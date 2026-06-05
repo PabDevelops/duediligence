@@ -1,5 +1,8 @@
 const AV_KEY = 'HQ3HYMDJQK4QBM4I';
 const FH_KEY = 'd8he51pr01qgcfbpbuo0d8he51pr01qgcfbpbuog';
+import { supabase } from '@/lib/supabase';
+
+const CACHE_HOURS = 24;
 
 export async function GET(request) {
   const { searchParams } = new URL(request.url);
@@ -7,6 +10,25 @@ export async function GET(request) {
 
   if (!ticker) {
     return Response.json({ error: 'Ticker requerido' }, { status: 400 });
+  }
+
+  // Verificar caché
+  try {
+    const { data: cached } = await supabase
+      .from('stock_cache')
+      .select('data, updated_at')
+      .eq('ticker', ticker)
+      .single();
+
+    if (cached) {
+      const updatedAt = new Date(cached.updated_at);
+      const hoursOld = (Date.now() - updatedAt.getTime()) / (1000 * 60 * 60);
+      if (hoursOld < CACHE_HOURS) {
+        return Response.json({ ...cached.data, cached: true });
+      }
+    }
+  } catch (e) {
+    // Si falla el caché seguimos con la petición normal
   }
 
   try {
@@ -190,25 +212,18 @@ const roic = equityVal && debtVal && oiVal
       av = {};
     }
 
-    return Response.json({
+    const result = {
       name: company.title,
       ticker,
       cik,
-      // SEC EDGAR metrics
       revVal, niVal, oiVal, fcfVal, assetsVal, equityVal, debtVal, cashVal, sharesVal, rdVal,
       opMargin, netMargin, grossMargin, revGrowth, roe, roa, debtToEquity, netDebt, roic,
       revHistory, niHistory, fcfHistory, oiHistory,
-      sharesHistory, gpHistory, marginHistory, shareDilution, epsCagr, epsHistory,
-      // Finnhub (ilimitado)
+      sharesHistory, gpHistory, marginHistory, shareDilution,
+      epsCagr, epsHistory,
       currentPrice, priceChange, priceChangePct, prevClose,
-      // Calculados desde SEC + Finnhub
-      eps: epsCalc,
-      pe: peCalc,
-      marketCap: marketCapCalc,
-      pfcf: pfcfCalc,
-      fcfYield,
+      eps: epsCalc, pe: peCalc, marketCap: marketCapCalc, pfcf: pfcfCalc, fcfYield,
       high52, low52,
-      // Alpha Vantage (best effort, puede ser null)
       beta: av.Beta && av.Beta !== 'None' ? +av.Beta : null,
       high52av: av['52WeekHigh'] && av['52WeekHigh'] !== 'None' ? +av['52WeekHigh'] : high52,
       low52av: av['52WeekLow'] && av['52WeekLow'] !== 'None' ? +av['52WeekLow'] : low52,
@@ -223,7 +238,18 @@ const roic = equityVal && debtVal && oiVal
       analystTarget: av.AnalystTargetPrice && av.AnalystTargetPrice !== 'None' ? +av.AnalystTargetPrice : null,
       sharesOutstanding: av.SharesOutstanding && av.SharesOutstanding !== 'None' ? +av.SharesOutstanding : sharesVal,
       shortRatio: av.ShortRatio && av.ShortRatio !== 'None' ? +av.ShortRatio : null,
-    });
+    };
+
+    // Guardar en caché
+    try {
+      await supabase
+        .from('stock_cache')
+        .upsert({ ticker, data: result, updated_at: new Date().toISOString() });
+    } catch (e) {
+      // Si falla el guardado no interrumpimos
+    }
+
+    return Response.json(result);
 
   } catch (e) {
     console.error(e);
