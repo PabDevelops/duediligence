@@ -185,7 +185,7 @@ export default function StockPage({ params }) {
             <div style={{ display: 'flex', gap: '16px', alignItems: 'flex-start' }}>
               <div style={{ width: '48px', height: '48px', background: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, overflow: 'hidden' }}>
                 <img
-                  src={`https://logo.clearbit.com/${data.name.toLowerCase().replace(/\binc\b|\bcorp\b|\bltd\b|\bplc\b|\bco\b|\bllc\b|\bgroup\b|\bholdings\b|\binternational\b|\bthe\b/g, '').trim().split(/\s+/)[0].replace(/[^a-z0-9]/g, '')}.com`}
+                  src={`https://img.logo.dev/${data.name.toLowerCase().replace(/\binc\b|\bcorp\b|\bltd\b|\bplc\b|\bco\b|\bllc\b|\bgroup\b|\bholdings\b|\binternational\b|\bthe\b/g, '').trim().split(/\s+/)[0].replace(/[^a-z0-9]/g, '')}.com?token=pk_B4aaLZF6S4G1YbCgqZq2Ug`}
                   alt={data.name}
                   style={{ width: '32px', height: '32px', objectFit: 'contain' }}
                   onError={e => { e.target.style.display = 'none'; e.target.parentElement.innerHTML = `<span style="color:var(--accent);font-weight:600;font-size:14px">${ticker.slice(0,2)}</span>`; e.target.parentElement.style.background = 'var(--bg-2)'; }}
