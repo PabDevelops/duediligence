@@ -22,8 +22,13 @@ export default function Home() {
           <span style={{ color: 'var(--text-3)' }}>|</span>
           <span style={{ color: 'var(--text-3)', fontSize: '11px' }}>FUNDAMENTAL ANALYSIS SYSTEM v1.0</span>
         </div>
-        <div style={{ color: 'var(--text-3)', fontSize: '11px' }}>
-          {new Date().toISOString().slice(0, 10)} · SEC EDGAR · FINNHUB
+        <div style={{ display: 'flex', alignItems: 'center', gap: '16px', fontSize: '11px' }}>
+  <a href="/screener" style={{ color: 'var(--text-3)', textDecoration: 'none', letterSpacing: '1px' }}
+    onMouseEnter={e => e.target.style.color = 'var(--accent)'}
+    onMouseLeave={e => e.target.style.color = 'var(--text-3)'}>
+    SCREENER
+  </a>
+  <span style={{ color: 'var(--text-3)' }}>{new Date().toISOString().slice(0, 10)} · SEC EDGAR · FINNHUB</span>
         </div>
       </div>
 
