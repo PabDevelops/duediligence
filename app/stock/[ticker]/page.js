@@ -629,15 +629,15 @@ export default function StockPage({ params }) {
                   <div style={{ background: 'var(--bg-1)', border: '1px solid var(--border)', padding: '16px', marginBottom: '24px', fontSize: '11px', color: 'var(--text-2)', lineHeight: 1.8 }}>
                     <span style={{ color: 'var(--accent)' }}>V = EPS × (8.5 + 2g)</span> &nbsp;·&nbsp;
                     EPS: <span style={{ color: 'var(--text)' }}>${data.eps}</span> &nbsp;·&nbsp;
-                    Base growth (g): <span style={{ color: 'var(--text)' }}>{data.revGrowth !== null ? `${data.revGrowth.toFixed(1)}%` : 'N/A'}</span> &nbsp;·&nbsp;
+                    5Y EPS CAGR (g): <span style={{ color: 'var(--text)' }}>{data.epsCagr !== null ? `${data.epsCagr}%` : 'N/A'}</span> &nbsp;·&nbsp;
                     <span style={{ color: 'var(--text-3)' }}>Benjamin Graham formula · Not investment advice</span>
                   </div>
 
                   <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '1px', background: 'var(--border)', marginBottom: '24px' }}>
                     {[
-                      { label: 'CONSERVATIVE', g: data.revGrowth !== null ? +(data.revGrowth * 0.5).toFixed(1) : 3, desc: '50% of historical growth' },
-                      { label: 'BASE', g: data.revGrowth !== null ? +data.revGrowth.toFixed(1) : 7, desc: 'Historical revenue growth' },
-                      { label: 'OPTIMISTIC', g: data.revGrowth !== null ? +(data.revGrowth * 1.5).toFixed(1) : 12, desc: '150% of historical growth' },
+                        { label: 'CONSERVATIVE', g: data.epsCagr !== null ? +(data.epsCagr * 0.5).toFixed(1) : 3, desc: '50% of 5Y EPS CAGR' },
+                        { label: 'BASE', g: data.epsCagr !== null ? +data.epsCagr.toFixed(1) : 7, desc: '5Y EPS CAGR (historical)' },
+                        { label: 'OPTIMISTIC', g: data.epsCagr !== null ? +(data.epsCagr * 1.5).toFixed(1) : 12, desc: '150% of 5Y EPS CAGR' },
                     ].map(scenario => {
                       const g = Math.max(0, Math.min(scenario.g, 25));
                       const intrinsic = +(data.eps * (8.5 + 2 * g)).toFixed(2);

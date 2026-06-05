@@ -111,6 +111,19 @@ export async function GET(request) {
 
     // Calcular EPS y P/E desde SEC EDGAR + Finnhub (sin Alpha Vantage)
     const epsCalc = niVal && sharesVal ? +(niVal / sharesVal).toFixed(2) : null;
+    // EPS histórico y CAGR a 5 años para Graham
+    const epsHistory = niHistory.map((ni, i) => {
+    const sh = sharesHistory[i];
+    if (!ni || !sh || !sh.val) return null;
+    return { year: ni.year, eps: +(ni.val / sh.val).toFixed(2) };
+    }).filter(Boolean);
+
+const epsOldest = epsHistory[0]?.eps;
+const epsLatest = epsHistory[epsHistory.length - 1]?.eps;
+const epsYears = epsHistory.length > 1 ? epsHistory.length - 1 : 1;
+const epsCagr = epsOldest && epsLatest && epsOldest > 0 && epsLatest > 0
+  ? +(((Math.pow(epsLatest / epsOldest, 1 / epsYears)) - 1) * 100).toFixed(1)
+  : null;
     const peCalc = epsCalc && currentPrice ? +(currentPrice / epsCalc).toFixed(2) : null;
     const marketCapCalc = currentPrice && sharesVal ? currentPrice * sharesVal : null;
     const pfcfCalc = marketCapCalc && fcfVal && fcfVal > 0 ? +(marketCapCalc / fcfVal).toFixed(1) : null;
@@ -141,7 +154,7 @@ export async function GET(request) {
       revVal, niVal, oiVal, fcfVal, assetsVal, equityVal, debtVal, cashVal, sharesVal, rdVal,
       opMargin, netMargin, grossMargin, revGrowth, roe, roa, debtToEquity, netDebt, roic,
       revHistory, niHistory, fcfHistory, oiHistory,
-      sharesHistory, gpHistory, marginHistory, shareDilution,
+      sharesHistory, gpHistory, marginHistory, shareDilution, epsCagr, epsHistory,
       // Finnhub (ilimitado)
       currentPrice, priceChange, priceChangePct, prevClose,
       // Calculados desde SEC + Finnhub
