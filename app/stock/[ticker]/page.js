@@ -108,10 +108,11 @@ export default function StockPage({ params }) {
   const [answers, setAnswers] = useState({});
   const [finTab, setFinTab] = useState('income');
   const [evidence, setEvidence] = useState({});
-const [sparklineData, setSparklineData] = useState(null);
-const [usage, setUsage] = useState(null);
+  const [sparklineData, setSparklineData] = useState(null);
+  const [usage, setUsage] = useState(null);
   const [usageLimited, setUsageLimited] = useState(false);
-const [isPro, setIsPro] = useState(false);
+  const [isPro, setIsPro] = useState(false);
+  const [inWatchlist, setInWatchlist] = useState(false);
   const { isSignedIn } = useUser();
 
 
@@ -141,6 +142,16 @@ const [isPro, setIsPro] = useState(false);
       .catch(() => {});
   }, [ticker]);
 
+  fetch('/api/watchlist')
+      .then(r => r.json())
+      .then(d => {
+        const tickers = d.tickers?.map(t => t.ticker) || [];
+        setInWatchlist(tickers.includes(ticker));
+      })
+      .catch(() => {});
+
+  
+
   const getDimScore = (dim) => {
     const indices = QUESTIONS.map((q, i) => q.dim === dim ? i : -1).filter(i => i >= 0);
     const answered = indices.filter(i => answers[i] === 'YES' || answers[i] === 'NO');
@@ -151,6 +162,17 @@ const [isPro, setIsPro] = useState(false);
     const scores = DIMS.map(d => getDimScore(d)).filter(s => s !== null);
     if (!scores.length) return null;
     return Math.round(scores.reduce((a, b) => a + b, 0) / scores.length);
+  };
+
+  const toggleWatchlist = async () => {
+    if (!isSignedIn) { window.location.href = '/sign-in'; return; }
+    const method = inWatchlist ? 'DELETE' : 'POST';
+    await fetch('/api/watchlist', {
+      method,
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ ticker }),
+    });
+    setInWatchlist(!inWatchlist);
   };
 
   if (loading) return (
@@ -269,11 +291,17 @@ const [isPro, setIsPro] = useState(false);
                     {data.description.slice(0, 180)}...
                   </div>
                 )}
+                <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginTop: '8px' }}>
                 <a href={`https://www.sec.gov/cgi-bin/browse-edgar?action=getcompany&CIK=${data.cik}&type=10-K`}
                   target="_blank" rel="noopener noreferrer"
                   style={{ color: 'var(--text-3)', fontSize: '10px', letterSpacing: '1px', textDecoration: 'none', borderBottom: '1px solid var(--border)', paddingBottom: '1px', marginTop: '8px', display: 'inline-block' }}>
                   SEC FILINGS ↗
                 </a>
+                <button onClick={toggleWatchlist}
+                    style={{ background: 'none', border: `1px solid ${inWatchlist ? 'var(--accent)' : 'var(--border)'}`, color: inWatchlist ? 'var(--accent)' : 'var(--text-3)', fontFamily: 'IBM Plex Mono, monospace', fontSize: '10px', padding: '2px 10px', cursor: 'pointer', letterSpacing: '1px' }}>
+                    {inWatchlist ? '★ WATCHLIST' : '☆ WATCHLIST'}
+                  </button>
+                </div>
               </div>
             </div>
 

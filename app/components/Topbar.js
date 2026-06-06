@@ -47,6 +47,7 @@ export default function Topbar() {
         {navItem('/screener', 'SCREENER')}
         {navItem('/compare', 'COMPARE')}
         {navItem('/pricing', 'PRICING')}
+        {navItem('/watchlist', 'WATCHLIST')}
         {navItem('/about', 'ABOUT')}
         {useUser().isSignedIn ? (
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
