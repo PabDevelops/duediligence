@@ -127,7 +127,7 @@ const [usageLimited, setUsageLimited] = useState(false);
       .then(r => r.json())
       .then(d => {
         setUsage(d);
-        if (d.count > d.limit) setUsageLimited(true);
+        if (d.limited) setUsageLimited(true);
       })
       .catch(() => {});
   }, [ticker]);

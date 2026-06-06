@@ -33,17 +33,23 @@ export async function POST() {
     .eq('date', today)
     .single();
 
+  const currentCount = existing?.count || 0;
+
+  if (currentCount >= FREE_LIMIT) {
+    return Response.json({ count: currentCount, limit: FREE_LIMIT, limited: true });
+  }
+
   if (existing) {
     await supabase
       .from('usage_tracking')
-      .update({ count: existing.count + 1 })
+      .update({ count: currentCount + 1 })
       .eq('user_id', userId)
       .eq('date', today);
-    return Response.json({ count: existing.count + 1, limit: FREE_LIMIT });
+    return Response.json({ count: currentCount + 1, limit: FREE_LIMIT, limited: currentCount + 1 >= FREE_LIMIT });
   } else {
     await supabase
       .from('usage_tracking')
       .insert({ user_id: userId, date: today, count: 1 });
-    return Response.json({ count: 1, limit: FREE_LIMIT });
+    return Response.json({ count: 1, limit: FREE_LIMIT, limited: false });
   }
 }
