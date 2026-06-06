@@ -1,5 +1,6 @@
 'use client';
 import { useState, useEffect, useRef } from 'react';
+import Sparkline from '../components/Sparkline';
 import { useRouter } from 'next/navigation';
 
 const fmt = (val) => {
@@ -20,6 +21,14 @@ export default function Screener() {
   const [loading, setLoading] = useState(true);
   const [sector, setSector] = useState('All');
   const [sortBy, setSortBy] = useState('marketCap');
+  const [sparklines, setSparklines] = useState({});
+
+const loadSparkline = async (ticker) => {
+  if (sparklines[ticker]) return;
+  const res = await fetch(`/api/sparkline?ticker=${ticker}`);
+  const data = await res.json();
+  setSparklines(prev => ({ ...prev, [ticker]: data.candles }));
+};
   const [sortDir, setSortDir] = useState('desc');
   const tableRef = useRef(null);
   const [search, setSearch] = useState('');
@@ -158,6 +167,7 @@ export default function Screener() {
                   <ColHeader col="fcfYield" label="FCF YIELD" />
                   <ColHeader col="roe" label="ROE" />
                   <ColHeader col="netDebt" label="NET DEBT" />
+                  <th style={{ padding: '8px 12px', textAlign: 'right', fontWeight: 400, fontSize: '10px', letterSpacing: '1px', color: 'var(--text-3)' }}>TREND</th>
                 </tr>
               </thead>
               <tbody>
@@ -190,6 +200,10 @@ onMouseLeave={e => e.currentTarget.style.background = 'var(--bg-1)'}>
                     <td style={{ padding: '8px 12px', textAlign: 'right', color: s.fcfYield > 4 ? 'var(--green)' : s.fcfYield > 0 ? 'var(--accent)' : 'var(--red)' }}>{s.fcfYield !== null ? `${s.fcfYield}%` : '—'}</td>
                     <td style={{ padding: '8px 12px', textAlign: 'right', color: s.roe > 15 ? 'var(--green)' : 'var(--text)' }}>{fmtP(s.roe)}</td>
                     <td style={{ padding: '8px 12px', textAlign: 'right', color: s.netDebt < 0 ? 'var(--green)' : 'var(--text)' }}>{fmt(s.netDebt)}</td>
+                    <td style={{ padding: '8px 12px', textAlign: 'right' }}
+  onMouseEnter={() => loadSparkline(s.ticker)}>
+  <Sparkline data={sparklines[s.ticker] || []} width={80} height={28} />
+</td>
                   </tr>
                 ))}
               </tbody>
