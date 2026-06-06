@@ -68,7 +68,7 @@ export default function Screener() {
     <div style={{ background: 'var(--bg)', minHeight: '100vh', color: 'var(--text)', fontFamily: 'IBM Plex Mono, monospace' }}>
       {/* Topbar */}
       <div style={{ borderBottom: '1px solid var(--border)', padding: '8px 16px', display: 'flex', alignItems: 'center', gap: '12px', position: 'sticky', top: 0, background: 'var(--bg)', zIndex: 10, fontSize: '11px' }}>
-        <a href="/" style={{ color: 'var(--accent)', fontWeight: 600, letterSpacing: '2px', textDecoration: 'none' }}>TERMINAL</a>
+        <a href="/" style={{ color: 'var(--accent)', fontWeight: 600, letterSpacing: '2px', textDecoration: 'none' }}>TRAQCKER</a>
         <span style={{ color: 'var(--border-2)' }}>/</span>
         <span style={{ color: 'var(--text)' }}>SCREENER</span>
         <div style={{ flex: 1 }}>

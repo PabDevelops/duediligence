@@ -151,7 +151,7 @@ export default function StockPage({ params }) {
     <div style={S.page}>
       {/* Topbar */}
       <div style={S.topbar}>
-        <a href="/" style={{ color: 'var(--accent)', fontWeight: 600, letterSpacing: '2px', textDecoration: 'none' }}>TERMINAL</a>
+        <a href="/" style={{ color: 'var(--accent)', fontWeight: 600, letterSpacing: '2px', textDecoration: 'none' }}>TRAQCKER</a>
         <span style={{ color: 'var(--border-2)' }}>/</span>
         <a href="/" style={{ color: 'var(--text-3)', textDecoration: 'none' }}>HOME</a>
         <span style={{ color: 'var(--border-2)' }}>/</span>

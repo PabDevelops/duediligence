@@ -18,9 +18,9 @@ export default function Home() {
       {/* Topbar */}
       <div style={{ borderBottom: '1px solid var(--border)', padding: '12px 24px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-          <span style={{ color: 'var(--accent)', fontWeight: 600, letterSpacing: '2px', fontSize: '13px' }}>TERMINAL</span>
-          <span style={{ color: 'var(--text-3)' }}>|</span>
-          <span style={{ color: 'var(--text-3)', fontSize: '11px' }}>FUNDAMENTAL ANALYSIS SYSTEM v1.0</span>
+          <img src="/logo.png" alt="Traqcker" style={{ height: '24px', objectFit: 'contain' }} />
+<span style={{ color: 'var(--text-3)' }}>|</span>
+<span style={{ color: 'var(--text-3)', fontSize: '11px' }}>FUNDAMENTAL ANALYSIS SYSTEM v1.0</span>
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: '16px', fontSize: '11px' }}>
   <a href="/screener" style={{ color: 'var(--text-3)', textDecoration: 'none', letterSpacing: '1px' }}
@@ -41,7 +41,7 @@ export default function Home() {
             ┌─────────────────────────────────────────┐
           </div>
           <div style={{ color: 'var(--text-3)', fontSize: '11px', marginBottom: '4px' }}>
-            │ &nbsp;STOCK ANALYSIS TERMINAL &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;│
+            │ &nbsp;STOCK ANALYSIS TRAQCKER &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;│
           </div>
           <div style={{ color: 'var(--text-3)', fontSize: '11px', marginBottom: '8px' }}>
             └─────────────────────────────────────────┘
