@@ -1,5 +1,5 @@
 'use client';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Sparkline from '../components/Sparkline';
 
 const fmt = (val) => {
@@ -11,6 +11,15 @@ const fmt = (val) => {
 };
 const fmtP = (v) => v !== null && v !== undefined ? `${v}%` : '—';
 const fmtN = (v, d = 1) => v !== null && v !== undefined ? v.toFixed(d) : '—';
+
+const calcEvEbitda = (d) => {
+  if (!d || !d.marketCap || !d.oiVal) return null;
+  const ev = d.marketCap + (d.netDebt || 0);
+  // EBITDA ≈ Operating Income (sin depreciation disponible en SEC data)
+  const ebitda = d.oiVal;
+  if (ebitda <= 0) return null;
+  return +(ev / ebitda).toFixed(1);
+};
 
 const calcScore = (data) => {
   if (!data) return { cbs: null, oppo: null, final: null };
@@ -35,57 +44,103 @@ const calcScore = (data) => {
   return { cbs, oppo, gqs: +gqs.toFixed(2), final };
 };
 
+const scoreColor = (s) => s >= 4 ? 'var(--green)' : s >= 3 ? 'var(--accent)' : s !== null ? 'var(--red)' : 'var(--text-3)';
+
+const METRICS = [
+  { section: 'PRICE & VALUATION' },
+  { label: 'Price', fn: d => d.currentPrice ? `$${d.currentPrice.toFixed(2)}` : '—' },
+  { label: 'Market Cap', fn: d => fmt(d.marketCap) },
+  { label: 'P/E', fn: d => fmtN(d.pe), color: d => d.pe > 0 && d.pe < 20 ? 'var(--green)' : d.pe > 35 ? 'var(--red)' : 'var(--text)', winner: 'min', winnerFn: d => d.pe > 0 ? d.pe : null },
+  { label: 'P/FCF', fn: d => fmtN(d.pfcf), color: d => d.pfcf > 0 && d.pfcf < 20 ? 'var(--green)' : d.pfcf > 40 ? 'var(--red)' : 'var(--text)', winner: 'min', winnerFn: d => d.pfcf > 0 ? d.pfcf : null },
+  { label: 'FCF Yield', fn: d => d.fcfYield ? `${d.fcfYield}%` : '—', color: d => d.fcfYield > 5 ? 'var(--green)' : d.fcfYield > 2 ? 'var(--accent)' : 'var(--text)', winner: 'max', winnerFn: d => d.fcfYield },
+  { label: 'EV/EBITDA', fn: d => fmtN(calcEvEbitda(d)), winner: 'min', winnerFn: d => calcEvEbitda(d) },
+  { section: 'PROFITABILITY' },
+  { label: 'Gross Margin', fn: d => fmtP(d.grossMargin), color: d => d.grossMargin > 50 ? 'var(--green)' : d.grossMargin > 30 ? 'var(--accent)' : 'var(--red)', winner: 'max', winnerFn: d => d.grossMargin },
+  { label: 'Op. Margin', fn: d => fmtP(d.opMargin), color: d => d.opMargin > 20 ? 'var(--green)' : d.opMargin > 10 ? 'var(--accent)' : 'var(--red)', winner: 'max', winnerFn: d => d.opMargin },
+  { label: 'Net Margin', fn: d => fmtP(d.netMargin), color: d => d.netMargin > 15 ? 'var(--green)' : d.netMargin > 5 ? 'var(--accent)' : 'var(--red)', winner: 'max', winnerFn: d => d.netMargin },
+  { label: 'ROE', fn: d => fmtP(d.roe), color: d => d.roe > 20 ? 'var(--green)' : d.roe > 10 ? 'var(--accent)' : 'var(--red)', winner: 'max', winnerFn: d => d.roe },
+  { label: 'ROA', fn: d => fmtP(d.roa), color: d => d.roa > 10 ? 'var(--green)' : d.roa > 5 ? 'var(--accent)' : 'var(--red)', winner: 'max', winnerFn: d => d.roa },
+  { label: 'ROIC', fn: d => fmtP(d.roic), color: d => d.roic > 15 ? 'var(--green)' : d.roic > 8 ? 'var(--accent)' : 'var(--red)', winner: 'max', winnerFn: d => d.roic },
+  { section: 'GROWTH' },
+  { label: 'Rev. Growth YoY', fn: d => d.revGrowth !== null ? `${d.revGrowth > 0 ? '+' : ''}${d.revGrowth}%` : '—', color: d => d.revGrowth > 10 ? 'var(--green)' : d.revGrowth > 0 ? 'var(--accent)' : 'var(--red)', winner: 'max', winnerFn: d => d.revGrowth },
+  { label: 'EPS CAGR', fn: d => d.epsCagr !== null ? `${d.epsCagr}%` : '—', color: d => d.epsCagr > 15 ? 'var(--green)' : d.epsCagr > 5 ? 'var(--accent)' : 'var(--red)', winner: 'max', winnerFn: d => d.epsCagr },
+  { section: 'BALANCE SHEET' },
+  { label: 'Net Debt', fn: d => fmt(d.netDebt), color: d => d.netDebt < 0 ? 'var(--green)' : 'var(--text)', winner: 'min', winnerFn: d => d.netDebt },
+  { label: 'D/E Ratio', fn: d => fmtN(d.debtToEquity), color: d => d.debtToEquity < 1 ? 'var(--green)' : d.debtToEquity < 2 ? 'var(--accent)' : 'var(--red)', winner: 'min', winnerFn: d => d.debtToEquity },
+  { label: 'Current Ratio', fn: d => d.currentAssetsVal && d.currentLiabilitiesVal ? fmtN(d.currentAssetsVal / d.currentLiabilitiesVal) : '—', winner: 'max', winnerFn: d => d.currentAssetsVal && d.currentLiabilitiesVal ? d.currentAssetsVal / d.currentLiabilitiesVal : null },
+  { label: 'Cash', fn: d => fmt(d.cashVal), color: () => 'var(--green)', winner: 'max', winnerFn: d => d.cashVal },
+  { section: 'TRAQCKER SCORE' },
+  { label: 'Core Business', fn: d => { const s = calcScore(d); return s.cbs?.toFixed(1) || '—'; }, color: d => { const s = calcScore(d); return scoreColor(s.cbs); }, winnerFn: d => calcScore(d).cbs, winner: 'max' },
+  { label: 'Oppo Score', fn: d => { const s = calcScore(d); return s.oppo?.toFixed(1) || '—'; }, color: d => { const s = calcScore(d); return scoreColor(s.oppo); }, winnerFn: d => calcScore(d).oppo, winner: 'max' },
+  { label: 'Final Note', fn: d => { const s = calcScore(d); return s.final?.toFixed(1) || '—'; }, color: d => { const s = calcScore(d); return scoreColor(s.final); }, winnerFn: d => calcScore(d).final, winner: 'max', bold: true },
+];
+
+const N = 3;
+
 export default function Compare() {
-  const [tickers, setTickers] = useState(['', '']);
-  const [stocks, setStocks] = useState([null, null]);
-  const [loading, setLoading] = useState([false, false]);
-  const [inputs, setInputs] = useState(['', '']);
+  const [tickers, setTickers] = useState(Array(N).fill(''));
+  const [stocks, setStocks] = useState(Array(N).fill(null));
+  const [loading, setLoading] = useState(Array(N).fill(false));
+  const [inputs, setInputs] = useState(Array(N).fill(''));
+  const [sparklines, setSparklines] = useState(Array(N).fill(null));
+
+  const fetchSparkline = async (index, ticker) => {
+    try {
+      const res = await fetch(`/api/sparkline?ticker=${ticker}`);
+      const data = await res.json();
+      setSparklines(prev => { const n = [...prev]; n[index] = data.candles || null; return n; });
+    } catch (e) {
+      setSparklines(prev => { const n = [...prev]; n[index] = null; return n; });
+    }
+  };
 
   const fetchStock = async (index, ticker) => {
     if (!ticker) return;
+    const t = ticker.toUpperCase();
     setLoading(prev => { const n = [...prev]; n[index] = true; return n; });
     try {
-      const res = await fetch(`/api/stock?ticker=${ticker.toUpperCase()}`);
+      const res = await fetch(`/api/stock?ticker=${t}`);
       const data = await res.json();
       setStocks(prev => { const n = [...prev]; n[index] = data.error ? null : data; return n; });
-      setTickers(prev => { const n = [...prev]; n[index] = ticker.toUpperCase(); return n; });
-    } catch (e) {}
+      setTickers(prev => { const n = [...prev]; n[index] = data.error ? '' : t; return n; });
+      if (!data.error) fetchSparkline(index, t);
+    } catch (e) {
+      setStocks(prev => { const n = [...prev]; n[index] = null; return n; });
+    }
     setLoading(prev => { const n = [...prev]; n[index] = false; return n; });
   };
 
-  const scoreColor = (s) => s >= 4 ? 'var(--green)' : s >= 3 ? 'var(--accent)' : s !== null ? 'var(--red)' : 'var(--text-3)';
+  const removeStock = (index) => {
+    setStocks(prev => { const n = [...prev]; n[index] = null; return n; });
+    setTickers(prev => { const n = [...prev]; n[index] = ''; return n; });
+    setInputs(prev => { const n = [...prev]; n[index] = ''; return n; });
+    setSparklines(prev => { const n = [...prev]; n[index] = null; return n; });
+  };
 
-  const METRICS = [
-    { section: 'PRICE & VALUATION' },
-    { label: 'Price', fn: d => d.currentPrice ? `$${d.currentPrice.toFixed(2)}` : '—' },
-    { label: 'Market Cap', fn: d => fmt(d.marketCap) },
-    { label: 'P/E', fn: d => fmtN(d.pe), color: d => d.pe > 0 && d.pe < 20 ? 'var(--green)' : d.pe > 35 ? 'var(--red)' : 'var(--text)' },
-    { label: 'P/FCF', fn: d => fmtN(d.pfcf), color: d => d.pfcf > 0 && d.pfcf < 20 ? 'var(--green)' : d.pfcf > 40 ? 'var(--red)' : 'var(--text)' },
-    { label: 'FCF Yield', fn: d => d.fcfYield ? `${d.fcfYield}%` : '—', color: d => d.fcfYield > 5 ? 'var(--green)' : d.fcfYield > 2 ? 'var(--accent)' : 'var(--text)' },
-    { label: 'EV/EBITDA', fn: d => fmtN(d.evEbitda) },
-    { section: 'PROFITABILITY' },
-    { label: 'Gross Margin', fn: d => fmtP(d.grossMargin), color: d => d.grossMargin > 50 ? 'var(--green)' : d.grossMargin > 30 ? 'var(--accent)' : 'var(--red)' },
-    { label: 'Op. Margin', fn: d => fmtP(d.opMargin), color: d => d.opMargin > 20 ? 'var(--green)' : d.opMargin > 10 ? 'var(--accent)' : 'var(--red)' },
-    { label: 'Net Margin', fn: d => fmtP(d.netMargin), color: d => d.netMargin > 15 ? 'var(--green)' : d.netMargin > 5 ? 'var(--accent)' : 'var(--red)' },
-    { label: 'ROE', fn: d => fmtP(d.roe), color: d => d.roe > 20 ? 'var(--green)' : d.roe > 10 ? 'var(--accent)' : 'var(--red)' },
-    { label: 'ROA', fn: d => fmtP(d.roa), color: d => d.roa > 10 ? 'var(--green)' : d.roa > 5 ? 'var(--accent)' : 'var(--red)' },
-    { label: 'ROIC', fn: d => fmtP(d.roic), color: d => d.roic > 15 ? 'var(--green)' : d.roic > 8 ? 'var(--accent)' : 'var(--red)' },
-    { section: 'GROWTH' },
-    { label: 'Rev. Growth YoY', fn: d => d.revGrowth !== null ? `${d.revGrowth > 0 ? '+' : ''}${d.revGrowth}%` : '—', color: d => d.revGrowth > 10 ? 'var(--green)' : d.revGrowth > 0 ? 'var(--accent)' : 'var(--red)' },
-    { label: 'EPS CAGR', fn: d => d.epsCagr !== null ? `${d.epsCagr}%` : '—', color: d => d.epsCagr > 15 ? 'var(--green)' : d.epsCagr > 5 ? 'var(--accent)' : 'var(--red)' },
-    { section: 'BALANCE SHEET' },
-    { label: 'Net Debt', fn: d => fmt(d.netDebt), color: d => d.netDebt < 0 ? 'var(--green)' : 'var(--text)' },
-    { label: 'D/E Ratio', fn: d => fmtN(d.debtToEquity), color: d => d.debtToEquity < 1 ? 'var(--green)' : d.debtToEquity < 2 ? 'var(--accent)' : 'var(--red)' },
-    { label: 'Current Ratio', fn: d => d.currentAssetsVal && d.currentLiabilitiesVal ? fmtN(d.currentAssetsVal/d.currentLiabilitiesVal) : '—' },
-    { label: 'Cash', fn: d => fmt(d.cashVal), color: () => 'var(--green)' },
-    { section: 'TRAQCKER SCORE' },
-    { label: 'Core Business', fn: d => { const s = calcScore(d); return s.cbs?.toFixed(1) || '—'; }, color: d => { const s = calcScore(d); return scoreColor(s.cbs); } },
-    { label: 'Oppo Score', fn: d => { const s = calcScore(d); return s.oppo?.toFixed(1) || '—'; }, color: d => { const s = calcScore(d); return scoreColor(s.oppo); } },
-    { label: 'Final Note', fn: d => { const s = calcScore(d); return s.final?.toFixed(1) || '—'; }, color: d => { const s = calcScore(d); return scoreColor(s.final); }, bold: true },
-  ];
+  const getWinners = (metric) => {
+    if (!metric.winner || !metric.winnerFn) return [];
+    const vals = stocks.map((s, i) => ({ i, v: s ? metric.winnerFn(s) : null }));
+    const valid = vals.filter(x => x.v !== null && x.v !== undefined && stocks[x.i] !== null);
+    if (valid.length < 2) return [];
+    const best = metric.winner === 'max'
+      ? Math.max(...valid.map(x => x.v))
+      : Math.min(...valid.map(x => x.v));
+    return valid.filter(x => x.v === best).map(x => x.i);
+  };
+
+  const logoUrl = (s) => {
+    if (!s?.name) return null;
+    const domain = s.name.toLowerCase()
+      .replace(/\binc\b|\bcorp\b|\bltd\b|\bplc\b|\bco\b|\bllc\b/g, '')
+      .trim().split(/\s+/)[0].replace(/[^a-z0-9]/g, '');
+    return `https://img.logo.dev/${domain}.com?token=pk_B4aaLZF6S4G1YbCgqZq2Ug`;
+  };
+
+  const hasAny = stocks.some(s => s !== null);
 
   return (
     <div style={{ background: 'var(--bg)', minHeight: '100vh', color: 'var(--text)', fontFamily: 'IBM Plex Mono, monospace' }}>
+
       {/* Topbar */}
       <div style={{ borderBottom: '1px solid var(--border)', padding: '8px 16px', display: 'flex', alignItems: 'center', gap: '12px', position: 'sticky', top: 0, background: 'var(--bg)', zIndex: 10, fontSize: '11px' }}>
         <a href="/" style={{ textDecoration: 'none' }}>
@@ -98,57 +153,104 @@ export default function Compare() {
       </div>
 
       <div style={{ maxWidth: '1200px', margin: '0 auto', padding: '24px' }}>
-        {/* Search inputs */}
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1px', background: 'var(--border)', marginBottom: '24px' }}>
-          {[0, 1].map(i => (
-            <div key={i} style={{ background: 'var(--bg-1)', padding: '16px' }}>
-              <div style={{ color: 'var(--text-3)', fontSize: '10px', letterSpacing: '2px', marginBottom: '8px' }}>STOCK {i + 1}</div>
-              <form onSubmit={e => { e.preventDefault(); fetchStock(i, inputs[i]); }}>
-                <div style={{ display: 'flex', gap: '8px' }}>
-                  <input
-                    value={inputs[i]}
-                    onChange={e => setInputs(prev => { const n = [...prev]; n[i] = e.target.value.toUpperCase(); return n; })}
-                    style={{ flex: 1, background: 'var(--bg-2)', border: '1px solid var(--border)', color: 'var(--text)', fontFamily: 'IBM Plex Mono, monospace', fontSize: '13px', padding: '8px 12px', outline: 'none', letterSpacing: '2px' }}
-                    placeholder="TICKER..."
-                  />
-                  <button type="submit"
-                    style={{ padding: '8px 16px', background: 'var(--accent)', border: 'none', color: '#000', fontFamily: 'IBM Plex Mono, monospace', fontSize: '11px', fontWeight: 600, cursor: 'pointer', letterSpacing: '1px' }}>
-                    {loading[i] ? '...' : 'ADD'}
+
+        {/* Stock slots */}
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '1px', background: 'var(--border)', marginBottom: '24px' }}>
+          {Array.from({ length: N }, (_, i) => (
+            <div key={i} style={{ background: 'var(--bg-1)', padding: '16px', display: 'flex', flexDirection: 'column', gap: '12px' }}>
+
+              {/* Slot label + clear */}
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                <div style={{ color: 'var(--text-3)', fontSize: '9px', letterSpacing: '3px' }}>STOCK {i + 1}</div>
+                {stocks[i] && (
+                  <button onClick={() => removeStock(i)} style={{ background: 'none', border: 'none', color: 'var(--text-3)', fontFamily: 'IBM Plex Mono, monospace', fontSize: '9px', cursor: 'pointer', letterSpacing: '1px', padding: 0 }}>
+                    ✕ CLEAR
                   </button>
-                </div>
+                )}
+              </div>
+
+              {/* Search */}
+              <form onSubmit={e => { e.preventDefault(); fetchStock(i, inputs[i]); }} style={{ display: 'flex', gap: '0' }}>
+                <input
+                  value={inputs[i]}
+                  onChange={e => setInputs(prev => { const n = [...prev]; n[i] = e.target.value.toUpperCase(); return n; })}
+                  style={{ flex: 1, background: 'var(--bg-2)', border: '1px solid var(--border)', borderRight: 'none', color: 'var(--text)', fontFamily: 'IBM Plex Mono, monospace', fontSize: '12px', padding: '8px 10px', outline: 'none', letterSpacing: '2px' }}
+                  placeholder="TICKER..."
+                />
+                <button type="submit"
+                  style={{ padding: '8px 14px', background: 'var(--accent)', border: 'none', color: '#000', fontFamily: 'IBM Plex Mono, monospace', fontSize: '10px', fontWeight: 700, cursor: 'pointer', letterSpacing: '1px', whiteSpace: 'nowrap' }}>
+                  {loading[i] ? '...' : 'ADD'}
+                </button>
               </form>
-              {stocks[i] && (
-                <div style={{ marginTop: '12px', display: 'flex', alignItems: 'center', gap: '12px' }}>
-                  <img
-                    src={`https://img.logo.dev/${stocks[i].name?.toLowerCase().replace(/\binc\b|\bcorp\b|\bltd\b|\bplc\b|\bco\b|\bllc\b/g, '').trim().split(/\s+/)[0].replace(/[^a-z0-9]/g, '')}.com?token=pk_B4aaLZF6S4G1YbCgqZq2Ug`}
-                    alt="" style={{ width: 32, height: 32, objectFit: 'contain', background: 'white', padding: 2 }}
-                    onError={e => e.target.style.display = 'none'}
-                  />
-                  <div>
-                    <div style={{ fontWeight: 600, fontSize: '14px' }}>{stocks[i].name}</div>
-                    <div style={{ color: 'var(--text-3)', fontSize: '10px' }}>{tickers[i]} · {stocks[i].sector}</div>
-                  </div>
-                  <div style={{ marginLeft: 'auto', textAlign: 'right' }}>
-                    <div style={{ fontSize: '20px', fontWeight: 600 }}>${stocks[i].currentPrice?.toFixed(2)}</div>
-                    <div style={{ color: stocks[i].priceChangePct >= 0 ? 'var(--green)' : 'var(--red)', fontSize: '11px' }}>
-                      {stocks[i].priceChangePct >= 0 ? '+' : ''}{stocks[i].priceChangePct?.toFixed(2)}%
+
+              {/* Stock info */}
+              {stocks[i] && (() => {
+                const s = stocks[i];
+                const sc = calcScore(s);
+                const up = s.priceChangePct >= 0;
+                return (
+                  <>
+                    {/* Logo + name + meta */}
+                    <div style={{ display: 'flex', alignItems: 'flex-start', gap: '10px' }}>
+                      <img
+                        src={logoUrl(s)}
+                        alt=""
+                        style={{ width: 36, height: 36, objectFit: 'contain', background: 'white', padding: 3, flexShrink: 0 }}
+                        onError={e => e.target.style.display = 'none'}
+                      />
+                      <div style={{ flex: 1, minWidth: 0 }}>
+                        <div style={{ fontSize: '10px', color: 'var(--accent)', fontWeight: 700, letterSpacing: '2px' }}>{tickers[i]}</div>
+                        <div style={{ fontSize: '12px', fontWeight: 600, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{s.name}</div>
+                        <div style={{ fontSize: '9px', color: 'var(--text-3)', letterSpacing: '1px', marginTop: '2px' }}>
+                          {s.exchange} · {s.sector}
+                        </div>
+                      </div>
                     </div>
-                  </div>
-                </div>
-              )}
+
+                    {/* Price + sparkline */}
+                    <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', gap: '8px' }}>
+                      <div>
+                        <div style={{ fontSize: '22px', fontWeight: 600, letterSpacing: '-1px' }}>${s.currentPrice?.toFixed(2)}</div>
+                        <div style={{ fontSize: '10px', color: up ? 'var(--green)' : 'var(--red)', marginTop: '2px', letterSpacing: '1px' }}>
+                          {up ? '▲' : '▼'} {Math.abs(s.priceChangePct)?.toFixed(2)}% TODAY
+                        </div>
+                      </div>
+                      {sparklines[i] && sparklines[i].length > 1 && (
+                        <Sparkline data={sparklines[i]} width={90} height={36} />
+                      )}
+                    </div>
+
+                    {/* Score strip */}
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '1px', background: 'var(--border)', borderTop: '1px solid var(--border)', marginTop: '4px' }}>
+                      {[
+                        { label: 'CORE', val: sc.cbs },
+                        { label: 'OPPO', val: sc.oppo },
+                        { label: 'FINAL', val: sc.final },
+                      ].map(({ label, val }) => (
+                        <div key={label} style={{ background: 'var(--bg-2)', padding: '8px 10px', textAlign: 'center' }}>
+                          <div style={{ fontSize: '8px', color: 'var(--text-3)', letterSpacing: '2px' }}>{label}</div>
+                          <div style={{ fontSize: '16px', fontWeight: 700, letterSpacing: '-1px', marginTop: '3px', color: scoreColor(val) }}>
+                            {val?.toFixed(1) || '—'}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </>
+                );
+              })()}
             </div>
           ))}
         </div>
 
         {/* Comparison table */}
-        {stocks.some(s => s !== null) && (
-          <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '12px' }}>
+        {hasAny && (
+          <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '11px', tableLayout: 'fixed' }}>
             <thead>
               <tr style={{ borderBottom: '1px solid var(--border)' }}>
-                <th style={{ padding: '8px 0', textAlign: 'left', fontWeight: 400, fontSize: '10px', color: 'var(--text-3)', width: '200px' }}>METRIC</th>
-                {[0, 1].map(i => (
-                  <th key={i} style={{ padding: '8px 16px', textAlign: 'right', fontWeight: 600, fontSize: '12px', color: stocks[i] ? 'var(--accent)' : 'var(--text-3)' }}>
-                    {tickers[i] || `STOCK ${i + 1}`}
+                <th style={{ padding: '8px 0', textAlign: 'left', fontWeight: 400, fontSize: '9px', color: 'var(--text-3)', width: '170px', letterSpacing: '1px' }}>METRIC</th>
+                {Array.from({ length: N }, (_, i) => (
+                  <th key={i} style={{ padding: '8px 12px', textAlign: 'right', fontWeight: 700, fontSize: '11px', letterSpacing: '2px', color: stocks[i] ? 'var(--accent)' : 'var(--text-3)' }}>
+                    {tickers[i] || `—`}
                   </th>
                 ))}
               </tr>
@@ -157,19 +259,29 @@ export default function Compare() {
               {METRICS.map((m, idx) => {
                 if (m.section) return (
                   <tr key={idx}>
-                    <td colSpan={3} style={{ padding: '12px 0 4px', color: 'var(--accent)', fontSize: '10px', letterSpacing: '2px', borderBottom: '1px solid var(--border)' }}>
+                    <td colSpan={N + 1} style={{ padding: '14px 0 4px', color: 'var(--accent)', fontSize: '9px', letterSpacing: '3px', borderBottom: '1px solid var(--border)' }}>
                       {m.section}
                     </td>
                   </tr>
                 );
+                const winners = getWinners(m);
                 return (
                   <tr key={idx} style={{ borderBottom: '1px solid var(--border)', background: idx % 2 === 0 ? 'transparent' : 'var(--bg-1)' }}>
-                    <td style={{ padding: '7px 0', color: 'var(--text-3)', fontSize: '11px', fontWeight: m.bold ? 600 : 400 }}>{m.label}</td>
-                    {[0, 1].map(i => (
-                      <td key={i} style={{ padding: '7px 16px', textAlign: 'right', color: stocks[i] ? (m.color ? m.color(stocks[i]) : 'var(--text)') : 'var(--text-3)', fontWeight: m.bold ? 700 : 400, fontSize: m.bold ? '13px' : '11px' }}>
-                        {stocks[i] ? m.fn(stocks[i]) : '—'}
-                      </td>
-                    ))}
+                    <td style={{ padding: '7px 0', color: 'var(--text-3)', fontSize: '10px', fontWeight: m.bold ? 600 : 400 }}>{m.label}</td>
+                    {Array.from({ length: N }, (_, i) => {
+                      const isWinner = winners.includes(i) && stocks[i] !== null;
+                      const color = stocks[i] && m.color ? m.color(stocks[i]) : 'var(--text)';
+                      return (
+                        <td key={i} style={{ padding: '7px 12px', textAlign: 'right', color: stocks[i] ? color : 'var(--text-3)', fontWeight: m.bold ? 700 : 400, fontSize: m.bold ? '13px' : '11px' }}>
+                          <span style={{ display: 'inline-flex', alignItems: 'center', gap: '5px', justifyContent: 'flex-end' }}>
+                            {stocks[i] ? m.fn(stocks[i]) : '—'}
+                            {isWinner && (
+                              <span style={{ width: 5, height: 5, borderRadius: '50%', background: 'var(--accent)', flexShrink: 0, display: 'inline-block' }} title="Best" />
+                            )}
+                          </span>
+                        </td>
+                      );
+                    })}
                   </tr>
                 );
               })}
@@ -177,9 +289,9 @@ export default function Compare() {
           </table>
         )}
 
-        {!stocks.some(s => s !== null) && (
-          <div style={{ textAlign: 'center', padding: '80px 0', color: 'var(--text-3)', fontSize: '11px', letterSpacing: '2px' }}>
-            ADD TWO TICKERS TO COMPARE
+        {!hasAny && (
+          <div style={{ textAlign: 'center', padding: '80px 0', color: 'var(--text-3)', fontSize: '10px', letterSpacing: '3px' }}>
+            ADD UP TO THREE TICKERS TO COMPARE
           </div>
         )}
       </div>
