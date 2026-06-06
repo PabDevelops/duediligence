@@ -492,196 +492,197 @@ export default function StockPage({ params }) {
 
           {/* QUALITY TAB */}
           {tab === 'quality' && (
-            <div>
-              {/* Score header */}
-              <div style={{ display: 'flex', alignItems: 'center', gap: '24px', padding: '20px', background: 'var(--bg-1)', border: '1px solid var(--border)', marginBottom: '24px' }}>
-                <ScoreBox score={score} size={72} />
-                <div>
-                  <div style={{ fontSize: '16px', fontWeight: 600, marginBottom: '4px' }}>
-                    {score !== null ? score >= 70 ? 'HIGH-QUALITY BUSINESS' : score >= 40 ? 'MODERATE QUALITY' : 'RED FLAGS DETECTED' : 'AUTOMATED QUALITY SCORE'}
+  <div>
+    {(() => {
+      // CORE BUSINESS SCORE (CBS) — calidad del negocio ajustada por sector
+      const sector = (data.sector || '').toLowerCase();
+      const isFinancial = sector.includes('bank') || sector.includes('insurance') || sector.includes('financial');
+      const isTech = sector.includes('tech') || sector.includes('software') || sector.includes('semi');
+      const isPharma = sector.includes('pharma') || sector.includes('biotech') || sector.includes('health');
+      const isConsumer = sector.includes('retail') || sector.includes('consumer') || sector.includes('food') || sector.includes('beverage');
+      const isEnergy = sector.includes('energy') || sector.includes('oil') || sector.includes('gas');
+
+      // ROIC score
+      const roicThreshold = isTech ? 0.25 : isPharma ? 0.20 : isConsumer ? 0.20 : isEnergy ? 0.12 : 0.15;
+      const roicScore = data.roic == null ? 2.5
+        : data.roic / 100 >= roicThreshold * 2 ? 5
+        : data.roic / 100 >= roicThreshold * 1.5 ? 4.5
+        : data.roic / 100 >= roicThreshold ? 4
+        : data.roic / 100 >= roicThreshold * 0.7 ? 3
+        : data.roic / 100 >= roicThreshold * 0.4 ? 2
+        : 1;
+
+      // Gross margin score
+      const gmThreshold = isTech ? 0.65 : isPharma ? 0.65 : isConsumer ? 0.45 : isFinancial ? 0.30 : isEnergy ? 0.25 : 0.35;
+      const gmScore = data.grossMargin == null ? 2.5
+        : data.grossMargin / 100 >= gmThreshold * 1.4 ? 5
+        : data.grossMargin / 100 >= gmThreshold * 1.15 ? 4.5
+        : data.grossMargin / 100 >= gmThreshold ? 4
+        : data.grossMargin / 100 >= gmThreshold * 0.75 ? 3
+        : data.grossMargin / 100 >= gmThreshold * 0.5 ? 2
+        : 1;
+
+      // Op margin score
+      const omThreshold = isTech ? 0.20 : isPharma ? 0.20 : isConsumer ? 0.15 : isFinancial ? 0.15 : isEnergy ? 0.12 : 0.15;
+      const omScore = data.opMargin == null ? 2.5
+        : data.opMargin / 100 >= omThreshold * 2 ? 5
+        : data.opMargin / 100 >= omThreshold * 1.5 ? 4.5
+        : data.opMargin / 100 >= omThreshold ? 4
+        : data.opMargin / 100 >= omThreshold * 0.65 ? 3
+        : data.opMargin / 100 > 0 ? 2
+        : 1;
+
+      // D/E score
+      const deScore = data.debtToEquity == null ? 2.5
+        : data.debtToEquity < 0.3 ? 5
+        : data.debtToEquity < 0.7 ? 4.5
+        : data.debtToEquity < 1.2 ? 4
+        : data.debtToEquity < 2 ? 3
+        : data.debtToEquity < 3 ? 2
+        : 1;
+
+      const cbs = +((roicScore * 0.4 + gmScore * 0.25 + omScore * 0.25 + deScore * 0.1)).toFixed(2);
+
+      // OPPO SCORE — oportunidad de entrada
+      const pfcfScore = data.pfcf == null || data.pfcf <= 0 ? 1
+        : data.pfcf < 12 ? 5
+        : data.pfcf < 18 ? 4.5
+        : data.pfcf < 25 ? 4
+        : data.pfcf < 35 ? 3
+        : data.pfcf < 50 ? 2
+        : 1;
+
+      const fcfYieldScore = data.fcfYield == null ? 1
+        : data.fcfYield > 8 ? 5
+        : data.fcfYield > 5 ? 4.5
+        : data.fcfYield > 3 ? 4
+        : data.fcfYield > 1.5 ? 3
+        : data.fcfYield > 0 ? 2
+        : 1;
+
+      const oppo = +((pfcfScore * 0.55 + fcfYieldScore * 0.45)).toFixed(2);
+
+      // GROWTH QUALITY SCORE (GQS) — aproximado
+      const revGrowthScore = data.revGrowth == null ? 2.5
+        : data.revGrowth > 25 ? 5
+        : data.revGrowth > 15 ? 4.5
+        : data.revGrowth > 8 ? 4
+        : data.revGrowth > 3 ? 3
+        : data.revGrowth > 0 ? 2
+        : 1;
+
+      const fcfTrend = data.fcfHistory?.length >= 3
+        ? data.fcfHistory[data.fcfHistory.length - 1]?.val > data.fcfHistory[0]?.val ? 1 : 0
+        : null;
+
+      const marginTrend = data.marginHistory?.length >= 3
+        ? (data.marginHistory[data.marginHistory.length - 1]?.margin || 0) > (data.marginHistory[0]?.margin || 0) ? 1 : 0
+        : null;
+
+      const trendBonus = (fcfTrend === 1 ? 0.5 : 0) + (marginTrend === 1 ? 0.5 : 0);
+      const gqs = Math.min(5, +((revGrowthScore * 0.6 + (2.5 + trendBonus * 2) * 0.4)).toFixed(2));
+
+      // FINAL NOTE
+      const finalNote = +((cbs * 0.45 + oppo * 0.30 + gqs * 0.25)).toFixed(2);
+
+      const scoreColor = (s) => s >= 4 ? 'var(--green)' : s >= 3 ? 'var(--accent)' : 'var(--red)';
+      const ScoreBar = ({ score }) => (
+        <div style={{ height: '3px', background: 'var(--border-2)', marginTop: '8px', borderRadius: '2px' }}>
+          <div style={{ width: `${(score / 5) * 100}%`, height: '100%', background: scoreColor(score), borderRadius: '2px' }} />
+        </div>
+      );
+
+      return (
+        <>
+          {/* Score header */}
+          <div style={{ background: 'var(--bg-1)', border: '1px solid var(--border)', padding: '24px', marginBottom: '24px' }}>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr 1fr', gap: '1px', background: 'var(--border)' }}>
+              {[
+                { label: 'CORE BUSINESS', score: cbs, desc: 'ROIC · Margins · Leverage' },
+                { label: 'OPPO SCORE', score: oppo, desc: 'P/FCF · FCF Yield' },
+                { label: 'GROWTH QUALITY', score: gqs, desc: 'Revenue · FCF trend' },
+                { label: 'FINAL NOTE', score: finalNote, desc: 'Weighted composite', highlight: true },
+              ].map(s => (
+                <div key={s.label} style={{ background: s.highlight ? 'var(--bg-2)' : 'var(--bg-1)', padding: '20px', textAlign: 'center' }}>
+                  <div style={{ color: 'var(--text-3)', fontSize: '9px', letterSpacing: '2px', marginBottom: '12px' }}>{s.label}</div>
+                  <div style={{ fontSize: s.highlight ? '48px' : '40px', fontWeight: 700, color: scoreColor(s.score), letterSpacing: '-2px', lineHeight: 1 }}>
+                    {s.score.toFixed(1)}
                   </div>
-                  <div style={{ color: 'var(--text-2)', fontSize: '11px', marginBottom: '4px' }}>
-                    {score !== null ? `Score based on ${Object.keys(answers).filter(k => answers[k]).length} of 15 questions from SEC filings.` : 'Score calculated from SEC EDGAR fundamentals.'}
-                  </div>
-                  <div style={{ color: 'var(--text-3)', fontSize: '10px', letterSpacing: '1px' }}>BROAD-MARKET HEURISTICS · NOT A BUY/SELL SIGNAL</div>
+                  <div style={{ color: 'var(--text-3)', fontSize: '9px', marginTop: '6px' }}>{s.desc}</div>
+                  <ScoreBar score={s.score} />
                 </div>
-              </div>
-
-              {/* Valuation section */}
-              <div style={S.section}>VALUATION</div>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1px', background: 'var(--border)', marginBottom: '24px' }}>
-                {[
-                  { label: 'EARNINGS MULTIPLE', val: data.pe ? `${data.pe}x` : 'N/A', score: data.pe ? data.pe < 15 ? 100 : data.pe < 20 ? 80 : data.pe < 25 ? 60 : data.pe < 35 ? 40 : 20 : null, desc: data.pe < 15 ? 'Below 15x, attractively priced' : data.pe < 20 ? 'Below 20x, reasonably priced' : data.pe < 25 ? 'Fair value range' : data.pe < 35 ? 'Paying a growth premium' : 'Above 35x, expensive' },
-                  { label: 'CASH FLOW MULTIPLE', val: data.fcfVal && data.marketCap ? `${(data.marketCap / data.fcfVal).toFixed(1)}x` : 'N/A', score: data.fcfVal && data.marketCap ? (data.marketCap / data.fcfVal) < 15 ? 100 : (data.marketCap / data.fcfVal) < 25 ? 60 : 20 : null, desc: 'Price to free cash flow ratio' },
-                ].map(m => {
-                  const c = m.score >= 80 ? 'var(--green)' : m.score >= 60 ? 'var(--accent)' : m.score !== null ? 'var(--red)' : 'var(--text-3)';
-                  return (
-                    <div key={m.label} style={{ background: 'var(--bg-1)', padding: '16px' }}>
-                      <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
-                        <span style={{ color: 'var(--text-3)', fontSize: '10px', letterSpacing: '1px' }}>{m.label}</span>
-                        {m.score !== null && <span style={{ color: c, fontSize: '10px' }}>{m.score}/100</span>}
-                      </div>
-                      <div style={{ color: c, fontSize: '28px', fontWeight: 600, marginBottom: '4px' }}>{m.val}</div>
-                      <div style={{ color: 'var(--text-3)', fontSize: '11px' }}>{m.desc}</div>
-                    </div>
-                  );
-                })}
-              </div>
-
-              {/* Growth section */}
-              <div style={S.section}>GROWTH</div>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1px', background: 'var(--border)', marginBottom: '24px' }}>
-                {[
-                  { label: 'REVENUE GROWTH', val: data.revGrowth !== null ? `${data.revGrowth > 0 ? '+' : ''}${data.revGrowth}%` : 'N/A', score: data.revGrowth > 20 ? 100 : data.revGrowth > 10 ? 80 : data.revGrowth > 5 ? 60 : data.revGrowth > 0 ? 40 : 20, chart: revChart, desc: data.revGrowth > 10 ? 'Above 10% CAGR, strong compounder' : 'Below 10% threshold' },
-                  { label: 'CASH FLOW GROWTH', val: (() => { const f = data.fcfHistory[0]?.val; const l = data.fcfHistory[data.fcfHistory.length-1]?.val; return f && l ? `${(((l-f)/Math.abs(f))*100).toFixed(1)}%` : 'N/A'; })(), score: (() => { const f = data.fcfHistory[0]?.val; const l = data.fcfHistory[data.fcfHistory.length-1]?.val; const g = f && l ? ((l-f)/Math.abs(f))*100 : null; return g > 20 ? 100 : g > 10 ? 80 : g > 0 ? 60 : 20; })(), chart: fcfChart, color: '#8b5cf6', desc: 'Free cash flow growth trend' },
-                ].map(m => {
-                  const c = m.score >= 80 ? 'var(--green)' : m.score >= 60 ? 'var(--accent)' : 'var(--red)';
-                  return (
-                    <div key={m.label} style={{ background: 'var(--bg-1)', padding: '16px' }}>
-                      <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
-                        <span style={{ color: 'var(--text-3)', fontSize: '10px', letterSpacing: '1px' }}>{m.label}</span>
-                        <span style={{ color: c, fontSize: '10px' }}>{m.score}/100</span>
-                      </div>
-                      <div style={{ color: c, fontSize: '28px', fontWeight: 600, marginBottom: '4px' }}>{m.val}</div>
-                      <div style={{ color: 'var(--text-3)', fontSize: '11px', marginBottom: '8px' }}>{m.desc}</div>
-                      <MiniBar data={m.chart} color={m.color || 'var(--green)'} />
-                    </div>
-                  );
-                })}
-              </div>
-
-              {/* Business Quality section */}
-              <div style={S.section}>BUSINESS QUALITY & CAPITAL ALLOCATION</div>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1px', background: 'var(--border)', marginBottom: '24px' }}>
-                {/* Margin Trend */}
-                {(() => {
-                  const margins = (data.marginHistory || []).filter(m => m.margin !== null);
-                  const first = margins[0]?.margin;
-                  const last = margins[margins.length - 1]?.margin;
-                  const trend = first !== null && last !== null ? +(last - first).toFixed(1) : null;
-                  const score = trend > 5 ? 100 : trend > 2 ? 80 : trend > 0 ? 60 : trend > -2 ? 40 : 20;
-                  const c = score >= 80 ? 'var(--green)' : score >= 60 ? 'var(--accent)' : 'var(--red)';
-                  return (
-                    <div style={{ background: 'var(--bg-1)', padding: '16px' }}>
-                      <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
-                        <span style={{ color: 'var(--text-3)', fontSize: '10px', letterSpacing: '1px' }}>MARGIN TREND</span>
-                        {trend !== null && <span style={{ color: c, fontSize: '10px' }}>{score}/100</span>}
-                      </div>
-                      <div style={{ color: c, fontSize: '28px', fontWeight: 600, marginBottom: '4px' }}>{trend !== null ? `${trend > 0 ? '+' : ''}${trend}pp` : 'N/A'}</div>
-                      <div style={{ color: 'var(--text-3)', fontSize: '11px', marginBottom: '8px' }}>{trend > 3 ? 'Expanded 3+pp, strong improvement' : trend > 0 ? 'Slight expansion' : 'Compressed'}</div>
-                      <MiniLine data={marginChart} color={c} />
-                    </div>
-                  );
-                })()}
-
-                {/* Capital Structure */}
-                {(() => {
-                  const nd = data.netDebt;
-                  const fcf = data.fcfVal;
-                  const ratio = nd && fcf && fcf > 0 ? +(nd / fcf).toFixed(1) : null;
-                  const score = nd < 0 ? 100 : ratio < 1 ? 80 : ratio < 2 ? 60 : ratio < 3 ? 40 : 20;
-                  const c = score >= 80 ? 'var(--green)' : score >= 60 ? 'var(--accent)' : 'var(--red)';
-                  return (
-                    <div style={{ background: 'var(--bg-1)', padding: '16px' }}>
-                      <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
-                        <span style={{ color: 'var(--text-3)', fontSize: '10px', letterSpacing: '1px' }}>CAPITAL STRUCTURE</span>
-                        <span style={{ color: c, fontSize: '10px' }}>{score}/100</span>
-                      </div>
-                      <div style={{ color: c, fontSize: '28px', fontWeight: 600, marginBottom: '4px' }}>{fmt(nd)}</div>
-                      <div style={{ color: 'var(--text-3)', fontSize: '11px', marginBottom: '12px' }}>{nd < 0 ? 'Net cash position' : `Net debt/FCF: ${ratio}x`}</div>
-                      <table style={{ ...S.table, fontSize: '11px' }}>
-                        <tbody>
-                          <tr><td style={S.td}>Cash</td><td style={{ ...S.tdVal, color: 'var(--green)' }}>{fmt(data.cashVal)}</td></tr>
-                          <tr><td style={S.td}>LT Debt</td><td style={{ ...S.tdVal, color: 'var(--red)' }}>{fmt(data.debtVal)}</td></tr>
-                          <tr><td style={S.td}>D/E Ratio</td><td style={S.tdVal}>{fmtN(data.debtToEquity)}</td></tr>
-                        </tbody>
-                      </table>
-                    </div>
-                  );
-                })()}
-
-                {/* Return on Capital */}
-                {(() => {
-                  const roic = data.roe;
-                  const score = roic > 25 ? 100 : roic > 20 ? 80 : roic > 15 ? 60 : roic > 10 ? 40 : 20;
-                  const c = score >= 80 ? 'var(--green)' : score >= 60 ? 'var(--accent)' : 'var(--red)';
-                  return (
-                    <div style={{ background: 'var(--bg-1)', padding: '16px' }}>
-                      <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
-                        <span style={{ color: 'var(--text-3)', fontSize: '10px', letterSpacing: '1px' }}>RETURN ON CAPITAL</span>
-                        {roic !== null && <span style={{ color: c, fontSize: '10px' }}>{score}/100</span>}
-                      </div>
-                      <div style={{ color: c, fontSize: '28px', fontWeight: 600, marginBottom: '4px' }}>{roic !== null ? `${roic}%` : 'N/A'}</div>
-                      <div style={{ color: 'var(--text-3)', fontSize: '11px' }}>{roic > 20 ? 'Above 20%, exceptional efficiency' : roic > 15 ? 'Strong returns' : roic > 10 ? 'Respectable returns' : 'Weak capital allocation'}</div>
-                    </div>
-                  );
-                })()}
-
-                {/* Share Dilution */}
-                {(() => {
-                  const d = data.shareDilution;
-                  const score = d === null ? null : d < -2 ? 100 : d < 0 ? 80 : d < 2 ? 60 : d < 5 ? 40 : 0;
-                  const c = score >= 80 ? 'var(--green)' : score >= 60 ? 'var(--accent)' : score !== null ? 'var(--red)' : 'var(--text-3)';
-                  const sharesChart = (data.sharesHistory || []).map(r => ({ year: r.year, value: +(r.val / 1e6).toFixed(0) }));
-                  return (
-                    <div style={{ background: 'var(--bg-1)', padding: '16px' }}>
-                      <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
-                        <span style={{ color: 'var(--text-3)', fontSize: '10px', letterSpacing: '1px' }}>SHARE DILUTION</span>
-                        {score !== null && <span style={{ color: c, fontSize: '10px' }}>{score}/100</span>}
-                      </div>
-                      <div style={{ color: c, fontSize: '28px', fontWeight: 600, marginBottom: '4px' }}>{d !== null ? `${d > 0 ? '+' : ''}${d}%` : 'N/A'}</div>
-                      <div style={{ color: 'var(--text-3)', fontSize: '11px', marginBottom: '8px' }}>{d < -2 ? 'Active buybacks' : d < 0 ? 'Mild buybacks' : d < 2 ? 'Mild dilution' : 'Heavy dilution'}</div>
-                      {sharesChart.length > 0 && <MiniBar data={sharesChart} color='var(--accent)' />}
-                    </div>
-                  );
-                })()}
-              </div>
-
-              {/* DD Checklist */}
-              <div style={S.section}>DUE DILIGENCE CHECKLIST</div>
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: '1px', background: 'var(--border)', marginBottom: '24px' }}>
-                {DIMS.map(dim => (
-                  <div key={dim} style={{ background: 'var(--bg-1)', padding: '12px', textAlign: 'center' }}>
-                    <ScoreBox score={getDimScore(dim)} size={40} />
-                    <div style={{ color: 'var(--text-3)', fontSize: '9px', letterSpacing: '1px', marginTop: '6px' }}>{dim.toUpperCase()}</div>
-                  </div>
-                ))}
-              </div>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '1px', background: 'var(--border)' }}>
-                {QUESTIONS.map((q, qi) => (
-                  <div key={qi} style={{ background: 'var(--bg-1)', padding: '12px 16px' }}>
-                    <div style={{ display: 'flex', alignItems: 'flex-start', gap: '12px' }}>
-                      <span style={{ color: 'var(--text-3)', fontSize: '10px', minWidth: '20px' }}>Q{qi + 1}</span>
-                      <div style={{ flex: 1 }}>
-                        <div style={{ color: 'var(--text-2)', fontSize: '11px', marginBottom: '8px' }}>{q.text}</div>
-                        <div style={{ display: 'flex', gap: '4px' }}>
-                          {['YES', 'NO', 'N/A'].map(opt => (
-                            <button key={opt} onClick={() => setAnswers(prev => ({ ...prev, [qi]: opt }))}
-                              style={{
-                                padding: '3px 10px', fontSize: '10px', letterSpacing: '1px', cursor: 'pointer', fontFamily: 'IBM Plex Mono, monospace',
-                                background: answers[qi] === opt ? (opt === 'YES' ? 'var(--green)' : opt === 'NO' ? 'var(--red)' : 'var(--text-3)') : 'none',
-                                color: answers[qi] === opt ? '#000' : 'var(--text-3)',
-                                border: `1px solid ${answers[qi] === opt ? 'transparent' : 'var(--border-2)'}`,
-                              }}>
-                              {opt}
-                            </button>
-                          ))}
-                        </div>
-                        {answers[qi] && (
-                          <input
-                            style={{ marginTop: '6px', width: '100%', background: 'var(--bg-2)', border: '1px solid var(--border)', color: 'var(--text-2)', fontFamily: 'IBM Plex Mono, monospace', fontSize: '11px', padding: '4px 8px', outline: 'none' }}
-                            placeholder="Evidence from filing (exact quote)..."
-                            value={evidence[qi] || ''}
-                            onChange={e => setEvidence(prev => ({ ...prev, [qi]: e.target.value }))}
-                          />
-                        )}
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
+              ))}
             </div>
-          )}
+            <div style={{ color: 'var(--text-3)', fontSize: '10px', letterSpacing: '1px', marginTop: '12px', textAlign: 'center' }}>
+              AUTOMATED SCORE · BASED ON SEC EDGAR & FINNHUB · NOT A BUY/SELL SIGNAL · CBS 45% · OPPO 30% · GQS 25%
+            </div>
+          </div>
+
+          {/* CBS breakdown */}
+          <div style={{ color: 'var(--accent)', fontSize: '10px', letterSpacing: '2px', borderBottom: '1px solid var(--border)', paddingBottom: '6px', marginBottom: '12px' }}>CORE BUSINESS BREAKDOWN</div>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '1px', background: 'var(--border)', marginBottom: '24px' }}>
+            {[
+              { label: 'ROIC', val: fmtP(data.roic), score: roicScore, desc: `Threshold: ${(roicThreshold * 100).toFixed(0)}% for ${data.sector || 'this sector'}` },
+              { label: 'GROSS MARGIN', val: fmtP(data.grossMargin), score: gmScore, desc: `Threshold: ${(gmThreshold * 100).toFixed(0)}% for ${data.sector || 'this sector'}` },
+              { label: 'OP. MARGIN', val: fmtP(data.opMargin), score: omScore, desc: `Threshold: ${(omThreshold * 100).toFixed(0)}% for ${data.sector || 'this sector'}` },
+              { label: 'DEBT/EQUITY', val: fmtN(data.debtToEquity), score: deScore, desc: 'Lower is better' },
+            ].map(m => (
+              <div key={m.label} style={{ background: 'var(--bg-1)', padding: '16px' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
+                  <span style={{ color: 'var(--text-3)', fontSize: '10px', letterSpacing: '1px' }}>{m.label}</span>
+                  <span style={{ color: scoreColor(m.score), fontSize: '10px' }}>{m.score.toFixed(1)}/5</span>
+                </div>
+                <div style={{ fontSize: '28px', fontWeight: 600, color: scoreColor(m.score), marginBottom: '4px' }}>{m.val}</div>
+                <div style={{ color: 'var(--text-3)', fontSize: '10px' }}>{m.desc}</div>
+              </div>
+            ))}
+          </div>
+
+          {/* OPPO breakdown */}
+          <div style={{ color: 'var(--accent)', fontSize: '10px', letterSpacing: '2px', borderBottom: '1px solid var(--border)', paddingBottom: '6px', marginBottom: '12px' }}>OPPORTUNITY BREAKDOWN</div>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1px', background: 'var(--border)', marginBottom: '24px' }}>
+            {[
+              { label: 'P/FCF', val: fmtN(data.pfcf), score: pfcfScore, desc: data.pfcf < 20 ? 'Attractive entry' : data.pfcf < 35 ? 'Fair valuation' : 'Expensive' },
+              { label: 'FCF YIELD', val: data.fcfYield ? `${data.fcfYield}%` : 'N/A', score: fcfYieldScore, desc: data.fcfYield > 5 ? 'Strong yield' : data.fcfYield > 2 ? 'Moderate yield' : 'Low yield' },
+            ].map(m => (
+              <div key={m.label} style={{ background: 'var(--bg-1)', padding: '16px' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
+                  <span style={{ color: 'var(--text-3)', fontSize: '10px', letterSpacing: '1px' }}>{m.label}</span>
+                  <span style={{ color: scoreColor(m.score), fontSize: '10px' }}>{m.score.toFixed(1)}/5</span>
+                </div>
+                <div style={{ fontSize: '28px', fontWeight: 600, color: scoreColor(m.score), marginBottom: '4px' }}>{m.val}</div>
+                <div style={{ color: 'var(--text-3)', fontSize: '10px' }}>{m.desc}</div>
+              </div>
+            ))}
+          </div>
+
+          {/* GQS breakdown */}
+          <div style={{ color: 'var(--accent)', fontSize: '10px', letterSpacing: '2px', borderBottom: '1px solid var(--border)', paddingBottom: '6px', marginBottom: '12px' }}>GROWTH QUALITY BREAKDOWN</div>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '1px', background: 'var(--border)', marginBottom: '24px' }}>
+            {[
+              { label: 'REVENUE GROWTH', val: data.revGrowth !== null ? `${data.revGrowth > 0 ? '+' : ''}${data.revGrowth}%` : 'N/A', score: revGrowthScore, chart: revChart },
+              { label: 'FCF TREND', val: fcfTrend === 1 ? 'IMPROVING' : fcfTrend === 0 ? 'DECLINING' : 'N/A', score: fcfTrend === 1 ? 4 : fcfTrend === 0 ? 2 : 2.5, chart: fcfChart, color: '#8b5cf6' },
+              { label: 'MARGIN TREND', val: marginTrend === 1 ? 'EXPANDING' : marginTrend === 0 ? 'COMPRESSING' : 'N/A', score: marginTrend === 1 ? 4 : marginTrend === 0 ? 2 : 2.5, chart: marginChart, isLine: true },
+            ].map(m => (
+              <div key={m.label} style={{ background: 'var(--bg-1)', padding: '16px' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
+                  <span style={{ color: 'var(--text-3)', fontSize: '10px', letterSpacing: '1px' }}>{m.label}</span>
+                  <span style={{ color: scoreColor(m.score), fontSize: '10px' }}>{m.score.toFixed(1)}/5</span>
+                </div>
+                <div style={{ fontSize: '22px', fontWeight: 600, color: scoreColor(m.score), marginBottom: '8px' }}>{m.val}</div>
+                {m.isLine ? <MiniLine data={m.chart} color={scoreColor(m.score)} /> : <MiniBar data={m.chart} color={m.color || scoreColor(m.score)} />}
+              </div>
+            ))}
+          </div>
+
+          <div style={{ color: 'var(--text-3)', fontSize: '10px', letterSpacing: '1px' }}>
+            SECTOR-ADJUSTED THRESHOLDS · CBS = ROIC×40% + GROSS MARGIN×25% + OP MARGIN×25% + D/E×10% · OPPO = P/FCF×55% + FCF YIELD×45% · GQS = REV GROWTH×60% + TREND×40%
+          </div>
+        </>
+      );
+    })()}
+  </div>
+)}
 
           {/* FINANCIALS TAB */}
           {tab === 'financials' && (
