@@ -13,6 +13,7 @@ export const viewport = {
 };
 
 export default function RootLayout({ children }) {
+  console.log('CLERK KEY:', process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY);
   return (
     <ClerkProvider>
       <html lang="en">
