@@ -69,7 +69,7 @@ export async function GET(request) {
       return null;
     };
 
-    const revenues = getMetric(['Revenues', 'RevenueFromContractWithCustomerExcludingAssessedTax', 'SalesRevenueNet']);
+    const revenues = getMetric(['RevenueFromContractWithCustomerExcludingAssessedTax', 'Revenues', 'SalesRevenueNet', 'RevenueFromContractWithCustomerIncludingAssessedTax']);
     const netIncomes = getMetric(['NetIncomeLoss']);
     const operatingIncomes = getMetric(['OperatingIncomeLoss']);
     const cashFlows = getMetric(['NetCashProvidedByUsedInOperatingActivities']);
@@ -92,6 +92,11 @@ export async function GET(request) {
     const totalLiabilities = getMetric(['Liabilities']);
     const retainedEarnings = getMetric(['RetainedEarningsAccumulatedDeficit']);
     const capex = getMetric(['PaymentsToAcquirePropertyPlantAndEquipment']);
+    const inventory = getMetric(['InventoryNet', 'InventoryGross']);
+    const receivables = getMetric(['AccountsReceivableNetCurrent', 'ReceivablesNetCurrent']);
+    const payables = getMetric(['AccountsPayableCurrent']);
+    const sbc = getMetric(['ShareBasedCompensation', 'AllocatedShareBasedCompensationExpense']);
+    const dividendsPaid = getMetric(['PaymentsOfDividends', 'PaymentsOfDividendsCommonStock']);
     const investingActivities = getMetric(['NetCashProvidedByUsedInInvestingActivities']);
     const financingActivities = getMetric(['NetCashProvidedByUsedInFinancingActivities']);
 
@@ -122,6 +127,18 @@ export async function GET(request) {
     const totalLiabilitiesVal = latest(totalLiabilities);
     const retainedEarningsVal = latest(retainedEarnings);
     const capexVal = latest(capex);
+    const inventoryVal = latest(inventory);
+    const receivablesVal = latest(receivables);
+    const payablesVal = latest(payables);
+    const sbcVal = latest(sbc);
+    const dividendsPaidVal = latest(dividendsPaid);
+
+// Efficiency ratios
+const dso = receivablesVal && revVal ? +((receivablesVal / revVal) * 365).toFixed(1) : null;
+const dio = inventoryVal && cogsVal ? +((inventoryVal / cogsVal) * 365).toFixed(1) : null;
+const dpo = payablesVal && cogsVal ? +((payablesVal / cogsVal) * 365).toFixed(1) : null;
+const ccc = dso !== null && dio !== null && dpo !== null ? +(dso + dio - dpo).toFixed(1) : null;
+const inventoryTurnover = cogsVal && inventoryVal ? +(cogsVal / inventoryVal).toFixed(2) : null;
     const investingCFVal = latest(investingActivities);
     const financingCFVal = latest(financingActivities);
 
@@ -230,6 +247,8 @@ export async function GET(request) {
       cogsVal, sgaVal, ebtVal, taxVal, interestVal, sharesBasicVal, sharesDilutedVal,
       currentAssetsVal, currentLiabilitiesVal, totalLiabilitiesVal, retainedEarningsVal,
       capexVal, investingCFVal, financingCFVal,
+      inventoryVal, receivablesVal, payablesVal, sbcVal, dividendsPaidVal,
+      dso, dio, dpo, ccc, inventoryTurnover,
       opMargin, netMargin, grossMargin, revGrowth, roe, roa, debtToEquity, netDebt, roic,
       revHistory, niHistory, fcfHistory, oiHistory,
       sharesHistory, gpHistory, marginHistory, shareDilution,

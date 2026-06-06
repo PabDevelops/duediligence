@@ -262,6 +262,124 @@ export default function StockPage({ params }) {
                 ))}
               </div>
 
+              {/* Metrics Table */}
+<div style={{ marginBottom: '24px' }}>
+  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '1px', background: 'var(--border)' }}>
+
+    {/* VALUATION */}
+    <div style={{ background: 'var(--bg-1)', padding: '16px' }}>
+      <div style={{ color: 'var(--accent)', fontSize: '10px', letterSpacing: '2px', marginBottom: '12px' }}>VALUATION</div>
+      <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '11px' }}>
+        <tbody>
+          {[
+            { label: 'Market Cap', val: fmt(data.marketCap) },
+            { label: 'P/E', val: fmtN(data.pe), color: data.pe > 0 && data.pe < 20 ? 'var(--green)' : data.pe > 40 ? 'var(--red)' : 'var(--text)' },
+            { label: 'Forward P/E', val: fmtN(data.forwardPE) },
+            { label: 'P/FCF', val: fmtN(data.pfcf), color: data.pfcf > 0 && data.pfcf < 20 ? 'var(--green)' : data.pfcf > 40 ? 'var(--red)' : 'var(--text)' },
+            { label: 'EV/EBITDA', val: fmtN(data.evEbitda) },
+            { label: 'P/B', val: fmtN(data.priceToBook) },
+            { label: 'FCF Yield', val: data.fcfYield ? `${data.fcfYield}%` : 'N/A', color: data.fcfYield > 5 ? 'var(--green)' : data.fcfYield > 0 ? 'var(--accent)' : 'var(--red)' },
+            { label: 'Div. Yield', val: data.dividendYield ? `${(+data.dividendYield).toFixed(2)}%` : '—' },
+          ].map(r => (
+            <tr key={r.label} style={{ borderBottom: '1px solid var(--border)' }}>
+              <td style={{ padding: '4px 0', color: 'var(--text-3)', fontSize: '10px' }}>{r.label}</td>
+              <td style={{ padding: '4px 0', textAlign: 'right', color: r.color || 'var(--text)', fontSize: '11px', fontWeight: 500 }}>{r.val}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+
+    {/* PROFITABILITY */}
+    <div style={{ background: 'var(--bg-1)', padding: '16px' }}>
+      <div style={{ color: 'var(--accent)', fontSize: '10px', letterSpacing: '2px', marginBottom: '12px' }}>PROFITABILITY</div>
+      <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '11px' }}>
+        <tbody>
+          {[
+            { label: 'Gross Margin', val: fmtP(data.grossMargin), color: data.grossMargin > 50 ? 'var(--green)' : data.grossMargin > 30 ? 'var(--accent)' : 'var(--red)' },
+            { label: 'Op. Margin', val: fmtP(data.opMargin), color: data.opMargin > 20 ? 'var(--green)' : data.opMargin > 10 ? 'var(--accent)' : 'var(--red)' },
+            { label: 'Net Margin', val: fmtP(data.netMargin), color: data.netMargin > 15 ? 'var(--green)' : data.netMargin > 5 ? 'var(--accent)' : 'var(--red)' },
+            { label: 'ROE', val: fmtP(data.roe), color: data.roe > 20 ? 'var(--green)' : data.roe > 10 ? 'var(--accent)' : 'var(--red)' },
+            { label: 'ROA', val: fmtP(data.roa), color: data.roa > 10 ? 'var(--green)' : data.roa > 5 ? 'var(--accent)' : 'var(--red)' },
+            { label: 'ROIC', val: fmtP(data.roic), color: data.roic > 15 ? 'var(--green)' : data.roic > 8 ? 'var(--accent)' : 'var(--red)' },
+            { label: 'SBC', val: fmt(data.sbcVal) },
+            { label: 'Dividends Paid', val: fmt(data.dividendsPaidVal) },
+          ].map(r => (
+            <tr key={r.label} style={{ borderBottom: '1px solid var(--border)' }}>
+              <td style={{ padding: '4px 0', color: 'var(--text-3)', fontSize: '10px' }}>{r.label}</td>
+              <td style={{ padding: '4px 0', textAlign: 'right', color: r.color || 'var(--text)', fontSize: '11px', fontWeight: 500 }}>{r.val}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+
+    {/* BALANCE SHEET */}
+    <div style={{ background: 'var(--bg-1)', padding: '16px' }}>
+      <div style={{ color: 'var(--accent)', fontSize: '10px', letterSpacing: '2px', marginBottom: '12px' }}>BALANCE SHEET</div>
+      <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '11px' }}>
+        <tbody>
+          {[
+            { label: 'Total Assets', val: fmt(data.assetsVal) },
+            { label: 'Total Liabilities', val: fmt(data.totalLiabilitiesVal) },
+            { label: 'Equity', val: fmt(data.equityVal) },
+            { label: 'Net Debt', val: fmt(data.netDebt), color: data.netDebt < 0 ? 'var(--green)' : 'var(--text)' },
+            { label: 'Cash', val: fmt(data.cashVal), color: 'var(--green)' },
+            { label: 'LT Debt', val: fmt(data.debtVal) },
+            { label: 'D/E Ratio', val: fmtN(data.debtToEquity), color: data.debtToEquity < 1 ? 'var(--green)' : data.debtToEquity < 2 ? 'var(--accent)' : 'var(--red)' },
+            { label: 'Current Ratio', val: data.currentAssetsVal && data.currentLiabilitiesVal ? fmtN(data.currentAssetsVal / data.currentLiabilitiesVal) : 'N/A', color: data.currentAssetsVal / data.currentLiabilitiesVal > 2 ? 'var(--green)' : data.currentAssetsVal / data.currentLiabilitiesVal > 1 ? 'var(--accent)' : 'var(--red)' },
+          ].map(r => (
+            <tr key={r.label} style={{ borderBottom: '1px solid var(--border)' }}>
+              <td style={{ padding: '4px 0', color: 'var(--text-3)', fontSize: '10px' }}>{r.label}</td>
+              <td style={{ padding: '4px 0', textAlign: 'right', color: r.color || 'var(--text)', fontSize: '11px', fontWeight: 500 }}>{r.val}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+
+    {/* EFFICIENCY + PER SHARE */}
+    <div style={{ background: 'var(--bg-1)', padding: '16px' }}>
+      <div style={{ color: 'var(--accent)', fontSize: '10px', letterSpacing: '2px', marginBottom: '12px' }}>EFFICIENCY</div>
+      <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '11px' }}>
+        <tbody>
+          {[
+            { label: 'Cash Conv. Cycle', val: data.ccc != null ? `${data.ccc}d` : 'N/A', color: data.ccc != null && data.ccc < 30 ? 'var(--green)' : data.ccc != null && data.ccc < 60 ? 'var(--accent)' : data.ccc != null ? 'var(--red)' : 'var(--text-3)' },
+{ label: 'Inventory Turnover', val: data.inventoryTurnover != null ? fmtN(data.inventoryTurnover) : 'N/A', color: data.inventoryTurnover > 8 ? 'var(--green)' : data.inventoryTurnover > 4 ? 'var(--accent)' : 'var(--text)' },
+{ label: 'DSO', val: data.dso != null ? `${data.dso}d` : 'N/A' },
+{ label: 'DIO', val: data.dio != null ? `${data.dio}d` : 'N/A' },
+{ label: 'DPO', val: data.dpo != null ? `${data.dpo}d` : 'N/A' },
+          ].map(r => (
+            <tr key={r.label} style={{ borderBottom: '1px solid var(--border)' }}>
+              <td style={{ padding: '4px 0', color: 'var(--text-3)', fontSize: '10px' }}>{r.label}</td>
+              <td style={{ padding: '4px 0', textAlign: 'right', color: r.color || 'var(--text)', fontSize: '11px', fontWeight: 500 }}>{r.val}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+
+      <div style={{ color: 'var(--accent)', fontSize: '10px', letterSpacing: '2px', margin: '12px 0 8px' }}>PER SHARE</div>
+      <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '11px' }}>
+        <tbody>
+          {[
+            { label: 'EPS (TTM)', val: data.eps ? `$${data.eps}` : 'N/A' },
+            { label: 'Shs Outstanding', val: data.sharesOutstanding ? `${(data.sharesOutstanding / 1e6).toFixed(0)}M` : 'N/A' },
+            { label: 'Beta', val: fmtN(data.beta) },
+            { label: '52W High', val: data.high52 ? `$${data.high52}` : 'N/A' },
+            { label: '52W Low', val: data.low52 ? `$${data.low52}` : 'N/A' },
+          ].map(r => (
+            <tr key={r.label} style={{ borderBottom: '1px solid var(--border)' }}>
+              <td style={{ padding: '4px 0', color: 'var(--text-3)', fontSize: '10px' }}>{r.label}</td>
+              <td style={{ padding: '4px 0', textAlign: 'right', color: r.color || 'var(--text)', fontSize: '11px', fontWeight: 500 }}>{r.val}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+
+  </div>
+</div>
+
               {/* Chart + multiples */}
               <div style={{ display: 'flex', gap: '1px', background: 'var(--border)', marginBottom: '24px' }}>
                 <div style={{ flex: 1, background: 'var(--bg-1)' }}>
@@ -278,7 +396,7 @@ export default function StockPage({ params }) {
                         { label: 'P/FCF', val: data.fcfVal && data.marketCap ? fmtN(data.marketCap / data.fcfVal) : 'N/A' },
                         { label: 'EV/EBITDA', val: fmtN(data.evEbitda) },
                         { label: 'FCF Yield', val: data.fcfVal && data.marketCap ? `${((data.fcfVal / data.marketCap) * 100).toFixed(1)}%` : 'N/A' },
-                        { label: 'Div. Yield', val: fmtP(data.dividendYield) },
+                        { label: 'Div. Yield', val: data.dividendYield ? `${(+data.dividendYield).toFixed(2)}%` : '—' },
                         { label: 'Beta', val: fmtN(data.beta) },
                       ].map(r => (
                         <tr key={r.label} style={S.tr}>
