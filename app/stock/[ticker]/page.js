@@ -94,6 +94,7 @@ export default function StockPage({ params }) {
   const [error, setError] = useState(null);
   const [tab, setTab] = useState('overview');
   const [answers, setAnswers] = useState({});
+  const [finTab, setFinTab] = useState('income');
   const [evidence, setEvidence] = useState({});
 
   useEffect(() => {
@@ -721,57 +722,171 @@ export default function StockPage({ params }) {
 
           {/* FINANCIALS TAB */}
           {tab === 'financials' && (
-            <div>
-              <div style={S.section}>INCOME STATEMENT</div>
-              <table style={{ ...S.table, marginBottom: '24px' }}>
-                <thead>
-                  <tr style={S.tr}>
-                    <th style={{ ...S.td, textAlign: 'left', fontWeight: 400, letterSpacing: '1px', fontSize: '10px' }}>METRIC</th>
-                    {data.revHistory.map(r => <th key={r.year} style={{ ...S.tdVal, fontWeight: 400, fontSize: '10px', letterSpacing: '1px' }}>{r.year}</th>)}
-                    <th style={{ ...S.tdVal, color: 'var(--accent)', fontWeight: 400, fontSize: '10px', letterSpacing: '1px' }}>TTM</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {[
-                    { label: 'Revenue', history: data.revHistory, latest: data.revVal },
-                    { label: 'Net Income', history: data.niHistory, latest: data.niVal },
-                    { label: 'Op. Cash Flow', history: data.fcfHistory, latest: data.fcfVal },
-                  ].map(row => (
-                    <tr key={row.label} style={S.tr}>
-                      <td style={S.td}>{row.label}</td>
-                      {row.history.map((r, i) => <td key={i} style={S.tdVal}>{fmt(r.val)}</td>)}
-                      <td style={{ ...S.tdVal, color: 'var(--accent)' }}>{fmt(row.latest)}</td>
-                    </tr>
-                  ))}
-                  {[
-                    { label: 'Gross Margin', ttm: fmtP(data.grossMargin) },
-                    { label: 'Op. Margin', ttm: fmtP(data.opMargin) },
-                    { label: 'Net Margin', ttm: fmtP(data.netMargin) },
-                  ].map(row => (
-                    <tr key={row.label} style={S.tr}>
-                      <td style={S.td}>{row.label}</td>
-                      {data.revHistory.map((_, i) => <td key={i} style={{ ...S.tdVal, color: 'var(--text-3)' }}>—</td>)}
-                      <td style={{ ...S.tdVal, color: 'var(--accent)' }}>{row.ttm}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+  <div>
+    {/* Fin tabs */}
+    <div style={{ display: 'flex', gap: '1px', background: 'var(--border)', marginBottom: '24px' }}>
+      {[['income', 'INCOME STATEMENT'], ['balance', 'BALANCE SHEET'], ['cashflow', 'CASH FLOW']].map(([key, label]) => (
+        <button key={key} onClick={() => setFinTab(key)}
+          style={{ padding: '8px 20px', fontSize: '11px', letterSpacing: '1px', background: finTab === key ? 'var(--accent)' : 'var(--bg-1)', color: finTab === key ? '#000' : 'var(--text-3)', border: 'none', cursor: 'pointer', fontFamily: 'IBM Plex Mono, monospace', fontWeight: finTab === key ? 600 : 400 }}>
+          {label}
+        </button>
+      ))}
+    </div>
 
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '1px', background: 'var(--border)' }}>
-                {[
-                  { title: 'REVENUE', chart: revChart, color: 'var(--green)' },
-                  { title: 'NET INCOME', chart: data.niHistory.map(r => ({ year: r.year, value: +(r.val / 1e9).toFixed(1) })), color: 'var(--blue)' },
-                  { title: 'CASH FLOW', chart: fcfChart, color: '#8b5cf6' },
-                ].map(({ title, chart, color }) => (
-                  <div key={title} style={{ background: 'var(--bg-1)', padding: '16px' }}>
-                    <div style={{ color: 'var(--text-3)', fontSize: '10px', letterSpacing: '2px', marginBottom: '8px' }}>{title}</div>
-                    <MiniBar data={chart} color={color} />
-                  </div>
-                ))}
-              </div>
-              <div style={{ color: 'var(--text-3)', fontSize: '10px', letterSpacing: '1px', marginTop: '16px' }}>SOURCE: SEC EDGAR (XBRL) · ALPHA VANTAGE · NOT INVESTMENT ADVICE</div>
-            </div>
-          )}
+    {finTab === 'income' && (() => {
+      const years = data.revHistory?.map(r => r.year) || [];
+      const rows = [
+        { label: 'Revenue', history: data.revHistory, ttm: data.revVal, bold: true },
+        { label: 'Cost of Revenue', history: data.cogsHistory, ttm: data.cogsVal, indent: true, neg: true },
+        { label: 'Gross Profit', history: data.revHistory?.map((r, i) => ({ year: r.year, val: data.cogsHistory?.[i] ? r.val - data.cogsHistory[i].val : null })), ttm: data.revVal && data.cogsVal ? data.revVal - data.cogsVal : null, bold: true, green: true },
+        { label: 'SG&A', history: data.sgaHistory, ttm: data.sgaVal, indent: true, neg: true },
+        { label: 'R&D', history: data.rdHistory, ttm: data.rdVal, indent: true, neg: true },
+        { label: 'Operating Income', history: data.oiHistory, ttm: data.oiVal, bold: true, green: true },
+        { label: 'Interest Expense', history: [], ttm: data.interestVal, indent: true, neg: true },
+        { label: 'EBT', history: data.ebtHistory, ttm: data.ebtVal, bold: true },
+        { label: 'Income Tax', history: data.taxHistory, ttm: data.taxVal, indent: true, neg: true },
+        { label: 'Net Income', history: data.niHistory, ttm: data.niVal, bold: true, green: true },
+        { label: '---', divider: true },
+        { label: 'EPS (Diluted)', history: data.sharesDilutedHistory?.map((s, i) => ({ year: s.year, val: data.niHistory?.[i] && s.val ? +(data.niHistory[i].val / s.val).toFixed(2) : null })), ttm: data.eps, prefix: '$' },
+        { label: 'Shares Diluted', history: data.sharesDilutedHistory, ttm: data.sharesDilutedVal, shares: true },
+        { label: 'SBC', history: [], ttm: data.sbcVal, indent: true },
+      ];
+      const fmtV = (v, row) => {
+        if (v === null || v === undefined) return '—';
+        if (row?.prefix) return `$${v}`;
+        if (row?.shares) return Math.abs(v) >= 1e9 ? `${(v/1e9).toFixed(2)}B` : `${(v/1e6).toFixed(0)}M`;
+        return Math.abs(v) >= 1e9 ? `$${(v/1e9).toFixed(1)}B` : Math.abs(v) >= 1e6 ? `$${(v/1e6).toFixed(0)}M` : `$${v.toLocaleString()}`;
+      };
+      return (
+        <div style={{ overflowX: 'auto' }}>
+          <div style={{ color: 'var(--text-3)', fontSize: '10px', letterSpacing: '1px', marginBottom: '8px' }}>All values in USD · Source: SEC EDGAR</div>
+          <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '11px', minWidth: '700px' }}>
+            <thead>
+              <tr style={{ borderBottom: '1px solid var(--border)' }}>
+                <th style={{ padding: '8px 0', textAlign: 'left', fontWeight: 400, fontSize: '10px', letterSpacing: '1px', color: 'var(--text-3)', width: '180px' }}>METRIC</th>
+                {years.map(y => <th key={y} style={{ padding: '8px 12px', textAlign: 'right', fontWeight: 400, fontSize: '10px', color: 'var(--text-3)' }}>{y}</th>)}
+                <th style={{ padding: '8px 12px', textAlign: 'right', fontWeight: 600, fontSize: '10px', color: 'var(--accent)' }}>TTM</th>
+              </tr>
+            </thead>
+            <tbody>
+              {rows.map((row, i) => {
+                if (row.divider) return <tr key={i}><td colSpan={years.length + 2} style={{ padding: '4px 0', borderBottom: '1px solid var(--border)' }} /></tr>;
+                return (
+                  <tr key={i} style={{ borderBottom: '1px solid var(--border)', background: i % 2 === 0 ? 'transparent' : 'var(--bg-1)' }}>
+                    <td style={{ padding: '6px 0', paddingLeft: row.indent ? '16px' : '0', color: row.bold ? 'var(--text)' : 'var(--text-3)', fontWeight: row.bold ? 600 : 400, fontSize: '11px' }}>{row.label}</td>
+                    {years.map((y, j) => {
+                      const h = row.history?.[j];
+                      const color = row.green ? 'var(--green)' : row.neg ? 'var(--red)' : 'var(--text)';
+                      return <td key={y} style={{ padding: '6px 12px', textAlign: 'right', color: h?.val != null ? color : 'var(--text-3)' }}>{fmtV(h?.val, row)}</td>;
+                    })}
+                    <td style={{ padding: '6px 12px', textAlign: 'right', color: row.green ? 'var(--accent)' : row.neg ? 'var(--red)' : 'var(--text)', fontWeight: 600 }}>{fmtV(row.ttm, row)}</td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
+      );
+    })()}
+
+    {finTab === 'balance' && (() => {
+      const rows = [
+        { label: 'ASSETS', section: true },
+        { label: 'Current Assets', val: data.currentAssetsVal, green: true },
+        { label: 'Total Assets', val: data.assetsVal, bold: true },
+        { label: 'LIABILITIES', section: true },
+        { label: 'Current Liabilities', val: data.currentLiabilitiesVal, neg: true },
+        { label: 'Long-term Debt', val: data.debtVal, neg: true },
+        { label: 'Total Liabilities', val: data.totalLiabilitiesVal, neg: true, bold: true },
+        { label: 'EQUITY', section: true },
+        { label: "Stockholders' Equity", val: data.equityVal, bold: true, green: true },
+        { label: 'Retained Earnings', val: data.retainedEarningsVal },
+        { label: 'RATIOS', section: true },
+        { label: 'D/E Ratio', val: data.debtToEquity, raw: true, suffix: 'x', color: data.debtToEquity < 1 ? 'var(--green)' : data.debtToEquity < 2 ? 'var(--accent)' : 'var(--red)' },
+        { label: 'Current Ratio', val: data.currentAssetsVal && data.currentLiabilitiesVal ? +(data.currentAssetsVal/data.currentLiabilitiesVal).toFixed(2) : null, raw: true, suffix: 'x', color: data.currentAssetsVal/data.currentLiabilitiesVal > 1.5 ? 'var(--green)' : 'var(--accent)' },
+        { label: 'Net Debt', val: data.netDebt, color: data.netDebt < 0 ? 'var(--green)' : 'var(--text)' },
+        { label: 'Cash & Equivalents', val: data.cashVal, green: true },
+      ];
+      const fmtV = (v, row) => {
+        if (v === null || v === undefined) return '—';
+        if (row?.raw) return `${v.toFixed(2)}${row.suffix || ''}`;
+        return Math.abs(v) >= 1e9 ? `$${(v/1e9).toFixed(1)}B` : Math.abs(v) >= 1e6 ? `$${(v/1e6).toFixed(0)}M` : `$${v.toLocaleString()}`;
+      };
+      return (
+        <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '11px', maxWidth: '500px' }}>
+          <thead>
+            <tr style={{ borderBottom: '1px solid var(--border)' }}>
+              <th style={{ padding: '8px 0', textAlign: 'left', fontWeight: 400, fontSize: '10px', color: 'var(--text-3)' }}>METRIC</th>
+              <th style={{ padding: '8px 12px', textAlign: 'right', fontWeight: 600, fontSize: '10px', color: 'var(--accent)' }}>TTM</th>
+            </tr>
+          </thead>
+          <tbody>
+            {rows.map((row, i) => {
+              if (row.section) return <tr key={i}><td colSpan={2} style={{ padding: '10px 0 4px', color: 'var(--accent)', fontSize: '10px', letterSpacing: '2px', borderBottom: '1px solid var(--border)' }}>{row.label}</td></tr>;
+              return (
+                <tr key={i} style={{ borderBottom: '1px solid var(--border)' }}>
+                  <td style={{ padding: '6px 0', color: row.bold ? 'var(--text)' : 'var(--text-3)', fontWeight: row.bold ? 600 : 400 }}>{row.label}</td>
+                  <td style={{ padding: '6px 12px', textAlign: 'right', color: row.color || (row.green ? 'var(--green)' : row.neg ? 'var(--red)' : 'var(--text)'), fontWeight: row.bold ? 600 : 400 }}>{fmtV(row.val, row)}</td>
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
+      );
+    })()}
+
+    {finTab === 'cashflow' && (() => {
+      const years = data.operatingCFHistory?.map(r => r.year) || [];
+      const rows = [
+        { label: 'Operating Cash Flow', history: data.operatingCFHistory, ttm: data.operatingCFVal, bold: true, green: true },
+        { label: 'Capital Expenditures', history: data.capexHistory, ttm: data.capexVal, indent: true, neg: true },
+        { label: 'Free Cash Flow', history: data.fcfHistory, ttm: data.fcfVal, bold: true, green: true },
+        { label: '---', divider: true },
+        { label: 'Investing Cash Flow', history: data.investingCFHistory, ttm: data.investingCFVal, neg: data.investingCFVal < 0 },
+        { label: 'Financing Cash Flow', history: data.financingCFHistory, ttm: data.financingCFVal, neg: data.financingCFVal < 0 },
+        { label: 'Dividends Paid', history: [], ttm: data.dividendsPaidVal, indent: true, neg: true },
+        { label: 'SBC', history: [], ttm: data.sbcVal, indent: true },
+      ];
+      const fmtV = (v) => {
+        if (v === null || v === undefined) return '—';
+        return Math.abs(v) >= 1e9 ? `$${(v/1e9).toFixed(1)}B` : Math.abs(v) >= 1e6 ? `$${(v/1e6).toFixed(0)}M` : `$${v.toLocaleString()}`;
+      };
+      return (
+        <div style={{ overflowX: 'auto' }}>
+          <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '11px', minWidth: '700px' }}>
+            <thead>
+              <tr style={{ borderBottom: '1px solid var(--border)' }}>
+                <th style={{ padding: '8px 0', textAlign: 'left', fontWeight: 400, fontSize: '10px', color: 'var(--text-3)', width: '200px' }}>METRIC</th>
+                {years.map(y => <th key={y} style={{ padding: '8px 12px', textAlign: 'right', fontWeight: 400, fontSize: '10px', color: 'var(--text-3)' }}>{y}</th>)}
+                <th style={{ padding: '8px 12px', textAlign: 'right', fontWeight: 600, fontSize: '10px', color: 'var(--accent)' }}>TTM</th>
+              </tr>
+            </thead>
+            <tbody>
+              {rows.map((row, i) => {
+                if (row.divider) return <tr key={i}><td colSpan={years.length + 2} style={{ padding: '4px 0', borderBottom: '1px solid var(--border)' }} /></tr>;
+                return (
+                  <tr key={i} style={{ borderBottom: '1px solid var(--border)', background: i % 2 === 0 ? 'transparent' : 'var(--bg-1)' }}>
+                    <td style={{ padding: '6px 0', paddingLeft: row.indent ? '16px' : '0', color: row.bold ? 'var(--text)' : 'var(--text-3)', fontWeight: row.bold ? 600 : 400 }}>{row.label}</td>
+                    {years.map((y, j) => {
+                      const h = row.history?.[j];
+                      const color = row.green ? 'var(--green)' : row.neg ? 'var(--red)' : 'var(--text)';
+                      return <td key={y} style={{ padding: '6px 12px', textAlign: 'right', color: h?.val != null ? color : 'var(--text-3)' }}>{fmtV(h?.val)}</td>;
+                    })}
+                    <td style={{ padding: '6px 12px', textAlign: 'right', color: row.green ? 'var(--accent)' : row.neg ? 'var(--red)' : 'var(--text)', fontWeight: 600 }}>{fmtV(row.ttm)}</td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
+      );
+    })()}
+
+    <div style={{ color: 'var(--text-3)', fontSize: '10px', letterSpacing: '1px', marginTop: '16px' }}>
+      SOURCE: SEC EDGAR (XBRL) · FINNHUB · NOT INVESTMENT ADVICE
+    </div>
+  </div>
+)}
 
           {/* DCF TAB */}
           {tab === 'dcf' && (

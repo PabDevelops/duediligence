@@ -103,7 +103,7 @@ export default function Home() {
             </button>
           </div>
           <div style={{ display: 'flex', gap: '8px', marginTop: '12px', flexWrap: 'wrap' }}>
-            {['AAPL', 'MSFT', 'NVDA', 'ASML', 'VISA', 'GOOGL'].map(t => (
+            {['AAPL', 'MSFT', 'NVDA', 'ASML', 'V', 'GOOGL'].map(t => (
               <button key={t} onClick={() => go(t)}
                 style={{
                   background: 'none',
