@@ -3,6 +3,8 @@ import { useState, useEffect, use } from 'react';
 import { BarChart, Bar, LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell } from 'recharts';
 import PriceChart from './chart';
 import StockChart from '../../components/StockChart';
+import Sparkline from '../../components/Sparkline';
+import SparklineHeader from '../../components/SparklineHeader';
 
 const fmt = (val) => {
   if (val === null || val === undefined) return 'N/A';
@@ -56,17 +58,24 @@ const QUESTIONS = [
 ];
 const DIMS = ['Management', 'Concentration', 'Op. Trend', 'Earn. Quality', 'Transparency'];
 
-const MiniBar = ({ data, color = 'var(--accent)' }) => (
-  <ResponsiveContainer width="100%" height={60}>
-    <BarChart data={data} barSize={20}>
-      <XAxis dataKey="year" tick={{ fill: '#555', fontSize: 9 }} axisLine={false} tickLine={false} />
-      <Tooltip formatter={v => [`$${Math.abs(v)}B`]} contentStyle={{ background: 'var(--bg-2)', border: '1px solid var(--border)', fontSize: 10, fontFamily: 'IBM Plex Mono' }} />
-      <Bar dataKey="value" radius={[1, 1, 0, 0]}>
-        {data.map((_, i) => <Cell key={i} fill={i === data.length - 1 ? color : `${color}55`} />)}
-      </Bar>
-    </BarChart>
-  </ResponsiveContainer>
-);
+const MiniBar = ({ data, color = '#F59E0B' }) => {
+  const max = Math.max(...data.map(d => Math.abs(d.value)));
+  return (
+    <ResponsiveContainer width="100%" height={80}>
+      <BarChart data={data} barSize={18} margin={{ top: 4, right: 0, bottom: 0, left: 0 }}>
+        <XAxis dataKey="year" tick={{ fill: '#555', fontSize: 9 }} axisLine={false} tickLine={false} />
+        <YAxis hide domain={[0, max * 1.15]} />
+        <Tooltip
+          formatter={v => [`$${Math.abs(v).toFixed(1)}B`]}
+          contentStyle={{ background: 'var(--bg-2)', border: '1px solid var(--border)', fontSize: 10, fontFamily: 'IBM Plex Mono' }}
+        />
+        <Bar dataKey="value" radius={[2, 2, 0, 0]}>
+          {data.map((_, i) => <Cell key={i} fill={i === data.length - 1 ? color : color + '55'} />)}
+        </Bar>
+      </BarChart>
+    </ResponsiveContainer>
+  );
+};
 
 const MiniLine = ({ data, color = 'var(--accent)' }) => (
   <ResponsiveContainer width="100%" height={60}>
@@ -97,6 +106,7 @@ export default function StockPage({ params }) {
   const [answers, setAnswers] = useState({});
   const [finTab, setFinTab] = useState('income');
   const [evidence, setEvidence] = useState({});
+const [sparklineData, setSparklineData] = useState(null);
 
   useEffect(() => {
     fetch(`/api/stock?ticker=${ticker}`)
@@ -104,6 +114,11 @@ export default function StockPage({ params }) {
       .then(d => { if (d.error) { setError(d.error); return; } setData(d); })
       .catch(() => setError('Connection error'))
       .finally(() => setLoading(false));
+
+    fetch(`/api/sparkline?ticker=${ticker}`)
+      .then(r => r.json())
+      .then(d => setSparklineData(d.candles || null))
+      .catch(() => {});
   }, [ticker]);
 
   const getDimScore = (dim) => {
@@ -152,7 +167,9 @@ export default function StockPage({ params }) {
     <div style={S.page}>
       {/* Topbar */}
       <div style={S.topbar}>
-        <a href="/" style={{ color: 'var(--accent)', fontWeight: 600, letterSpacing: '2px', textDecoration: 'none' }}>TRAQCKER</a>
+        <a href="/" style={{ textDecoration: 'none' }}>
+  <img src="/logo.png" alt="Traqcker" style={{ height: '20px', objectFit: 'contain' }} />
+</a>
         <span style={{ color: 'var(--border-2)' }}>/</span>
         <a href="/" style={{ color: 'var(--text-3)', textDecoration: 'none' }}>HOME</a>
         <span style={{ color: 'var(--border-2)' }}>/</span>
@@ -183,8 +200,8 @@ export default function StockPage({ params }) {
         <div style={S.content}>
 
           {/* Company header */}
-          <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: '24px', paddingBottom: '16px', borderBottom: '1px solid var(--border)' }}>
-            <div style={{ display: 'flex', gap: '16px', alignItems: 'flex-start' }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '24px', paddingBottom: '16px', borderBottom: '1px solid var(--border)', gap: '24px' }}>
+            <div style={{ display: 'flex', gap: '16px', alignItems: 'center', flexShrink: 0 }}>
               <div style={{ width: '48px', height: '48px', background: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, overflow: 'hidden' }}>
                 <img
                   src={`https://img.logo.dev/${data.name.toLowerCase().replace(/\binc\b|\bcorp\b|\bltd\b|\bplc\b|\bco\b|\bllc\b|\bgroup\b|\bholdings\b|\binternational\b|\bthe\b/g, '').trim().split(/\s+/)[0].replace(/[^a-z0-9]/g, '')}.com?token=pk_B4aaLZF6S4G1YbCgqZq2Ug`}
@@ -211,8 +228,13 @@ export default function StockPage({ params }) {
               </div>
             </div>
 
+           {/* Sparkline central */}
+<div style={{ flex: 1, minWidth: 0, alignSelf: 'center' }}>
+  <SparklineHeader ticker={ticker} />
+</div>
+
            {/* Price block */}
-<div style={{ display: 'flex', alignItems: 'flex-start', gap: '20px', flexShrink: 0, marginLeft: '24px' }}>
+<div style={{ display: 'flex', alignItems: 'flex-start', gap: '20px', flexShrink: 0 }}>
   {price ? (
     <>
       <div style={{ textAlign: 'right' }}>
@@ -493,12 +515,12 @@ export default function StockPage({ params }) {
               {/* Charts */}
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1px', background: 'var(--border)', marginBottom: '24px' }}>
                 {[
-                  { title: 'REVENUE', chart: revChart, color: 'var(--green)', type: 'bar' },
-                  { title: 'FREE CASH FLOW', chart: fcfChart, color: '#8b5cf6', type: 'bar' },
+                  { title: 'REVENUE', chart: revChart, color: '#F59E0B', type: 'line' },
+{ title: 'FREE CASH FLOW', chart: fcfChart, color: '#8b5cf6', type: 'line' },
                 ].map(({ title, chart, color, type }) => (
                   <div key={title} style={{ background: 'var(--bg-1)', padding: '16px' }}>
                     <div style={{ color: 'var(--text-3)', fontSize: '10px', letterSpacing: '2px', marginBottom: '12px' }}>{title}</div>
-                    <MiniBar data={chart} color={color} />
+                    <MiniLine data={chart} color={color} />
                   </div>
                 ))}
               </div>
@@ -677,7 +699,7 @@ export default function StockPage({ params }) {
 
           {/* OPPO breakdown */}
           <div style={{ color: 'var(--accent)', fontSize: '10px', letterSpacing: '2px', borderBottom: '1px solid var(--border)', paddingBottom: '6px', marginBottom: '12px' }}>OPPORTUNITY BREAKDOWN</div>
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1px', background: 'var(--border)', marginBottom: '24px' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '1px', background: 'var(--border)', marginBottom: '24px' }}>
             {[
               { label: 'P/FCF', val: fmtN(data.pfcf), score: pfcfScore, desc: data.pfcf < 20 ? 'Attractive entry' : data.pfcf < 35 ? 'Fair valuation' : 'Expensive' },
               { label: 'FCF YIELD', val: data.fcfYield ? `${data.fcfYield}%` : 'N/A', score: fcfYieldScore, desc: data.fcfYield > 5 ? 'Strong yield' : data.fcfYield > 2 ? 'Moderate yield' : 'Low yield' },
@@ -691,6 +713,29 @@ export default function StockPage({ params }) {
                 <div style={{ color: 'var(--text-3)', fontSize: '10px' }}>{m.desc}</div>
               </div>
             ))}
+            {/* 52W Range */}
+            <div style={{ background: 'var(--bg-1)', padding: '16px' }}>
+              <div style={{ color: 'var(--text-3)', fontSize: '10px', letterSpacing: '1px', marginBottom: '8px' }}>52W RANGE</div>
+              {data.high52 && data.low52 && data.currentPrice ? (() => {
+                const pct = Math.round(((data.currentPrice - data.low52) / (data.high52 - data.low52)) * 100);
+                const color = pct < 30 ? 'var(--green)' : pct > 75 ? 'var(--red)' : 'var(--accent)';
+                return (
+                  <>
+                    <div style={{ fontSize: '28px', fontWeight: 600, color, marginBottom: '4px' }}>{pct}%</div>
+                    <div style={{ color: 'var(--text-3)', fontSize: '10px', marginBottom: '10px' }}>
+                      {pct < 30 ? 'Near 52W low' : pct > 75 ? 'Near 52W high' : 'Mid range'}
+                    </div>
+                    <div style={{ position: 'relative', height: '3px', background: 'var(--border-2)', borderRadius: '2px', marginBottom: '6px' }}>
+                      <div style={{ position: 'absolute', left: `${pct}%`, top: '-3px', width: '2px', height: '9px', background: color, borderRadius: '1px' }} />
+                    </div>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '9px', color: 'var(--text-3)' }}>
+                      <span>${data.low52}</span>
+                      <span>${data.high52}</span>
+                    </div>
+                  </>
+                );
+              })() : <div style={{ color: 'var(--text-3)', fontSize: '10px' }}>N/A</div>}
+            </div>
           </div>
 
           {/* GQS breakdown */}
@@ -707,7 +752,7 @@ export default function StockPage({ params }) {
                   <span style={{ color: scoreColor(m.score), fontSize: '10px' }}>{m.score.toFixed(1)}/5</span>
                 </div>
                 <div style={{ fontSize: '22px', fontWeight: 600, color: scoreColor(m.score), marginBottom: '8px' }}>{m.val}</div>
-                {m.isLine ? <MiniLine data={m.chart} color={scoreColor(m.score)} /> : <MiniBar data={m.chart} color={m.color || scoreColor(m.score)} />}
+                <MiniLine data={m.chart} color={m.color || scoreColor(m.score)} />
               </div>
             ))}
           </div>

@@ -1,9 +1,9 @@
 export async function GET() {
   const symbols = [
-    { symbol: 'SPY', label: 'S&P 500' },
-    { symbol: 'QQQ', label: 'NASDAQ' },
-    { symbol: 'DIA', label: 'DOW JONES' },
-    { symbol: 'IWM', label: 'RUSSELL 2000' },
+    { symbol: '^GSPC', label: 'S&P 500' },
+    { symbol: '^IXIC', label: 'NASDAQ' },
+    { symbol: '^DJI', label: 'DOW JONES' },
+    { symbol: '^RUT', label: 'RUSSELL 2000' },
   ];
 
   try {

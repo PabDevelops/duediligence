@@ -32,6 +32,8 @@ const loadSparkline = async (ticker) => {
   const [sortDir, setSortDir] = useState('desc');
   const tableRef = useRef(null);
   const [search, setSearch] = useState('');
+const [page, setPage] = useState(1);
+const PAGE_SIZE = 50;
   useEffect(() => {
   if (tableRef.current) tableRef.current.scrollTop = 0;
 }, [search, sector]);
@@ -59,6 +61,11 @@ const loadSparkline = async (ticker) => {
       return sortDir === 'desc' ? bv - av : av - bv;
     });
 
+  const totalPages = Math.ceil(filtered.length / PAGE_SIZE);
+  const paginated = filtered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
+
+
+
   const toggleSort = (col) => {
     if (sortBy === col) setSortDir(d => d === 'desc' ? 'asc' : 'desc');
     else { setSortBy(col); setSortDir('desc'); }
@@ -77,7 +84,9 @@ const loadSparkline = async (ticker) => {
     <div style={{ background: 'var(--bg)', minHeight: '100vh', color: 'var(--text)', fontFamily: 'IBM Plex Mono, monospace' }}>
       {/* Topbar */}
       <div style={{ borderBottom: '1px solid var(--border)', padding: '8px 16px', display: 'flex', alignItems: 'center', gap: '12px', position: 'sticky', top: 0, background: 'var(--bg)', zIndex: 10, fontSize: '11px' }}>
-        <a href="/" style={{ color: 'var(--accent)', fontWeight: 600, letterSpacing: '2px', textDecoration: 'none' }}>TRAQCKER</a>
+        <a href="/" style={{ textDecoration: 'none' }}>
+  <img src="/logo.png" alt="Traqcker" style={{ height: '20px', objectFit: 'contain' }} />
+</a>
         <span style={{ color: 'var(--border-2)' }}>/</span>
         <span style={{ color: 'var(--text)' }}>SCREENER</span>
         <div style={{ flex: 1 }}>
@@ -171,7 +180,7 @@ const loadSparkline = async (ticker) => {
                 </tr>
               </thead>
               <tbody>
-                {filtered.map((s, i) => (
+                {paginated.map((s, i) => (
                   <tr key={s.ticker}
                     onClick={() => router.push(`/stock/${s.ticker}`)}
                     style={{ borderBottom: '1px solid var(--border)', cursor: 'pointer', background: 'var(--bg-1)' }}
@@ -208,6 +217,23 @@ onMouseLeave={e => e.currentTarget.style.background = 'var(--bg-1)'}>
                 ))}
               </tbody>
             </table>
+          )}
+
+          {/* Paginador */}
+          {totalPages > 1 && (
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', padding: '16px 0', borderTop: '1px solid var(--border)' }}>
+              <button onClick={() => setPage(p => Math.max(1, p - 1))} disabled={page === 1}
+                style={{ padding: '4px 12px', background: 'none', border: '1px solid var(--border)', color: page === 1 ? 'var(--text-3)' : 'var(--text)', fontFamily: 'IBM Plex Mono, monospace', fontSize: '10px', cursor: page === 1 ? 'default' : 'pointer', letterSpacing: '1px' }}>
+                ← PREV
+              </button>
+              <span style={{ color: 'var(--text-3)', fontSize: '10px', letterSpacing: '1px' }}>
+                {page} / {totalPages} · {filtered.length} RESULTS
+              </span>
+              <button onClick={() => setPage(p => Math.min(totalPages, p + 1))} disabled={page === totalPages}
+                style={{ padding: '4px 12px', background: 'none', border: '1px solid var(--border)', color: page === totalPages ? 'var(--text-3)' : 'var(--text)', fontFamily: 'IBM Plex Mono, monospace', fontSize: '10px', cursor: page === totalPages ? 'default' : 'pointer', letterSpacing: '1px' }}>
+                NEXT →
+              </button>
+            </div>
           )}
         </div>
       </div>

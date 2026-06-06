@@ -1,11 +1,15 @@
 export async function GET(request) {
   const { searchParams } = new URL(request.url);
   const ticker = searchParams.get('ticker');
+  const range = searchParams.get('range') || '1mo';
+  const interval = range === '1y' || range === '6mo' ? '1wk' : '1d';
   if (!ticker) return Response.json({ candles: [] });
 
   try {
+    const range = searchParams.get('range') || '1mo';
+    const interval = range === '1y' || range === '6mo' ? '1wk' : '1d';
     const res = await fetch(
-      `https://query1.finance.yahoo.com/v8/finance/chart/${ticker}?interval=1d&range=1mo`,
+      `https://query1.finance.yahoo.com/v8/finance/chart/${ticker}?interval=${interval}&range=${range}`,
       { headers: { 'User-Agent': 'Mozilla/5.0' } }
     );
     const data = await res.json();

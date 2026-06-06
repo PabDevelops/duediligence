@@ -69,56 +69,57 @@ export async function GET(request) {
       return null;
     };
 
-    const revenues = getMetric(['RevenueFromContractWithCustomerExcludingAssessedTax', 'Revenues', 'SalesRevenueNet', 'RevenueFromContractWithCustomerIncludingAssessedTax']);
-    const netIncomes = getMetric(['NetIncomeLoss']);
+    const revenues      = getMetric(['RevenueFromContractWithCustomerExcludingAssessedTax','Revenues','SalesRevenueNet','RevenueFromContractWithCustomerIncludingAssessedTax']);
+    const netIncomes    = getMetric(['NetIncomeLoss']);
     const operatingIncomes = getMetric(['OperatingIncomeLoss']);
-    const cashFlows = getMetric(['NetCashProvidedByUsedInOperatingActivities']);
-    const assets = getMetric(['Assets']);
-    const equity = getMetric(['StockholdersEquity', 'StockholdersEquityIncludingPortionAttributableToNoncontrollingInterest']);
-    const debt = getMetric(['LongTermDebt', 'LongTermDebtNoncurrent']);
-    const cash = getMetric(['CashAndCashEquivalentsAtCarryingValue', 'CashCashEquivalentsAndShortTermInvestments']);
-    const shares = getMetric(['CommonStockSharesOutstanding', 'WeightedAverageNumberOfSharesOutstandingBasic']);
-    const grossProfit = getMetric(['GrossProfit']);
-    const rd = getMetric(['ResearchAndDevelopmentExpense']);
-    const cogs = getMetric(['CostOfRevenue', 'CostOfGoodsAndServicesSold']);
-    const sga = getMetric(['SellingGeneralAndAdministrativeExpense', 'SellingAndMarketingExpense']);
-    const ebt = getMetric(['IncomeLossFromContinuingOperationsBeforeIncomeTaxesExtraordinaryItemsNoncontrollingInterest']);
-    const tax = getMetric(['IncomeTaxExpenseBenefit']);
-    const interestExp = getMetric(['InterestExpense', 'InterestAndDebtExpense']);
-    const sharesBasic = getMetric(['WeightedAverageNumberOfSharesOutstandingBasic']);
+    const cashFlows     = getMetric(['NetCashProvidedByUsedInOperatingActivities']);
+    const assets        = getMetric(['Assets']);
+    const equity        = getMetric(['StockholdersEquity','StockholdersEquityIncludingPortionAttributableToNoncontrollingInterest']);
+    const debt          = getMetric(['LongTermDebt','LongTermDebtNoncurrent']);
+    const cash          = getMetric(['CashAndCashEquivalentsAtCarryingValue','CashCashEquivalentsAndShortTermInvestments']);
+    const shares        = getMetric(['CommonStockSharesOutstanding','WeightedAverageNumberOfSharesOutstandingBasic']);
+    const grossProfit   = getMetric(['GrossProfit']);
+    const rd            = getMetric(['ResearchAndDevelopmentExpense']);
+    const cogs          = getMetric(['CostOfRevenue','CostOfGoodsAndServicesSold']);
+    const sga           = getMetric(['SellingGeneralAndAdministrativeExpense','SellingAndMarketingExpense']);
+    const ebt           = getMetric(['IncomeLossFromContinuingOperationsBeforeIncomeTaxesExtraordinaryItemsNoncontrollingInterest']);
+    const tax           = getMetric(['IncomeTaxExpenseBenefit']);
+    const interestExp   = getMetric(['InterestExpense','InterestAndDebtExpense']);
+    const sharesBasic   = getMetric(['WeightedAverageNumberOfSharesOutstandingBasic']);
     const sharesDiluted = getMetric(['WeightedAverageNumberOfDilutedSharesOutstanding']);
     const currentAssets = getMetric(['AssetsCurrent']);
     const currentLiabilities = getMetric(['LiabilitiesCurrent']);
     const totalLiabilities = getMetric(['Liabilities']);
     const retainedEarnings = getMetric(['RetainedEarningsAccumulatedDeficit']);
-    const capex = getMetric(['PaymentsToAcquirePropertyPlantAndEquipment']);
-    const inventory = getMetric(['InventoryNet', 'InventoryGross']);
-    const receivables = getMetric(['AccountsReceivableNetCurrent', 'ReceivablesNetCurrent']);
-    const payables = getMetric(['AccountsPayableCurrent']);
-    const sbc = getMetric(['ShareBasedCompensation', 'AllocatedShareBasedCompensationExpense']);
-    const dividendsPaid = getMetric(['PaymentsOfDividends', 'PaymentsOfDividendsCommonStock']);
+    const capex         = getMetric(['PaymentsToAcquirePropertyPlantAndEquipment']);
+    const inventory     = getMetric(['InventoryNet','InventoryGross']);
+    const receivables   = getMetric(['AccountsReceivableNetCurrent','ReceivablesNetCurrent']);
+    const payables      = getMetric(['AccountsPayableCurrent']);
+    const sbc           = getMetric(['ShareBasedCompensation','AllocatedShareBasedCompensationExpense']);
+    const dividendsPaid = getMetric(['PaymentsOfDividends','PaymentsOfDividendsCommonStock']);
     const investingActivities = getMetric(['NetCashProvidedByUsedInInvestingActivities']);
     const financingActivities = getMetric(['NetCashProvidedByUsedInFinancingActivities']);
 
     const latest = (arr) => arr?.[0]?.val ?? null;
-    const prev = (arr) => arr?.[1]?.val ?? null;
+    const prev   = (arr) => arr?.[1]?.val ?? null;
+    const buildHistory = (arr) => arr?.slice(0, 6).reverse().map(r => ({ year: r.end.slice(0, 4), val: r.val })) || [];
 
-    const revVal = latest(revenues);
-    const revPrev = prev(revenues);
-    const niVal = latest(netIncomes);
-    const oiVal = latest(operatingIncomes);
-    const fcfVal = latest(cashFlows);
+    const revVal   = latest(revenues);
+    const revPrev  = prev(revenues);
+    const niVal    = latest(netIncomes);
+    const oiVal    = latest(operatingIncomes);
+    const fcfVal   = latest(cashFlows);
     const assetsVal = latest(assets);
     const equityVal = latest(equity);
-    const debtVal = latest(debt);
-    const cashVal = latest(cash);
+    const debtVal  = latest(debt);
+    const cashVal  = latest(cash);
     const sharesVal = latest(shares);
-    const gpVal = latest(grossProfit);
-    const rdVal = latest(rd);
-    const cogsVal = latest(cogs);
-    const sgaVal = latest(sga);
-    const ebtVal = latest(ebt);
-    const taxVal = latest(tax);
+    const gpVal    = latest(grossProfit);
+    const rdVal    = latest(rd);
+    const cogsVal  = latest(cogs);
+    const sgaVal   = latest(sga);
+    const ebtVal   = latest(ebt);
+    const taxVal   = latest(tax);
     const interestVal = latest(interestExp);
     const sharesBasicVal = latest(sharesBasic);
     const sharesDilutedVal = latest(sharesDiluted);
@@ -130,39 +131,36 @@ export async function GET(request) {
     const inventoryVal = latest(inventory);
     const receivablesVal = latest(receivables);
     const payablesVal = latest(payables);
-    const sbcVal = latest(sbc);
+    const sbcVal   = latest(sbc);
     const dividendsPaidVal = latest(dividendsPaid);
-
-// Efficiency ratios
-const dso = receivablesVal && revVal ? +((receivablesVal / revVal) * 365).toFixed(1) : null;
-const dio = inventoryVal && cogsVal ? +((inventoryVal / cogsVal) * 365).toFixed(1) : null;
-const dpo = payablesVal && cogsVal ? +((payablesVal / cogsVal) * 365).toFixed(1) : null;
-const ccc = dso !== null && dio !== null && dpo !== null ? +(dso + dio - dpo).toFixed(1) : null;
-const inventoryTurnover = cogsVal && inventoryVal ? +(cogsVal / inventoryVal).toFixed(2) : null;
     const investingCFVal = latest(investingActivities);
     const financingCFVal = latest(financingActivities);
 
-    const opMargin = revVal && oiVal ? +((oiVal / revVal) * 100).toFixed(1) : null;
-    const netMargin = revVal && niVal ? +((niVal / revVal) * 100).toFixed(1) : null;
-    const grossMargin = revVal && gpVal ? +((gpVal / revVal) * 100).toFixed(1) : null;
-    const revGrowth = revVal && revPrev ? +(((revVal - revPrev) / Math.abs(revPrev)) * 100).toFixed(1) : null;
-    const roe = equityVal && niVal ? +((niVal / equityVal) * 100).toFixed(1) : null;
-    const roa = assetsVal && niVal ? +((niVal / assetsVal) * 100).toFixed(1) : null;
-    const debtToEquity = equityVal && debtVal ? +(debtVal / equityVal).toFixed(2) : null;
-    const netDebt = debtVal && cashVal ? debtVal - cashVal : null;
-    const roic = equityVal && debtVal && oiVal ? +((oiVal / (equityVal + debtVal)) * 100).toFixed(1) : null;
+    const dso = receivablesVal && revVal ? +((receivablesVal / revVal) * 365).toFixed(1) : null;
+    const dio = inventoryVal && cogsVal ? +((inventoryVal / cogsVal) * 365).toFixed(1) : null;
+    const dpo = payablesVal && cogsVal ? +((payablesVal / cogsVal) * 365).toFixed(1) : null;
+    const ccc = dso !== null && dio !== null && dpo !== null ? +(dso + dio - dpo).toFixed(1) : null;
+    const inventoryTurnover = cogsVal && inventoryVal ? +(cogsVal / inventoryVal).toFixed(2) : null;
 
-    const buildHistory = (arr) => arr?.slice(0, 6).reverse().map(r => ({ year: r.end.slice(0, 4), val: r.val })) || [];
+    const opMargin    = revVal && oiVal ? +((oiVal / revVal) * 100).toFixed(1) : null;
+    const netMargin   = revVal && niVal ? +((niVal / revVal) * 100).toFixed(1) : null;
+    const grossMargin = revVal && gpVal ? +((gpVal / revVal) * 100).toFixed(1) : null;
+    const revGrowth   = revVal && revPrev ? +(((revVal - revPrev) / Math.abs(revPrev)) * 100).toFixed(1) : null;
+    const roe         = equityVal && niVal ? +((niVal / equityVal) * 100).toFixed(1) : null;
+    const roa         = assetsVal && niVal ? +((niVal / assetsVal) * 100).toFixed(1) : null;
+    const roic        = equityVal && debtVal && oiVal ? +((oiVal / (equityVal + debtVal)) * 100).toFixed(1) : null;
+    const debtToEquity = equityVal && debtVal ? +(debtVal / equityVal).toFixed(2) : null;
+    const netDebt     = debtVal && cashVal ? debtVal - cashVal : null;
 
     const revHistory = buildHistory(revenues);
-    const niHistory = buildHistory(netIncomes);
+    const niHistory  = buildHistory(netIncomes);
     const fcfHistory = buildHistory(cashFlows);
-    const oiHistory = buildHistory(operatingIncomes);
+    const oiHistory  = buildHistory(operatingIncomes);
     const sharesHistory = buildHistory(shares);
-    const gpHistory = buildHistory(grossProfit);
+    const gpHistory  = buildHistory(grossProfit);
     const cogsHistory = buildHistory(cogs);
     const sgaHistory = buildHistory(sga);
-    const rdHistory = buildHistory(rd);
+    const rdHistory  = buildHistory(rd);
     const ebtHistory = buildHistory(ebt);
     const taxHistory = buildHistory(tax);
     const sharesBasicHistory = buildHistory(sharesBasic);
@@ -197,26 +195,23 @@ const inventoryTurnover = cogsVal && inventoryVal ? +(cogsVal / inventoryVal).to
     const fhBasic = await fhBasicRes.json();
     const fhProfile = await fhProfileRes.json();
 
-    const currentPrice = fh.c || null;
-    const priceChange = fh.d || null;
+    const currentPrice   = fh.c || null;
+    const priceChange    = fh.d || null;
     const priceChangePct = fh.dp || null;
-    const prevClose = fh.pc || null;
-    const high52 = fhBasic?.metric?.['52WeekHigh'] || null;
-    const low52 = fhBasic?.metric?.['52WeekLow'] || null;
-    const beta = fhBasic?.metric?.beta || null;
+    const prevClose      = fh.pc || null;
+    const high52         = fhBasic?.metric?.['52WeekHigh'] || null;
+    const low52          = fhBasic?.metric?.['52WeekLow'] || null;
+    const beta           = fhBasic?.metric?.beta || null;
 
-    const epsDirect = getEPS();
+    const epsDirect  = getEPS();
     const epsFinnhub = fhBasic?.metric?.epsAnnual || fhBasic?.metric?.epsTTM || null;
     const sharesFinnhub = fhBasic?.metric?.sharesOutstanding ? fhBasic.metric.sharesOutstanding * 1e6 : null;
     const sharesForCalc = sharesVal || sharesFinnhub;
-    const epsCalc = epsDirect || epsFinnhub || (niVal && sharesForCalc ? +(niVal / sharesForCalc).toFixed(2) : null);
-    const peCalc = epsCalc && currentPrice ? +(currentPrice / epsCalc).toFixed(2) : null;
+    const epsCalc    = epsDirect || epsFinnhub || (niVal && sharesForCalc ? +(niVal / sharesForCalc).toFixed(2) : null);
+    const peCalc     = epsCalc && currentPrice ? +(currentPrice / epsCalc).toFixed(2) : null;
     const marketCapCalc = currentPrice && sharesForCalc ? currentPrice * sharesForCalc : null;
-    // Fallback: market cap desde Finnhub profile si no hay shares
-const marketCapFinnhub = fhProfile?.marketCapitalization ? fhProfile.marketCapitalization * 1e6 : null;
-const marketCapFinal = marketCapCalc || marketCapFinnhub;
-    const pfcfCalc = marketCapCalc && fcfVal && fcfVal > 0 ? +(marketCapCalc / fcfVal).toFixed(1) : null;
-    const fcfYield = marketCapCalc && fcfVal ? +((fcfVal / marketCapCalc) * 100).toFixed(2) : null;
+    const marketCapFinnhub = fhProfile?.marketCapitalization ? fhProfile.marketCapitalization * 1e6 : null;
+    const marketCapFinal = marketCapCalc || marketCapFinnhub;
 
     const epsHistory = niHistory.map((ni, i) => {
       const sh = sharesHistory[i];
@@ -226,15 +221,13 @@ const marketCapFinal = marketCapCalc || marketCapFinnhub;
 
     const epsOldest = epsHistory[0]?.eps;
     const epsLatest = epsHistory[epsHistory.length - 1]?.eps;
-    const epsYears = epsHistory.length > 1 ? epsHistory.length - 1 : 1;
+    const epsYears  = epsHistory.length > 1 ? epsHistory.length - 1 : 1;
     const epsCagrRaw = epsOldest && epsLatest && epsOldest > 0 && epsLatest > 0
       ? +(((Math.pow(epsLatest / epsOldest, 1 / epsYears)) - 1) * 100).toFixed(1)
       : null;
     const epsCagr = epsCagrRaw !== null && epsCagrRaw > 0 && epsCagrRaw < 50
       ? epsCagrRaw
-      : revGrowth !== null && revGrowth > 0
-      ? Math.min(revGrowth, 20)
-      : null;
+      : revGrowth !== null && revGrowth > 0 ? Math.min(revGrowth, 20) : null;
 
     const result = {
       name: company.title,
@@ -261,8 +254,10 @@ const marketCapFinal = marketCapCalc || marketCapFinnhub;
       capexHistory, operatingCFHistory, investingCFHistory, financingCFHistory,
       epsCagr, epsHistory,
       currentPrice, priceChange, priceChangePct, prevClose,
-      eps: epsCalc, pe: peCalc, marketCap: marketCapFinal, pfcf: fcfVal && marketCapFinal && fcfVal > 0 ? +(marketCapFinal / fcfVal).toFixed(1) : null,
-fcfYield: marketCapFinal && fcfVal ? +((fcfVal / marketCapFinal) * 100).toFixed(2) : null,
+      eps: epsCalc, pe: peCalc,
+      marketCap: marketCapFinal,
+      pfcf: marketCapFinal && fcfVal && fcfVal > 0 ? +(marketCapFinal / fcfVal).toFixed(1) : null,
+      fcfYield: marketCapFinal && fcfVal ? +((fcfVal / marketCapFinal) * 100).toFixed(2) : null,
       high52, low52, beta,
       sharesOutstanding: sharesForCalc,
       dividendYield: fhBasic?.metric?.dividendYieldIndicatedAnnual || null,
