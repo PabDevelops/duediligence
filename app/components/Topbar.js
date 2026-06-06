@@ -1,6 +1,6 @@
 'use client';
 import { usePathname } from 'next/navigation';
-import { SignInButton, SignOutButton, UserButton, useUser } from '@clerk/nextjs';
+import { SignInButton, UserButton, useUser } from '@clerk/nextjs';
 
 export default function Topbar() {
   const path = usePathname();
@@ -34,11 +34,16 @@ export default function Topbar() {
         {useUser().isSignedIn ? (
           <UserButton afterSignOutUrl="/" />
         ) : (
-          <SignInButton mode="modal">
-            <button style={{ background: 'var(--accent)', color: '#000', border: 'none', padding: '4px 12px', fontFamily: 'IBM Plex Mono, monospace', fontSize: '10px', fontWeight: 700, cursor: 'pointer', letterSpacing: '1px' }}>
-              SIGN IN
-            </button>
-          </SignInButton>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+            <span style={{ color: 'var(--text-3)', fontSize: '10px', letterSpacing: '1px', borderRight: '1px solid var(--border)', paddingRight: '12px' }}>
+              🔒 SIGN IN TO SEE FULL DATA
+            </span>
+            <SignInButton mode="modal">
+              <button style={{ background: 'var(--accent)', color: '#000', border: 'none', padding: '4px 12px', fontFamily: 'IBM Plex Mono, monospace', fontSize: '10px', fontWeight: 700, cursor: 'pointer', letterSpacing: '1px' }}>
+                SIGN IN
+              </button>
+            </SignInButton>
+          </div>
         )}
       </div>
     </div>

@@ -6,6 +6,7 @@ import StockChart from '../../components/StockChart';
 import Sparkline from '../../components/Sparkline';
 import SparklineHeader from '../../components/SparklineHeader';
 import Topbar from '../../components/Topbar';
+import { useUser } from '@clerk/nextjs';
 
 const fmt = (val) => {
   if (val === null || val === undefined) return 'N/A';
@@ -109,7 +110,8 @@ export default function StockPage({ params }) {
   const [evidence, setEvidence] = useState({});
 const [sparklineData, setSparklineData] = useState(null);
 const [usage, setUsage] = useState(null);
-const [usageLimited, setUsageLimited] = useState(false);
+  const [usageLimited, setUsageLimited] = useState(false);
+  const { isSignedIn } = useUser();
 
   useEffect(() => {
     fetch(`/api/stock?ticker=${ticker}`)
@@ -195,6 +197,12 @@ const [usageLimited, setUsageLimited] = useState(false);
             <input name="search" style={{ background: 'var(--bg-2)', border: '1px solid var(--border)', color: 'var(--text)', fontFamily: 'IBM Plex Mono, monospace', fontSize: '11px', padding: '4px 10px', width: '220px', outline: 'none', letterSpacing: '1px' }} placeholder="SEARCH TICKER..." />
           </form>
         </div>
+        {!isSignedIn && (
+          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+            <span style={{ color: 'var(--text-3)', fontSize: '10px', letterSpacing: '1px' }}>🔒 SIGN IN TO SEE FULL DATA</span>
+            <a href="/sign-in" style={{ background: 'var(--accent)', color: '#000', padding: '4px 12px', fontFamily: 'IBM Plex Mono, monospace', fontSize: '10px', fontWeight: 700, letterSpacing: '1px', textDecoration: 'none' }}>SIGN IN</a>
+          </div>
+        )}
       </div>
 
       <div style={{ display: 'flex' }}>
@@ -304,7 +312,7 @@ const [usageLimited, setUsageLimited] = useState(false);
         return (
           <div style={{ position: 'relative' }}>
             <div style={{ position: 'absolute', inset: '-12px', borderRadius: '50%', background: c, opacity: 0.12, filter: 'blur(16px)' }} />
-            <div style={{ position: 'relative', border: `1px solid ${c}`, padding: '12px 20px', textAlign: 'center' }}>
+            <div style={{ position: 'relative', border: `1px solid ${c}`, padding: '12px 20px', textAlign: 'center', filter: !isSignedIn ? 'blur(12px)' : 'none', userSelect: !isSignedIn ? 'none' : 'auto' }}>
               <div style={{ color: 'var(--text-3)', fontSize: '9px', letterSpacing: '2px', marginBottom: '4px' }}>FINAL NOTE</div>
               <div style={{ color: c, fontSize: '40px', fontWeight: 700, letterSpacing: '-2px', lineHeight: 1 }}>{finalNote}</div>
               <div style={{ color: 'var(--text-3)', fontSize: '9px', marginTop: '4px' }}>/ 5.0</div>
@@ -335,7 +343,7 @@ const [usageLimited, setUsageLimited] = useState(false);
                 ].map(p => (
                   <div key={p.label} style={{ background: 'var(--bg-1)', padding: '10px 14px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                     <span style={{ color: 'var(--text-3)', fontSize: '10px', letterSpacing: '1px' }}>{p.label}</span>
-                    <span style={{ color: p.good ? 'var(--green)' : p.good === false ? 'var(--red)' : 'var(--accent)', fontSize: '10px', fontWeight: 600, letterSpacing: '0.5px' }}>{p.val}</span>
+                    <span style={{ color: !isSignedIn ? 'var(--accent)' : p.good ? 'var(--green)' : p.good === false ? 'var(--red)' : 'var(--accent)', fontSize: '10px', fontWeight: 600, letterSpacing: '0.5px', filter: !isSignedIn ? 'blur(4px)' : 'none', userSelect: !isSignedIn ? 'none' : 'auto' }}>{p.val}</span>
                   </div>
                 ))}
               </div>
@@ -350,7 +358,7 @@ const [usageLimited, setUsageLimited] = useState(false);
                 ].map(b => (
                   <div key={b.label} style={{ background: 'var(--bg-1)', padding: '14px 16px' }}>
                     <div style={{ color: b.color, fontSize: '10px', letterSpacing: '1.5px', marginBottom: '8px' }}>{b.label}</div>
-                    <div style={{ color: 'var(--text-2)', fontSize: '12px', lineHeight: 1.6 }}>{b.text}</div>
+                    <div style={{ color: 'var(--text-2)', fontSize: '12px', lineHeight: 1.6, filter: !isSignedIn ? 'blur(5px)' : 'none', userSelect: !isSignedIn ? 'none' : 'auto' }}>{b.text}</div>
                   </div>
                 ))}
               </div>
@@ -688,7 +696,17 @@ const [usageLimited, setUsageLimited] = useState(false);
       return (
         <>
           {/* Score header */}
-          <div style={{ background: 'var(--bg-1)', border: '1px solid var(--border)', padding: '24px', marginBottom: '24px' }}>
+          <div style={{ position: 'relative', marginBottom: '24px' }}>
+  {!isSignedIn && (
+    <a href="/sign-in" style={{ position: 'absolute', inset: 0, zIndex: 2, display: 'flex', alignItems: 'center', justifyContent: 'center', textDecoration: 'none', opacity: 0, transition: 'opacity 0.2s' }}
+      onMouseEnter={e => e.currentTarget.style.opacity = '1'}
+      onMouseLeave={e => e.currentTarget.style.opacity = '0'}>
+      <div style={{ background: 'var(--bg-2)', border: '1px solid var(--accent)', padding: '10px 20px', color: 'var(--accent)', fontSize: '11px', fontWeight: 700, letterSpacing: '2px' }}>
+        🔒 SIGN IN TO SEE SCORES
+      </div>
+    </a>
+  )}
+  <div style={{ background: 'var(--bg-1)', border: '1px solid var(--border)', padding: '24px', filter: !isSignedIn ? 'blur(12px)' : 'none', pointerEvents: !isSignedIn ? 'none' : 'auto', userSelect: !isSignedIn ? 'none' : 'auto' }}>
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr 1fr', gap: '1px', background: 'var(--border)' }}>
               {[
                 { label: 'CORE BUSINESS', score: cbs, desc: 'ROIC · Margins · Leverage' },
@@ -710,6 +728,7 @@ const [usageLimited, setUsageLimited] = useState(false);
               AUTOMATED SCORE · BASED ON SEC EDGAR & FINNHUB · NOT A BUY/SELL SIGNAL · CBS 45% · OPPO 30% · GQS 25%
             </div>
           </div>
+        </div>
 
           {/* CBS breakdown */}
           <div style={{ color: 'var(--accent)', fontSize: '10px', letterSpacing: '2px', borderBottom: '1px solid var(--border)', paddingBottom: '6px', marginBottom: '12px' }}>CORE BUSINESS BREAKDOWN</div>
@@ -801,7 +820,14 @@ const [usageLimited, setUsageLimited] = useState(false);
 )}
 
           {/* FINANCIALS TAB */}
-          {tab === 'financials' && (
+          {tab === 'financials' && !isSignedIn && (
+            <div style={{ textAlign: 'center', padding: '80px 24px' }}>
+              <div style={{ color: 'var(--accent)', fontSize: '13px', letterSpacing: '2px', marginBottom: '12px' }}>🔒 SIGN IN REQUIRED</div>
+              <div style={{ color: 'var(--text-2)', fontSize: '12px', marginBottom: '24px' }}>Create a free account to access Financial Statements.</div>
+              <a href="/sign-in" style={{ background: 'var(--accent)', color: '#000', padding: '10px 24px', fontFamily: 'IBM Plex Mono, monospace', fontSize: '11px', fontWeight: 700, letterSpacing: '1px', textDecoration: 'none' }}>CREATE FREE ACCOUNT →</a>
+            </div>
+          )}
+          {tab === 'financials' && isSignedIn && (
   <div>
     {/* Fin tabs */}
     <div style={{ display: 'flex', gap: '1px', background: 'var(--border)', marginBottom: '24px' }}>
@@ -969,7 +995,14 @@ const [usageLimited, setUsageLimited] = useState(false);
 )}
 
           {/* DCF TAB */}
-          {tab === 'dcf' && (
+          {tab === 'dcf' && !isSignedIn && (
+            <div style={{ textAlign: 'center', padding: '80px 24px' }}>
+              <div style={{ color: 'var(--accent)', fontSize: '13px', letterSpacing: '2px', marginBottom: '12px' }}>🔒 SIGN IN REQUIRED</div>
+              <div style={{ color: 'var(--text-2)', fontSize: '12px', marginBottom: '24px' }}>Create a free account to access DCF Valuation.</div>
+              <a href="/sign-in" style={{ background: 'var(--accent)', color: '#000', padding: '10px 24px', fontFamily: 'IBM Plex Mono, monospace', fontSize: '11px', fontWeight: 700, letterSpacing: '1px', textDecoration: 'none' }}>CREATE FREE ACCOUNT →</a>
+            </div>
+          )}
+          {tab === 'dcf' && isSignedIn && (
             <div>
               <div style={S.section}>GRAHAM INTRINSIC VALUE — V = EPS × (8.5 + 2g)</div>
 
