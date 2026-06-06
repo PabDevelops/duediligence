@@ -209,24 +209,59 @@ export default function StockPage({ params }) {
               </div>
             </div>
 
-            {/* Price block */}
-            <div style={{ textAlign: 'right', flexShrink: 0, marginLeft: '24px' }}>
-              {price ? (
-                <>
-                  <div style={{ fontSize: '36px', fontWeight: 600, letterSpacing: '-1px' }}>${price.toFixed(2)}</div>
-                  <div style={{ color: change >= 0 ? 'var(--green)' : 'var(--red)', fontSize: '13px', marginBottom: '4px' }}>
-                    {change >= 0 ? '+' : ''}{change?.toFixed(2)} ({changePct?.toFixed(2)}%)
-                  </div>
-                  <div style={{ color: 'var(--text-3)', fontSize: '10px', letterSpacing: '1px' }}>LIVE · FINNHUB</div>
-                </>
-              ) : (
-                <>
-                  <div style={{ fontSize: '28px', fontWeight: 600 }}>{fmt(data.marketCap)}</div>
-                  <div style={{ color: 'var(--text-3)', fontSize: '10px' }}>MARKET CAP</div>
-                </>
-              )}
-              
+           {/* Price block */}
+<div style={{ display: 'flex', alignItems: 'flex-start', gap: '20px', flexShrink: 0, marginLeft: '24px' }}>
+  {price ? (
+    <>
+      <div style={{ textAlign: 'right' }}>
+        <div style={{ fontSize: '36px', fontWeight: 600, letterSpacing: '-1px' }}>${price.toFixed(2)}</div>
+        <div style={{ color: change >= 0 ? 'var(--green)' : 'var(--red)', fontSize: '13px', marginBottom: '4px' }}>
+          {change >= 0 ? '+' : ''}{change?.toFixed(2)} ({changePct?.toFixed(2)}%)
+        </div>
+        <div style={{ color: 'var(--text-3)', fontSize: '10px', letterSpacing: '1px' }}>LIVE · FINNHUB</div>
+      </div>
+      {tab === 'quality' && (() => {
+        const sector = (data.sector || '').toLowerCase();
+        const isFinancial = sector.includes('bank') || sector.includes('insurance') || sector.includes('financial');
+        const isTech = sector.includes('tech') || sector.includes('software') || sector.includes('semi');
+        const isPharma = sector.includes('pharma') || sector.includes('biotech') || sector.includes('health');
+        const roicThreshold = isTech ? 0.25 : isPharma ? 0.20 : 0.15;
+        const gmThreshold = isTech ? 0.65 : isPharma ? 0.65 : isFinancial ? 0.30 : 0.35;
+        const omThreshold = isTech ? 0.20 : isPharma ? 0.20 : isFinancial ? 0.15 : 0.15;
+        const roicScore = data.roic == null ? 2.5 : data.roic/100 >= roicThreshold*2 ? 5 : data.roic/100 >= roicThreshold*1.5 ? 4.5 : data.roic/100 >= roicThreshold ? 4 : data.roic/100 >= roicThreshold*0.7 ? 3 : data.roic/100 >= roicThreshold*0.4 ? 2 : 1;
+        const gmScore = data.grossMargin == null ? 2.5 : data.grossMargin/100 >= gmThreshold*1.4 ? 5 : data.grossMargin/100 >= gmThreshold*1.15 ? 4.5 : data.grossMargin/100 >= gmThreshold ? 4 : data.grossMargin/100 >= gmThreshold*0.75 ? 3 : data.grossMargin/100 >= gmThreshold*0.5 ? 2 : 1;
+        const omScore = data.opMargin == null ? 2.5 : data.opMargin/100 >= omThreshold*2 ? 5 : data.opMargin/100 >= omThreshold*1.5 ? 4.5 : data.opMargin/100 >= omThreshold ? 4 : data.opMargin/100 >= omThreshold*0.65 ? 3 : data.opMargin/100 > 0 ? 2 : 1;
+        const deScore = data.debtToEquity == null ? 2.5 : data.debtToEquity < 0.3 ? 5 : data.debtToEquity < 0.7 ? 4.5 : data.debtToEquity < 1.2 ? 4 : data.debtToEquity < 2 ? 3 : data.debtToEquity < 3 ? 2 : 1;
+        const cbs = (roicScore*0.4 + gmScore*0.25 + omScore*0.25 + deScore*0.1);
+        const pfcfScore = data.pfcf == null || data.pfcf <= 0 ? 1 : data.pfcf < 12 ? 5 : data.pfcf < 18 ? 4.5 : data.pfcf < 25 ? 4 : data.pfcf < 35 ? 3 : data.pfcf < 50 ? 2 : 1;
+        const fcfYieldScore = data.fcfYield == null ? 1 : data.fcfYield > 8 ? 5 : data.fcfYield > 5 ? 4.5 : data.fcfYield > 3 ? 4 : data.fcfYield > 1.5 ? 3 : data.fcfYield > 0 ? 2 : 1;
+        const oppo = (pfcfScore*0.55 + fcfYieldScore*0.45);
+        const revGrowthScore = data.revGrowth == null ? 2.5 : data.revGrowth > 25 ? 5 : data.revGrowth > 15 ? 4.5 : data.revGrowth > 8 ? 4 : data.revGrowth > 3 ? 3 : data.revGrowth > 0 ? 2 : 1;
+        const fcfTrend = data.fcfHistory?.length >= 3 ? data.fcfHistory[data.fcfHistory.length-1]?.val > data.fcfHistory[0]?.val ? 1 : 0 : null;
+        const marginTrend = data.marginHistory?.length >= 3 ? (data.marginHistory[data.marginHistory.length-1]?.margin||0) > (data.marginHistory[0]?.margin||0) ? 1 : 0 : null;
+        const trendBonus = (fcfTrend===1?0.5:0)+(marginTrend===1?0.5:0);
+        const gqs = Math.min(5, revGrowthScore*0.6 + (2.5+trendBonus*2)*0.4);
+        const finalNote = +((cbs*0.45 + oppo*0.30 + gqs*0.25)).toFixed(1);
+        const c = finalNote >= 4 ? 'var(--green)' : finalNote >= 3 ? 'var(--accent)' : 'var(--red)';
+        return (
+          <div style={{ position: 'relative' }}>
+            <div style={{ position: 'absolute', inset: '-12px', borderRadius: '50%', background: c, opacity: 0.12, filter: 'blur(16px)' }} />
+            <div style={{ position: 'relative', border: `1px solid ${c}`, padding: '12px 20px', textAlign: 'center' }}>
+              <div style={{ color: 'var(--text-3)', fontSize: '9px', letterSpacing: '2px', marginBottom: '4px' }}>FINAL NOTE</div>
+              <div style={{ color: c, fontSize: '40px', fontWeight: 700, letterSpacing: '-2px', lineHeight: 1 }}>{finalNote}</div>
+              <div style={{ color: 'var(--text-3)', fontSize: '9px', marginTop: '4px' }}>/ 5.0</div>
             </div>
+          </div>
+        );
+      })()}
+    </>
+  ) : (
+    <>
+      <div style={{ fontSize: '28px', fontWeight: 600 }}>{fmt(data.marketCap)}</div>
+      <div style={{ color: 'var(--text-3)', fontSize: '10px' }}>MARKET CAP</div>
+    </>
+  )}
+</div>
           </div>
 
           {/* OVERVIEW TAB */}
