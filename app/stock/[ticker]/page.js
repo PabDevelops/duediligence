@@ -2,6 +2,7 @@
 import { useState, useEffect, use } from 'react';
 import { BarChart, Bar, LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell } from 'recharts';
 import PriceChart from './chart';
+import StockChart from '../../components/StockChart';
 
 const fmt = (val) => {
   if (val === null || val === undefined) return 'N/A';
@@ -419,7 +420,7 @@ export default function StockPage({ params }) {
               {/* Chart + multiples */}
               <div style={{ display: 'flex', gap: '1px', background: 'var(--border)', marginBottom: '24px' }}>
                 <div style={{ flex: 1, background: 'var(--bg-1)' }}>
-                  <PriceChart ticker={ticker} />
+                  <StockChart ticker={ticker} />
                 </div>
                 <div style={{ width: '220px', background: 'var(--bg-1)', padding: '16px', flexShrink: 0 }}>
                   <div style={{ color: 'var(--text-3)', fontSize: '10px', letterSpacing: '2px', marginBottom: '12px' }}>VALUATION & MULTIPLES</div>
