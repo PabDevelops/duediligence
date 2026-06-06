@@ -1,5 +1,5 @@
 'use client';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 
 const fmt = (val) => {
@@ -12,23 +12,7 @@ const fmt = (val) => {
 const fmtP = (v) => v !== null && v !== undefined ? `${v}%` : '—';
 const fmtN = (v, d = 1) => v !== null && v !== undefined ? v.toFixed(d) : '—';
 
-const SECTORS = ['All', 'Technology', 'Healthcare', 'Financials', 'Industrials', 'Consumer Cyclical', 'Consumer Defensive', 'Energy', 'Materials', 'Real Estate', 'Utilities', 'Communication Services'];
-const mapSector = (industry) => {
-  if (!industry) return null;
-  const i = industry.toLowerCase();
-  if (i.includes('semiconductor') || i.includes('software') || i.includes('hardware') || i.includes('tech') || i.includes('electronic') || i.includes('internet')) return 'Technology';
-  if (i.includes('drug') || i.includes('biotech') || i.includes('medical') || i.includes('health') || i.includes('pharma') || i.includes('hospital')) return 'Healthcare';
-  if (i.includes('bank') || i.includes('insurance') || i.includes('financial') || i.includes('asset') || i.includes('investment') || i.includes('credit')) return 'Financials';
-  if (i.includes('aerospace') || i.includes('defense') || i.includes('industrial') || i.includes('machinery') || i.includes('engineering') || i.includes('construction')) return 'Industrials';
-  if (i.includes('retail') || i.includes('auto') || i.includes('apparel') || i.includes('restaurant') || i.includes('hotel') || i.includes('travel') || i.includes('entertainment')) return 'Consumer Cyclical';
-  if (i.includes('food') || i.includes('beverage') || i.includes('tobacco') || i.includes('household') || i.includes('consumer staple') || i.includes('grocery')) return 'Consumer Defensive';
-  if (i.includes('oil') || i.includes('gas') || i.includes('energy') || i.includes('coal') || i.includes('refin')) return 'Energy';
-  if (i.includes('chemical') || i.includes('mining') || i.includes('metal') || i.includes('material') || i.includes('paper') || i.includes('gold') || i.includes('silver')) return 'Materials';
-  if (i.includes('reit') || i.includes('real estate') || i.includes('property')) return 'Real Estate';
-  if (i.includes('utility') || i.includes('utilities') || i.includes('electric') || i.includes('water') || i.includes('gas util')) return 'Utilities';
-  if (i.includes('telecom') || i.includes('communication') || i.includes('media') || i.includes('broadcasting') || i.includes('social')) return 'Communication Services';
-  return null;
-};
+const SECTORS = ['All'];
 
 export default function Screener() {
   const router = useRouter();
@@ -37,7 +21,11 @@ export default function Screener() {
   const [sector, setSector] = useState('All');
   const [sortBy, setSortBy] = useState('marketCap');
   const [sortDir, setSortDir] = useState('desc');
+  const tableRef = useRef(null);
   const [search, setSearch] = useState('');
+  useEffect(() => {
+  if (tableRef.current) tableRef.current.scrollTop = 0;
+}, [search, sector]);
   const [filters, setFilters] = useState({
     minMargin: '', maxPE: '', minFCFYield: '', minRevGrowth: '',
   });
@@ -50,7 +38,7 @@ export default function Screener() {
   }, []);
 
   const filtered = stocks
-    .filter(s => sector === 'All' || mapSector(s.sector) === sector)
+    .filter(s => sector === 'All' || s.sector === sector)
     .filter(s => !search || s.ticker.includes(search.toUpperCase()) || s.name?.toUpperCase().includes(search.toUpperCase()))
     .filter(s => filters.minMargin === '' || (s.opMargin !== null && s.opMargin >= Number(filters.minMargin)))
     .filter(s => filters.maxPE === '' || (s.pe !== null && s.pe > 0 && s.pe <= Number(filters.maxPE)))
@@ -101,12 +89,12 @@ export default function Screener() {
 
           <div style={{ marginBottom: '16px' }}>
             <div style={{ color: 'var(--text-3)', fontSize: '10px', marginBottom: '6px' }}>SECTOR</div>
-            {SECTORS.map(s => (
-              <button key={s} onClick={() => setSector(s)}
-                style={{ display: 'block', width: '100%', textAlign: 'left', padding: '4px 8px', fontSize: '10px', background: 'none', border: 'none', cursor: 'pointer', fontFamily: 'IBM Plex Mono, monospace', color: sector === s ? 'var(--accent)' : 'var(--text-3)', borderLeft: sector === s ? '2px solid var(--accent)' : '2px solid transparent' }}>
-                {s}
-              </button>
-            ))}
+            {['All', ...new Set(stocks.map(s => s.sector).filter(Boolean))].sort().map(sec => (
+  <button key={sec} onClick={() => setSector(sec)}
+    style={{ display: 'block', width: '100%', textAlign: 'left', padding: '4px 8px', fontSize: '10px', background: 'none', border: 'none', cursor: 'pointer', fontFamily: 'IBM Plex Mono, monospace', color: sector === sec ? 'var(--accent)' : 'var(--text-3)', borderLeft: sector === sec ? '2px solid var(--accent)' : '2px solid transparent' }}>
+    {sec}
+  </button>
+))}
           </div>
 
           <div style={{ borderTop: '1px solid var(--border)', paddingTop: '16px' }}>
@@ -136,7 +124,7 @@ export default function Screener() {
         </div>
 
         {/* Table */}
-        <div style={{ flex: 1, overflow: 'auto' }}>
+        <div ref={tableRef} style={{ flex: 1, overflow: 'auto', minHeight: '100vh' }}>
           {loading ? (
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '400px', color: 'var(--text-3)', fontSize: '11px', letterSpacing: '2px' }}>
               LOADING SCREENER DATA...
@@ -157,7 +145,7 @@ export default function Screener() {
             </div>
           ) : (
             <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '11px' }}>
-              <thead style={{ position: 'sticky', top: '33px', background: 'var(--bg)' }}>
+              <thead style={{ position: 'sticky', top: 0, background: 'var(--bg)' }}>
                 <tr style={{ borderBottom: '1px solid var(--border)' }}>
                   <th style={{ padding: '8px 12px', textAlign: 'left', fontWeight: 400, fontSize: '10px', letterSpacing: '1px', color: 'var(--text-3)', width: '120px' }}>TICKER</th>
                   <th style={{ padding: '8px 12px', textAlign: 'left', fontWeight: 400, fontSize: '10px', letterSpacing: '1px', color: 'var(--text-3)' }}>NAME</th>
@@ -176,9 +164,9 @@ export default function Screener() {
                 {filtered.map((s, i) => (
                   <tr key={s.ticker}
                     onClick={() => router.push(`/stock/${s.ticker}`)}
-                    style={{ borderBottom: '1px solid var(--border)', cursor: 'pointer', background: i % 2 === 0 ? 'var(--bg)' : 'var(--bg-1)' }}
+                    style={{ borderBottom: '1px solid var(--border)', cursor: 'pointer', background: 'var(--bg-1)' }}
                     onMouseEnter={e => e.currentTarget.style.background = 'var(--bg-2)'}
-                    onMouseLeave={e => e.currentTarget.style.background = i % 2 === 0 ? 'var(--bg)' : 'var(--bg-1)'}>
+onMouseLeave={e => e.currentTarget.style.background = 'var(--bg-1)'}>
                     <td style={{ padding: '8px 12px' }}>
                       <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                         <div style={{ width: '24px', height: '24px', background: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden', flexShrink: 0 }}>

@@ -11,7 +11,6 @@ export async function GET(request) {
     return Response.json({ error: 'Ticker requerido' }, { status: 400 });
   }
 
-  // Verificar caché
   try {
     const { data: cached } = await supabase
       .from('stock_cache')
@@ -28,7 +27,6 @@ export async function GET(request) {
   } catch (e) {}
 
   try {
-    // SEC EDGAR
     const tickerRes = await fetch(
       'https://www.sec.gov/files/company_tickers.json',
       { headers: { 'User-Agent': 'DueDiligenceApp contact@example.com' } }
@@ -82,6 +80,20 @@ export async function GET(request) {
     const shares = getMetric(['CommonStockSharesOutstanding', 'WeightedAverageNumberOfSharesOutstandingBasic']);
     const grossProfit = getMetric(['GrossProfit']);
     const rd = getMetric(['ResearchAndDevelopmentExpense']);
+    const cogs = getMetric(['CostOfRevenue', 'CostOfGoodsAndServicesSold']);
+    const sga = getMetric(['SellingGeneralAndAdministrativeExpense', 'SellingAndMarketingExpense']);
+    const ebt = getMetric(['IncomeLossFromContinuingOperationsBeforeIncomeTaxesExtraordinaryItemsNoncontrollingInterest']);
+    const tax = getMetric(['IncomeTaxExpenseBenefit']);
+    const interestExp = getMetric(['InterestExpense', 'InterestAndDebtExpense']);
+    const sharesBasic = getMetric(['WeightedAverageNumberOfSharesOutstandingBasic']);
+    const sharesDiluted = getMetric(['WeightedAverageNumberOfDilutedSharesOutstanding']);
+    const currentAssets = getMetric(['AssetsCurrent']);
+    const currentLiabilities = getMetric(['LiabilitiesCurrent']);
+    const totalLiabilities = getMetric(['Liabilities']);
+    const retainedEarnings = getMetric(['RetainedEarningsAccumulatedDeficit']);
+    const capex = getMetric(['PaymentsToAcquirePropertyPlantAndEquipment']);
+    const investingActivities = getMetric(['NetCashProvidedByUsedInInvestingActivities']);
+    const financingActivities = getMetric(['NetCashProvidedByUsedInFinancingActivities']);
 
     const latest = (arr) => arr?.[0]?.val ?? null;
     const prev = (arr) => arr?.[1]?.val ?? null;
@@ -98,6 +110,20 @@ export async function GET(request) {
     const sharesVal = latest(shares);
     const gpVal = latest(grossProfit);
     const rdVal = latest(rd);
+    const cogsVal = latest(cogs);
+    const sgaVal = latest(sga);
+    const ebtVal = latest(ebt);
+    const taxVal = latest(tax);
+    const interestVal = latest(interestExp);
+    const sharesBasicVal = latest(sharesBasic);
+    const sharesDilutedVal = latest(sharesDiluted);
+    const currentAssetsVal = latest(currentAssets);
+    const currentLiabilitiesVal = latest(currentLiabilities);
+    const totalLiabilitiesVal = latest(totalLiabilities);
+    const retainedEarningsVal = latest(retainedEarnings);
+    const capexVal = latest(capex);
+    const investingCFVal = latest(investingActivities);
+    const financingCFVal = latest(financingActivities);
 
     const opMargin = revVal && oiVal ? +((oiVal / revVal) * 100).toFixed(1) : null;
     const netMargin = revVal && niVal ? +((niVal / revVal) * 100).toFixed(1) : null;
@@ -107,14 +133,30 @@ export async function GET(request) {
     const roa = assetsVal && niVal ? +((niVal / assetsVal) * 100).toFixed(1) : null;
     const debtToEquity = equityVal && debtVal ? +(debtVal / equityVal).toFixed(2) : null;
     const netDebt = debtVal && cashVal ? debtVal - cashVal : null;
+    const roic = equityVal && debtVal && oiVal ? +((oiVal / (equityVal + debtVal)) * 100).toFixed(1) : null;
 
-    const buildHistory = (arr) => arr?.slice(0, 5).reverse().map(r => ({ year: r.end.slice(0, 4), val: r.val })) || [];
+    const buildHistory = (arr) => arr?.slice(0, 6).reverse().map(r => ({ year: r.end.slice(0, 4), val: r.val })) || [];
+
     const revHistory = buildHistory(revenues);
     const niHistory = buildHistory(netIncomes);
     const fcfHistory = buildHistory(cashFlows);
     const oiHistory = buildHistory(operatingIncomes);
     const sharesHistory = buildHistory(shares);
     const gpHistory = buildHistory(grossProfit);
+    const cogsHistory = buildHistory(cogs);
+    const sgaHistory = buildHistory(sga);
+    const rdHistory = buildHistory(rd);
+    const ebtHistory = buildHistory(ebt);
+    const taxHistory = buildHistory(tax);
+    const sharesBasicHistory = buildHistory(sharesBasic);
+    const sharesDilutedHistory = buildHistory(sharesDiluted);
+    const currentAssetsHistory = buildHistory(currentAssets);
+    const currentLiabilitiesHistory = buildHistory(currentLiabilities);
+    const totalLiabilitiesHistory = buildHistory(totalLiabilities);
+    const capexHistory = buildHistory(capex);
+    const operatingCFHistory = buildHistory(cashFlows);
+    const investingCFHistory = buildHistory(investingActivities);
+    const financingCFHistory = buildHistory(financingActivities);
 
     const marginHistory = revHistory.map((r, i) => {
       const oi = oiHistory[i];
@@ -128,7 +170,6 @@ export async function GET(request) {
       ? +(((sharesLatest - sharesOldest) / sharesOldest) * 100).toFixed(1)
       : null;
 
-    // Finnhub — precio, métricas y perfil
     const [fhRes, fhBasicRes, fhProfileRes] = await Promise.all([
       fetch(`https://finnhub.io/api/v1/quote?symbol=${ticker}&token=${FH_KEY}`),
       fetch(`https://finnhub.io/api/v1/stock/metric?symbol=${ticker}&metric=all&token=${FH_KEY}`),
@@ -156,7 +197,6 @@ export async function GET(request) {
     const marketCapCalc = currentPrice && sharesForCalc ? currentPrice * sharesForCalc : null;
     const pfcfCalc = marketCapCalc && fcfVal && fcfVal > 0 ? +(marketCapCalc / fcfVal).toFixed(1) : null;
     const fcfYield = marketCapCalc && fcfVal ? +((fcfVal / marketCapCalc) * 100).toFixed(2) : null;
-    const roic = equityVal && debtVal && oiVal ? +((oiVal / (equityVal + debtVal)) * 100).toFixed(1) : null;
 
     const epsHistory = niHistory.map((ni, i) => {
       const sh = sharesHistory[i];
@@ -187,9 +227,16 @@ export async function GET(request) {
       employees: fhProfile.employeeTotal || null,
       weburl: fhProfile.weburl || null,
       revVal, niVal, oiVal, fcfVal, assetsVal, equityVal, debtVal, cashVal, sharesVal, rdVal,
+      cogsVal, sgaVal, ebtVal, taxVal, interestVal, sharesBasicVal, sharesDilutedVal,
+      currentAssetsVal, currentLiabilitiesVal, totalLiabilitiesVal, retainedEarningsVal,
+      capexVal, investingCFVal, financingCFVal,
       opMargin, netMargin, grossMargin, revGrowth, roe, roa, debtToEquity, netDebt, roic,
       revHistory, niHistory, fcfHistory, oiHistory,
       sharesHistory, gpHistory, marginHistory, shareDilution,
+      cogsHistory, sgaHistory, rdHistory, ebtHistory, taxHistory,
+      sharesBasicHistory, sharesDilutedHistory,
+      currentAssetsHistory, currentLiabilitiesHistory, totalLiabilitiesHistory,
+      capexHistory, operatingCFHistory, investingCFHistory, financingCFHistory,
       epsCagr, epsHistory,
       currentPrice, priceChange, priceChangePct, prevClose,
       eps: epsCalc, pe: peCalc, marketCap: marketCapCalc, pfcf: pfcfCalc, fcfYield,
@@ -197,9 +244,9 @@ export async function GET(request) {
       sharesOutstanding: sharesForCalc,
       dividendYield: fhBasic?.metric?.dividendYieldIndicatedAnnual || null,
       analystTarget: null,
+      operatingCFVal: fcfVal,
     };
 
-    // Guardar en caché
     try {
       await supabase
         .from('stock_cache')
