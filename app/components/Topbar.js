@@ -30,6 +30,7 @@ export default function Topbar() {
         {navItem('/', 'HOME')}
         {navItem('/screener', 'SCREENER')}
         {navItem('/compare', 'COMPARE')}
+        {navItem('/pricing', 'PRICING')}
         <span style={{ color: 'var(--text-3)', fontSize: '11px' }}>{new Date().toISOString().slice(0, 10)} · SEC EDGAR · FINNHUB</span>
         {useUser().isSignedIn ? (
           <UserButton afterSignOutUrl="/" />
