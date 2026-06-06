@@ -1,6 +1,7 @@
 'use client';
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
+import MarketBar from './components/MarketBar';
 
 export default function Home() {
   const [ticker, setTicker] = useState('');
@@ -31,6 +32,11 @@ export default function Home() {
   <span style={{ color: 'var(--text-3)' }}>{new Date().toISOString().slice(0, 10)} · SEC EDGAR · FINNHUB</span>
         </div>
       </div>
+
+      {/* Market bar */}
+<MarketBar />
+
+{/* Hero */}
 
       {/* Hero */}
       <div style={{ maxWidth: '900px', margin: '0 auto', padding: '80px 24px 60px' }}>
