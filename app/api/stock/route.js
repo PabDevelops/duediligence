@@ -171,6 +171,7 @@ export async function GET(request) {
     const receivables   = getMetric(['AccountsReceivableNetCurrent','ReceivablesNetCurrent']);
     const payables      = getMetric(['AccountsPayableCurrent', 'AccountsPayable', 'AccountsPayableAndAccruedLiabilitiesCurrent']);
     const sbc           = getMetric(['ShareBasedCompensation','AllocatedShareBasedCompensationExpense']);
+    const da            = getMetric(['DepreciationDepletionAndAmortization','DepreciationAndAmortization','Depreciation']);
     const dividendsPaid = getMetric(['PaymentsOfDividends','PaymentsOfDividendsCommonStock']);
     const investingActivities = getMetric(['NetCashProvidedByUsedInInvestingActivities']);
     const financingActivities = getMetric(['NetCashProvidedByUsedInFinancingActivities']);
@@ -217,6 +218,7 @@ export async function GET(request) {
     const receivablesVal = latest(receivables);
     const payablesVal = latest(payables);
     const sbcVal   = latest(sbc);
+    const daVal    = latest(da);
     const dividendsPaidVal = latest(dividendsPaid);
     const investingCFVal = latest(investingActivities);
     const financingCFVal = latest(financingActivities);
@@ -299,8 +301,10 @@ const sharesForCalc = sharesValAdj || sharesFinnhub;
     const marketCapCalc = currentPrice && sharesForCalc ? currentPrice * sharesForCalc : null;
     const marketCapFinnhub = fhProfile?.marketCapitalization ? fhProfile.marketCapitalization * 1e6 : null;
     const marketCapFinal = marketCapFinnhub || marketCapCalc;
+    const ebitdaCalc   = oiVal != null && daVal != null ? oiVal + daVal : null;
     const ebitdaFh     = fhBasic?.metric?.ebitdaTTM ? fhBasic.metric.ebitdaTTM * 1e6 : (fhBasic?.metric?.ebitdaAnnual ? fhBasic.metric.ebitdaAnnual * 1e6 : null);
-    const evEbitda     = marketCapFinal != null && ebitdaFh ? +((marketCapFinal + netDebt) / ebitdaFh).toFixed(1) : null;
+    const ebitdaFinal  = ebitdaCalc ?? ebitdaFh;
+    const evEbitda     = marketCapFinal != null && ebitdaFinal ? +((marketCapFinal + netDebt) / ebitdaFinal).toFixed(1) : null;
     const priceToBook  = marketCapFinal && equityVal && equityVal > 0 ? +(marketCapFinal / equityVal).toFixed(2) : null;
 
     const epsHistory = niHistory.map((ni, i) => {

@@ -407,7 +407,6 @@ export default function StockPage({ params }) {
           {[
             { label: 'Market Cap', val: fmt(data.marketCap) },
             { label: 'P/E', val: fmtN(data.pe), color: data.pe > 0 && data.pe < 20 ? 'var(--green)' : data.pe > 40 ? 'var(--red)' : 'var(--text)' },
-            { label: 'Forward P/E', val: fmtN(data.forwardPE) },
             { label: 'P/FCF', val: fmtN(data.pfcf), color: data.pfcf > 0 && data.pfcf < 20 ? 'var(--green)' : data.pfcf > 40 ? 'var(--red)' : 'var(--text)' },
             { label: 'EV/EBITDA', val: fmtN(data.evEbitda) },
             { label: 'P/B', val: fmtN(data.priceToBook) },
