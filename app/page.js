@@ -82,7 +82,15 @@ export default function Home() {
   const [movers, setMovers] = useState(null);
   const [earnings, setEarnings] = useState(null);
   const [blink, setBlink] = useState(true);
+  const [isMobile, setIsMobile] = useState(false);
   const router = useRouter();
+
+  useEffect(() => {
+    const check = () => setIsMobile(window.innerWidth < 768);
+    check();
+    window.addEventListener('resize', check);
+    return () => window.removeEventListener('resize', check);
+  }, []);
 
   useEffect(() => {
     fetch('/api/movers').then(r => r.json()).then(d => setMovers(d)).catch(() => {});
@@ -101,6 +109,108 @@ export default function Home() {
     <main style={{ background: 'var(--bg)', minHeight: '100vh', color: 'var(--text)', fontFamily: 'IBM Plex Mono, monospace' }}>
       <Topbar />
       <MarketBar />
+      {isMobile && (
+        <div style={{ background: 'var(--bg-1)', borderBottom: '1px solid var(--accent)', padding: '10px 16px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+          <span style={{ color: 'var(--accent)', fontSize: '11px' }}>⚠</span>
+          <span style={{ color: 'var(--text-2)', fontSize: '10px', letterSpacing: '0.5px', lineHeight: 1.5 }}>
+            Traqcker is designed as a desktop terminal. For the best experience, open on a computer.
+          </span>
+        </div>
+      )}
+
+      {isMobile && (
+        <div style={{ padding: '24px 16px' }}>
+          <div style={{ marginBottom: '32px' }}>
+            <h1 style={{ fontSize: '32px', fontWeight: 700, letterSpacing: '-1px', lineHeight: 1.1, marginBottom: '16px' }}>
+              Fundamental<br />analysis<span style={{ color: 'var(--accent)' }}>.</span><br />
+              <span style={{ color: 'var(--accent)' }}>Without noise.</span>
+            </h1>
+            <p style={{ color: 'var(--text-2)', fontSize: '12px', lineHeight: 1.8, marginBottom: '24px' }}>
+              Primary data from SEC EDGAR. No opinions. No buy/sell calls.
+            </p>
+            <div style={{ display: 'flex', gap: '0', marginBottom: '16px' }}>
+              <input
+                style={{ flex: 1, background: 'var(--bg-2)', border: '1px solid var(--border-2)', borderRight: 'none', color: 'var(--accent)', fontFamily: 'IBM Plex Mono, monospace', fontSize: '18px', fontWeight: 700, padding: '12px 16px', outline: 'none', letterSpacing: '3px' }}
+                placeholder="AAPL"
+                value={ticker}
+                onChange={e => setTicker(e.target.value.toUpperCase())}
+                onKeyDown={e => e.key === 'Enter' && go()}
+                maxLength={6}
+              />
+              <button onClick={() => go()}
+                style={{ background: 'var(--accent)', color: '#000', border: 'none', padding: '12px 20px', fontFamily: 'IBM Plex Mono, monospace', fontSize: '12px', fontWeight: 700, cursor: 'pointer', letterSpacing: '1px' }}>
+                GO →
+              </button>
+            </div>
+            <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', marginBottom: '24px' }}>
+              {['AAPL', 'MSFT', 'NVDA', 'V', 'GOOGL'].map(t => (
+                <button key={t} onClick={() => go(t)}
+                  style={{ background: 'none', border: '1px solid var(--border)', color: 'var(--text-3)', padding: '4px 10px', fontFamily: 'IBM Plex Mono, monospace', fontSize: '10px', cursor: 'pointer', letterSpacing: '1px' }}>
+                  {t}
+                </button>
+              ))}
+            </div>
+            <div style={{ display: 'flex', gap: '10px' }}>
+              <a href="/sign-up" style={{ flex: 1, background: 'var(--accent)', color: '#000', padding: '12px', fontFamily: 'IBM Plex Mono, monospace', fontSize: '11px', fontWeight: 700, letterSpacing: '1px', textDecoration: 'none', textAlign: 'center' }}>
+                START FREE →
+              </a>
+              <a href="/pricing" style={{ flex: 1, background: 'none', border: '1px solid var(--border)', color: 'var(--text-3)', padding: '12px', fontFamily: 'IBM Plex Mono, monospace', fontSize: '11px', letterSpacing: '1px', textDecoration: 'none', textAlign: 'center' }}>
+                PRICING
+              </a>
+            </div>
+          </div>
+
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1px', background: 'var(--border)', marginBottom: '24px' }}>
+            {[
+              { icon: '◈', title: 'QUALITY SCORE', desc: 'Sector-adjusted scoring' },
+              { icon: '◎', title: 'DCF VALUATION', desc: 'Graham formula' },
+              { icon: '⊞', title: 'SCREENER', desc: '8,000+ US stocks' },
+              { icon: '⊟', title: 'COMPARE', desc: 'Side-by-side analysis' },
+            ].map(f => (
+              <div key={f.title} style={{ background: 'var(--bg-1)', padding: '16px' }}>
+                <div style={{ color: 'var(--accent)', fontSize: '20px', marginBottom: '6px' }}>{f.icon}</div>
+                <div style={{ color: 'var(--text)', fontSize: '10px', fontWeight: 700, letterSpacing: '1px', marginBottom: '4px' }}>{f.title}</div>
+                <div style={{ color: 'var(--text-3)', fontSize: '10px', lineHeight: 1.5 }}>{f.desc}</div>
+              </div>
+            ))}
+          </div>
+
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1px', background: 'var(--border)', marginBottom: '24px' }}>
+            {[
+              { val: '8,000+', label: 'US STOCKS' },
+              { val: '15', label: 'DD QUESTIONS' },
+              { val: '5', label: 'DIMENSIONS' },
+              { val: 'FREE', label: 'TO START' },
+            ].map(s => (
+              <div key={s.label} style={{ background: 'var(--bg-1)', padding: '16px', textAlign: 'center' }}>
+                <div style={{ color: 'var(--accent)', fontSize: '20px', fontWeight: 700 }}>{s.val}</div>
+                <div style={{ color: 'var(--text-3)', fontSize: '9px', letterSpacing: '2px', marginTop: '4px' }}>{s.label}</div>
+              </div>
+            ))}
+          </div>
+
+          {movers && (
+            <div style={{ marginBottom: '24px' }}>
+              <div style={{ color: 'var(--text-3)', fontSize: '9px', letterSpacing: '3px', marginBottom: '8px' }}>MARKET DATA</div>
+              <div style={{ background: 'var(--bg-1)', border: '1px solid var(--border)' }}>
+                <TableHeader title="▲ TOP GAINERS" color="var(--green)" />
+                {movers.gainers.slice(0, 5).map(s => <MoverRow key={s.ticker} s={s} router={router} />)}
+              </div>
+            </div>
+          )}
+
+          <div style={{ borderTop: '1px solid var(--border)', paddingTop: '16px', color: 'var(--text-3)', fontSize: '9px', letterSpacing: '1px', textAlign: 'center' }}>
+            <div style={{ display: 'flex', gap: '16px', justifyContent: 'center', marginBottom: '8px' }}>
+              <a href="/privacy" style={{ color: 'var(--text-3)', textDecoration: 'none' }}>PRIVACY</a>
+              <a href="/terms" style={{ color: 'var(--text-3)', textDecoration: 'none' }}>TERMS</a>
+              <a href="/about" style={{ color: 'var(--text-3)', textDecoration: 'none' }}>ABOUT</a>
+            </div>
+            NOT INVESTMENT ADVICE · © 2026 TRAQCKER
+          </div>
+        </div>
+      )}
+
+      {!isMobile && <>
       {/* Ticker tape */}
       <div style={{ borderBottom: '1px solid var(--border)', background: 'var(--bg-1)', overflow: 'hidden', whiteSpace: 'nowrap', padding: '6px 0' }}>
         <style>{`
@@ -211,7 +321,7 @@ export default function Home() {
 
       {/* STATS BAR */}
       <div style={{ borderBottom: '1px solid var(--border)', background: 'var(--bg-1)' }}>
-        <div className="stats-bar" style={{ maxWidth: '1400px', margin: '0 auto', padding: '16px 24px', display: 'flex', gap: '48px', alignItems: 'center' }}>
+        <div style={{ maxWidth: '1400px', margin: '0 auto', padding: '16px 24px', display: 'flex', gap: '48px', alignItems: 'center' }}>
           {[
             { val: '8,000+', label: 'US STOCKS' },
             { val: '15', label: 'DD QUESTIONS' },
@@ -253,7 +363,7 @@ export default function Home() {
             </div>
 
             {/* Rankings */}
-            <div className="rankings-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '1px', background: 'var(--border)', marginBottom: '48px' }}>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '1px', background: 'var(--border)', marginBottom: '48px' }}>
               {[
                 { title: 'TOP ROIC', data: movers.topRoic, metric: 'roic', suffix: '%' },
                 { title: 'TOP FCF YIELD', data: movers.topFcfYield, metric: 'fcfYield', suffix: '%' },
@@ -345,6 +455,8 @@ export default function Home() {
           <div style={{ letterSpacing: '1px' }}>DATA: SEC EDGAR · FINNHUB · YAHOO FINANCE · NOT INVESTMENT ADVICE · © 2026 TRAQCKER</div>
         </div>
       </div>
+    </>}
+
     </main>
   );
 }
