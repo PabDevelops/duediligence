@@ -40,6 +40,8 @@ export default function Pricing() {
           <span style={{ color: 'var(--green)', fontSize: '10px' }}>●</span>
           <span style={{ color: 'var(--text-2)', fontSize: '11px', letterSpacing: '1px' }}>BETA LAUNCH — Payments launching very soon. Sign up free now and get early access to Pro.</span>
         </div>
+
+        <div style={{ textAlign: 'center', marginBottom: '48px' }}>
           <div style={{ color: 'var(--accent)', fontSize: '10px', letterSpacing: '3px', marginBottom: '12px' }}>PLANS & PRICING</div>
           <h1 style={{ fontSize: '36px', fontWeight: 600, letterSpacing: '-1px', marginBottom: '12px' }}>
             Serious analysis.<br /><span style={{ color: 'var(--accent)' }}>Serious tools.</span>
