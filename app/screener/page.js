@@ -2,6 +2,8 @@
 import { useState, useEffect, useRef } from 'react';
 import Sparkline from '../components/Sparkline';
 import { useRouter } from 'next/navigation';
+import { useUser } from '@clerk/nextjs';
+import Topbar from '../components/Topbar';
 
 const fmt = (val) => {
   if (val === null || val === undefined) return '—';
@@ -43,9 +45,11 @@ const loadSparkline = async (ticker) => {
       .then(d => setIsPro(d.isPro))
       .catch(() => {});
   }, []);
+
   useEffect(() => {
-  if (tableRef.current) tableRef.current.scrollTop = 0;
-}, [search, sector]);
+    if (tableRef.current) tableRef.current.scrollTop = 0;
+  }, [search, sector]);
+
   const [filters, setFilters] = useState({
     minMargin: '', maxPE: '', minFCFYield: '', minRevGrowth: '',
   });
@@ -92,17 +96,9 @@ const loadSparkline = async (ticker) => {
   return (
     <div style={{ background: 'var(--bg)', minHeight: '100vh', color: 'var(--text)', fontFamily: 'IBM Plex Mono, monospace' }}>
 
-      {/* Topbar */}
-      <div style={{ borderBottom: '1px solid var(--border)', padding: '8px 16px', display: 'flex', alignItems: 'center', gap: '12px', position: 'sticky', top: 0, background: 'var(--bg)', zIndex: 10, fontSize: '11px' }}>
-        <a href="/" style={{ textDecoration: 'none' }}>
-  <img src="/logo.png" alt="Traqcker" style={{ height: '20px', objectFit: 'contain' }} />
-</a>
-        <span style={{ color: 'var(--border-2)' }}>|</span>
-        <a href="/screener" style={{ color: 'var(--accent)', fontSize: '11px', letterSpacing: '1px', textDecoration: 'none' }}>SCREENER</a>
-        <span style={{ color: 'var(--border-2)' }}>·</span>
-        <a href="/compare" style={{ color: 'var(--text-3)', fontSize: '11px', letterSpacing: '1px', textDecoration: 'none' }}
-          onMouseEnter={e => e.target.style.color = 'var(--accent)'}
-          onMouseLeave={e => e.target.style.color = 'var(--text-3)'}>COMPARE</a>
+      <Topbar />
+      {/* Search bar */}
+      <div style={{ borderBottom: '1px solid var(--border)', padding: '8px 16px', display: 'flex', alignItems: 'center', gap: '12px', background: 'var(--bg)', fontSize: '11px' }}>
         <div style={{ flex: 1 }}>
           <input
             style={{ background: 'var(--bg-2)', border: '1px solid var(--border)', color: 'var(--text)', fontFamily: 'IBM Plex Mono, monospace', fontSize: '11px', padding: '4px 10px', width: '220px', outline: 'none', letterSpacing: '1px' }}
