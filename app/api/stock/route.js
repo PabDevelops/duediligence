@@ -33,7 +33,76 @@ export async function GET(request) {
     );
     const tickerData = await tickerRes.json();
     const company = Object.values(tickerData).find(c => c.ticker.toUpperCase() === ticker);
-    if (!company) return Response.json({ error: 'Ticker no encontrado' }, { status: 404 });
+    
+    if (!company) {
+      // Fallback a Finnhub para stocks no en SEC EDGAR
+      const [fhRes, fhBasicRes, fhProfileRes] = await Promise.all([
+        fetch(`https://finnhub.io/api/v1/quote?symbol=${ticker}&token=${FH_KEY}`),
+        fetch(`https://finnhub.io/api/v1/stock/metric?symbol=${ticker}&metric=all&token=${FH_KEY}`),
+        fetch(`https://finnhub.io/api/v1/stock/profile2?symbol=${ticker}&token=${FH_KEY}`),
+      ]);
+
+      const fh = await fhRes.json();
+      const fhBasic = await fhBasicRes.json();
+      const fhProfile = await fhProfileRes.json();
+
+      if (!fh.c || !fhProfile.name) return Response.json({ error: 'Ticker no encontrado' }, { status: 404 });
+
+      const m = fhBasic?.metric || {};
+      const currentPrice = fh.c || null;
+      const sharesOutstanding = m.sharesOutstanding ? m.sharesOutstanding * 1e6 : null;
+      const marketCap = fhProfile.marketCapitalization ? fhProfile.marketCapitalization * 1e6 : null;
+      const eps = m.epsAnnual || m.epsTTM || null;
+      const pe = eps && currentPrice ? +(currentPrice / eps).toFixed(2) : null;
+
+      const result = {
+        name: fhProfile.name || ticker,
+        ticker,
+        cik: null,
+        sector: fhProfile.finnhubIndustry || null,
+        industry: fhProfile.finnhubIndustry || null,
+        exchange: fhProfile.exchange || null,
+        description: fhProfile.description || null,
+        currentPrice,
+        priceChange: fh.d || null,
+        priceChangePct: fh.dp || null,
+        prevClose: fh.pc || null,
+        marketCap,
+        eps,
+        pe,
+        forwardPE: null,
+        high52: m['52WeekHigh'] || null,
+        low52: m['52WeekLow'] || null,
+        beta: m.beta || null,
+        sharesOutstanding,
+        dividendYield: m.dividendYieldIndicatedAnnual || null,
+        grossMargin: m.grossMarginTTM || null,
+        opMargin: m.operatingMarginTTM || null,
+        netMargin: m.netProfitMarginTTM || null,
+        roe: m.roeTTM ? +(m.roeTTM * 100).toFixed(1) : null,
+        roa: m.roaTTM ? +(m.roaTTM * 100).toFixed(1) : null,
+        roic: m.roicTTM ? +(m.roicTTM * 100).toFixed(1) : null,
+        revGrowth: m.revenueGrowthTTMYoy ? +(m.revenueGrowthTTMYoy * 100).toFixed(1) : null,
+        debtToEquity: m.totalDebt_totalEquityAnnual || null,
+        revVal: null, niVal: null, oiVal: null, fcfVal: null,
+        assetsVal: null, equityVal: null, debtVal: null, cashVal: null,
+        netDebt: null, pfcf: null, fcfYield: null,
+        revHistory: [], niHistory: [], fcfHistory: [], oiHistory: [],
+        marginHistory: [], sharesHistory: [], gpHistory: [],
+        cogsHistory: [], sgaHistory: [], rdHistory: [], ebtHistory: [],
+        taxHistory: [], sharesBasicHistory: [], sharesDilutedHistory: [],
+        capexHistory: [], operatingCFHistory: [], investingCFHistory: [], financingCFHistory: [],
+        epsCagr: null, epsHistory: [],
+        analystTarget: null,
+        finnhubFallback: true,
+      };
+
+      try {
+        await supabase.from('stock_cache').upsert({ ticker, data: result, updated_at: new Date().toISOString() });
+      } catch (e) {}
+
+      return Response.json(result);
+    }
 
     const cik = String(company.cik_str).padStart(10, '0');
 
