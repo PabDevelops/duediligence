@@ -1,5 +1,6 @@
 import "./globals.css";
 import { ClerkProvider } from '@clerk/nextjs';
+import CookieBanner from './components/CookieBanner';
 
 export const metadata = {
   title: "Traqcker — Fundamental Stock Analysis",
@@ -16,7 +17,10 @@ export default function RootLayout({ children }) {
   return (
     <ClerkProvider publishableKey="pk_live_Y2xlcmsudHJhcWNrZXIuY29tJA">
       <html lang="en">
-        <body>{children}</body>
+        <body>
+          {children}
+          <CookieBanner />
+        </body>
       </html>
     </ClerkProvider>
   );
