@@ -2,8 +2,8 @@
 import { useState, useEffect } from 'react';
 import { useUser } from '@clerk/nextjs';
 import { useRouter } from 'next/navigation';
-import Topbar from '../../components/Topbar';
-import Sparkline from '../../components/Sparkline';
+import Topbar from '../components/Topbar';
+import Sparkline from '../components/Sparkline';
 
 const fmt = (val) => {
   if (val === null || val === undefined) return '—';

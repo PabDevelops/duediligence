@@ -1,6 +1,7 @@
 import "./globals.css";
 import { ClerkProvider } from '@clerk/nextjs';
 import CookieBanner from './components/CookieBanner';
+import WatchlistWidget from './components/WatchlistWidget';
 
 export const metadata = {
   title: "Traqcker — Fundamental Stock Analysis",
@@ -19,6 +20,7 @@ export default function RootLayout({ children }) {
       <html lang="en">
         <body>
           {children}
+          <WatchlistWidget />
           <CookieBanner />
         </body>
       </html>
