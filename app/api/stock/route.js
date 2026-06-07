@@ -118,7 +118,7 @@ export async function GET(request) {
       for (const key of keys) {
         const metric = usgaap[key];
         if (!metric) continue;
-        const units = metric.units?.USD || metric.units?.shares || metric.units?.pure;
+        const units = metric.units?.USD || metric.units?.EUR || metric.units?.shares || metric.units?.pure;
         if (!units) continue;
         const annual = units.filter(u => (u.form === '10-K' || u.form === '20-F') && u.frame).sort((a, b) => b.end.localeCompare(a.end));
         if (annual.length > 0) return annual;
