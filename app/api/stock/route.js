@@ -299,7 +299,8 @@ const roic        = investedCapital > 0 && oiVal !== null ? +((oiVal / investedC
     const sharesFinnhub = fhBasic?.metric?.sharesOutstanding ? fhBasic.metric.sharesOutstanding * 1e6 : null;
 const sharesValAdj = sharesVal && sharesVal < 1e6 ? sharesVal * 1e6 : sharesVal;
 const sharesForCalc = sharesValAdj || sharesFinnhub;
-    const epsCalc    = epsDirect || epsFinnhub || (niVal && sharesForCalc ? +(niVal / sharesForCalc).toFixed(2) : null);
+    const epsEdgar   = niVal && sharesForCalc ? +(niVal / sharesForCalc).toFixed(2) : null;
+    const epsCalc    = epsDirect || epsEdgar || epsFinnhub || null;
     const peCalc     = epsCalc && currentPrice ? +(currentPrice / epsCalc).toFixed(2) : null;
     const marketCapCalc = currentPrice && sharesForCalc ? currentPrice * sharesForCalc : null;
     const marketCapFinnhub = fhProfile?.marketCapitalization ? fhProfile.marketCapitalization * 1e6 : null;
