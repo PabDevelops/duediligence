@@ -222,11 +222,6 @@ export default function StockPage({ params }) {
       <div style={{ borderBottom: '1px solid var(--border)', padding: '6px 16px', display: 'flex', alignItems: 'center', gap: '12px', background: 'var(--bg-1)', fontSize: '11px' }}>
         <span style={{ color: 'var(--text-3)' }}>▸</span>
         <span style={{ color: 'var(--accent)', fontWeight: 700, letterSpacing: '2px' }}>{ticker}</span>
-        <div style={{ flex: 1 }}>
-          <form onSubmit={e => { e.preventDefault(); const t = e.target.search.value.toUpperCase().trim(); if (t) window.location.href = `/stock/${t}`; }}>
-            <input name="search" style={{ background: 'var(--bg-2)', border: '1px solid var(--border)', color: 'var(--text)', fontFamily: 'IBM Plex Mono, monospace', fontSize: '11px', padding: '4px 10px', width: '220px', outline: 'none', letterSpacing: '1px' }} placeholder="SEARCH TICKER..." />
-          </form>
-        </div>
       </div>
       {/* Mobile nav tabs */}
       <div className="mobile-tabs" style={{ display: 'none', borderBottom: '1px solid var(--border)', background: 'var(--bg-1)', overflowX: 'auto', whiteSpace: 'nowrap' }}>
