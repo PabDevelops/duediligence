@@ -112,6 +112,7 @@ export default function StockPage({ params }) {
   const [usage, setUsage] = useState(null);
   const [usageLimited, setUsageLimited] = useState(false);
   const [isPro, setIsPro] = useState(false);
+  const [checkingPro, setCheckingPro] = useState(true);
   const [inWatchlist, setInWatchlist] = useState(false);
   const { isSignedIn } = useUser();
 
@@ -141,6 +142,7 @@ export default function StockPage({ params }) {
         .then(r => r.json())
         .then(d => {
           setIsPro(d.isPro);
+          setCheckingPro(false);
           if (!d.isPro) {
             fetch('/api/usage', { method: 'POST' })
               .then(r => r.json())
@@ -153,6 +155,7 @@ export default function StockPage({ params }) {
         })
         .catch(() => {});
     } else {
+      setCheckingPro(false);
       fetch('/api/usage', { method: 'POST' })
         .then(r => r.json())
         .then(d => {
@@ -263,7 +266,7 @@ export default function StockPage({ params }) {
 
         {/* Main content */}
         <div style={S.content}>
-          {usageLimited && (
+          {usageLimited && !isPro && !checkingPro && (
             <div style={{ background: 'var(--accent-dim)', border: '1px solid var(--accent)', padding: '12px 16px', marginBottom: '24px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
               <div>
                 <span style={{ color: 'var(--accent)', fontSize: '11px', fontWeight: 600, letterSpacing: '1px' }}>FREE LIMIT REACHED</span>
@@ -860,7 +863,7 @@ export default function StockPage({ params }) {
 )}
 
           {/* FINANCIALS TAB */}
-          {tab === 'financials' && !isPro && (
+          {tab === 'financials' && !isPro && !checkingPro && (
             <div style={{ textAlign: 'center', padding: '80px 24px' }}>
               <div style={{ color: 'var(--accent)', fontSize: '13px', letterSpacing: '2px', marginBottom: '12px' }}>🔒 SIGN IN REQUIRED</div>
               <div style={{ color: 'var(--text-2)', fontSize: '12px', marginBottom: '24px' }}>Create a free account to access Financial Statements.</div>
@@ -1035,7 +1038,7 @@ export default function StockPage({ params }) {
 )}
 
           {/* DCF TAB */}
-          {tab === 'dcf' && !isPro && (
+          {tab === 'dcf' && !isPro && !checkingPro && (
             <div style={{ textAlign: 'center', padding: '80px 24px' }}>
               <div style={{ color: 'var(--accent)', fontSize: '13px', letterSpacing: '2px', marginBottom: '12px' }}>🔒 SIGN IN REQUIRED</div>
               <div style={{ color: 'var(--text-2)', fontSize: '12px', marginBottom: '24px' }}>Create a free account to access DCF Valuation.</div>
