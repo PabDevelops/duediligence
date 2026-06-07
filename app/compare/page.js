@@ -1,5 +1,6 @@
 'use client';
 import { useState, useEffect } from 'react';
+import { useUser } from '@clerk/nextjs';
 import Sparkline from '../components/Sparkline';
 import Topbar from '../components/Topbar';
 
@@ -79,7 +80,18 @@ const METRICS = [
 const N = 3;
 
 export default function Compare() {
-  const [tickers, setTickers] = useState(Array(N).fill(''));
+  const { isSignedIn } = useUser();
+  const [isPro, setIsPro] = useState(false);
+  const [checkingPro, setCheckingPro] = useState(true);
+
+  useEffect(() => {
+    fetch('/api/subscription')
+      .then(r => r.json())
+      .then(d => { setIsPro(d.isPro); setCheckingPro(false); })
+      .catch(() => setCheckingPro(false));
+  }, []);
+
+  const [tickers, setTickers] = useState(['', '']);
   const [stocks, setStocks] = useState(Array(N).fill(null));
   const [loading, setLoading] = useState(Array(N).fill(false));
   const [inputs, setInputs] = useState(Array(N).fill(''));
@@ -138,6 +150,32 @@ export default function Compare() {
   };
 
   const hasAny = stocks.some(s => s !== null);
+
+  if (checkingPro) return (
+    <div style={{ background: 'var(--bg)', minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: 'IBM Plex Mono, monospace' }}>
+      <div style={{ color: 'var(--text-3)', fontSize: '10px', letterSpacing: '2px' }}>LOADING...</div>
+    </div>
+  );
+
+  if (!isPro) return (
+    <div style={{ background: 'var(--bg)', minHeight: '100vh', color: 'var(--text)', fontFamily: 'IBM Plex Mono, monospace' }}>
+      <Topbar />
+      <div style={{ maxWidth: '600px', margin: '0 auto', padding: '100px 24px', textAlign: 'center' }}>
+        <div style={{ fontSize: '48px', marginBottom: '24px' }}>🔒</div>
+        <div style={{ color: 'var(--accent)', fontSize: '10px', letterSpacing: '3px', marginBottom: '12px' }}>PRO FEATURE</div>
+        <h1 style={{ fontSize: '24px', fontWeight: 600, marginBottom: '12px' }}>Compare is a Pro feature</h1>
+        <p style={{ color: 'var(--text-2)', fontSize: '12px', lineHeight: 1.8, marginBottom: '32px' }}>
+          Compare up to 3 stocks side by side with full metrics, sparklines and Traqcker scores. Upgrade to Pro to unlock.
+        </p>
+        <a href="/pricing" style={{ background: 'var(--accent)', color: '#000', padding: '10px 28px', fontFamily: 'IBM Plex Mono, monospace', fontSize: '11px', fontWeight: 700, letterSpacing: '1px', textDecoration: 'none' }}>
+          UPGRADE TO PRO →
+        </a>
+        <div style={{ marginTop: '16px' }}>
+          <a href="/" style={{ color: 'var(--text-3)', fontSize: '10px', textDecoration: 'none', letterSpacing: '1px' }}>← BACK TO HOME</a>
+        </div>
+      </div>
+    </div>
+  );
 
   return (
     <div style={{ background: 'var(--bg)', minHeight: '100vh', color: 'var(--text)', fontFamily: 'IBM Plex Mono, monospace' }}>
