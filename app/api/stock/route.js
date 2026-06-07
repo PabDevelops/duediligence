@@ -359,8 +359,8 @@ const sharesForCalc = sharesValAdj || sharesFinnhub;
     };
 
     // Si menos de 2 campos clave tienen datos, marcar como fallback
-    const dataQuality = [revVal, niVal, oiVal, fcfVal, assetsVal, equityVal].filter(v => v !== null).length;
-    if (dataQuality < 2) result.finnhubFallback = true;
+    const dataQuality = [revVal, niVal, oiVal, fcfVal, assetsVal, equityVal, debtVal, cashVal].filter(v => v !== null).length;
+    if (dataQuality < 3) result.finnhubFallback = true;
 
     try {
       await supabase
