@@ -79,4 +79,10 @@ html, body {
   .mobile-tabs {
     display: block !important;
   }
+  .stock-content > div {
+    overflow-x: auto !important;
+  }
+  .stock-content table {
+    min-width: 600px;
+  }
 }
