@@ -90,7 +90,7 @@ export default function Topbar() {
               </a>
             );
           })}
-          {!useUser().isSignedIn && (
+          {!useUser().isSignedIn ? (
             <div style={{ padding: '12px 16px', borderBottom: '1px solid var(--border)' }}>
               <SignInButton mode="modal">
                 <button style={{ width: '100%', background: 'var(--accent)', color: '#000', border: 'none', padding: '8px', fontFamily: 'IBM Plex Mono, monospace', fontSize: '11px', fontWeight: 700, cursor: 'pointer', letterSpacing: '1px' }}>
@@ -98,7 +98,7 @@ export default function Topbar() {
                 </button>
               </SignInButton>
             </div>
-          )}
+          ) : null}
         </div>
       )}
     </>

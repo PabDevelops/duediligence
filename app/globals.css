@@ -75,14 +75,31 @@ html, body {
   }
   .stock-content {
     padding: 12px !important;
+    overflow-x: hidden !important;
   }
   .mobile-tabs {
     display: block !important;
   }
   .stock-content > div {
     overflow-x: auto !important;
+    max-width: 100vw !important;
   }
   .stock-content table {
-    min-width: 600px;
+    min-width: unset !important;
+    width: 100% !important;
+    font-size: 10px !important;
+  }
+  .stock-content td, .stock-content th {
+    padding: 4px 6px !important;
+    font-size: 10px !important;
+  }
+  .stock-content .grid-4 {
+    grid-template-columns: 1fr 1fr !important;
+  }
+  .grid-4 {
+    grid-template-columns: repeat(2, 1fr) !important;
+  }
+  .grid-3 {
+    grid-template-columns: repeat(1, 1fr) !important;
   }
 }
