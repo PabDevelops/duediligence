@@ -489,26 +489,29 @@ export default function StockPage({ params }) {
           ))}
         </tbody>
       </table>
-
-      <div style={{ color: 'var(--accent)', fontSize: '10px', letterSpacing: '2px', margin: '12px 0 8px' }}>PER SHARE</div>
-      <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '11px' }}>
-        <tbody>
-          {[
-            { label: 'EPS (TTM)', val: data.eps ? `$${data.eps}` : 'N/A' },
-            { label: 'Shs Outstanding', val: data.sharesOutstanding ? `${(data.sharesOutstanding / 1e6).toFixed(0)}M` : 'N/A' },
-            { label: 'Beta', val: fmtN(data.beta) },
-            { label: '52W High', val: data.high52 ? `$${data.high52}` : 'N/A' },
-            { label: '52W Low', val: data.low52 ? `$${data.low52}` : 'N/A' },
-          ].map(r => (
-            <tr key={r.label} style={{ borderBottom: '1px solid var(--border)' }}>
-              <td style={{ padding: '4px 0', color: 'var(--text-3)', fontSize: '10px' }}>{r.label}</td>
-              <td style={{ padding: '4px 0', textAlign: 'right', color: r.color || 'var(--text)', fontSize: '11px', fontWeight: 500 }}>{r.val}</td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
     </div>
 
+  </div>
+</div>
+
+{/* PER SHARE */}
+<div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '1px', background: 'var(--border)', marginBottom: '24px' }}>
+  <div style={{ background: 'var(--bg-1)', padding: '16px' }}>
+    <div style={{ color: 'var(--accent)', fontSize: '10px', letterSpacing: '2px', marginBottom: '12px' }}>PER SHARE & MARKET DATA</div>
+    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: '1px', background: 'var(--border)' }}>
+      {[
+        { label: 'EPS (TTM)', val: data.eps ? `$${data.eps}` : 'N/A' },
+        { label: 'Shs Outstanding', val: data.sharesOutstanding ? `${(data.sharesOutstanding / 1e6).toFixed(0)}M` : 'N/A' },
+        { label: 'Beta', val: fmtN(data.beta) },
+        { label: '52W High', val: data.high52 ? `$${data.high52}` : 'N/A' },
+        { label: '52W Low', val: data.low52 ? `$${data.low52}` : 'N/A' },
+      ].map(r => (
+        <div key={r.label} style={{ background: 'var(--bg-2)', padding: '12px' }}>
+          <div style={{ color: 'var(--text-3)', fontSize: '10px', letterSpacing: '1px', marginBottom: '6px' }}>{r.label}</div>
+          <div style={{ color: 'var(--text)', fontSize: '13px', fontWeight: 600 }}>{r.val}</div>
+        </div>
+      ))}
+    </div>
   </div>
 </div>
 
