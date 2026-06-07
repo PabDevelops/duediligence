@@ -47,7 +47,7 @@ export async function GET(request) {
       const fhBasic = await fhBasicRes.json();
       const fhProfile = await fhProfileRes.json();
 
-      if (!fh.c || !fhProfile.name) return Response.json({ error: 'Ticker no encontrado' }, { status: 404 });
+      if (!fhProfile.name) return Response.json({ error: 'Ticker no encontrado' }, { status: 404 });
 
       const m = fhBasic?.metric || {};
       const currentPrice = fh.c || null;
