@@ -111,7 +111,6 @@ export default function StockPage({ params }) {
   const [sparklineData, setSparklineData] = useState(null);
   const [isPro, setIsPro] = useState(false);
   const [checkingPro, setCheckingPro] = useState(true);
-  console.log('RENDER isPro:', isPro, 'checkingPro:', checkingPro);
   const [inWatchlist, setInWatchlist] = useState(false);
   const { isSignedIn } = useUser();
 
