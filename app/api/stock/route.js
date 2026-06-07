@@ -299,6 +299,16 @@ const sharesForCalc = sharesValAdj || sharesFinnhub;
       ? epsCagrRaw
       : revGrowth !== null && revGrowth > 0 ? Math.min(revGrowth, 20) : null;
 
+      // Finnhub fallback para campos vacíos de SEC EDGAR
+    const grossMarginFinal = grossMargin ?? (fhBasic?.metric?.grossMarginTTM || null);
+    const opMarginFinal = opMargin ?? (fhBasic?.metric?.operatingMarginTTM || null);
+    const netMarginFinal = netMargin ?? (fhBasic?.metric?.netProfitMarginTTM || null);
+    const roeFinal = roe ?? (fhBasic?.metric?.roeTTM ? +(fhBasic.metric.roeTTM * 100).toFixed(1) : null);
+    const roaFinal = roa ?? (fhBasic?.metric?.roaTTM ? +(fhBasic.metric.roaTTM * 100).toFixed(1) : null);
+    const roicFinal = roic ?? (fhBasic?.metric?.roicTTM ? +(fhBasic.metric.roicTTM * 100).toFixed(1) : null);
+    const revGrowthFinal = revGrowth ?? (fhBasic?.metric?.revenueGrowthTTMYoy ? +(fhBasic.metric.revenueGrowthTTMYoy * 100).toFixed(1) : null);
+    const debtToEquityFinal = debtToEquity ?? (fhBasic?.metric?.totalDebt_totalEquityAnnual || null);
+
     const result = {
       name: company.title,
       ticker,
@@ -315,7 +325,14 @@ const sharesForCalc = sharesValAdj || sharesFinnhub;
       capexVal, investingCFVal, financingCFVal,
       inventoryVal, receivablesVal, payablesVal, sbcVal, dividendsPaidVal,
       dso, dio, dpo, ccc, inventoryTurnover,
-      opMargin, netMargin, grossMargin, revGrowth, roe, roa, debtToEquity, netDebt, roic,
+      opMargin: opMarginFinal,
+      netMargin: netMarginFinal,
+      grossMargin: grossMarginFinal,
+      revGrowth: revGrowthFinal,
+      roe: roeFinal,
+      roa: roaFinal,
+      roic: roicFinal,
+      debtToEquity: debtToEquityFinal,
       revHistory, niHistory, fcfHistory, oiHistory,
       sharesHistory, gpHistory, marginHistory, shareDilution,
       cogsHistory, sgaHistory, rdHistory, ebtHistory, taxHistory,
