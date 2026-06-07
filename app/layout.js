@@ -7,6 +7,26 @@ export const metadata = {
   title: "Traqcker — Fundamental Stock Analysis",
   description: "Deep fundamental analysis for serious investors. SEC filings, proprietary scoring, Graham DCF.",
   icons: { icon: '/favicon.png' },
+  openGraph: {
+    title: "Traqcker — Fundamental Stock Analysis",
+    description: "No opinions. No noise. Just data from SEC EDGAR filings.",
+    url: "https://traqcker.com",
+    siteName: "Traqcker",
+    images: [
+      {
+        url: "https://traqcker.com/og-image.png",
+        width: 1200,
+        height: 630,
+      },
+    ],
+    type: "website",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Traqcker — Fundamental Stock Analysis",
+    description: "No opinions. No noise. Just data from SEC EDGAR filings.",
+    images: ["https://traqcker.com/og-image.png"],
+  },
 };
 
 export const viewport = {
