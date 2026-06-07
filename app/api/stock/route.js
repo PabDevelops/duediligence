@@ -124,7 +124,7 @@ export async function GET(request) {
         if (!metric) continue;
         const units = metric.units?.USD || metric.units?.EUR || metric.units?.shares || metric.units?.pure;
         if (!units) continue;
-        const annual = units.filter(u => (u.form === '10-K' || u.form === '20-F') && u.frame).sort((a, b) => b.end.localeCompare(a.end));
+        const annual = units.filter(u => (u.form === '10-K' || u.form === '20-F')).sort((a, b) => b.end.localeCompare(a.end));
         if (annual.length > 0) return annual;
       }
       return null;
@@ -145,7 +145,7 @@ export async function GET(request) {
 
     const revenues      = getMetric(['RevenueFromContractWithCustomerExcludingAssessedTax','Revenues','SalesRevenueNet','RevenueFromContractWithCustomerIncludingAssessedTax']);
     const netIncomes    = getMetric(['NetIncomeLoss']);
-    const operatingIncomes = getMetric(['OperatingIncomeLoss']);
+    const operatingIncomes = getMetric(['OperatingIncomeLoss', 'IncomeLossFromContinuingOperationsBeforeIncomeTaxesExtraordinaryItemsNoncontrollingInterest']);
     const cashFlows     = getMetric(['NetCashProvidedByUsedInOperatingActivities']);
     const assets        = getMetric(['Assets']);
     const equity        = getMetric(['StockholdersEquity','StockholdersEquityIncludingPortionAttributableToNoncontrollingInterest']);
@@ -222,7 +222,8 @@ export async function GET(request) {
     const revGrowth   = revVal && revPrev ? +(((revVal - revPrev) / Math.abs(revPrev)) * 100).toFixed(1) : null;
     const roe         = equityVal && niVal ? +((niVal / equityVal) * 100).toFixed(1) : null;
     const roa         = assetsVal && niVal ? +((niVal / assetsVal) * 100).toFixed(1) : null;
-    const roic        = equityVal && debtVal && oiVal ? +((oiVal / (equityVal + debtVal)) * 100).toFixed(1) : null;
+    const investedCapital = (equityVal ?? 0) + (debtVal ?? 0);
+const roic        = investedCapital > 0 && oiVal !== null ? +((oiVal / investedCapital) * 100).toFixed(1) : null;
     const debtToEquity = equityVal && debtVal ? +(debtVal / equityVal).toFixed(2) : null;
     const netDebt     = debtVal && cashVal ? debtVal - cashVal : null;
 
