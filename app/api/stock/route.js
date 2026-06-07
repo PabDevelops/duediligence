@@ -102,6 +102,10 @@ export async function GET(request) {
         await supabase.from('stock_cache').upsert({ ticker, data: result, updated_at: new Date().toISOString() });
       } catch (e) {}
 
+      // Detectar si los datos son muy incompletos
+    const dataQuality = [revVal, niVal, oiVal, fcfVal, assetsVal, equityVal].filter(v => v !== null).length;
+    result.finnhubFallback = dataQuality < 2;
+
       return Response.json(result);
     }
 
@@ -351,7 +355,12 @@ const sharesForCalc = sharesValAdj || sharesFinnhub;
       dividendYield: fhBasic?.metric?.dividendYieldIndicatedAnnual || null,
       analystTarget: null,
       operatingCFVal: fcfVal,
+      finnhubFallback: false,
     };
+
+    // Si menos de 2 campos clave tienen datos, marcar como fallback
+    const dataQuality = [revVal, niVal, oiVal, fcfVal, assetsVal, equityVal].filter(v => v !== null).length;
+    if (dataQuality < 2) result.finnhubFallback = true;
 
     try {
       await supabase
