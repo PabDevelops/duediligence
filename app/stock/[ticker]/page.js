@@ -128,18 +128,37 @@ export default function StockPage({ params }) {
       .then(d => setSparklineData(d.candles || null))
       .catch(() => {});
 
-    fetch('/api/usage', { method: 'POST' })
+    fetch('/api/watchlist')
       .then(r => r.json())
       .then(d => {
-        setUsage(d);
-        if (d.limited) setUsageLimited(true);
+        const tickers = d.tickers?.map(t => t.ticker) || [];
+        setInWatchlist(tickers.includes(ticker));
       })
       .catch(() => {});
 
     if (isSignedIn) {
       fetch('/api/subscription')
         .then(r => r.json())
-        .then(d => setIsPro(d.isPro))
+        .then(d => {
+          setIsPro(d.isPro);
+          if (!d.isPro) {
+            fetch('/api/usage', { method: 'POST' })
+              .then(r => r.json())
+              .then(u => {
+                setUsage(u);
+                if (u.limited) setUsageLimited(true);
+              })
+              .catch(() => {});
+          }
+        })
+        .catch(() => {});
+    } else {
+      fetch('/api/usage', { method: 'POST' })
+        .then(r => r.json())
+        .then(d => {
+          setUsage(d);
+          if (d.limited) setUsageLimited(true);
+        })
         .catch(() => {});
     }
   }, [ticker, isSignedIn]);
@@ -209,42 +228,17 @@ export default function StockPage({ params }) {
 
   return (
     <div style={S.page}>
-      {/* Topbar */}
-      <div style={S.topbar}>
-        <a href="/" style={{ textDecoration: 'none' }}>
-          <img src="/logo.png" alt="Traqcker" style={{ height: '20px', objectFit: 'contain' }} />
-        </a>
-        <span style={{ color: 'var(--border-2)' }}>|</span>
-        <a href="/" style={{ color: 'var(--text-3)', fontSize: '11px', letterSpacing: '1px', textDecoration: 'none' }}
-          onMouseEnter={e => e.target.style.color = 'var(--accent)'}
-          onMouseLeave={e => e.target.style.color = 'var(--text-3)'}>HOME</a>
-        <a href="/screener" style={{ color: 'var(--text-3)', fontSize: '11px', letterSpacing: '1px', textDecoration: 'none' }}
-          onMouseEnter={e => e.target.style.color = 'var(--accent)'}
-          onMouseLeave={e => e.target.style.color = 'var(--text-3)'}>SCREENER</a>
-        <a href="/compare" style={{ color: 'var(--text-3)', fontSize: '11px', letterSpacing: '1px', textDecoration: 'none' }}
-          onMouseEnter={e => e.target.style.color = 'var(--accent)'}
-          onMouseLeave={e => e.target.style.color = 'var(--text-3)'}>COMPARE</a>
-        <a href="/pricing" style={{ color: 'var(--text-3)', fontSize: '11px', letterSpacing: '1px', textDecoration: 'none' }}
-          onMouseEnter={e => e.target.style.color = 'var(--accent)'}
-          onMouseLeave={e => e.target.style.color = 'var(--text-3)'}>PRICING</a>
-        <a href="/watchlist" style={{ color: 'var(--text-3)', fontSize: '11px', letterSpacing: '1px', textDecoration: 'none' }}
-          onMouseEnter={e => e.target.style.color = 'var(--accent)'}
-          onMouseLeave={e => e.target.style.color = 'var(--text-3)'}>WATCHLIST</a>
-        <span style={{ color: 'var(--border-2)' }}>·</span>
-        <span style={{ color: 'var(--accent)', fontSize: '11px', letterSpacing: '1px' }}>{ticker}</span>
+      <Topbar />
+      {/* Stock subbar */}
+      <div style={{ borderBottom: '1px solid var(--border)', padding: '6px 16px', display: 'flex', alignItems: 'center', gap: '12px', background: 'var(--bg-1)', fontSize: '11px' }}>
+        <span style={{ color: 'var(--text-3)' }}>▸</span>
+        <span style={{ color: 'var(--accent)', fontWeight: 700, letterSpacing: '2px' }}>{ticker}</span>
         <div style={{ flex: 1 }}>
           <form onSubmit={e => { e.preventDefault(); const t = e.target.search.value.toUpperCase().trim(); if (t) window.location.href = `/stock/${t}`; }}>
             <input name="search" style={{ background: 'var(--bg-2)', border: '1px solid var(--border)', color: 'var(--text)', fontFamily: 'IBM Plex Mono, monospace', fontSize: '11px', padding: '4px 10px', width: '220px', outline: 'none', letterSpacing: '1px' }} placeholder="SEARCH TICKER..." />
           </form>
         </div>
-        {!isSignedIn && (
-          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-            <span style={{ color: 'var(--text-3)', fontSize: '10px', letterSpacing: '1px' }}>🔒 SIGN IN TO SEE FULL DATA</span>
-            <a href="/sign-in" style={{ background: 'var(--accent)', color: '#000', padding: '4px 12px', fontFamily: 'IBM Plex Mono, monospace', fontSize: '10px', fontWeight: 700, letterSpacing: '1px', textDecoration: 'none' }}>SIGN IN</a>
-          </div>
-        )}
       </div>
-
       <div style={{ display: 'flex' }}>
         {/* Sidebar */}
         <div style={S.sidebar}>
