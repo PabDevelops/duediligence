@@ -268,6 +268,12 @@ export default function StockPage({ params }) {
                     {data.description.slice(0, 180)}...
                   </div>
                 )}
+                {data.finnhubFallback && (
+                  <div style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', background: 'var(--bg-2)', border: '1px solid var(--border)', padding: '3px 8px', marginTop: '6px' }}>
+                    <span style={{ color: 'var(--accent)', fontSize: '9px' }}>ℹ</span>
+                    <span style={{ color: 'var(--text-3)', fontSize: '9px', letterSpacing: '0.5px' }}>Limited data — company reports outside SEC EDGAR. Showing Finnhub data only.</span>
+                  </div>
+                )}
                 <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginTop: '8px' }}>
                 <a href={`https://www.sec.gov/cgi-bin/browse-edgar?action=getcompany&CIK=${data.cik}&type=10-K`}
                   target="_blank" rel="noopener noreferrer"
