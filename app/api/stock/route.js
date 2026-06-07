@@ -391,6 +391,16 @@ const sharesForCalc = sharesValAdj || sharesFinnhub;
         .upsert({ ticker, data: result, updated_at: new Date().toISOString() });
     } catch (e) {}
 
+    // Wikipedia description
+    try {
+      const searchName = fhProfile?.name || company.title;
+      const wikiSearch = await fetch(`https://en.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(searchName)}`);
+      if (wikiSearch.ok) {
+        const wikiData = await wikiSearch.json();
+        if (wikiData.extract) result.description = wikiData.extract.slice(0, 400);
+      }
+    } catch (e) {}
+
     return Response.json(result);
 
   } catch (e) {
