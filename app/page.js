@@ -272,7 +272,7 @@ export default function Home() {
                 ENTER TICKER{blink ? '_' : ' '}
               </div>
               <div style={{ position: 'relative' }}>
-            <div style={{ display: 'flex', gap: '0' }}>
+              <div style={{ display: 'flex', gap: '0' }}>
                 <input
                   style={{ flex: 1, maxWidth: '280px', background: 'var(--bg-2)', border: '1px solid var(--border-2)', borderRight: 'none', color: 'var(--accent)', fontFamily: 'IBM Plex Mono, monospace', fontSize: '22px', fontWeight: 700, padding: '12px 16px', outline: 'none', letterSpacing: '4px' }}
                   placeholder="AAPL"
@@ -306,8 +306,7 @@ export default function Home() {
                 </div>
               )}
             </div>
-              </div>
-            </div>
+          </div>
 
             <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', marginBottom: '32px' }}>
               {['AAPL', 'MSFT', 'NVDA', 'V', 'ASML', 'GOOGL'].map(t => (
@@ -331,7 +330,6 @@ export default function Home() {
                 SEE PRICING
               </a>
             </div>
-          </div>
 
           {/* Right — feature grid */}
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1px', background: 'var(--border)' }}>
