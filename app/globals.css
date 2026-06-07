@@ -103,3 +103,31 @@ html, body {
     grid-template-columns: repeat(1, 1fr) !important;
   }
 }
+
+@media (max-width: 768px) {
+  /* Landing hero */
+  .hero-grid {
+    grid-template-columns: 1fr !important;
+  }
+  .hero-title {
+    font-size: 36px !important;
+  }
+  /* Landing sections */
+  .how-it-works-grid {
+    grid-template-columns: 1fr !important;
+  }
+  .framework-grid {
+    grid-template-columns: 1fr 1fr !important;
+  }
+  .market-grid {
+    grid-template-columns: 1fr !important;
+  }
+  .rankings-grid {
+    grid-template-columns: 1fr 1fr !important;
+  }
+  .stats-bar {
+    gap: 16px !important;
+    flex-wrap: wrap !important;
+    justify-content: center !important;
+  }
+}

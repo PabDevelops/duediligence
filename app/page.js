@@ -122,7 +122,7 @@ export default function Home() {
 
       {/* HERO */}
       <div style={{ borderBottom: '1px solid var(--border)', padding: '48px 24px 40px', maxWidth: '1400px', margin: '0 auto', boxSizing: 'border-box', width: '100%' }}>
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '64px', alignItems: 'center' }}>
+        <div className="hero-grid" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '64px', alignItems: 'center' }}>
 
           {/* Left — copy */}
           <div>
@@ -131,7 +131,7 @@ export default function Home() {
               <span style={{ color: 'var(--accent)', fontSize: '10px', letterSpacing: '2px', fontWeight: 700 }}>LIVE · SEC EDGAR · FINNHUB</span>
             </div>
 
-            <h1 style={{ fontSize: '52px', fontWeight: 700, letterSpacing: '-2px', lineHeight: 1.05, marginBottom: '20px' }}>
+            <h1 className="hero-title" style={{ fontSize: '52px', fontWeight: 700, letterSpacing: '-2px', lineHeight: 1.05, marginBottom: '20px' }}>
               Fundamental<br />
               analysis<span style={{ color: 'var(--accent)' }}>.</span><br />
               <span style={{ color: 'var(--accent)' }}>Without noise.</span>
@@ -211,7 +211,7 @@ export default function Home() {
 
       {/* STATS BAR */}
       <div style={{ borderBottom: '1px solid var(--border)', background: 'var(--bg-1)' }}>
-        <div style={{ maxWidth: '1400px', margin: '0 auto', padding: '16px 24px', display: 'flex', gap: '48px', alignItems: 'center' }}>
+        <div className="stats-bar" style={{ maxWidth: '1400px', margin: '0 auto', padding: '16px 24px', display: 'flex', gap: '48px', alignItems: 'center' }}>
           {[
             { val: '8,000+', label: 'US STOCKS' },
             { val: '15', label: 'DD QUESTIONS' },
@@ -235,7 +235,7 @@ export default function Home() {
             <div style={{ color: 'var(--text-3)', fontSize: '9px', letterSpacing: '3px', marginBottom: '12px' }}>MARKET DATA · UPDATED DAILY</div>
 
             {/* Gainers / Losers / Earnings */}
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr 1fr', gap: '1px', background: 'var(--border)', marginBottom: '1px' }}>
+            <div className="market-grid" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr 1fr', gap: '1px', background: 'var(--border)', marginBottom: '1px' }}>
               <div style={{ background: 'var(--bg-1)', gridColumn: '1' }}>
                 <TableHeader title="▲ TOP GAINERS" sub="TOP 10" color="var(--green)" />
                 {movers.gainers.slice(0, 10).map(s => <MoverRow key={s.ticker} s={s} router={router} />)}
@@ -253,7 +253,7 @@ export default function Home() {
             </div>
 
             {/* Rankings */}
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '1px', background: 'var(--border)', marginBottom: '48px' }}>
+            <div className="rankings-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '1px', background: 'var(--border)', marginBottom: '48px' }}>
               {[
                 { title: 'TOP ROIC', data: movers.topRoic, metric: 'roic', suffix: '%' },
                 { title: 'TOP FCF YIELD', data: movers.topFcfYield, metric: 'fcfYield', suffix: '%' },
@@ -274,7 +274,7 @@ export default function Home() {
           <div style={{ color: 'var(--text-3)', fontSize: '9px', letterSpacing: '3px', marginBottom: '24px', borderBottom: '1px solid var(--border)', paddingBottom: '8px' }}>
             HOW IT WORKS
           </div>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '1px', background: 'var(--border)' }}>
+          <div className="how-it-works-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '1px', background: 'var(--border)' }}>
             {[
               { step: '01', title: 'SEARCH A TICKER', desc: 'Enter any US stock ticker. Traqcker fetches real-time data directly from SEC EDGAR filings and Finnhub.' },
               { step: '02', title: 'ANALYZE THE BUSINESS', desc: 'Review quality scores, margins, cash flow, valuation multiples, and Graham DCF across 5 analysis dimensions.' },
@@ -294,7 +294,7 @@ export default function Home() {
           <div style={{ color: 'var(--text-3)', fontSize: '9px', letterSpacing: '3px', marginBottom: '24px', borderBottom: '1px solid var(--border)', paddingBottom: '8px' }}>
             ANALYSIS FRAMEWORK · 5 DIMENSIONS · 15 QUESTIONS
           </div>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: '1px', background: 'var(--border)' }}>
+          <div className="framework-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: '1px', background: 'var(--border)' }}>
             {[
               { num: '01', name: 'MANAGEMENT', desc: 'Guidance, compensation alignment, C-suite stability' },
               { num: '02', name: 'CONCENTRATION', desc: 'Customer, geography, and product diversification' },
