@@ -520,39 +520,6 @@ export default function StockPage({ params }) {
                 <div style={{ flex: 1, background: 'var(--bg-1)' }}>
                   <StockChart ticker={ticker} />
                 </div>
-                <div style={{ width: '220px', background: 'var(--bg-1)', padding: '16px', flexShrink: 0 }}>
-                  <div style={{ color: 'var(--text-3)', fontSize: '10px', letterSpacing: '2px', marginBottom: '12px' }}>VALUATION & MULTIPLES</div>
-                  <table style={S.table}>
-                    <tbody>
-                      {[
-                        { label: 'Market Cap', val: fmt(data.marketCap) },
-                        { label: 'EPS', val: data.eps ? `$${data.eps}` : 'N/A' },
-                        { label: 'P/E', val: fmtN(data.pe), color: data.pe > 30 ? 'var(--red)' : 'var(--green)' },
-                        { label: 'P/FCF', val: data.fcfVal && data.marketCap ? fmtN(data.marketCap / data.fcfVal) : 'N/A' },
-                        { label: 'EV/EBITDA', val: fmtN(data.evEbitda) },
-                        { label: 'FCF Yield', val: data.fcfVal && data.marketCap ? `${((data.fcfVal / data.marketCap) * 100).toFixed(1)}%` : 'N/A' },
-                        { label: 'Div. Yield', val: data.dividendYield ? `${(+data.dividendYield).toFixed(2)}%` : '—' },
-                        { label: 'Beta', val: fmtN(data.beta) },
-                      ].map(r => (
-                        <tr key={r.label} style={S.tr}>
-                          <td style={S.td}>{r.label}</td>
-                          <td style={{ ...S.tdVal, color: r.color || 'var(--text)' }}>{r.val}</td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                  {data.low52 && data.high52 && (
-                    <div style={{ marginTop: '16px' }}>
-                      <div style={{ color: 'var(--text-3)', fontSize: '10px', letterSpacing: '1px', marginBottom: '6px' }}>52W RANGE</div>
-                      <div style={{ height: '3px', background: 'var(--border-2)', position: 'relative', marginBottom: '4px' }}>
-                        <div style={{ position: 'absolute', height: '3px', background: 'var(--accent)', width: `${Math.min(100, Math.max(0, ((data.analystTarget - data.low52) / (data.high52 - data.low52)) * 100))}%` }}></div>
-                      </div>
-                      <div style={{ display: 'flex', justifyContent: 'space-between', color: 'var(--text-3)', fontSize: '10px' }}>
-                        <span>${data.low52}</span><span>${data.high52}</span>
-                      </div>
-                    </div>
-                  )}
-                </div>
               </div>
 
               {/* Metrics grid */}
