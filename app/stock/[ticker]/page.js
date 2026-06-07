@@ -272,11 +272,10 @@ export default function StockPage({ params }) {
                 <div style={{ color: 'var(--text-3)', fontSize: '11px', marginBottom: '6px' }}>
                   {ticker} {data.exchange && `· ${data.exchange}`} {data.sector && `· ${data.sector}`}
                 </div>
-                {data.description && (
-                  <div style={{ color: 'var(--text-2)', fontSize: '11px', maxWidth: '560px', lineHeight: 1.6 }}>
-                    {data.description.slice(0, 180)}...
-                  </div>
-                )}
+                
+                
+
+
                 {data.finnhubFallback && (
                   <div style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', background: 'var(--bg-2)', border: '1px solid var(--border)', padding: '3px 8px', marginTop: '6px' }}>
                     <span style={{ color: 'var(--accent)', fontSize: '9px' }}>ℹ</span>
@@ -361,6 +360,12 @@ export default function StockPage({ params }) {
   )}
 </div>
           </div>
+
+          {data.description && (
+            <div style={{ color: 'var(--text-3)', fontSize: '11px', lineHeight: 1.7, marginBottom: '20px', paddingBottom: '16px', borderBottom: '1px solid var(--border)', maxWidth: '800px' }}>
+              {data.description.slice(0, 300)}...
+            </div>
+          )}
 
           {/* OVERVIEW TAB */}
           {tab === 'overview' && (
