@@ -178,7 +178,7 @@ export async function GET(request) {
 
     const latest = (arr) => arr?.[0]?.val ?? null;
     const prev   = (arr) => arr?.[1]?.val ?? null;
-    const buildHistory = (arr) => {
+    const buildHistory = (arr, isShares = false) => {
   if (!arr) return [];
   const seen = new Set();
   const deduped = arr.filter(r => {
@@ -187,7 +187,10 @@ export async function GET(request) {
     seen.add(y);
     return true;
   });
-  return deduped.slice(0, 6).reverse().map(r => ({ year: r.end.slice(0, 4), val: r.val }));
+  return deduped.slice(0, 6).reverse().map(r => {
+    const val = isShares && r.val < 1e6 ? r.val * 1e6 : r.val;
+    return { year: r.end.slice(0, 4), val };
+  });
 };
 
     const revVal   = latest(revenues);
@@ -244,7 +247,7 @@ const roic        = investedCapital > 0 && oiVal !== null ? +((oiVal / investedC
     const niHistory  = buildHistory(netIncomes);
     const fcfHistory = buildHistory(cashFlows);
     const oiHistory  = buildHistory(operatingIncomes);
-    const sharesHistory = buildHistory(shares);
+    const sharesHistory = buildHistory(shares, true);
     const gpHistory  = buildHistory(grossProfit);
     const cogsHistory = buildHistory(cogs);
     const sgaHistory = buildHistory(sga);

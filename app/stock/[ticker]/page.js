@@ -284,7 +284,7 @@ export default function StockPage({ params }) {
                   </div>
                 )}
                 <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginTop: '8px' }}>
-                <a href={`https://www.sec.gov/cgi-bin/browse-edgar?action=getcompany&CIK=${data.cik}&type=10-K`}
+                <a href={data.cik ? `https://www.sec.gov/cgi-bin/browse-edgar?action=getcompany&CIK=${data.cik}&type=10-K` : `https://www.sec.gov/cgi-bin/browse-edgar?action=getcompany&company=${encodeURIComponent(data.name)}&type=10-K&dateb=&owner=include&count=10&search_text=&action=getcompany`}
                   target="_blank" rel="noopener noreferrer"
                   style={{ color: 'var(--text-3)', fontSize: '10px', letterSpacing: '1px', textDecoration: 'none', borderBottom: '1px solid var(--border)', paddingBottom: '1px', marginTop: '8px', display: 'inline-block' }}>
                   SEC FILINGS ↗
