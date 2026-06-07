@@ -169,7 +169,7 @@ export async function GET(request) {
     const capex         = getMetric(['PaymentsToAcquirePropertyPlantAndEquipment']);
     const inventory     = getMetric(['InventoryNet','InventoryGross']);
     const receivables   = getMetric(['AccountsReceivableNetCurrent','ReceivablesNetCurrent']);
-    const payables      = getMetric(['AccountsPayableCurrent']);
+    const payables      = getMetric(['AccountsPayableCurrent', 'AccountsPayable', 'AccountsPayableAndAccruedLiabilitiesCurrent']);
     const sbc           = getMetric(['ShareBasedCompensation','AllocatedShareBasedCompensationExpense']);
     const dividendsPaid = getMetric(['PaymentsOfDividends','PaymentsOfDividendsCommonStock']);
     const investingActivities = getMetric(['NetCashProvidedByUsedInInvestingActivities']);
@@ -237,9 +237,6 @@ export async function GET(request) {
 const roic        = investedCapital > 0 && oiVal !== null ? +((oiVal / investedCapital) * 100).toFixed(1) : null;
     const debtToEquity = equityVal && debtVal ? +(debtVal / equityVal).toFixed(2) : null;
     const netDebt     = (debtVal ?? 0) - (cashVal ?? 0);
-    const ebitda      = oiVal && fhBasic?.metric?.ebitdaAnnual ? fhBasic.metric.ebitdaAnnual * 1e6 : null;
-    const evEbitda    = marketCapFinal && netDebt !== null && ebitda ? +((marketCapFinal + netDebt) / ebitda).toFixed(1) : null;
-    const priceToBook = marketCapFinal && equityVal && equityVal > 0 ? +(marketCapFinal / equityVal).toFixed(2) : null;
 
     const revHistory = buildHistory(revenues);
     const niHistory  = buildHistory(netIncomes);
@@ -302,9 +299,8 @@ const sharesForCalc = sharesValAdj || sharesFinnhub;
     const marketCapCalc = currentPrice && sharesForCalc ? currentPrice * sharesForCalc : null;
     const marketCapFinnhub = fhProfile?.marketCapitalization ? fhProfile.marketCapitalization * 1e6 : null;
     const marketCapFinal = marketCapFinnhub || marketCapCalc;
-    const netDebtAdj   = (debtVal ?? 0) - (cashVal ?? 0);
     const ebitdaFh     = fhBasic?.metric?.ebitdaTTM ? fhBasic.metric.ebitdaTTM * 1e6 : (fhBasic?.metric?.ebitdaAnnual ? fhBasic.metric.ebitdaAnnual * 1e6 : null);
-    const evEbitda     = marketCapFinal != null && ebitdaFh ? +((marketCapFinal + netDebtAdj) / ebitdaFh).toFixed(1) : null;
+    const evEbitda     = marketCapFinal != null && ebitdaFh ? +((marketCapFinal + netDebt) / ebitdaFh).toFixed(1) : null;
     const priceToBook  = marketCapFinal && equityVal && equityVal > 0 ? +(marketCapFinal / equityVal).toFixed(2) : null;
 
     const epsHistory = niHistory.map((ni, i) => {
@@ -374,6 +370,8 @@ const sharesForCalc = sharesValAdj || sharesFinnhub;
       sharesOutstanding: sharesForCalc,
       dividendYield: fhBasic?.metric?.dividendYieldIndicatedAnnual || null,
       netDebt,
+      evEbitda,
+      priceToBook,
       analystTarget: null,
       operatingCFVal: fcfVal,
       finnhubFallback: false,
