@@ -189,6 +189,26 @@ export default function StockPage({ params }) {
     </div>
   );
 
+  if (data?.finnhubFallback && !isPro && !checkingPro) return (
+    <div style={{ background: 'var(--bg)', minHeight: '100vh', color: 'var(--text)', fontFamily: 'IBM Plex Mono, monospace' }}>
+      <Topbar />
+      <div style={{ maxWidth: '600px', margin: '0 auto', padding: '100px 24px', textAlign: 'center' }}>
+        <div style={{ fontSize: '48px', marginBottom: '24px' }}>🌍</div>
+        <div style={{ color: 'var(--accent)', fontSize: '10px', letterSpacing: '3px', marginBottom: '12px' }}>PRO FEATURE</div>
+        <h1 style={{ fontSize: '24px', fontWeight: 600, marginBottom: '12px' }}>{ticker} is an international stock</h1>
+        <p style={{ color: 'var(--text-2)', fontSize: '12px', lineHeight: 1.8, marginBottom: '32px' }}>
+          This company reports outside SEC EDGAR. Pro members get access to international stocks via Finnhub data.
+        </p>
+        <a href="/pricing" style={{ background: 'var(--accent)', color: '#000', padding: '10px 28px', fontFamily: 'IBM Plex Mono, monospace', fontSize: '11px', fontWeight: 700, letterSpacing: '1px', textDecoration: 'none' }}>
+          UPGRADE TO PRO →
+        </a>
+        <div style={{ marginTop: '16px' }}>
+          <a href="/" style={{ color: 'var(--text-3)', fontSize: '10px', textDecoration: 'none', letterSpacing: '1px' }}>← BACK TO HOME</a>
+        </div>
+      </div>
+    </div>
+  );
+
   const score = totalScore();
   const revChart = data.revHistory.map(r => ({ year: r.year, value: +(r.val / 1e9).toFixed(1) }));
   const fcfChart = data.fcfHistory.map(r => ({ year: r.year, value: +(r.val / 1e9).toFixed(1) }));
