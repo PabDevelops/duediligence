@@ -214,9 +214,20 @@ export default function StockPage({ params }) {
           </form>
         </div>
       </div>
+      {/* Mobile nav tabs */}
+      <div className="mobile-tabs" style={{ display: 'none', borderBottom: '1px solid var(--border)', background: 'var(--bg-1)', overflowX: 'auto', whiteSpace: 'nowrap' }}>
+        {NAV.map(n => (
+          <button key={n.key}
+            onClick={() => setTab(n.key)}
+            style={{ display: 'inline-block', padding: '10px 16px', fontSize: '11px', letterSpacing: '1px', background: 'none', border: 'none', color: tab === n.key ? 'var(--accent)' : 'var(--text-3)', borderBottom: tab === n.key ? '2px solid var(--accent)' : '2px solid transparent', fontFamily: 'IBM Plex Mono, monospace', cursor: 'pointer' }}>
+            {n.label}
+          </button>
+        ))}
+      </div>
+
       <div style={{ display: 'flex' }}>
         {/* Sidebar */}
-        <div style={S.sidebar}>
+        <div style={S.sidebar} className="stock-sidebar">
           <div style={{ padding: '0 16px', marginBottom: '12px', color: 'var(--text-3)', fontSize: '9px', letterSpacing: '2px' }}>ANALYSIS</div>
           {NAV.map(n => (
             <button key={n.key}
@@ -234,7 +245,7 @@ export default function StockPage({ params }) {
         </div>
 
         {/* Main content */}
-        <div style={S.content}>
+        <div style={S.content} className="stock-content">
 
           {/* Company header */}
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '24px', paddingBottom: '16px', borderBottom: '1px solid var(--border)', gap: '24px' }}>
