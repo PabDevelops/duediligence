@@ -2,6 +2,7 @@
 import { usePathname } from 'next/navigation';
 import { useState, useEffect } from 'react';
 import { SignInButton, UserButton, useUser } from '@clerk/nextjs';
+import { usePathname, useRouter } from 'next/navigation';
 
 function ProBadge() {
   const [isPro, setIsPro] = useState(false);
@@ -35,6 +36,21 @@ export default function Topbar() {
 
   const [menuOpen, setMenuOpen] = useState(false);
   const { isSignedIn } = useUser();
+  const [searchQ, setSearchQ] = useState('');
+  const [suggestions, setSuggestions] = useState([]);
+  const [showSuggestions, setShowSuggestions] = useState(false);
+  const router = useRouter();
+
+  useEffect(() => {
+    if (searchQ.length < 1) { setSuggestions([]); return; }
+    const timeout = setTimeout(() => {
+      fetch(`/api/search?q=${searchQ}`)
+        .then(r => r.json())
+        .then(d => setSuggestions(d.results || []))
+        .catch(() => {});
+    }, 200);
+    return () => clearTimeout(timeout);
+  }, [searchQ]);
 
   return (
     <>
