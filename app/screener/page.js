@@ -32,8 +32,17 @@ const loadSparkline = async (ticker) => {
   const [sortDir, setSortDir] = useState('desc');
   const tableRef = useRef(null);
   const [search, setSearch] = useState('');
-const [page, setPage] = useState(1);
-const PAGE_SIZE = 50;
+  const [page, setPage] = useState(1);
+  const PAGE_SIZE = 50;
+  const [isPro, setIsPro] = useState(false);
+  const { isSignedIn } = useUser();
+
+  useEffect(() => {
+    fetch('/api/subscription')
+      .then(r => r.json())
+      .then(d => setIsPro(d.isPro))
+      .catch(() => {});
+  }, []);
   useEffect(() => {
   if (tableRef.current) tableRef.current.scrollTop = 0;
 }, [search, sector]);
@@ -148,7 +157,14 @@ const PAGE_SIZE = 50;
 
         {/* Table */}
         <div ref={tableRef} style={{ flex: 1, overflow: 'auto', minHeight: '100vh' }}>
-          {loading ? (
+          {!isPro && (
+          <div style={{ background: 'var(--accent-dim)', border: '1px solid var(--accent)', padding: '10px 16px', marginBottom: '12px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+            <span style={{ color: 'var(--accent)', fontSize: '11px', letterSpacing: '1px' }}>🔒 Upgrade to Pro to see full metrics</span>
+            <a href="/pricing" style={{ background: 'var(--accent)', color: '#000', padding: '4px 14px', fontFamily: 'IBM Plex Mono, monospace', fontSize: '10px', fontWeight: 700, letterSpacing: '1px', textDecoration: 'none' }}>UPGRADE →</a>
+          </div>
+        )}
+
+        {loading ? (
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '400px', color: 'var(--text-3)', fontSize: '11px', letterSpacing: '2px' }}>
               LOADING SCREENER DATA...
             </div>
@@ -206,14 +222,14 @@ onMouseLeave={e => e.currentTarget.style.background = 'var(--bg-1)'}>
                     </td>
                     <td style={{ padding: '8px 12px', color: 'var(--text-2)', maxWidth: '200px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{s.name}</td>
                     <td style={{ padding: '8px 12px', color: 'var(--text-3)', fontSize: '10px' }}>{s.sector || '—'}</td>
-                    <td style={{ padding: '8px 12px', textAlign: 'right' }}>{s.currentPrice ? `$${s.currentPrice.toFixed(2)}` : '—'}</td>
-                    <td style={{ padding: '8px 12px', textAlign: 'right' }}>{fmt(s.marketCap)}</td>
-                    <td style={{ padding: '8px 12px', textAlign: 'right', color: s.pe > 30 ? 'var(--red)' : s.pe > 0 ? 'var(--green)' : 'var(--text-3)' }}>{fmtN(s.pe)}</td>
-                    <td style={{ padding: '8px 12px', textAlign: 'right', color: s.revGrowth > 10 ? 'var(--green)' : s.revGrowth > 0 ? 'var(--accent)' : 'var(--red)' }}>{s.revGrowth !== null ? `${s.revGrowth > 0 ? '+' : ''}${s.revGrowth}%` : '—'}</td>
-                    <td style={{ padding: '8px 12px', textAlign: 'right', color: s.opMargin > 15 ? 'var(--green)' : s.opMargin > 0 ? 'var(--accent)' : 'var(--red)' }}>{fmtP(s.opMargin)}</td>
-                    <td style={{ padding: '8px 12px', textAlign: 'right', color: s.fcfYield > 4 ? 'var(--green)' : s.fcfYield > 0 ? 'var(--accent)' : 'var(--red)' }}>{s.fcfYield !== null ? `${s.fcfYield}%` : '—'}</td>
-                    <td style={{ padding: '8px 12px', textAlign: 'right', color: s.roe > 15 ? 'var(--green)' : 'var(--text)' }}>{fmtP(s.roe)}</td>
-                    <td style={{ padding: '8px 12px', textAlign: 'right', color: s.netDebt < 0 ? 'var(--green)' : 'var(--text)' }}>{fmt(s.netDebt)}</td>
+                    <td style={{ padding: '8px 12px', textAlign: 'right', filter: !isPro ? 'blur(4px)' : 'none', userSelect: !isPro ? 'none' : 'auto' }}>{s.currentPrice ? `$${s.currentPrice.toFixed(2)}` : '—'}</td>
+                    <td style={{ padding: '8px 12px', textAlign: 'right', filter: !isPro ? 'blur(4px)' : 'none', userSelect: !isPro ? 'none' : 'auto' }}>{fmt(s.marketCap)}</td>
+                    <td style={{ padding: '8px 12px', textAlign: 'right', color: s.pe > 30 ? 'var(--red)' : s.pe > 0 ? 'var(--green)' : 'var(--text-3)', filter: !isPro ? 'blur(4px)' : 'none', userSelect: !isPro ? 'none' : 'auto' }}>{fmtN(s.pe)}</td>
+                    <td style={{ padding: '8px 12px', textAlign: 'right', color: s.revGrowth > 10 ? 'var(--green)' : s.revGrowth > 0 ? 'var(--accent)' : 'var(--red)', filter: !isPro ? 'blur(4px)' : 'none', userSelect: !isPro ? 'none' : 'auto' }}>{s.revGrowth !== null ? `${s.revGrowth > 0 ? '+' : ''}${s.revGrowth}%` : '—'}</td>
+                    <td style={{ padding: '8px 12px', textAlign: 'right', color: s.opMargin > 15 ? 'var(--green)' : s.opMargin > 0 ? 'var(--accent)' : 'var(--red)', filter: !isPro ? 'blur(4px)' : 'none', userSelect: !isPro ? 'none' : 'auto' }}>{fmtP(s.opMargin)}</td>
+                    <td style={{ padding: '8px 12px', textAlign: 'right', color: s.fcfYield > 4 ? 'var(--green)' : s.fcfYield > 0 ? 'var(--accent)' : 'var(--red)', filter: !isPro ? 'blur(4px)' : 'none', userSelect: !isPro ? 'none' : 'auto' }}>{s.fcfYield !== null ? `${s.fcfYield}%` : '—'}</td>
+                    <td style={{ padding: '8px 12px', textAlign: 'right', color: s.roe > 15 ? 'var(--green)' : 'var(--text)', filter: !isPro ? 'blur(4px)' : 'none', userSelect: !isPro ? 'none' : 'auto' }}>{fmtP(s.roe)}</td>
+                    <td style={{ padding: '8px 12px', textAlign: 'right', color: s.netDebt < 0 ? 'var(--green)' : 'var(--text)', filter: !isPro ? 'blur(4px)' : 'none', userSelect: !isPro ? 'none' : 'auto' }}>{fmt(s.netDebt)}</td>
                     <td style={{ padding: '8px 12px', textAlign: 'right' }}
   onMouseEnter={() => loadSparkline(s.ticker)}>
   <Sparkline data={sparklines[s.ticker] || []} width={80} height={28} />
