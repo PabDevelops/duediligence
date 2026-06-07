@@ -166,7 +166,7 @@ export async function GET(request) {
     const currentLiabilities = getMetric(['LiabilitiesCurrent']);
     const totalLiabilities = getMetric(['Liabilities']);
     const retainedEarnings = getMetric(['RetainedEarningsAccumulatedDeficit']);
-    const capex         = getMetric(['PaymentsToAcquirePropertyPlantAndEquipment']);
+    const capex = getMetric(['PaymentsToAcquirePropertyPlantAndEquipment', 'CapitalExpenditureDiscontinuedOperations', 'PaymentsForProceedsFromProductiveAssets']);
     const inventory     = getMetric(['InventoryNet','InventoryGross']);
     const receivables   = getMetric(['AccountsReceivableNetCurrent','ReceivablesNetCurrent']);
     const payables      = getMetric(['AccountsPayableCurrent', 'AccountsPayable', 'AccountsPayableAndAccruedLiabilitiesCurrent']);
