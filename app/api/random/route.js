@@ -9,9 +9,9 @@ export async function GET() {
       s.symbol &&
       !s.symbol.includes('.') &&
       !s.symbol.includes('-') &&
-      s.symbol.length <= 5 &&
-      (s.mic === 'XNYS' || s.mic === 'XNAS')
+      s.symbol.length <= 5
     ).map(s => s.symbol);
+    if (!tickers.length) return Response.json({ ticker: 'AAPL' });
     const random = tickers[Math.floor(Math.random() * tickers.length)];
     return Response.json({ ticker: random });
   } catch (e) {
