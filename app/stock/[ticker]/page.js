@@ -362,8 +362,8 @@ export default function StockPage({ params }) {
           </div>
 
           {data.description && (
-            <div style={{ color: 'var(--text-3)', fontSize: '11px', lineHeight: 1.7, marginBottom: '20px', paddingBottom: '16px', borderBottom: '1px solid var(--border)', maxWidth: '800px' }}>
-              {data.description.slice(0, 300)}...
+            <div style={{ color: 'var(--text-3)', fontSize: '11px', lineHeight: 1.7, marginBottom: '20px', paddingBottom: '16px', borderBottom: '1px solid var(--border)' }}>
+              {data.description.slice(0, 400)}...
             </div>
           )}
 
