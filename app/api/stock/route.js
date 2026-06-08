@@ -399,13 +399,13 @@ const sharesForCalc = sharesValAdj || sharesFinnhub;
       }
     } catch (e) {}
 
-    return Response.json(result);
-
     try {
       await supabase
         .from('stock_cache')
         .upsert({ ticker, data: result, updated_at: new Date().toISOString() });
     } catch (e) {}
+
+    return Response.json(result);
 
     
 
