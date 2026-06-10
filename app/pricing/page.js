@@ -68,13 +68,9 @@ export default function Pricing() {
             <div style={{ color: 'var(--text-3)', fontSize: '11px', marginBottom: '24px' }}>forever</div>
             <div style={{ borderTop: '1px solid var(--border)', paddingTop: '20px', marginBottom: '24px' }}>
               {[
-                '✓ Stock overview & metrics',
-                '✓ Quality scorecard',
+                '✓ Stock overview',
                 '✓ Market data & sparklines',
-                '✗ Financial statements',
-                '✗ DCF valuation',
-                '✗ Screener',
-                '✗ Compare tool',
+          
               ].map(f => (
                 <div key={f} style={{ color: f.startsWith('✓') ? 'var(--text-2)' : 'var(--text-3)', fontSize: '11px', marginBottom: '8px', letterSpacing: '0.5px' }}>{f}</div>
               ))}
