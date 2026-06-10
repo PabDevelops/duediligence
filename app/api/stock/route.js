@@ -390,14 +390,7 @@ const sharesForCalc = sharesValAdj || sharesFinnhub;
     if (dataQuality < 3) result.finnhubFallback = true;
 
     // Wikipedia description
-    try {
-      const searchName = fhProfile?.name || company.title;
-      const wikiSearch = await fetch(`https://en.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(searchName)}`);
-      if (wikiSearch.ok) {
-        const wikiData = await wikiSearch.json();
-        if (wikiData.extract) result.description = wikiData.extract.slice(0, 1000);
-      }
-    } catch (e) {}
+    
 
     try {
       await supabase
