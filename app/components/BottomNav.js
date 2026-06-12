@@ -95,35 +95,7 @@ export default function BottomNav() {
         <NavLink href="/" icon="home" label="Home" active={isHome} />
         <NavLink href="/screener" icon="search" label="Search" active={isSearch} />
         <NavLink href="/watchlist" icon="watchlist" label="Watchlist" active={isWatchlist} />
-        {isSignedIn ? (
-          <>
-            <button onClick={openUserProfile} style={{
-              display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px',
-              background: 'none', border: 'none', flex: 1, padding: '6px 0', cursor: 'pointer',
-            }}>
-              {ICONS.profile(isProfile)}
-              <span style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: '10px', color: isProfile ? 'var(--accent)' : 'var(--text-3)', fontWeight: isProfile ? 600 : 400 }}>
-                Profile
-              </span>
-            </button>
-            {/* Hidden UserButton - its click is forwarded by the button above */}
-            <div ref={userButtonRef} style={{ position: 'absolute', width: 0, height: 0, overflow: 'hidden', opacity: 0 }}>
-              <UserButton afterSignOutUrl="/" />
-            </div>
-          </>
-        ) : (
-          <SignInButton mode="modal">
-            <button style={{
-              display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px',
-              background: 'none', border: 'none', flex: 1, padding: '6px 0', cursor: 'pointer',
-            }}>
-              {ICONS.profile(isProfile)}
-              <span style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: '10px', color: isProfile ? 'var(--accent)' : 'var(--text-3)', fontWeight: isProfile ? 600 : 400 }}>
-                Profile
-              </span>
-            </button>
-          </SignInButton>
-        )}
+        <NavLink href="/about" icon="profile" label="About" active={path.startsWith('/about')} />
       </div>
     </nav>
   );
