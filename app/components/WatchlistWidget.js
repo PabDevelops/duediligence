@@ -34,7 +34,7 @@ export default function WatchlistWidget() {
   if (!isSignedIn) return null;
 
   return (
-    <div style={{ position: 'fixed', bottom: '24px', right: '24px', zIndex: 50, fontFamily: 'JetBrains Mono, monospace' }}>
+    <div className="watchlist-widget" style={{ position: 'fixed', bottom: '24px', right: '24px', zIndex: 50, fontFamily: 'JetBrains Mono, monospace' }}>
       {open && (
         <div style={{ background: 'var(--bg-1)', border: '1px solid var(--border)', marginBottom: '8px', width: '280px' }}>
           <div style={{ padding: '10px 14px', borderBottom: '1px solid var(--border)', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>

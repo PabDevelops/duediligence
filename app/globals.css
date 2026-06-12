@@ -67,6 +67,9 @@ html, body {
   .mobile-menu {
     display: flex !important;
   }
+  .watchlist-widget {
+    display: none !important;
+  }
 }
 
 @media (min-width: 769px) {
