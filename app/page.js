@@ -439,7 +439,7 @@ export default function Home() {
             <div style={{ color: 'var(--text-3)', fontSize: '9px', letterSpacing: '3px', marginBottom: '12px' }}>MARKET DATA · UPDATED DAILY</div>
 
             {/* Gainers / Losers / Earnings */}
-            <div className="market-grid" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr 1fr', gap: '1px', background: 'var(--border)', marginBottom: '1px' }}>
+            <div className="market-grid" style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr 1fr 1fr 1fr' : '1fr 1fr', gap: '1px', background: 'var(--border)', marginBottom: '1px' }}>
               <div style={{ background: 'var(--bg-1)', gridColumn: '1' }}>
                 <TableHeader title="▲ TOP GAINERS" sub="TOP 10" color="var(--green)" />
                 {movers.gainers.slice(0, 10).map(s => <MoverRow key={s.ticker} s={s} router={router} />)}
@@ -448,15 +448,18 @@ export default function Home() {
                 <TableHeader title="▼ TOP LOSERS" sub="TOP 10" color="var(--red)" />
                 {movers.losers.slice(0, 10).map(s => <MoverRow key={s.ticker} s={s} router={router} />)}
               </div>
+              {isMobile && (
               <div style={{ background: 'var(--bg-1)', gridColumn: '3 / 5' }}>
                 <TableHeader title="📅 UPCOMING EARNINGS" sub="NEXT 7 DAYS" />
                 {earnings ? earnings.map(e => <EarningRow key={e.ticker + e.date} e={e} router={router} />) :
                   <div style={{ padding: '20px 12px', color: 'var(--text-3)', fontSize: '10px' }}>LOADING...</div>}
                 {earnings?.length === 0 && <div style={{ padding: '20px 12px', color: 'var(--text-3)', fontSize: '10px' }}>NO EARNINGS THIS WEEK</div>}
               </div>
+              )}
             </div>
 
-            {/* Rankings */}
+            {/* Rankings - MOBILE ONLY */}
+            {isMobile && (
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '1px', background: 'var(--border)', marginBottom: '48px' }}>
               {[
                 { title: 'TOP ROIC', data: movers.topRoic, metric: 'roic', suffix: '%' },
@@ -470,6 +473,7 @@ export default function Home() {
                 </div>
               ))}
             </div>
+            )}
           </>
         )}
 
