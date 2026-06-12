@@ -87,12 +87,20 @@ export default function Home() {
   const [suggestions, setSuggestions] = useState([]);
   const [showSuggestions, setShowSuggestions] = useState(false);
   const [sotw, setSotw] = useState(null);
+  const [sotwVotes, setSotwVotes] = useState({ BUY: 0, HOLD: 0, SELL: 0, total: 0 });
   const router = useRouter();
 
   useEffect(() => {
     fetch('/api/stock-of-week')
       .then(r => r.json())
-      .then(d => setSotw(d.ticker))
+      .then(d => {
+        setSotw(d.ticker);
+        // Load votes for this stock
+        fetch(`/api/votes?ticker=${d.ticker}`)
+          .then(r => r.json())
+          .then(v => setSotwVotes({ ...v.percentages, total: v.total }))
+          .catch(() => {});
+      })
       .catch(() => {});
   }, []);
 
@@ -176,20 +184,45 @@ export default function Home() {
             </div>
           </div>
 
-          {/* Stock of the Week - preview teaser */}
-          <div style={{ background: 'linear-gradient(135deg, var(--accent-dim), transparent)', border: '1px solid var(--accent)', borderRadius: '18px', padding: '16px 18px', marginBottom: '16px', display: 'flex', alignItems: 'center', gap: '12px' }}>
-            <div style={{ width: '40px', height: '40px', borderRadius: '12px', background: 'var(--accent-dim)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '18px', flexShrink: 0 }}>
-              🔥
-            </div>
-            <div style={{ flex: 1 }}>
-              <div style={{ fontFamily: 'Space Grotesk, sans-serif', color: 'var(--accent)', fontWeight: 600, fontSize: '12px', letterSpacing: '0.5px' }}>
-                STOCK OF THE WEEK
+          {/* Stock of the Week - FEATURED */}
+          {sotw && (
+            <div onClick={() => router.push(`/stock/${sotw}`)} style={{ background: 'linear-gradient(135deg, var(--accent-dim), transparent)', border: '1.5px solid var(--accent)', borderRadius: '20px', padding: '24px', marginBottom: '24px', cursor: 'pointer', transition: 'all 0.2s' }} onMouseEnter={e => { e.currentTarget.style.borderColor = 'var(--accent)'; e.currentTarget.style.transform = 'scale(1.02)'; }} onMouseLeave={e => { e.currentTarget.style.borderColor = 'var(--accent)'; e.currentTarget.style.transform = 'scale(1)'; }}>
+              <div style={{ display: 'flex', alignItems: 'flex-start', gap: '14px', marginBottom: '16px' }}>
+                <div style={{ fontSize: '28px', flexShrink: 0 }}>🔥</div>
+                <div style={{ flex: 1 }}>
+                  <div style={{ fontFamily: 'Space Grotesk, sans-serif', color: 'var(--accent)', fontWeight: 600, fontSize: '11px', letterSpacing: '1px', marginBottom: '4px' }}>STOCK OF THE WEEK</div>
+                  <div style={{ fontFamily: 'Space Grotesk, sans-serif', fontSize: '18px', fontWeight: 700, color: 'var(--text)' }}>{sotw}</div>
+                </div>
               </div>
-              <div style={{ color: 'var(--text-2)', fontSize: '12px', marginTop: '2px' }}>
-                {sotw ? `${sotw} is this week's community pick. Vote Buy, Hold, or Sell.` : 'Every week, one stock. Vote Buy, Hold, or Sell — and see what everyone else thinks.'}
+              
+              <div style={{ borderTop: '1px solid var(--accent)', paddingTop: '16px', marginBottom: '16px' }}>
+                <div style={{ color: 'var(--text-3)', fontSize: '10px', letterSpacing: '1px', marginBottom: '8px' }}>COMMUNITY CONSENSUS</div>
+                <div style={{ display: 'flex', height: '12px', borderRadius: '6px', overflow: 'hidden', marginBottom: '10px' }}>
+                  <div style={{ background: 'var(--green)', width: `${sotwVotes.BUY}%` }} />
+                  <div style={{ background: 'var(--amber)', width: `${sotwVotes.HOLD}%` }} />
+                  <div style={{ background: 'var(--red)', width: `${sotwVotes.SELL}%` }} />
+                </div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '11px', fontFamily: 'JetBrains Mono, monospace', color: 'var(--text-2)' }}>
+                  <span>● {sotwVotes.BUY}% Buy</span>
+                  <span>● {sotwVotes.HOLD}% Hold</span>
+                  <span>● {sotwVotes.SELL}% Sell</span>
+                </div>
+                {sotwVotes.total > 0 && (
+                  <div style={{ marginTop: '8px', fontSize: '10px', color: 'var(--text-3)', textAlign: 'center' }}>
+                    {sotwVotes.total} {sotwVotes.total === 1 ? 'person' : 'people'} voted
+                  </div>
+                )}
+              </div>
+
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
+                {['BUY', 'HOLD', 'SELL'].slice(0, 2).map(v => (
+                  <button key={v} onClick={async (e) => { e.stopPropagation(); if (!isSignedIn) { router.push('/sign-in'); return; } fetch('/api/votes', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ ticker: sotw, vote: v }) }).then(() => { fetch(`/api/votes?ticker=${sotw}`).then(r => r.json()).then(d => setSotwVotes({ ...d.percentages, total: d.total })); }); }} style={{ padding: '10px', borderRadius: '12px', background: 'var(--accent)', color: '#0B0E14', border: 'none', fontFamily: 'Space Grotesk, sans-serif', fontWeight: 700, fontSize: '12px', cursor: 'pointer' }}>
+                    Vote {v}
+                  </button>
+                ))}
               </div>
             </div>
-          </div>
+          )}
 
           {/* What you get - meter-style cards instead of plain grid */}
           <div style={{ marginBottom: '16px' }}>
