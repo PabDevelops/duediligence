@@ -177,20 +177,9 @@ export default function ProfilePage() {
           <div style={{ fontSize: '11px', color: 'var(--text-3)', letterSpacing: '2px', marginBottom: '16px', paddingBottom: '8px', borderBottom: '1px solid var(--border)' }}>
             ACHIEVEMENTS ({achievements.length})
           </div>
-          {achievements.length === 0 ? (
-            <div style={{ color: 'var(--text-3)', fontSize: '12px', padding: '20px', textAlign: 'center', background: 'var(--bg-1)', borderRadius: '12px' }}>
-              No achievements yet. Keep exploring! 🚀
-            </div>
-          ) : (
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(120px, 1fr))', gap: '12px' }}>
-              {achievements.map((ach, i) => (
-                <div key={i} style={{ background: 'var(--bg-1)', border: '1px solid var(--accent)', borderRadius: '12px', padding: '16px', textAlign: 'center' }}>
-                  <div style={{ fontSize: '24px', marginBottom: '8px' }}>🏆</div>
-                  <div style={{ fontSize: '11px', color: 'var(--accent)', fontWeight: 600 }}>{ach.type || 'Achievement'}</div>
-                </div>
-              ))}
-            </div>
-          )}
+          <div style={{ color: 'var(--text-3)', fontSize: '12px', padding: '20px', textAlign: 'center', background: 'var(--bg-1)', borderRadius: '12px', border: '1px solid var(--accent)', borderStyle: 'dashed' }}>
+            🚀 Coming soon — Track your SOTW votes, predictions, and unlock achievements
+          </div>
         </div>
       </div>
     </div>
