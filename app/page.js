@@ -138,7 +138,7 @@ export default function Home() {
             </p>
             <div style={{ display: 'flex', gap: '0', marginBottom: '14px', borderRadius: '14px', overflow: 'hidden', border: '1px solid var(--border-2)' }}>
               <input
-                style={{ flex: 1, background: 'var(--bg-2)', border: 'none', color: 'var(--accent)', fontFamily: 'JetBrains Mono, monospace', fontSize: '18px', fontWeight: 700, padding: '14px 16px', outline: 'none', letterSpacing: '3px' }}
+                style={{ flex: 1, minWidth: 0, background: 'var(--bg-2)', border: 'none', color: 'var(--accent)', fontFamily: 'JetBrains Mono, monospace', fontSize: '18px', fontWeight: 700, padding: '14px 16px', outline: 'none', letterSpacing: '3px' }}
                 placeholder="AAPL"
                 value={ticker}
                 onChange={e => setTicker(e.target.value.toUpperCase())}
@@ -146,7 +146,7 @@ export default function Home() {
                 maxLength={6}
               />
               <button onClick={() => go()}
-                style={{ background: 'var(--accent)', color: '#0B0E14', border: 'none', padding: '14px 22px', fontFamily: 'Space Grotesk, sans-serif', fontSize: '13px', fontWeight: 700, cursor: 'pointer', letterSpacing: '0.5px' }}>
+                style={{ flexShrink: 0, whiteSpace: 'nowrap', background: 'var(--accent)', color: '#0B0E14', border: 'none', padding: '14px 18px', fontFamily: 'Space Grotesk, sans-serif', fontSize: '13px', fontWeight: 700, cursor: 'pointer', letterSpacing: '0.5px' }}>
                 GO →
               </button>
             </div>
@@ -165,6 +165,21 @@ export default function Home() {
               <a href="/pricing" style={{ flex: 1, background: 'none', border: '1px solid var(--border-2)', borderRadius: '14px', color: 'var(--text-2)', padding: '14px', fontFamily: 'Space Grotesk, sans-serif', fontSize: '13px', fontWeight: 600, letterSpacing: '0.3px', textDecoration: 'none', textAlign: 'center' }}>
                 Pricing
               </a>
+            </div>
+          </div>
+
+          {/* Stock of the Week - preview teaser */}
+          <div style={{ background: 'linear-gradient(135deg, var(--accent-dim), transparent)', border: '1px solid var(--accent)', borderRadius: '18px', padding: '16px 18px', marginBottom: '16px', display: 'flex', alignItems: 'center', gap: '12px' }}>
+            <div style={{ width: '40px', height: '40px', borderRadius: '12px', background: 'var(--accent-dim)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '18px', flexShrink: 0 }}>
+              🔥
+            </div>
+            <div style={{ flex: 1 }}>
+              <div style={{ fontFamily: 'Space Grotesk, sans-serif', color: 'var(--accent)', fontWeight: 600, fontSize: '12px', letterSpacing: '0.5px' }}>
+                STOCK OF THE WEEK
+              </div>
+              <div style={{ color: 'var(--text-2)', fontSize: '12px', marginTop: '2px' }}>
+                Every week, one stock. Vote Buy, Hold, or Sell — and see what everyone else thinks.
+              </div>
             </div>
           </div>
 
