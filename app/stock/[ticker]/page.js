@@ -217,9 +217,6 @@ export default function StockPage({ params }) {
   const price = data.currentPrice;
   const change = data.priceChange;
   const changePct = data.priceChangePct;
-  const fcfPerShare = data.fcfVal && data.sharesOutstanding ? data.fcfVal / data.sharesOutstanding : null;
-  const intrinsicValue = fcfPerShare ? +(fcfPerShare * 20).toFixed(2) : null;
-  const undervalued = intrinsicValue && price ? intrinsicValue > price : null;
 
   // Easy Mode score (0-100) - same methodology as quality tab, scaled up
   const easyMode = (() => {
@@ -795,36 +792,6 @@ export default function StockPage({ params }) {
         </button>
       ))}
     </div>
-
-              {/* Status pills */}
-              <div className="grid-4" style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '10px', marginBottom: '16px' }}>
-                {[
-                  { label: 'PROFITABILITY', val: data.grossMargin > 50 ? 'STRONG MARGINS' : data.grossMargin > 30 ? 'SOLID MARGINS' : 'THIN MARGINS', good: data.grossMargin > 40 },
-                  { label: 'GROWTH', val: data.revGrowth > 20 ? 'ACCELERATING' : data.revGrowth > 5 ? 'STEADY' : 'SLOW', good: data.revGrowth > 10 },
-                  { label: 'CASH FLOW', val: data.fcfVal > 0 ? 'POSITIVE FCF' : 'NEGATIVE FCF', good: data.fcfVal > 0 },
-                  { label: 'VALUATION', val: data.pe > 40 ? 'NOT CHEAP' : data.pe > 20 ? 'FAIR VALUE' : data.pe > 0 ? 'ATTRACTIVE' : 'N/A', good: data.pe > 0 && data.pe < 25 },
-                ].map(p => (
-                  <div key={p.label} style={{ background: 'var(--bg-1)', border: '1px solid var(--border)', borderRadius: '14px', padding: '12px 14px', display: 'flex', flexDirection: 'column', gap: '6px' }}>
-                    <span style={{ color: 'var(--text-3)', fontSize: '10px', letterSpacing: '1px' }}>{p.label}</span>
-                    <span style={{ color: !isSignedIn ? 'var(--accent)' : p.good ? 'var(--green)' : p.good === false ? 'var(--red)' : 'var(--accent)', fontSize: '11px', fontWeight: 600, letterSpacing: '0.5px', filter: !isSignedIn ? 'blur(4px)' : 'none', userSelect: !isSignedIn ? 'none' : 'auto' }}>{p.val}</span>
-                  </div>
-                ))}
-              </div>
-
-              {/* Insight boxes */}
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px', marginBottom: '16px' }}>
-                {[
-                  { label: 'WHAT STANDS OUT', color: 'var(--green)', text: data.grossMargin > 50 ? `Gross margin of ${data.grossMargin}% signals strong pricing power. Positive ROIC spread.` : `Revenue grew ${data.revGrowth}% YoY with operating margin of ${data.opMargin}%.` },
-                  { label: "WHAT'S CHANGING", color: 'var(--blue)', text: data.revGrowth > 0 ? `Revenue growing at ${data.revGrowth}% YoY. ${data.opMargin > 15 ? 'Operating margins remain solid.' : 'Margins showing expansion.'}` : `Revenue contracting ${data.revGrowth}% YoY. Monitor margin evolution closely.` },
-                  { label: 'WHAT DESERVES CAUTION', color: 'var(--amber)', text: data.pe > 35 ? `P/E of ${data.pe}x leaves limited room for execution misses or growth deceleration.` : data.debtToEquity > 2 ? `Debt/equity of ${data.debtToEquity}x warrants attention in high-rate environment.` : `Monitor margin evolution and free cash flow generation going forward.` },
-                  { label: 'VALUATION CONTEXT', color: '#a855f7', text: data.pe ? `${data.pe}x earnings. ${data.pe > 30 ? 'Quality is already priced in.' : 'Reasonable valuation given the business profile.'} ${data.analystTarget ? `Analyst target: $${data.analystTarget}.` : ''}` : `No P/E available. EV/EBITDA: ${fmtN(data.evEbitda)}x.` },
-                ].map(b => (
-                  <div key={b.label} style={{ background: 'var(--bg-1)', border: '1px solid var(--border)', borderRadius: '14px', padding: '14px 16px' }}>
-                    <div style={{ color: b.color, fontSize: '10px', letterSpacing: '1.5px', marginBottom: '8px', fontWeight: 600 }}>{b.label}</div>
-                    <div style={{ color: 'var(--text-2)', fontSize: '12px', lineHeight: 1.6, filter: !isSignedIn ? 'blur(5px)' : 'none', userSelect: !isSignedIn ? 'none' : 'auto' }}>{b.text}</div>
-                  </div>
-                ))}
-              </div>
 
               {/* Metrics Table */}
 <div style={{ marginBottom: '16px' }}>
