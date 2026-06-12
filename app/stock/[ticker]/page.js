@@ -501,7 +501,7 @@ export default function StockPage({ params }) {
                     Trading at <b style={{ color: 'var(--text)', fontFamily: 'JetBrains Mono, monospace' }}>${price?.toFixed(2)}</b> — our estimate is <b style={{ color: 'var(--text)', fontFamily: 'JetBrains Mono, monospace' }}>${fairValue.estimate.toFixed(2)}</b>
                   </div>
                 </div>
-              )}\n
+              )}
 
               {/* Stock of the Week - only if this is this week's pick */}
               {sotw === ticker && (
