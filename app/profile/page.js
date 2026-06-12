@@ -2,6 +2,7 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useUser } from '@clerk/nextjs';
+import { SignOutButton } from '@clerk/nextjs';
 import Topbar from '../components/Topbar';
 
 export default function ProfilePage() {
@@ -57,14 +58,40 @@ export default function ProfilePage() {
       
       <div style={{ maxWidth: '900px', margin: '0 auto', padding: '24px' }}>
         {/* Header */}
-        <div style={{ marginBottom: '32px' }}>
-          <div style={{ fontSize: '11px', color: 'var(--text-3)', letterSpacing: '2px', marginBottom: '12px' }}>YOUR PROFILE</div>
-          <h1 style={{ fontFamily: 'Space Grotesk, sans-serif', fontSize: '28px', fontWeight: 700, marginBottom: '8px' }}>
-            {user?.firstName || user?.emailAddresses?.[0]?.emailAddress || 'User'}
-          </h1>
-          <p style={{ color: 'var(--text-2)', fontSize: '12px' }}>
-            Member since {user?.createdAt ? new Date(user.createdAt).toLocaleDateString() : '—'}
-          </p>
+        <div style={{ marginBottom: '32px', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+          <div>
+            <div style={{ fontSize: '11px', color: 'var(--text-3)', letterSpacing: '2px', marginBottom: '12px' }}>YOUR PROFILE</div>
+            <h1 style={{ fontFamily: 'Space Grotesk, sans-serif', fontSize: '28px', fontWeight: 700, marginBottom: '8px' }}>
+              {user?.firstName || user?.emailAddresses?.[0]?.emailAddress || 'User'}
+            </h1>
+            <p style={{ color: 'var(--text-2)', fontSize: '12px' }}>
+              Member since {user?.createdAt ? new Date(user.createdAt).toLocaleDateString() : '—'}
+            </p>
+          </div>
+          {isSignedIn && (
+            <SignOutButton redirectUrl="/">
+              <button style={{
+                padding: '10px 16px',
+                borderRadius: '8px',
+                border: '1px solid var(--red)',
+                background: 'transparent',
+                color: 'var(--red)',
+                cursor: 'pointer',
+                fontSize: '12px',
+                fontWeight: 600,
+                fontFamily: 'Space Grotesk, sans-serif',
+                transition: 'all 0.2s'
+              }}
+              onMouseEnter={e => {
+                e.currentTarget.style.background = 'var(--red-dim)';
+              }}
+              onMouseLeave={e => {
+                e.currentTarget.style.background = 'transparent';
+              }}>
+                Sign out
+              </button>
+            </SignOutButton>
+          )}
         </div>
 
         {/* Stats grid */}
