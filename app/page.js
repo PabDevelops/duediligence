@@ -191,8 +191,8 @@ export default function Home() {
 
           {/* Stock of the Week - MOBILE ONLY - right after hero */}
           {sotw && (
-            <div style={{ padding: '0', marginBottom: '24px' }}>
-              <div onClick={() => router.push(`/stock/${sotw?.ticker}`)} style={{ background: 'linear-gradient(135deg, var(--accent-dim), transparent)', border: '1.5px solid var(--accent)', borderRadius: '20px', padding: '24px', cursor: 'pointer', transition: 'all 0.2s', marginBottom: '16px' }} onMouseEnter={e => { e.currentTarget.style.borderColor = 'var(--accent)'; e.currentTarget.style.transform = 'scale(1.02)'; }} onMouseLeave={e => { e.currentTarget.style.borderColor = 'var(--accent)'; e.currentTarget.style.transform = 'scale(1)'; }}>
+            <a href={`/stock/${sotw?.ticker}`} style={{ display: 'block', padding: '0', marginBottom: '24px', textDecoration: 'none' }}>
+              <div style={{ background: 'linear-gradient(135deg, var(--accent-dim), transparent)', border: '1.5px solid var(--accent)', borderRadius: '20px', padding: '24px', cursor: 'pointer', transition: 'all 0.2s', marginBottom: '16px' }} onMouseEnter={e => { e.currentTarget.style.borderColor = 'var(--accent)'; e.currentTarget.style.transform = 'scale(1.02)'; }} onMouseLeave={e => { e.currentTarget.style.borderColor = 'var(--accent)'; e.currentTarget.style.transform = 'scale(1)'; }}>
                 <div style={{ display: 'flex', alignItems: 'flex-start', gap: '14px', marginBottom: '16px' }}>
                   <div style={{ fontSize: '28px', flexShrink: 0 }}>🔥</div>
                   <div style={{ flex: 1 }}>
@@ -231,7 +231,7 @@ export default function Home() {
                   ))}
                 </div>
               </div>
-            </div>
+            </a>
           )}
 
           {/* What you get - meter-style cards instead of plain grid */}
@@ -313,8 +313,8 @@ export default function Home() {
 
       {/* Stock of the Week - after ticker, inside desktop block */}
       {sotw && (
-        <div style={{ padding: '0 24px', marginBottom: '24px', maxWidth: '1400px', margin: '0 auto' }}>
-          <div onClick={() => router.push(`/stock/${sotw?.ticker}`)} style={{ background: 'linear-gradient(135deg, var(--accent-dim), transparent)', border: '1.5px solid var(--accent)', borderRadius: '20px', padding: '24px', cursor: 'pointer', transition: 'all 0.2s' }} onMouseEnter={e => { e.currentTarget.style.borderColor = 'var(--accent)'; e.currentTarget.style.transform = 'scale(1.01)'; }} onMouseLeave={e => { e.currentTarget.style.borderColor = 'var(--accent)'; e.currentTarget.style.transform = 'scale(1)'; }}>
+        <a href={`/stock/${sotw?.ticker}`} style={{ display: 'block', padding: '0 24px', marginBottom: '24px', maxWidth: '1400px', margin: '0 auto', textDecoration: 'none' }}>
+          <div style={{ background: 'linear-gradient(135deg, var(--accent-dim), transparent)', border: '1.5px solid var(--accent)', borderRadius: '20px', padding: '24px', cursor: 'pointer', transition: 'all 0.2s' }} onMouseEnter={e => { e.currentTarget.style.borderColor = 'var(--accent)'; e.currentTarget.style.transform = 'scale(1.01)'; }} onMouseLeave={e => { e.currentTarget.style.borderColor = 'var(--accent)'; e.currentTarget.style.transform = 'scale(1)'; }}>
             <div style={{ display: 'flex', alignItems: 'flex-start', gap: '14px', marginBottom: '16px' }}>
               <div style={{ fontSize: '28px', flexShrink: 0 }}>🔥</div>
               <div style={{ flex: 1 }}>
@@ -353,7 +353,7 @@ export default function Home() {
               ))}
             </div>
           </div>
-        </div>
+        </a>
       )}
 
       {/* HERO */}
