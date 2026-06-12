@@ -1,7 +1,7 @@
 'use client';
 import { usePathname } from 'next/navigation';
-import { useUser, SignInButton } from '@clerk/nextjs';
-import { useState, useEffect } from 'react';
+import { useUser, SignInButton, UserButton } from '@clerk/nextjs';
+import { useState, useEffect, useRef } from 'react';
 
 const ICONS = {
   home: (active) => (
@@ -71,7 +71,16 @@ export default function BottomNav() {
   const isHome = path === '/';
   const isSearch = path === '/screener' || path === '/compare';
   const isWatchlist = path.startsWith('/watchlist');
-  const isProfile = path === '/about' || path.startsWith('/sign-in') || path.startsWith('/sign-up') || path === '/pricing';
+  const isProfile = path.startsWith('/sign-in') || path.startsWith('/sign-up');
+
+  const userButtonRef = useRef(null);
+
+  const openUserProfile = () => {
+    // UserButton renders its own trigger button; forward our click to it
+    // so we can show our own icon/label while still using Clerk's profile UI.
+    const btn = userButtonRef.current?.querySelector('button');
+    if (btn) btn.click();
+  };
 
   return (
     <nav className="bottom-nav" style={{
@@ -87,7 +96,21 @@ export default function BottomNav() {
         <NavLink href="/screener" icon="search" label="Search" active={isSearch} />
         <NavLink href="/watchlist" icon="watchlist" label="Watchlist" active={isWatchlist} />
         {isSignedIn ? (
-          <NavLink href="/about" icon="profile" label="Profile" active={isProfile} />
+          <>
+            <button onClick={openUserProfile} style={{
+              display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px',
+              background: 'none', border: 'none', flex: 1, padding: '6px 0', cursor: 'pointer',
+            }}>
+              {ICONS.profile(isProfile)}
+              <span style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: '10px', color: isProfile ? 'var(--accent)' : 'var(--text-3)', fontWeight: isProfile ? 600 : 400 }}>
+                Profile
+              </span>
+            </button>
+            {/* Hidden UserButton - its click is forwarded by the button above */}
+            <div ref={userButtonRef} style={{ position: 'absolute', width: 0, height: 0, overflow: 'hidden', opacity: 0 }}>
+              <UserButton afterSignOutUrl="/" />
+            </div>
+          </>
         ) : (
           <SignInButton mode="modal">
             <button style={{
