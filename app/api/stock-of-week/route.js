@@ -1,5 +1,23 @@
 import { supabase } from '../../../lib/supabase';
 
+// Fallback company names for stocks not in cache
+const companyNames = {
+  'MOH': 'Molina Healthcare, Inc.',
+  'AAPL': 'Apple Inc.',
+  'MSFT': 'Microsoft Corporation',
+  'GOOGL': 'Alphabet Inc.',
+  'AMZN': 'Amazon.com Inc.',
+  'NVDA': 'NVIDIA Corporation',
+  'TSLA': 'Tesla Inc.',
+  'META': 'Meta Platforms Inc.',
+  'INTC': 'Intel Corporation',
+  'AMD': 'Advanced Micro Devices',
+};
+
+function getCompanyName(ticker) {
+  return companyNames[ticker] || 'N/A';
+}
+
 function getWeekStart(date = new Date()) {
   const d = new Date(date);
   const day = d.getDay();
@@ -20,13 +38,14 @@ export async function GET() {
       .single();
 
     if (!checkError && existing) {
-      // Get name from cache
+      // Get name from cache, fallback to known companies
       const { data: stock } = await supabase
         .from('stock_cache')
         .select('name')
         .eq('ticker', existing.ticker)
         .single();
-      return Response.json({ ticker: existing.ticker, name: stock?.name || 'N/A', isNew: false });
+      const name = stock?.name || getCompanyName(existing.ticker);
+      return Response.json({ ticker: existing.ticker, name, isNew: false });
     }
 
     // Get all stocks in cache with name
@@ -63,7 +82,8 @@ export async function GET() {
 
     if (insertError) throw insertError;
 
-    return Response.json({ ticker: randomStock.ticker, name: randomStock.name || 'N/A', isNew: true });
+    const name = randomStock.name || getCompanyName(randomStock.ticker);
+    return Response.json({ ticker: randomStock.ticker, name, isNew: true });
   } catch (error) {
     console.error('stock-of-week error:', error);
     return Response.json({ error: error.message }, { status: 500 });
