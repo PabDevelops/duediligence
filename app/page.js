@@ -125,18 +125,20 @@ export default function Home() {
       <MarketBar />
 
       {isMobile && (
-        <div style={{ padding: '24px 16px' }}>
-          <div style={{ marginBottom: '32px' }}>
-            <h1 style={{ fontSize: '32px', fontWeight: 700, letterSpacing: '-1px', lineHeight: 1.1, marginBottom: '16px' }}>
-              Fundamental<br />analysis<span style={{ color: 'var(--accent)' }}>.</span><br />
-              <span style={{ color: 'var(--accent)' }}>Without noise.</span>
+        <div style={{ padding: '20px 16px' }}>
+
+          {/* Hero card */}
+          <div style={{ background: 'var(--bg-1)', border: '1px solid var(--border)', borderRadius: '20px', padding: '24px 20px', marginBottom: '16px' }}>
+            <h1 style={{ fontFamily: 'Space Grotesk, sans-serif', fontSize: '30px', fontWeight: 700, letterSpacing: '-0.5px', lineHeight: 1.15, marginBottom: '12px' }}>
+              Know if a stock is worth buying.<br />
+              <span style={{ color: 'var(--accent)' }}>In seconds.</span>
             </h1>
-            <p style={{ color: 'var(--text-2)', fontSize: '12px', lineHeight: 1.8, marginBottom: '24px' }}>
-              Primary data from SEC EDGAR. No opinions. No buy/sell calls.
+            <p style={{ color: 'var(--text-2)', fontSize: '13px', lineHeight: 1.7, marginBottom: '20px' }}>
+              Type a ticker. Get a simple score, a fair value, and what other everyday investors think. No jargon.
             </p>
-            <div style={{ display: 'flex', gap: '0', marginBottom: '16px' }}>
+            <div style={{ display: 'flex', gap: '0', marginBottom: '14px', borderRadius: '14px', overflow: 'hidden', border: '1px solid var(--border-2)' }}>
               <input
-                style={{ flex: 1, background: 'var(--bg-2)', border: '1px solid var(--border-2)', borderRight: 'none', color: 'var(--accent)', fontFamily: 'JetBrains Mono, monospace', fontSize: '18px', fontWeight: 700, padding: '12px 16px', outline: 'none', letterSpacing: '3px' }}
+                style={{ flex: 1, background: 'var(--bg-2)', border: 'none', color: 'var(--accent)', fontFamily: 'JetBrains Mono, monospace', fontSize: '18px', fontWeight: 700, padding: '14px 16px', outline: 'none', letterSpacing: '3px' }}
                 placeholder="AAPL"
                 value={ticker}
                 onChange={e => setTicker(e.target.value.toUpperCase())}
@@ -144,61 +146,68 @@ export default function Home() {
                 maxLength={6}
               />
               <button onClick={() => go()}
-                style={{ background: 'var(--accent)', color: '#000', border: 'none', padding: '12px 20px', fontFamily: 'JetBrains Mono, monospace', fontSize: '12px', fontWeight: 700, cursor: 'pointer', letterSpacing: '1px' }}>
+                style={{ background: 'var(--accent)', color: '#0B0E14', border: 'none', padding: '14px 22px', fontFamily: 'Space Grotesk, sans-serif', fontSize: '13px', fontWeight: 700, cursor: 'pointer', letterSpacing: '0.5px' }}>
                 GO →
               </button>
             </div>
-            <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', marginBottom: '24px' }}>
+            <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', marginBottom: '20px' }}>
               {['AAPL', 'MSFT', 'NVDA', 'V', 'GOOGL'].map(t => (
                 <button key={t} onClick={() => go(t)}
-                  style={{ background: 'none', border: '1px solid var(--border)', color: 'var(--text-3)', padding: '4px 10px', fontFamily: 'JetBrains Mono, monospace', fontSize: '10px', cursor: 'pointer', letterSpacing: '1px' }}>
+                  style={{ background: 'var(--bg-2)', border: '1px solid var(--border)', borderRadius: '10px', color: 'var(--text-2)', padding: '6px 12px', fontFamily: 'JetBrains Mono, monospace', fontSize: '11px', cursor: 'pointer', letterSpacing: '1px' }}>
                   {t}
                 </button>
               ))}
             </div>
             <div style={{ display: 'flex', gap: '10px' }}>
-              <a href="/sign-up" style={{ flex: 1, background: 'var(--accent)', color: '#000', padding: '12px', fontFamily: 'JetBrains Mono, monospace', fontSize: '11px', fontWeight: 700, letterSpacing: '1px', textDecoration: 'none', textAlign: 'center' }}>
-                START FREE →
+              <a href="/sign-up" style={{ flex: 1, background: 'var(--accent)', color: '#0B0E14', padding: '14px', borderRadius: '14px', fontFamily: 'Space Grotesk, sans-serif', fontSize: '13px', fontWeight: 700, letterSpacing: '0.3px', textDecoration: 'none', textAlign: 'center' }}>
+                Start free
               </a>
-              <a href="/pricing" style={{ flex: 1, background: 'none', border: '1px solid var(--border)', color: 'var(--text-3)', padding: '12px', fontFamily: 'JetBrains Mono, monospace', fontSize: '11px', letterSpacing: '1px', textDecoration: 'none', textAlign: 'center' }}>
-                PRICING
+              <a href="/pricing" style={{ flex: 1, background: 'none', border: '1px solid var(--border-2)', borderRadius: '14px', color: 'var(--text-2)', padding: '14px', fontFamily: 'Space Grotesk, sans-serif', fontSize: '13px', fontWeight: 600, letterSpacing: '0.3px', textDecoration: 'none', textAlign: 'center' }}>
+                Pricing
               </a>
             </div>
           </div>
 
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1px', background: 'var(--border)', marginBottom: '24px' }}>
-            {[
-              { icon: '◈', title: 'QUALITY SCORE', desc: 'Sector-adjusted scoring' },
-              { icon: '◎', title: 'DCF VALUATION', desc: 'Graham formula' },
-              { icon: '⊞', title: 'SCREENER', desc: '8,000+ US stocks' },
-              { icon: '⊟', title: 'COMPARE', desc: 'Side-by-side analysis' },
-            ].map(f => (
-              <div key={f.title} style={{ background: 'var(--bg-1)', padding: '16px' }}>
-                <div style={{ color: 'var(--accent)', fontSize: '20px', marginBottom: '6px' }}>{f.icon}</div>
-                <div style={{ color: 'var(--text)', fontSize: '10px', fontWeight: 700, letterSpacing: '1px', marginBottom: '4px' }}>{f.title}</div>
-                <div style={{ color: 'var(--text-3)', fontSize: '10px', lineHeight: 1.5 }}>{f.desc}</div>
-              </div>
-            ))}
+          {/* What you get - meter-style cards instead of plain grid */}
+          <div style={{ marginBottom: '16px' }}>
+            <div style={{ fontFamily: 'JetBrains Mono, monospace', color: 'var(--text-3)', fontSize: '11px', letterSpacing: '2px', marginBottom: '10px', paddingLeft: '4px' }}>
+              WHAT YOU GET
+            </div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+              {[
+                { icon: '🟢', title: 'Easy Mode score', desc: 'A simple 0-100 score and a plain-English verdict for any stock' },
+                { icon: '👍', title: 'Community votes', desc: "See what other everyday investors think — Buy, Hold, or Sell" },
+                { icon: '📊', title: 'Fair value check', desc: 'Know if a stock looks cheap, fair, or expensive right now' },
+                { icon: '🔍', title: 'Full screener', desc: '8,000+ US stocks, searchable in seconds' },
+              ].map(f => (
+                <div key={f.title} style={{ background: 'var(--bg-1)', border: '1px solid var(--border)', borderRadius: '16px', padding: '14px 16px', display: 'flex', gap: '12px', alignItems: 'flex-start' }}>
+                  <div style={{ fontSize: '20px', lineHeight: 1.4 }}>{f.icon}</div>
+                  <div>
+                    <div style={{ fontFamily: 'Space Grotesk, sans-serif', color: 'var(--text)', fontSize: '14px', fontWeight: 600, marginBottom: '3px' }}>{f.title}</div>
+                    <div style={{ color: 'var(--text-3)', fontSize: '12px', lineHeight: 1.5 }}>{f.desc}</div>
+                  </div>
+                </div>
+              ))}
+            </div>
           </div>
 
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1px', background: 'var(--border)', marginBottom: '24px' }}>
+          {/* Stats strip */}
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px', marginBottom: '16px' }}>
             {[
               { val: '8,000+', label: 'US STOCKS' },
-              { val: '15', label: 'DD QUESTIONS' },
-              { val: '5', label: 'DIMENSIONS' },
-              { val: 'FREE', label: 'TO START' },
+              { val: 'FREE', label: 'EASY MODE' },
             ].map(s => (
-              <div key={s.label} style={{ background: 'var(--bg-1)', padding: '16px', textAlign: 'center' }}>
-                <div style={{ color: 'var(--accent)', fontSize: '20px', fontWeight: 700 }}>{s.val}</div>
-                <div style={{ color: 'var(--text-3)', fontSize: '9px', letterSpacing: '2px', marginTop: '4px' }}>{s.label}</div>
+              <div key={s.label} style={{ background: 'var(--bg-1)', border: '1px solid var(--border)', borderRadius: '16px', padding: '16px', textAlign: 'center' }}>
+                <div style={{ fontFamily: 'Space Grotesk, sans-serif', color: 'var(--accent)', fontSize: '22px', fontWeight: 700 }}>{s.val}</div>
+                <div style={{ color: 'var(--text-3)', fontSize: '10px', letterSpacing: '2px', marginTop: '4px' }}>{s.label}</div>
               </div>
             ))}
           </div>
 
           {movers && (
-            <div style={{ marginBottom: '24px' }}>
-              <div style={{ color: 'var(--text-3)', fontSize: '9px', letterSpacing: '3px', marginBottom: '8px' }}>MARKET DATA</div>
-              <div style={{ background: 'var(--bg-1)', border: '1px solid var(--border)' }}>
+            <div style={{ marginBottom: '16px' }}>
+              <div style={{ fontFamily: 'JetBrains Mono, monospace', color: 'var(--text-3)', fontSize: '11px', letterSpacing: '2px', marginBottom: '10px', paddingLeft: '4px' }}>MARKET MOVERS</div>
+              <div style={{ background: 'var(--bg-1)', border: '1px solid var(--border)', borderRadius: '16px', overflow: 'hidden' }}>
                 <TableHeader title="▲ TOP GAINERS" color="var(--green)" />
                 {movers.gainers.slice(0, 5).map(s => <MoverRow key={s.ticker} s={s} router={router} />)}
               </div>
