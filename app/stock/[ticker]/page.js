@@ -112,6 +112,8 @@ export default function StockPage({ params }) {
   const [isPro, setIsPro] = useState(false);
   const [checkingPro, setCheckingPro] = useState(true);
   const [inWatchlist, setInWatchlist] = useState(false);
+  const [userVote, setUserVote] = useState(null);
+  const [expanded, setExpanded] = useState(false);
   const { isSignedIn } = useUser();
 
 
@@ -214,6 +216,67 @@ export default function StockPage({ params }) {
   const fcfPerShare = data.fcfVal && data.sharesOutstanding ? data.fcfVal / data.sharesOutstanding : null;
   const intrinsicValue = fcfPerShare ? +(fcfPerShare * 20).toFixed(2) : null;
   const undervalued = intrinsicValue && price ? intrinsicValue > price : null;
+
+  // Easy Mode score (0-100) - same methodology as quality tab, scaled up
+  const easyMode = (() => {
+    const sector = (data.sector || '').toLowerCase();
+    const isFinancial = sector.includes('bank') || sector.includes('insurance') || sector.includes('financial');
+    const isTech = sector.includes('tech') || sector.includes('software') || sector.includes('semi');
+    const isPharma = sector.includes('pharma') || sector.includes('biotech') || sector.includes('health');
+    const roicThreshold = isTech ? 0.25 : isPharma ? 0.20 : 0.15;
+    const gmThreshold = isTech ? 0.65 : isPharma ? 0.65 : isFinancial ? 0.30 : 0.35;
+    const omThreshold = isTech ? 0.20 : isPharma ? 0.20 : isFinancial ? 0.15 : 0.15;
+    const roicScore = data.roic == null ? 2.5 : data.roic/100 >= roicThreshold*2 ? 5 : data.roic/100 >= roicThreshold*1.5 ? 4.5 : data.roic/100 >= roicThreshold ? 4 : data.roic/100 >= roicThreshold*0.7 ? 3 : data.roic/100 >= roicThreshold*0.4 ? 2 : 1;
+    const gmScore = data.grossMargin == null ? 2.5 : data.grossMargin/100 >= gmThreshold*1.4 ? 5 : data.grossMargin/100 >= gmThreshold*1.15 ? 4.5 : data.grossMargin/100 >= gmThreshold ? 4 : data.grossMargin/100 >= gmThreshold*0.75 ? 3 : data.grossMargin/100 >= gmThreshold*0.5 ? 2 : 1;
+    const omScore = data.opMargin == null ? 2.5 : data.opMargin/100 >= omThreshold*2 ? 5 : data.opMargin/100 >= omThreshold*1.5 ? 4.5 : data.opMargin/100 >= omThreshold ? 4 : data.opMargin/100 >= omThreshold*0.65 ? 3 : data.opMargin/100 > 0 ? 2 : 1;
+    const deScore = data.debtToEquity == null ? 2.5 : data.debtToEquity < 0.3 ? 5 : data.debtToEquity < 0.7 ? 4.5 : data.debtToEquity < 1.2 ? 4 : data.debtToEquity < 2 ? 3 : data.debtToEquity < 3 ? 2 : 1;
+    const cbs = (roicScore*0.4 + gmScore*0.25 + omScore*0.25 + deScore*0.1);
+    const pfcfScore = data.pfcf == null || data.pfcf <= 0 ? 1 : data.pfcf < 12 ? 5 : data.pfcf < 18 ? 4.5 : data.pfcf < 25 ? 4 : data.pfcf < 35 ? 3 : data.pfcf < 50 ? 2 : 1;
+    const fcfYieldScore = data.fcfYield == null ? 1 : data.fcfYield > 8 ? 5 : data.fcfYield > 5 ? 4.5 : data.fcfYield > 3 ? 4 : data.fcfYield > 1.5 ? 3 : data.fcfYield > 0 ? 2 : 1;
+    const oppo = (pfcfScore*0.55 + fcfYieldScore*0.45);
+    const revGrowthScore = data.revGrowth == null ? 2.5 : data.revGrowth > 25 ? 5 : data.revGrowth > 15 ? 4.5 : data.revGrowth > 8 ? 4 : data.revGrowth > 3 ? 3 : data.revGrowth > 0 ? 2 : 1;
+    const fcfTrend = data.fcfHistory?.length >= 3 ? data.fcfHistory[data.fcfHistory.length-1]?.val > data.fcfHistory[0]?.val ? 1 : 0 : null;
+    const marginTrend = data.marginHistory?.length >= 3 ? (data.marginHistory[data.marginHistory.length-1]?.margin||0) > (data.marginHistory[0]?.margin||0) ? 1 : 0 : null;
+    const trendBonus = (fcfTrend===1?0.5:0)+(marginTrend===1?0.5:0);
+    const gqs = Math.min(5, revGrowthScore*0.6 + (2.5+trendBonus*2)*0.4);
+    const finalNote = (cbs*0.45 + oppo*0.30 + gqs*0.25);
+    const score100 = Math.round((finalNote / 5) * 100);
+
+    let verdict, verdictColor;
+    if (score100 >= 70) { verdict = 'Solid & steady'; verdictColor = 'var(--green)'; }
+    else if (score100 >= 40) { verdict = 'Mixed signals'; verdictColor = 'var(--amber)'; }
+    else { verdict = 'Needs caution'; verdictColor = 'var(--red)'; }
+
+    let summary;
+    if (data.revGrowth != null && data.fcfVal != null && data.debtToEquity != null) {
+      const growthPart = data.revGrowth > 5 ? `grows revenue at a healthy pace` : data.revGrowth > 0 ? `grows revenue slowly` : `has shrinking revenue`;
+      const cashPart = data.fcfVal > 0 ? `generates strong cash flow` : `is burning cash`;
+      const debtPart = data.debtToEquity < 1.2 ? `carries manageable debt` : `carries significant debt`;
+      summary = `${data.name?.split(' ')[0] || 'This company'} ${growthPart}, ${cashPart}, and ${debtPart}.`;
+    } else {
+      summary = `Not enough data yet to give a full picture for ${data.name || 'this company'}.`;
+    }
+
+    return { score100, verdict, verdictColor, summary };
+  })();
+
+  // Fair value positioning (0-100% along Cheap -> Fair -> Expensive bar)
+  const fairValue = (() => {
+    if (!intrinsicValue || !price) return null;
+    const ratio = price / intrinsicValue; // >1 = expensive, <1 = cheap
+    // Map ratio 0.5x -> 1.5x onto 0% -> 100%
+    const pct = Math.max(2, Math.min(98, ((ratio - 0.5) / 1.0) * 100));
+    let tag;
+    if (ratio < 0.85) tag = 'UNDERVALUED';
+    else if (ratio < 1.05) tag = 'FAIR VALUE';
+    else if (ratio < 1.3) tag = 'SLIGHTLY EXPENSIVE';
+    else tag = 'EXPENSIVE';
+    const tagColor = ratio < 0.85 ? 'var(--green)' : ratio < 1.05 ? 'var(--green)' : ratio < 1.3 ? 'var(--amber)' : 'var(--red)';
+    return { pct, tag, tagColor, estimate: intrinsicValue };
+  })();
+
+  // Community vote state (local-only placeholder until backend exists)
+
 
   return (
     <div style={S.page}>
@@ -362,7 +425,6 @@ export default function StockPage({ params }) {
           </div>
 
           {data.description && (() => {
-            const [expanded, setExpanded] = useState(false);
             const short = data.description.slice(0, 200);
             const full = data.description;
             return (
@@ -381,6 +443,115 @@ export default function StockPage({ params }) {
           {/* OVERVIEW TAB */}
           {tab === 'overview' && (
             <div>
+              {/* Community vote */}
+              <div style={{ background: 'var(--bg-1)', border: '1px solid var(--border)', borderRadius: '20px', padding: '20px', marginBottom: '16px' }}>
+                <div style={{ fontFamily: 'Space Grotesk, sans-serif', fontWeight: 600, fontSize: '15px', marginBottom: '4px' }}>What's your call?</div>
+                <div style={{ color: 'var(--text-3)', fontSize: '12px', marginBottom: '16px' }}>Tap one — see what everyone else thinks</div>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '8px' }}>
+                  {['BUY', 'HOLD', 'SELL'].map(v => {
+                    const active = userVote === v;
+                    const activeColor = v === 'BUY' ? 'var(--green)' : v === 'SELL' ? 'var(--red)' : 'var(--amber)';
+                    const activeDim = v === 'BUY' ? 'var(--green-dim)' : v === 'SELL' ? 'var(--red-dim)' : 'var(--amber-dim)';
+                    return (
+                      <button key={v} onClick={() => setUserVote(v)}
+                        style={{
+                          borderRadius: '14px', padding: '14px 8px', textAlign: 'center',
+                          border: `1.5px solid ${active ? activeColor : 'var(--border)'}`,
+                          background: active ? activeDim : 'var(--bg-2)',
+                          color: active ? activeColor : 'var(--text-2)',
+                          fontFamily: 'Space Grotesk, sans-serif', fontWeight: 600, fontSize: '13px', letterSpacing: '0.5px',
+                          cursor: 'pointer'
+                        }}>
+                        {v}
+                      </button>
+                    );
+                  })}
+                </div>
+                <div style={{ marginTop: '18px' }}>
+                  <div style={{ display: 'flex', height: '10px', borderRadius: '6px', overflow: 'hidden' }}>
+                    <div style={{ background: 'var(--green)', width: '64%' }} />
+                    <div style={{ background: 'var(--amber)', width: '28%' }} />
+                    <div style={{ background: 'var(--red)', width: '8%' }} />
+                  </div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '10px', fontSize: '11px', color: 'var(--text-3)', fontFamily: 'JetBrains Mono, monospace' }}>
+                    <span style={{ color: 'var(--green)' }}>● 64% Buy</span>
+                    <span style={{ color: 'var(--amber)' }}>● 28% Hold</span>
+                    <span style={{ color: 'var(--red)' }}>● 8% Sell</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Easy Mode health ring */}
+              <div style={{ background: 'var(--bg-1)', border: '1px solid var(--border)', borderRadius: '20px', padding: '24px 20px', display: 'flex', alignItems: 'center', gap: '20px', marginBottom: '16px' }}>
+                <div style={{ position: 'relative', width: '92px', height: '92px', flexShrink: 0 }}>
+                  <svg width="92" height="92" viewBox="0 0 92 92" style={{ transform: 'rotate(-90deg)' }}>
+                    <circle cx="46" cy="46" r="40" fill="none" stroke="var(--bg-3)" strokeWidth="8" />
+                    <circle cx="46" cy="46" r="40" fill="none" stroke={easyMode.verdictColor} strokeWidth="8" strokeLinecap="round"
+                      strokeDasharray="251.2" strokeDashoffset={251.2 - (251.2 * easyMode.score100 / 100)} />
+                  </svg>
+                  <div style={{ position: 'absolute', inset: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
+                    <div style={{ fontFamily: 'Space Grotesk, sans-serif', fontWeight: 700, fontSize: '26px', lineHeight: 1 }}>{easyMode.score100}</div>
+                    <div style={{ fontSize: '9px', color: 'var(--text-3)', letterSpacing: '1px', marginTop: '2px' }}>/ 100</div>
+                  </div>
+                </div>
+                <div>
+                  <div style={{ fontSize: '11px', letterSpacing: '2px', color: 'var(--text-3)', marginBottom: '6px', fontFamily: 'JetBrains Mono, monospace' }}>EASY MODE</div>
+                  <div style={{ fontFamily: 'Space Grotesk, sans-serif', fontWeight: 600, fontSize: '17px', color: easyMode.verdictColor, marginBottom: '6px' }}>{easyMode.verdict}</div>
+                  <div style={{ fontSize: '13px', color: 'var(--text-2)', lineHeight: 1.4 }}>{easyMode.summary}</div>
+                </div>
+              </div>
+
+              {/* Fair value bar */}
+              {fairValue && (
+                <div style={{ background: 'var(--bg-1)', border: '1px solid var(--border)', borderRadius: '20px', padding: '20px', marginBottom: '16px' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: '14px' }}>
+                    <div style={{ fontFamily: 'Space Grotesk, sans-serif', fontWeight: 600, fontSize: '15px' }}>Fair value</div>
+                    <div style={{ fontSize: '11px', fontWeight: 600, letterSpacing: '1px', color: fairValue.tagColor, padding: '4px 10px', borderRadius: '8px', backgroundColor: fairValue.tag === 'EXPENSIVE' ? 'var(--red-dim)' : fairValue.tag === 'SLIGHTLY EXPENSIVE' ? 'var(--amber-dim)' : 'var(--green-dim)' }}>{fairValue.tag}</div>
+                  </div>
+                  <div style={{ position: 'relative', height: '10px', borderRadius: '6px', background: 'linear-gradient(90deg, var(--green) 0%, var(--amber) 50%, var(--red) 100%)', opacity: 0.35 }}>
+                    <div style={{ position: 'absolute', top: '-5px', width: '4px', height: '20px', borderRadius: '2px', background: 'var(--text)', left: `${fairValue.pct}%` }} />
+                  </div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '10px', fontFamily: 'JetBrains Mono, monospace', fontSize: '11px', color: 'var(--text-3)' }}>
+                    <span>Cheap</span><span>Fair</span><span>Expensive</span>
+                  </div>
+                  <div style={{ textAlign: 'center', marginTop: '14px', fontSize: '13px', color: 'var(--text-2)' }}>
+                    Trading at <b style={{ color: 'var(--text)', fontFamily: 'JetBrains Mono, monospace' }}>${price?.toFixed(2)}</b> — our estimate is <b style={{ color: 'var(--text)', fontFamily: 'JetBrains Mono, monospace' }}>${fairValue.estimate.toFixed(2)}</b>
+                  </div>
+                </div>
+              )}
+
+              {/* Stock of the Week teaser */}
+              <div style={{ background: 'linear-gradient(135deg, var(--accent-dim), transparent)', border: '1px solid var(--accent)', borderRadius: '18px', padding: '16px 18px', marginBottom: '16px', display: 'flex', alignItems: 'center', gap: '12px' }}>
+                <div style={{ width: '40px', height: '40px', borderRadius: '12px', background: 'var(--accent-dim)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '18px', flexShrink: 0 }}>🔥</div>
+                <div>
+                  <div style={{ fontFamily: 'Space Grotesk, sans-serif', color: 'var(--accent)', fontWeight: 600, fontSize: '12px', letterSpacing: '0.5px' }}>STOCK OF THE WEEK</div>
+                  <div style={{ color: 'var(--text-2)', fontSize: '12px', marginTop: '2px' }}>{ticker} is this week's pick — 1,240 people have voted</div>
+                </div>
+              </div>
+
+              {/* The Numbers, Simplified - meter bars */}
+              <div style={{ marginBottom: '16px' }}>
+                <div style={{ fontFamily: 'JetBrains Mono, monospace', color: 'var(--text-3)', fontSize: '11px', letterSpacing: '2px', marginBottom: '10px', paddingLeft: '4px' }}>THE NUMBERS, SIMPLIFIED</div>
+                <div style={{ background: 'var(--bg-1)', border: '1px solid var(--border)', borderRadius: '20px', padding: '18px 20px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                  {[
+                    { label: 'Revenue is growing', value: data.revGrowth != null ? `${data.revGrowth > 0 ? '+' : ''}${data.revGrowth}% / yr` : 'N/A', pct: data.revGrowth != null ? Math.max(4, Math.min(100, 50 + data.revGrowth * 2)) : 0, color: data.revGrowth > 5 ? 'green' : data.revGrowth > 0 ? 'amber' : 'red' },
+                    { label: 'Keeps a healthy slice of profit', value: data.opMargin != null ? `${data.opMargin}% margin` : 'N/A', pct: data.opMargin != null ? Math.max(4, Math.min(100, data.opMargin * 2.5)) : 0, color: data.opMargin > 15 ? 'green' : data.opMargin > 5 ? 'amber' : 'red' },
+                    { label: 'Generates real cash, not just paper profit', value: data.fcfVal > 0 ? 'Strong' : data.fcfVal < 0 ? 'Negative' : 'N/A', pct: data.fcfVal > 0 ? 85 : data.fcfVal < 0 ? 15 : 0, color: data.fcfVal > 0 ? 'green' : 'red' },
+                    { label: data.debtToEquity > 1.5 ? 'Carries notable debt — worth watching' : 'Debt levels look manageable', value: data.debtToEquity != null ? `${data.debtToEquity.toFixed(2)}x equity` : 'N/A', pct: data.debtToEquity != null ? Math.max(4, Math.min(100, 100 - data.debtToEquity * 30)) : 0, color: data.debtToEquity < 1 ? 'green' : data.debtToEquity < 2 ? 'amber' : 'red' },
+                  ].map((m, i) => (
+                    <div key={i} style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', gap: '8px' }}>
+                        <span style={{ fontSize: '13px', color: 'var(--text-2)', lineHeight: 1.3 }}>{m.label}</span>
+                        <span style={{ fontSize: '12px', fontWeight: 700, flexShrink: 0, color: `var(--${m.color})`, fontFamily: 'JetBrains Mono, monospace' }}>{m.value}</span>
+                      </div>
+                      <div style={{ height: '6px', borderRadius: '4px', background: 'var(--bg-3)', overflow: 'hidden' }}>
+                        <div style={{ height: '100%', borderRadius: '4px', width: `${m.pct}%`, background: `var(--${m.color})` }} />
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
               {/* Status pills */}
               <div className="grid-4" style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '1px', background: 'var(--border)', marginBottom: '24px' }}>
                 {[
