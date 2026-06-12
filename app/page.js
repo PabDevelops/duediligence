@@ -389,9 +389,9 @@ export default function Home() {
                     style={{ flex: 1, maxWidth: '280px', background: 'var(--bg-2)', border: '1px solid var(--border-2)', borderRight: 'none', color: 'var(--accent)', fontFamily: 'JetBrains Mono, monospace', fontSize: '22px', fontWeight: 700, padding: '12px 16px', outline: 'none', letterSpacing: '4px' }}
                     placeholder="AAPL"
                     value={searchQ || ticker}
-                    onChange={e => { const v = e.target.value.toUpperCase(); setTicker(v); setSearchQ(v); setShowSuggestions(true); }}
+                    onChange={e => { const v = e.target.value; setSearchQ(v); setTicker(v.toUpperCase()); setShowSuggestions(true); }}
                     onKeyDown={e => { if (e.key === 'Enter') { go(); setShowSuggestions(false); } if (e.key === 'Escape') setShowSuggestions(false); }}
-                    maxLength={6}
+                    maxLength={50}
                     onFocus={e => { e.target.style.borderColor = 'var(--accent)'; setShowSuggestions(true); }}
                     onBlur={e => { e.target.style.borderColor = 'var(--border-2)'; setTimeout(() => setShowSuggestions(false), 200); }}
                   />
