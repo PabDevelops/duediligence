@@ -192,7 +192,7 @@ export default function Home() {
           {/* Stock of the Week - MOBILE ONLY - right after hero */}
           {sotw && (
             <div style={{ padding: '0', marginBottom: '24px' }}>
-              <div onClick={() => router.push(`/stock/${sotw}`)} style={{ background: 'linear-gradient(135deg, var(--accent-dim), transparent)', border: '1.5px solid var(--accent)', borderRadius: '20px', padding: '24px', cursor: 'pointer', transition: 'all 0.2s', marginBottom: '16px' }} onMouseEnter={e => { e.currentTarget.style.borderColor = 'var(--accent)'; e.currentTarget.style.transform = 'scale(1.02)'; }} onMouseLeave={e => { e.currentTarget.style.borderColor = 'var(--accent)'; e.currentTarget.style.transform = 'scale(1)'; }}>
+              <div onClick={() => router.push(`/stock/${sotw?.ticker}`)} style={{ background: 'linear-gradient(135deg, var(--accent-dim), transparent)', border: '1.5px solid var(--accent)', borderRadius: '20px', padding: '24px', cursor: 'pointer', transition: 'all 0.2s', marginBottom: '16px' }} onMouseEnter={e => { e.currentTarget.style.borderColor = 'var(--accent)'; e.currentTarget.style.transform = 'scale(1.02)'; }} onMouseLeave={e => { e.currentTarget.style.borderColor = 'var(--accent)'; e.currentTarget.style.transform = 'scale(1)'; }}>
                 <div style={{ display: 'flex', alignItems: 'flex-start', gap: '14px', marginBottom: '16px' }}>
                   <div style={{ fontSize: '28px', flexShrink: 0 }}>🔥</div>
                   <div style={{ flex: 1 }}>
