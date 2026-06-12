@@ -62,10 +62,10 @@ html, body {
     display: none !important;
   }
   .mobile-menu-btn {
-    display: flex !important;
+    display: none !important;
   }
   .mobile-menu {
-    display: flex !important;
+    display: none !important;
   }
   .bottom-nav {
     display: block !important;
