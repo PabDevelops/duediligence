@@ -90,7 +90,7 @@ export default function Home() {
   const [searchQ, setSearchQ] = useState('');
   const [suggestions, setSuggestions] = useState([]);
   const [showSuggestions, setShowSuggestions] = useState(false);
-  const [sotw, setSotw] = useState(null);
+  const [sotw, setSotw] = useState(null); // { ticker, name } or null
   const [sotwVotes, setSotwVotes] = useState({ BUY: 0, HOLD: 0, SELL: 0, total: 0 });
   const router = useRouter();
 
@@ -98,7 +98,8 @@ export default function Home() {
     fetch('/api/stock-of-week')
       .then(r => r.json())
       .then(d => {
-        setSotw(d.ticker);
+        // d has: { ticker, name } from API
+        setSotw({ ticker: d.ticker, name: d.name || 'N/A' });
         // Load votes for this stock
         fetch(`/api/votes?ticker=${d.ticker}`)
           .then(r => r.json())
@@ -196,7 +197,10 @@ export default function Home() {
                   <div style={{ fontSize: '28px', flexShrink: 0 }}>🔥</div>
                   <div style={{ flex: 1 }}>
                     <div style={{ fontFamily: 'Space Grotesk, sans-serif', color: 'var(--accent)', fontWeight: 600, fontSize: '11px', letterSpacing: '1px', marginBottom: '4px' }}>STOCK OF THE WEEK</div>
-                    <div style={{ fontFamily: 'Space Grotesk, sans-serif', fontSize: '18px', fontWeight: 700, color: 'var(--text)' }}>{sotw}</div>
+                    <div style={{ fontFamily: 'Space Grotesk, sans-serif', fontSize: '16px', fontWeight: 700, color: 'var(--text)' }}>
+                      {sotw?.ticker}
+                      <span style={{ fontSize: '13px', fontWeight: 500, color: 'var(--text-2)', marginLeft: '6px' }}>– {sotw?.name}</span>
+                    </div>
                   </div>
                 </div>
                 
@@ -221,7 +225,7 @@ export default function Home() {
 
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
                   {['BUY', 'HOLD', 'SELL'].slice(0, 2).map(v => (
-                    <button key={v} onClick={async (e) => { e.stopPropagation(); if (!isSignedIn) { router.push('/sign-in'); return; } fetch('/api/votes', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ ticker: sotw, vote: v }) }).then(() => { fetch(`/api/votes?ticker=${sotw}`).then(r => r.json()).then(d => setSotwVotes({ ...d.percentages, total: d.total })); }); }} style={{ padding: '10px', borderRadius: '12px', background: 'var(--accent)', color: '#0B0E14', border: 'none', fontFamily: 'Space Grotesk, sans-serif', fontWeight: 700, fontSize: '12px', cursor: 'pointer' }}>
+                    <button key={v} onClick={async (e) => { e.stopPropagation(); if (!isSignedIn) { router.push('/sign-in'); return; } fetch('/api/votes', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ ticker: sotw?.ticker, vote: v }) }).then(() => { fetch(`/api/votes?ticker=${sotw?.ticker}`).then(r => r.json()).then(d => setSotwVotes({ ...d.percentages, total: d.total })); }); }} style={{ padding: '10px', borderRadius: '12px', background: 'var(--accent)', color: '#0B0E14', border: 'none', fontFamily: 'Space Grotesk, sans-serif', fontWeight: 700, fontSize: '12px', cursor: 'pointer' }}>
                       Vote {v}
                     </button>
                   ))}
@@ -310,12 +314,15 @@ export default function Home() {
       {/* Stock of the Week - after ticker, inside desktop block */}
       {sotw && (
         <div style={{ padding: '0 24px', marginBottom: '24px', maxWidth: '1400px', margin: '0 auto' }}>
-          <div onClick={() => router.push(`/stock/${sotw}`)} style={{ background: 'linear-gradient(135deg, var(--accent-dim), transparent)', border: '1.5px solid var(--accent)', borderRadius: '20px', padding: '24px', cursor: 'pointer', transition: 'all 0.2s' }} onMouseEnter={e => { e.currentTarget.style.borderColor = 'var(--accent)'; e.currentTarget.style.transform = 'scale(1.01)'; }} onMouseLeave={e => { e.currentTarget.style.borderColor = 'var(--accent)'; e.currentTarget.style.transform = 'scale(1)'; }}>
+          <div onClick={() => router.push(`/stock/${sotw?.ticker}`)} style={{ background: 'linear-gradient(135deg, var(--accent-dim), transparent)', border: '1.5px solid var(--accent)', borderRadius: '20px', padding: '24px', cursor: 'pointer', transition: 'all 0.2s' }} onMouseEnter={e => { e.currentTarget.style.borderColor = 'var(--accent)'; e.currentTarget.style.transform = 'scale(1.01)'; }} onMouseLeave={e => { e.currentTarget.style.borderColor = 'var(--accent)'; e.currentTarget.style.transform = 'scale(1)'; }}>
             <div style={{ display: 'flex', alignItems: 'flex-start', gap: '14px', marginBottom: '16px' }}>
               <div style={{ fontSize: '28px', flexShrink: 0 }}>🔥</div>
               <div style={{ flex: 1 }}>
                 <div style={{ fontFamily: 'Space Grotesk, sans-serif', color: 'var(--accent)', fontWeight: 600, fontSize: '11px', letterSpacing: '1px', marginBottom: '4px' }}>STOCK OF THE WEEK</div>
-                <div style={{ fontFamily: 'Space Grotesk, sans-serif', fontSize: '18px', fontWeight: 700, color: 'var(--text)' }}>{sotw}</div>
+                <div style={{ fontFamily: 'Space Grotesk, sans-serif', fontSize: '18px', fontWeight: 700, color: 'var(--text)' }}>
+                  {sotw?.ticker}
+                  <span style={{ fontSize: '14px', fontWeight: 500, color: 'var(--text-2)', marginLeft: '8px' }}>– {sotw?.name}</span>
+                </div>
               </div>
             </div>
             
@@ -340,7 +347,7 @@ export default function Home() {
 
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
               {['BUY', 'HOLD', 'SELL'].slice(0, 2).map(v => (
-                <button key={v} onClick={async (e) => { e.stopPropagation(); if (!isSignedIn) { router.push('/sign-in'); return; } fetch('/api/votes', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ ticker: sotw, vote: v }) }).then(() => { fetch(`/api/votes?ticker=${sotw}`).then(r => r.json()).then(d => setSotwVotes({ ...d.percentages, total: d.total })); }); }} style={{ padding: '10px', borderRadius: '12px', background: 'var(--accent)', color: '#0B0E14', border: 'none', fontFamily: 'Space Grotesk, sans-serif', fontWeight: 700, fontSize: '12px', cursor: 'pointer' }}>
+                <button key={v} onClick={async (e) => { e.stopPropagation(); if (!isSignedIn) { router.push('/sign-in'); return; } fetch('/api/votes', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ ticker: sotw?.ticker, vote: v }) }).then(() => { fetch(`/api/votes?ticker=${sotw?.ticker}`).then(r => r.json()).then(d => setSotwVotes({ ...d.percentages, total: d.total })); }); }} style={{ padding: '10px', borderRadius: '12px', background: 'var(--accent)', color: '#0B0E14', border: 'none', fontFamily: 'Space Grotesk, sans-serif', fontWeight: 700, fontSize: '12px', cursor: 'pointer' }}>
                   Vote {v}
                 </button>
               ))}

@@ -20,13 +20,19 @@ export async function GET() {
       .single();
 
     if (!checkError && existing) {
-      return Response.json({ ticker: existing.ticker, isNew: false });
+      // Get name from cache
+      const { data: stock } = await supabase
+        .from('stock_cache')
+        .select('name')
+        .eq('ticker', existing.ticker)
+        .single();
+      return Response.json({ ticker: existing.ticker, name: stock?.name || 'N/A', isNew: false });
     }
 
-    // Get all stocks in cache
+    // Get all stocks in cache with name
     const { data: allStocks, error: cacheError } = await supabase
       .from('stock_cache')
-      .select('ticker')
+      .select('ticker, name')
       .order('updated_at', { ascending: false })
       .limit(500);
 
@@ -57,7 +63,7 @@ export async function GET() {
 
     if (insertError) throw insertError;
 
-    return Response.json({ ticker: randomStock.ticker, isNew: true });
+    return Response.json({ ticker: randomStock.ticker, name: randomStock.name || 'N/A', isNew: true });
   } catch (error) {
     console.error('stock-of-week error:', error);
     return Response.json({ error: error.message }, { status: 500 });
