@@ -67,6 +67,12 @@ html, body {
   .mobile-menu {
     display: flex !important;
   }
+  .bottom-nav {
+    display: block !important;
+  }
+  body {
+    padding-bottom: 64px;
+  }
   .watchlist-widget {
     display: none !important;
   }

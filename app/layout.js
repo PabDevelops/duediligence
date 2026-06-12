@@ -2,6 +2,7 @@ import "./globals.css";
 import { ClerkProvider } from '@clerk/nextjs';
 import CookieBanner from './components/CookieBanner';
 import WatchlistWidget from './components/WatchlistWidget';
+import BottomNav from './components/BottomNav';
 import { Analytics } from '@vercel/analytics/react';
 
 export const metadata = {
@@ -41,6 +42,7 @@ export default function RootLayout({ children }) {
       <html lang="en">
         <body>
           {children}
+          <BottomNav />
           <WatchlistWidget />
           <CookieBanner />
           <Analytics />
