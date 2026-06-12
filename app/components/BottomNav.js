@@ -95,34 +95,7 @@ export default function BottomNav() {
         <NavLink href="/" icon="home" label="Home" active={isHome} />
         <NavLink href="/screener" icon="search" label="Search" active={isSearch} />
         <NavLink href="/watchlist" icon="watchlist" label="Watchlist" active={isWatchlist} />
-        {isSignedIn ? (
-          <>
-            <button onClick={() => userButtonRef.current?.querySelector('button')?.click()} style={{
-              display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px',
-              background: 'none', border: 'none', flex: 1, padding: '6px 0', cursor: 'pointer',
-            }}>
-              {ICONS.profile(path.startsWith('/sign-in') || path.startsWith('/sign-up'))}
-              <span style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: '10px', color: path.startsWith('/sign') ? 'var(--accent)' : 'var(--text-3)', fontWeight: path.startsWith('/sign') ? 600 : 400 }}>
-                Profile
-              </span>
-            </button>
-            <div ref={userButtonRef} style={{ position: 'absolute', width: 0, height: 0, overflow: 'hidden', opacity: 0 }}>
-              <UserButton afterSignOutUrl="/" />
-            </div>
-          </>
-        ) : (
-          <SignInButton mode="modal">
-            <button style={{
-              display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px',
-              background: 'none', border: 'none', flex: 1, padding: '6px 0', cursor: 'pointer',
-            }}>
-              {ICONS.profile(path.startsWith('/sign-in') || path.startsWith('/sign-up'))}
-              <span style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: '10px', color: path.startsWith('/sign') ? 'var(--accent)' : 'var(--text-3)', fontWeight: path.startsWith('/sign') ? 600 : 400 }}>
-                Profile
-              </span>
-            </button>
-          </SignInButton>
-        )}
+        <NavLink href="/profile" icon="profile" label="Profile" active={path.startsWith('/profile')} />
       </div>
     </nav>
   );
