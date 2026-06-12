@@ -24,15 +24,19 @@ const MoverRow = ({ s, router }) => {
   const up = s.priceChangePct >= 0;
   return (
     <div onClick={() => router.push(`/stock/${s.ticker}`)}
-      style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '5px 12px', cursor: 'pointer', borderBottom: '1px solid var(--border)' }}
+      style={{ display: 'grid', gridTemplateColumns: '52px 1fr auto auto', gap: '8px', padding: '8px 12px', cursor: 'pointer', borderBottom: '1px solid var(--border)', alignItems: 'start' }}
       onMouseEnter={e => e.currentTarget.style.background = 'var(--bg-2)'}
       onMouseLeave={e => e.currentTarget.style.background = 'transparent'}>
-      <img src={logoUrl(s.name)} alt="" style={{ width: 16, height: 16, objectFit: 'contain', background: 'white', padding: 1, flexShrink: 0 }}
-        onError={e => e.target.style.display = 'none'} />
-      <span style={{ color: 'var(--accent)', fontSize: '12px', fontWeight: 700, width: 52, flexShrink: 0 }}>{s.ticker}</span>
-      <span style={{ color: 'var(--text-3)', fontSize: '11px', flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{s.name}</span>
-      <span style={{ color: 'var(--text)', fontSize: '12px', flexShrink: 0 }}>${s.currentPrice?.toFixed(2)}</span>
-      <span style={{ color: up ? 'var(--green)' : 'var(--red)', fontSize: '12px', fontWeight: 600, width: 68, textAlign: 'right', flexShrink: 0 }}>
+      <div style={{ display: 'flex', gap: '8px', alignItems: 'center', gridColumn: '1' }}>
+        <img src={logoUrl(s.name)} alt="" style={{ width: 16, height: 16, objectFit: 'contain', background: 'white', padding: 1, flexShrink: 0 }}
+          onError={e => e.target.style.display = 'none'} />
+        <span style={{ color: 'var(--accent)', fontSize: '12px', fontWeight: 700 }}>{s.ticker}</span>
+      </div>
+      <div style={{ overflow: 'hidden', gridColumn: '2' }}>
+        <div style={{ color: 'var(--text-3)', fontSize: '11px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{s.name}</div>
+      </div>
+      <span style={{ color: 'var(--text)', fontSize: '12px', flexShrink: 0, gridColumn: '3' }}>${s.currentPrice?.toFixed(2)}</span>
+      <span style={{ color: up ? 'var(--green)' : 'var(--red)', fontSize: '12px', fontWeight: 600, width: 68, textAlign: 'right', flexShrink: 0, gridColumn: '4' }}>
         {up ? '+' : ''}{s.priceChangePct?.toFixed(2)}%
       </span>
     </div>
