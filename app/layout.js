@@ -8,7 +8,11 @@ import { Analytics } from '@vercel/analytics/react';
 export const metadata = {
   title: "Traqcker — Fundamental Stock Analysis",
   description: "Deep fundamental analysis for serious investors. SEC filings, proprietary scoring, Graham DCF.",
-  icons: { icon: '/favicon.png' },
+  icons: {
+    icon: '/favicon.png',
+    apple: '/apple-touch-icon.png',
+    other: [{ rel: 'icon', url: '/icon-512.png', sizes: '512x512' }],
+  },
   openGraph: {
     title: "Traqcker — Fundamental Stock Analysis",
     description: "No opinions. No noise. Just data from SEC EDGAR filings.",
