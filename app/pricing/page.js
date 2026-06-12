@@ -32,87 +32,96 @@ export default function Pricing() {
   const ANNUAL_ID = process.env.NEXT_PUBLIC_STRIPE_PRICE_ANNUAL || 'price_1TfcvtPqu5l8d1hxz5cmBDqO';
 
   return (
-    <div style={{ background: 'var(--bg)', minHeight: '100vh', color: 'var(--text)', fontFamily: 'JetBrains Mono, monospace' }}>
+    <div style={{ background: 'var(--bg)', minHeight: '100vh', color: 'var(--text)', fontFamily: 'Inter, sans-serif' }}>
       <Topbar />
-      <div style={{ maxWidth: '800px', margin: '0 auto', padding: '60px 24px' }}>
+      <div style={{ maxWidth: '800px', margin: '0 auto', padding: '48px 20px' }}>
 
-        <div style={{ textAlign: 'center', marginBottom: '48px' }}>
-          <div style={{ color: 'var(--accent)', fontSize: '10px', letterSpacing: '3px', marginBottom: '12px' }}>PLANS & PRICING</div>
-          <h1 style={{ fontSize: '36px', fontWeight: 600, letterSpacing: '-1px', marginBottom: '12px' }}>
-            Serious analysis.<br /><span style={{ color: 'var(--accent)' }}>Serious tools.</span>
+        <div style={{ textAlign: 'center', marginBottom: '36px' }}>
+          <div style={{ color: 'var(--accent)', fontSize: '11px', letterSpacing: '2px', marginBottom: '12px', fontFamily: 'JetBrains Mono, monospace' }}>PLANS & PRICING</div>
+          <h1 style={{ fontFamily: 'Space Grotesk, sans-serif', fontSize: '32px', fontWeight: 700, letterSpacing: '-0.5px', marginBottom: '12px' }}>
+            Easy Mode is free.<br /><span style={{ color: 'var(--accent)' }}>Go Pro for more.</span>
           </h1>
           <p style={{ color: 'var(--text-2)', fontSize: '13px', lineHeight: 1.7 }}>
-            No ads. No opinions. Just data from SEC filings.
+            Scores, fair value, and community votes are free for everyone — forever.
           </p>
         </div>
 
         {/* Toggle */}
-        <div style={{ display: 'flex', justifyContent: 'center', gap: '1px', background: 'var(--border)', marginBottom: '40px', maxWidth: '300px', margin: '0 auto 40px' }}>
+        <div style={{ display: 'flex', justifyContent: 'center', gap: '8px', marginBottom: '32px', maxWidth: '320px', margin: '0 auto 32px' }}>
           <button onClick={() => setAnnual(false)}
-            style={{ flex: 1, padding: '8px 16px', background: !annual ? 'var(--accent)' : 'var(--bg-1)', color: !annual ? '#000' : 'var(--text-3)', border: 'none', fontFamily: 'JetBrains Mono, monospace', fontSize: '10px', fontWeight: 700, cursor: 'pointer', letterSpacing: '1px' }}>
-            MONTHLY
+            style={{ flex: 1, padding: '10px 16px', borderRadius: '12px', background: !annual ? 'var(--accent)' : 'var(--bg-1)', color: !annual ? '#0B0E14' : 'var(--text-2)', border: !annual ? 'none' : '1px solid var(--border)', fontFamily: 'Space Grotesk, sans-serif', fontSize: '12px', fontWeight: 700, cursor: 'pointer', letterSpacing: '0.3px' }}>
+            Monthly
           </button>
           <button onClick={() => setAnnual(true)}
-            style={{ flex: 1, padding: '8px 16px', background: annual ? 'var(--accent)' : 'var(--bg-1)', color: annual ? '#000' : 'var(--text-3)', border: 'none', fontFamily: 'JetBrains Mono, monospace', fontSize: '10px', fontWeight: 700, cursor: 'pointer', letterSpacing: '1px' }}>
-            ANNUAL · SAVE 17%
+            style={{ flex: 1, padding: '10px 16px', borderRadius: '12px', background: annual ? 'var(--accent)' : 'var(--bg-1)', color: annual ? '#0B0E14' : 'var(--text-2)', border: annual ? 'none' : '1px solid var(--border)', fontFamily: 'Space Grotesk, sans-serif', fontSize: '12px', fontWeight: 700, cursor: 'pointer', letterSpacing: '0.3px' }}>
+            Annual · Save 17%
           </button>
         </div>
 
         {/* Plans */}
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1px', background: 'var(--border)' }}>
+        <div className="pricing-grid" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
 
           {/* Free */}
-          <div style={{ background: 'var(--bg-1)', padding: '32px' }}>
-            <div style={{ color: 'var(--text-3)', fontSize: '10px', letterSpacing: '3px', marginBottom: '16px' }}>FREE</div>
-            <div style={{ fontSize: '36px', fontWeight: 600, marginBottom: '4px' }}>$0</div>
-            <div style={{ color: 'var(--text-3)', fontSize: '11px', marginBottom: '24px' }}>forever</div>
-            <div style={{ borderTop: '1px solid var(--border)', paddingTop: '20px', marginBottom: '24px' }}>
+          <div style={{ background: 'var(--bg-1)', border: '1px solid var(--border)', borderRadius: '20px', padding: '24px' }}>
+            <div style={{ color: 'var(--text-3)', fontSize: '11px', letterSpacing: '2px', marginBottom: '12px', fontFamily: 'JetBrains Mono, monospace' }}>FREE</div>
+            <div style={{ fontFamily: 'Space Grotesk, sans-serif', fontSize: '32px', fontWeight: 700, marginBottom: '4px' }}>$0</div>
+            <div style={{ color: 'var(--text-3)', fontSize: '12px', marginBottom: '20px' }}>forever</div>
+            <div style={{ borderTop: '1px solid var(--border)', paddingTop: '18px', marginBottom: '20px', display: 'flex', flexDirection: 'column', gap: '10px' }}>
               {[
-                '✓ Stock overview',
-                '✓ Market data & sparklines',
-          
+                'Easy Mode score for any stock',
+                'Fair value check',
+                'Community Buy/Hold/Sell votes',
+                'Stock of the Week',
+                'Market data & charts',
               ].map(f => (
-                <div key={f} style={{ color: f.startsWith('✓') ? 'var(--text-2)' : 'var(--text-3)', fontSize: '11px', marginBottom: '8px', letterSpacing: '0.5px' }}>{f}</div>
+                <div key={f} style={{ display: 'flex', gap: '8px', alignItems: 'flex-start', color: 'var(--text-2)', fontSize: '12px', lineHeight: 1.5 }}>
+                  <span style={{ color: 'var(--green)', flexShrink: 0 }}>✓</span>{f}
+                </div>
               ))}
             </div>
-            <button disabled style={{ width: '100%', padding: '10px', background: 'transparent', border: '1px solid var(--border)', color: 'var(--text-3)', fontFamily: 'JetBrains Mono, monospace', fontSize: '11px', letterSpacing: '1px', cursor: 'default' }}>
-              FREE PLAN
+            <button disabled style={{ width: '100%', padding: '12px', borderRadius: '12px', background: 'transparent', border: '1px solid var(--border)', color: 'var(--text-3)', fontFamily: 'Space Grotesk, sans-serif', fontSize: '12px', fontWeight: 600, letterSpacing: '0.3px', cursor: 'default' }}>
+              Your current plan
             </button>
           </div>
 
           {/* Pro */}
-          <div style={{ background: 'var(--bg-2)', padding: '32px', border: '1px solid var(--accent)' }}>
-            <div style={{ color: 'var(--accent)', fontSize: '10px', letterSpacing: '3px', marginBottom: '16px' }}>PRO</div>
-            <div style={{ fontSize: '36px', fontWeight: 600, marginBottom: '4px' }}>
-              {annual ? '$9.99' : '$11.99'}
+          <div style={{ background: 'var(--bg-2)', border: '1.5px solid var(--accent)', borderRadius: '20px', padding: '24px', position: 'relative' }}>
+            <div style={{ position: 'absolute', top: '-10px', right: '20px', background: 'var(--accent)', color: '#0B0E14', fontSize: '10px', fontWeight: 700, letterSpacing: '1px', padding: '4px 10px', borderRadius: '8px', fontFamily: 'Space Grotesk, sans-serif' }}>
+              MOST POPULAR
             </div>
-            <div style={{ color: 'var(--text-3)', fontSize: '11px', marginBottom: '24px' }}>
-              {annual ? '/month · billed $119.88/year' : '/month'}
+            <div style={{ color: 'var(--accent)', fontSize: '11px', letterSpacing: '2px', marginBottom: '12px', fontFamily: 'JetBrains Mono, monospace' }}>PRO</div>
+            <div style={{ fontFamily: 'Space Grotesk, sans-serif', fontSize: '32px', fontWeight: 700, marginBottom: '4px' }}>
+              {annual ? '£3.33' : '£3.99'}
             </div>
-            <div style={{ borderTop: '1px solid var(--border)', paddingTop: '20px', marginBottom: '24px' }}>
+            <div style={{ color: 'var(--text-3)', fontSize: '12px', marginBottom: '20px' }}>
+              {annual ? '/month · billed £39.99/year' : '/month'}
+            </div>
+            <div style={{ borderTop: '1px solid var(--border)', paddingTop: '18px', marginBottom: '20px', display: 'flex', flexDirection: 'column', gap: '10px' }}>
               {[
-                '✓ Everything in Free',
-                '✓ Financial statements',
-                '✓ DCF valuation',
-                '✓ Stock screener',
-                '✓ Compare up to 3 stocks',
-                '✓ PDF dossier (coming soon)',
-                '✓ Priority support',
+                'Everything in Free',
+                'Full financial statements',
+                'Detailed valuation ratios',
+                'Stock screener (8,000+ stocks)',
+                'Compare up to 3 stocks',
+                'Vote history & accuracy tracking',
+                'Advanced profile & stats',
               ].map(f => (
-                <div key={f} style={{ color: 'var(--text-2)', fontSize: '11px', marginBottom: '8px', letterSpacing: '0.5px' }}>{f}</div>
+                <div key={f} style={{ display: 'flex', gap: '8px', alignItems: 'flex-start', color: 'var(--text-2)', fontSize: '12px', lineHeight: 1.5 }}>
+                  <span style={{ color: 'var(--accent)', flexShrink: 0 }}>✓</span>{f}
+                </div>
               ))}
             </div>
             <button
               onClick={() => checkout(annual ? ANNUAL_ID : MONTHLY_ID)}
               disabled={loading !== null}
-              style={{ width: '100%', padding: '10px', background: 'var(--accent)', border: 'none', color: '#000', fontFamily: 'JetBrains Mono, monospace', fontSize: '11px', fontWeight: 700, letterSpacing: '1px', cursor: 'pointer' }}>
-              {loading ? 'LOADING...' : `GET PRO ${annual ? '· SAVE 17%' : ''} →`}
+              style={{ width: '100%', padding: '12px', borderRadius: '12px', background: 'var(--accent)', border: 'none', color: '#0B0E14', fontFamily: 'Space Grotesk, sans-serif', fontSize: '13px', fontWeight: 700, letterSpacing: '0.3px', cursor: 'pointer' }}>
+              {loading ? 'Loading...' : `Go Pro ${annual ? '— Save 17%' : ''} →`}
             </button>
           </div>
         </div>
 
-        <div style={{ textAlign: 'center', marginTop: '24px', color: 'var(--text-3)', fontSize: '10px', letterSpacing: '1px' }}>
-          SECURE PAYMENT VIA STRIPE · CANCEL ANYTIME · NO HIDDEN FEES
+        <div style={{ textAlign: 'center', marginTop: '24px', color: 'var(--text-3)', fontSize: '11px', letterSpacing: '0.5px' }}>
+          Secure payment via Stripe · Cancel anytime · No hidden fees
         </div>
       </div>
     </div>
