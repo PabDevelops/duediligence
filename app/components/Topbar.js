@@ -55,8 +55,10 @@ export default function Topbar() {
   return (
     <>
       <div style={{ borderBottom: '1px solid var(--border)', padding: '10px 16px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', position: 'sticky', top: 0, background: 'var(--bg)', zIndex: 10 }}>
-        <a href="/" style={{ textDecoration: 'none' }}>
-          <img src="/logo.png" alt="Traqcker" style={{ height: '20px', objectFit: 'contain' }} />
+        <a href="/" style={{ textDecoration: 'none', display: 'flex', alignItems: 'center' }}>
+          <span style={{ fontFamily: 'Space Grotesk, sans-serif', fontWeight: 700, fontSize: '18px', letterSpacing: '-0.3px', color: 'var(--text)' }}>
+            Traq<span style={{ color: 'var(--accent)' }}>●</span>cker
+          </span>
         </a>
 
         {/* Desktop nav */}
