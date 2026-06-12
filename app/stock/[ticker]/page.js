@@ -36,7 +36,9 @@ const S = {
 
 const NAV = [
     { key: 'overview', label: 'OVERVIEW' },
-    { key: 'quality', label: 'QUALITY' },
+    // QUALITY tab hidden from nav (health ring in Overview now summarizes the FINAL NOTE
+    // in plain language). Code kept for potential future use - just not shown.
+    // { key: 'quality', label: 'QUALITY' },
     { key: 'financials', label: 'FINANCIALS', pro: true },
     // DCF tab hidden from nav (Graham formula now powers the Fair Value bar in Overview).
     // Code kept for potential future use - just not shown.
