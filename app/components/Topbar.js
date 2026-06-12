@@ -70,7 +70,7 @@ export default function Topbar() {
                 onKeyDown={e => { if (e.key === 'Enter' && searchQ) { router.push(`/stock/${searchQ}`); setSearchQ(''); setShowSuggestions(false); } if (e.key === 'Escape') setShowSuggestions(false); }}
                 onBlur={() => setTimeout(() => setShowSuggestions(false), 200)}
                 onFocus={() => searchQ && setShowSuggestions(true)}
-                style={{ background: 'var(--bg-2)', border: '1px solid var(--border)', color: 'var(--text)', fontFamily: 'IBM Plex Mono, monospace', fontSize: '11px', padding: '4px 10px', width: '160px', outline: 'none', letterSpacing: '1px' }}
+                style={{ background: 'var(--bg-2)', border: '1px solid var(--border)', color: 'var(--text)', fontFamily: 'JetBrains Mono, monospace', fontSize: '11px', padding: '4px 10px', width: '160px', outline: 'none', letterSpacing: '1px' }}
                 placeholder="SEARCH TICKER..."
               />
             </div>
@@ -95,7 +95,7 @@ export default function Topbar() {
   const res = await fetch('/api/random');
   const { ticker } = await res.json();
   window.location.href = `/stock/${ticker}`;
-}} style={{ background: 'none', border: '1px solid var(--border)', color: 'var(--text-3)', fontFamily: 'IBM Plex Mono, monospace', fontSize: '10px', padding: '4px 10px', cursor: 'pointer', letterSpacing: '1px' }}
+}} style={{ background: 'none', border: '1px solid var(--border)', color: 'var(--text-3)', fontFamily: 'JetBrains Mono, monospace', fontSize: '10px', padding: '4px 10px', cursor: 'pointer', letterSpacing: '1px' }}
   onMouseEnter={e => { e.target.style.borderColor = 'var(--accent)'; e.target.style.color = 'var(--accent)'; }}
   onMouseLeave={e => { e.target.style.borderColor = 'var(--border)'; e.target.style.color = 'var(--text-3)'; }}>
   ⚡ DISCOVER
@@ -114,7 +114,7 @@ export default function Topbar() {
             <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
               <span style={{ color: 'var(--text-3)', fontSize: '10px', letterSpacing: '1px', borderRight: '1px solid var(--border)', paddingRight: '12px' }}>🔒 SIGN IN TO SEE FULL DATA</span>
               <SignInButton mode="modal">
-                <button style={{ background: 'var(--accent)', color: '#000', border: 'none', padding: '4px 12px', fontFamily: 'IBM Plex Mono, monospace', fontSize: '10px', fontWeight: 700, cursor: 'pointer', letterSpacing: '1px' }}>
+                <button style={{ background: 'var(--accent)', color: '#000', border: 'none', padding: '4px 12px', fontFamily: 'JetBrains Mono, monospace', fontSize: '10px', fontWeight: 700, cursor: 'pointer', letterSpacing: '1px' }}>
                   SIGN IN
                 </button>
               </SignInButton>
@@ -126,7 +126,7 @@ export default function Topbar() {
         <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
           <button className="mobile-menu-btn"
             onClick={() => setMenuOpen(!menuOpen)}
-            style={{ background: 'none', border: '1px solid var(--border)', color: 'var(--text)', padding: '4px 8px', cursor: 'pointer', fontFamily: 'IBM Plex Mono, monospace', fontSize: '16px' }}>
+            style={{ background: 'none', border: '1px solid var(--border)', color: 'var(--text)', padding: '4px 8px', cursor: 'pointer', fontFamily: 'JetBrains Mono, monospace', fontSize: '16px' }}>
             {menuOpen ? '✕' : '☰'}
           </button>
         </div>
@@ -148,7 +148,7 @@ export default function Topbar() {
           {!isSignedIn ? (
             <div style={{ padding: '12px 16px', borderBottom: '1px solid var(--border)' }}>
               <SignInButton mode="modal">
-                <button style={{ width: '100%', background: 'var(--accent)', color: '#000', border: 'none', padding: '8px', fontFamily: 'IBM Plex Mono, monospace', fontSize: '11px', fontWeight: 700, cursor: 'pointer', letterSpacing: '1px' }}>
+                <button style={{ width: '100%', background: 'var(--accent)', color: '#000', border: 'none', padding: '8px', fontFamily: 'JetBrains Mono, monospace', fontSize: '11px', fontWeight: 700, cursor: 'pointer', letterSpacing: '1px' }}>
                   SIGN IN
                 </button>
               </SignInButton>

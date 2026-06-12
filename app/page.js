@@ -120,17 +120,9 @@ export default function Home() {
   }
 
   return (
-    <main style={{ background: 'var(--bg)', minHeight: '100vh', color: 'var(--text)', fontFamily: 'IBM Plex Mono, monospace' }}>
+    <main style={{ background: 'var(--bg)', minHeight: '100vh', color: 'var(--text)', fontFamily: 'JetBrains Mono, monospace' }}>
       <Topbar />
       <MarketBar />
-      {isMobile && (
-        <div style={{ background: 'var(--bg-1)', borderBottom: '1px solid var(--accent)', padding: '10px 16px', display: 'flex', alignItems: 'center', gap: '8px' }}>
-          <span style={{ color: 'var(--accent)', fontSize: '11px' }}>⚠</span>
-          <span style={{ color: 'var(--text-2)', fontSize: '10px', letterSpacing: '0.5px', lineHeight: 1.5 }}>
-            Traqcker is designed as a desktop terminal. For the best experience, open on a computer.
-          </span>
-        </div>
-      )}
 
       {isMobile && (
         <div style={{ padding: '24px 16px' }}>
@@ -144,7 +136,7 @@ export default function Home() {
             </p>
             <div style={{ display: 'flex', gap: '0', marginBottom: '16px' }}>
               <input
-                style={{ flex: 1, background: 'var(--bg-2)', border: '1px solid var(--border-2)', borderRight: 'none', color: 'var(--accent)', fontFamily: 'IBM Plex Mono, monospace', fontSize: '18px', fontWeight: 700, padding: '12px 16px', outline: 'none', letterSpacing: '3px' }}
+                style={{ flex: 1, background: 'var(--bg-2)', border: '1px solid var(--border-2)', borderRight: 'none', color: 'var(--accent)', fontFamily: 'JetBrains Mono, monospace', fontSize: '18px', fontWeight: 700, padding: '12px 16px', outline: 'none', letterSpacing: '3px' }}
                 placeholder="AAPL"
                 value={ticker}
                 onChange={e => setTicker(e.target.value.toUpperCase())}
@@ -152,23 +144,23 @@ export default function Home() {
                 maxLength={6}
               />
               <button onClick={() => go()}
-                style={{ background: 'var(--accent)', color: '#000', border: 'none', padding: '12px 20px', fontFamily: 'IBM Plex Mono, monospace', fontSize: '12px', fontWeight: 700, cursor: 'pointer', letterSpacing: '1px' }}>
+                style={{ background: 'var(--accent)', color: '#000', border: 'none', padding: '12px 20px', fontFamily: 'JetBrains Mono, monospace', fontSize: '12px', fontWeight: 700, cursor: 'pointer', letterSpacing: '1px' }}>
                 GO →
               </button>
             </div>
             <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', marginBottom: '24px' }}>
               {['AAPL', 'MSFT', 'NVDA', 'V', 'GOOGL'].map(t => (
                 <button key={t} onClick={() => go(t)}
-                  style={{ background: 'none', border: '1px solid var(--border)', color: 'var(--text-3)', padding: '4px 10px', fontFamily: 'IBM Plex Mono, monospace', fontSize: '10px', cursor: 'pointer', letterSpacing: '1px' }}>
+                  style={{ background: 'none', border: '1px solid var(--border)', color: 'var(--text-3)', padding: '4px 10px', fontFamily: 'JetBrains Mono, monospace', fontSize: '10px', cursor: 'pointer', letterSpacing: '1px' }}>
                   {t}
                 </button>
               ))}
             </div>
             <div style={{ display: 'flex', gap: '10px' }}>
-              <a href="/sign-up" style={{ flex: 1, background: 'var(--accent)', color: '#000', padding: '12px', fontFamily: 'IBM Plex Mono, monospace', fontSize: '11px', fontWeight: 700, letterSpacing: '1px', textDecoration: 'none', textAlign: 'center' }}>
+              <a href="/sign-up" style={{ flex: 1, background: 'var(--accent)', color: '#000', padding: '12px', fontFamily: 'JetBrains Mono, monospace', fontSize: '11px', fontWeight: 700, letterSpacing: '1px', textDecoration: 'none', textAlign: 'center' }}>
                 START FREE →
               </a>
-              <a href="/pricing" style={{ flex: 1, background: 'none', border: '1px solid var(--border)', color: 'var(--text-3)', padding: '12px', fontFamily: 'IBM Plex Mono, monospace', fontSize: '11px', letterSpacing: '1px', textDecoration: 'none', textAlign: 'center' }}>
+              <a href="/pricing" style={{ flex: 1, background: 'none', border: '1px solid var(--border)', color: 'var(--text-3)', padding: '12px', fontFamily: 'JetBrains Mono, monospace', fontSize: '11px', letterSpacing: '1px', textDecoration: 'none', textAlign: 'center' }}>
                 PRICING
               </a>
             </div>
@@ -274,7 +266,7 @@ export default function Home() {
               <div style={{ position: 'relative' }}>
                 <div style={{ display: 'flex', gap: '0' }}>
                   <input
-                    style={{ flex: 1, maxWidth: '280px', background: 'var(--bg-2)', border: '1px solid var(--border-2)', borderRight: 'none', color: 'var(--accent)', fontFamily: 'IBM Plex Mono, monospace', fontSize: '22px', fontWeight: 700, padding: '12px 16px', outline: 'none', letterSpacing: '4px' }}
+                    style={{ flex: 1, maxWidth: '280px', background: 'var(--bg-2)', border: '1px solid var(--border-2)', borderRight: 'none', color: 'var(--accent)', fontFamily: 'JetBrains Mono, monospace', fontSize: '22px', fontWeight: 700, padding: '12px 16px', outline: 'none', letterSpacing: '4px' }}
                     placeholder="AAPL"
                     value={searchQ || ticker}
                     onChange={e => { const v = e.target.value.toUpperCase(); setTicker(v); setSearchQ(v); setShowSuggestions(true); }}
@@ -284,7 +276,7 @@ export default function Home() {
                     onBlur={e => { e.target.style.borderColor = 'var(--border-2)'; setTimeout(() => setShowSuggestions(false), 200); }}
                   />
                   <button onClick={() => go()}
-                    style={{ background: 'var(--accent)', color: '#000', border: 'none', padding: '12px 24px', fontFamily: 'IBM Plex Mono, monospace', fontSize: '13px', fontWeight: 700, cursor: 'pointer', letterSpacing: '1px' }}
+                    style={{ background: 'var(--accent)', color: '#000', border: 'none', padding: '12px 24px', fontFamily: 'JetBrains Mono, monospace', fontSize: '13px', fontWeight: 700, cursor: 'pointer', letterSpacing: '1px' }}
                     onMouseEnter={e => e.target.style.opacity = '0.85'}
                     onMouseLeave={e => e.target.style.opacity = '1'}>
                     ANALYZE →
@@ -311,7 +303,7 @@ export default function Home() {
             <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', marginBottom: '32px' }}>
               {['AAPL', 'MSFT', 'NVDA', 'V', 'ASML', 'GOOGL'].map(t => (
                 <button key={t} onClick={() => go(t)}
-                  style={{ background: 'none', border: '1px solid var(--border)', color: 'var(--text-3)', padding: '3px 10px', fontFamily: 'IBM Plex Mono, monospace', fontSize: '10px', cursor: 'pointer', letterSpacing: '1px' }}
+                  style={{ background: 'none', border: '1px solid var(--border)', color: 'var(--text-3)', padding: '3px 10px', fontFamily: 'JetBrains Mono, monospace', fontSize: '10px', cursor: 'pointer', letterSpacing: '1px' }}
                   onMouseEnter={e => { e.target.style.borderColor = 'var(--accent)'; e.target.style.color = 'var(--accent)'; }}
                   onMouseLeave={e => { e.target.style.borderColor = 'var(--border)'; e.target.style.color = 'var(--text-3)'; }}>
                   {t}
@@ -321,16 +313,16 @@ export default function Home() {
 
             {/* CTAs */}
             <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
-              <a href="/sign-up" style={{ background: 'var(--accent)', color: '#000', padding: '10px 20px', fontFamily: 'IBM Plex Mono, monospace', fontSize: '11px', fontWeight: 700, letterSpacing: '1px', textDecoration: 'none' }}>
+              <a href="/sign-up" style={{ background: 'var(--accent)', color: '#000', padding: '10px 20px', fontFamily: 'JetBrains Mono, monospace', fontSize: '11px', fontWeight: 700, letterSpacing: '1px', textDecoration: 'none' }}>
                 START FREE →
               </a>
-              <a href="/pricing" style={{ background: 'none', border: '1px solid var(--border)', color: 'var(--text-3)', padding: '10px 20px', fontFamily: 'IBM Plex Mono, monospace', fontSize: '11px', letterSpacing: '1px', textDecoration: 'none' }}
+              <a href="/pricing" style={{ background: 'none', border: '1px solid var(--border)', color: 'var(--text-3)', padding: '10px 20px', fontFamily: 'JetBrains Mono, monospace', fontSize: '11px', letterSpacing: '1px', textDecoration: 'none' }}
                 onMouseEnter={e => { e.currentTarget.style.borderColor = 'var(--accent)'; e.currentTarget.style.color = 'var(--accent)'; }}
                 onMouseLeave={e => { e.currentTarget.style.borderColor = 'var(--border)'; e.currentTarget.style.color = 'var(--text-3)'; }}>
                 SEE PRICING
               </a>
               <button onClick={async () => { const r = await fetch('/api/random'); const { ticker } = await r.json(); router.push(`/stock/${ticker}`); }}
-                style={{ background: 'none', border: '1px solid var(--border)', color: 'var(--text-3)', padding: '10px 20px', fontFamily: 'IBM Plex Mono, monospace', fontSize: '11px', letterSpacing: '1px', cursor: 'pointer' }}
+                style={{ background: 'none', border: '1px solid var(--border)', color: 'var(--text-3)', padding: '10px 20px', fontFamily: 'JetBrains Mono, monospace', fontSize: '11px', letterSpacing: '1px', cursor: 'pointer' }}
                 onMouseEnter={e => { e.currentTarget.style.borderColor = 'var(--accent)'; e.currentTarget.style.color = 'var(--accent)'; }}
                 onMouseLeave={e => { e.currentTarget.style.borderColor = 'var(--border)'; e.currentTarget.style.color = 'var(--text-3)'; }}>
                 ⚡ DISCOVER
@@ -470,10 +462,10 @@ export default function Home() {
             </div>
           </div>
           <div style={{ display: 'flex', gap: '12px', flexShrink: 0 }}>
-            <a href="/sign-up" style={{ background: 'var(--accent)', color: '#000', padding: '12px 28px', fontFamily: 'IBM Plex Mono, monospace', fontSize: '12px', fontWeight: 700, letterSpacing: '1px', textDecoration: 'none' }}>
+            <a href="/sign-up" style={{ background: 'var(--accent)', color: '#000', padding: '12px 28px', fontFamily: 'JetBrains Mono, monospace', fontSize: '12px', fontWeight: 700, letterSpacing: '1px', textDecoration: 'none' }}>
               START FOR FREE →
             </a>
-            <a href="/pricing" style={{ background: 'none', border: '1px solid var(--border)', color: 'var(--text-3)', padding: '12px 28px', fontFamily: 'IBM Plex Mono, monospace', fontSize: '12px', letterSpacing: '1px', textDecoration: 'none' }}
+            <a href="/pricing" style={{ background: 'none', border: '1px solid var(--border)', color: 'var(--text-3)', padding: '12px 28px', fontFamily: 'JetBrains Mono, monospace', fontSize: '12px', letterSpacing: '1px', textDecoration: 'none' }}
               onMouseEnter={e => { e.currentTarget.style.borderColor = 'var(--accent)'; e.currentTarget.style.color = 'var(--accent)'; }}
               onMouseLeave={e => { e.currentTarget.style.borderColor = 'var(--border)'; e.currentTarget.style.color = 'var(--text-3)'; }}>
               VIEW PRICING

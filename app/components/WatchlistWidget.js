@@ -34,7 +34,7 @@ export default function WatchlistWidget() {
   if (!isSignedIn) return null;
 
   return (
-    <div style={{ position: 'fixed', bottom: '24px', right: '24px', zIndex: 50, fontFamily: 'IBM Plex Mono, monospace' }}>
+    <div style={{ position: 'fixed', bottom: '24px', right: '24px', zIndex: 50, fontFamily: 'JetBrains Mono, monospace' }}>
       {open && (
         <div style={{ background: 'var(--bg-1)', border: '1px solid var(--border)', marginBottom: '8px', width: '280px' }}>
           <div style={{ padding: '10px 14px', borderBottom: '1px solid var(--border)', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
@@ -78,7 +78,7 @@ export default function WatchlistWidget() {
 
       <button
         onClick={() => setOpen(!open)}
-        style={{ background: open ? 'var(--accent)' : 'var(--bg-1)', border: '1px solid var(--border)', color: open ? '#000' : 'var(--accent)', fontFamily: 'IBM Plex Mono, monospace', fontSize: '10px', fontWeight: 700, padding: '8px 16px', cursor: 'pointer', letterSpacing: '2px', display: 'flex', alignItems: 'center', gap: '8px', marginLeft: 'auto' }}>
+        style={{ background: open ? 'var(--accent)' : 'var(--bg-1)', border: '1px solid var(--border)', color: open ? '#000' : 'var(--accent)', fontFamily: 'JetBrains Mono, monospace', fontSize: '10px', fontWeight: 700, padding: '8px 16px', cursor: 'pointer', letterSpacing: '2px', display: 'flex', alignItems: 'center', gap: '8px', marginLeft: 'auto' }}>
         ★ {open ? 'CLOSE' : 'WATCHLIST'}
       </button>
     </div>

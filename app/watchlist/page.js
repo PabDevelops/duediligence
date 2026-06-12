@@ -57,7 +57,7 @@ export default function Watchlist() {
   };
 
   return (
-    <div style={{ background: 'var(--bg)', minHeight: '100vh', color: 'var(--text)', fontFamily: 'IBM Plex Mono, monospace' }}>
+    <div style={{ background: 'var(--bg)', minHeight: '100vh', color: 'var(--text)', fontFamily: 'JetBrains Mono, monospace' }}>
       <Topbar />
       <div style={{ maxWidth: '1000px', margin: '0 auto', padding: '40px 24px' }}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '32px' }}>
@@ -71,7 +71,7 @@ export default function Watchlist() {
         {!isSignedIn ? (
           <div style={{ textAlign: 'center', padding: '80px 0' }}>
             <div style={{ color: 'var(--text-3)', fontSize: '11px', letterSpacing: '2px', marginBottom: '16px' }}>SIGN IN TO SEE YOUR WATCHLIST</div>
-            <a href="/sign-in" style={{ background: 'var(--accent)', color: '#000', padding: '8px 20px', fontFamily: 'IBM Plex Mono, monospace', fontSize: '11px', fontWeight: 700, letterSpacing: '1px', textDecoration: 'none' }}>SIGN IN →</a>
+            <a href="/sign-in" style={{ background: 'var(--accent)', color: '#000', padding: '8px 20px', fontFamily: 'JetBrains Mono, monospace', fontSize: '11px', fontWeight: 700, letterSpacing: '1px', textDecoration: 'none' }}>SIGN IN →</a>
           </div>
         ) : loading ? (
           <div style={{ color: 'var(--text-3)', fontSize: '11px', letterSpacing: '2px' }}>LOADING...</div>
@@ -126,7 +126,7 @@ export default function Watchlist() {
                     </td>
                     <td style={{ padding: '12px', textAlign: 'right' }}>
                       <button onClick={e => { e.stopPropagation(); remove(ticker); }}
-                        style={{ background: 'none', border: 'none', color: 'var(--text-3)', cursor: 'pointer', fontSize: '11px', fontFamily: 'IBM Plex Mono, monospace', letterSpacing: '1px' }}
+                        style={{ background: 'none', border: 'none', color: 'var(--text-3)', cursor: 'pointer', fontSize: '11px', fontFamily: 'JetBrains Mono, monospace', letterSpacing: '1px' }}
                         onMouseEnter={e => e.target.style.color = 'var(--red)'}
                         onMouseLeave={e => e.target.style.color = 'var(--text-3)'}>
                         ✕

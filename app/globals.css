@@ -1,33 +1,42 @@
+@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500;700&display=swap');
 @import "tailwindcss";
 
 :root {
-  --bg: #080808;
-  --bg-1: #0f0f0f;
-  --bg-2: #141414;
-  --bg-3: #1a1a1a;
-  --border: #222222;
-  --border-2: #2a2a2a;
-  --text: #e8e8e8;
-  --text-2: #d6d6d6;
-  --text-3: #bbbbbb;
-  --accent: #F59E0B;
-  --accent-dim: #F59E0B22;
-  --green: #22c55e;
-  --red: #ef4444;
-  --blue: #3b82f6;
+  --bg: #0B0E14;
+  --bg-1: #151A24;
+  --bg-2: #1C2230;
+  --bg-3: #232A3B;
+  --border: #2A3142;
+  --border-2: #3A4358;
+  --text: #F4F5F7;
+  --text-2: #C7CBD4;
+  --text-3: #8B92A3;
+  --accent: #818CF8;
+  --accent-dim: #818CF822;
+  --green: #34D399;
+  --green-dim: #34D39922;
+  --amber: #FBBF24;
+  --amber-dim: #FBBF2422;
+  --red: #F87171;
+  --red-dim: #F8717122;
+  --blue: #60A5FA;
+  --font-display: 'Space Grotesk', sans-serif;
+  --font-body: 'Inter', sans-serif;
+  --font-mono: 'JetBrains Mono', monospace;
 }
 
 * {
   box-sizing: border-box;
   margin: 0;
+
   padding: 0;
 }
 
 html, body {
   background: var(--bg);
   color: var(--text);
-  font-family: 'IBM Plex Mono', monospace;
-  font-size: 13px;
+  font-family: 'Inter', sans-serif;
+  font-size: 14px;
   line-height: 1.6;
   -webkit-font-smoothing: antialiased;
 }

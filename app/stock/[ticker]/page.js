@@ -19,10 +19,10 @@ const fmtP = (v) => v !== null && v !== undefined ? `${v}%` : 'N/A';
 const fmtN = (v, d = 2) => v !== null && v !== undefined ? v.toFixed(d) : 'N/A';
 
 const S = {
-  page: { background: 'var(--bg)', minHeight: '100vh', color: 'var(--text)', fontFamily: 'IBM Plex Mono, monospace' },
+  page: { background: 'var(--bg)', minHeight: '100vh', color: 'var(--text)', fontFamily: 'JetBrains Mono, monospace' },
   topbar: { borderBottom: '1px solid var(--border)', padding: '8px 16px', display: 'flex', alignItems: 'center', gap: '12px', position: 'sticky', top: 0, background: 'var(--bg)', zIndex: 10, fontSize: '11px' },
   sidebar: { width: '160px', flexShrink: 0, borderRight: '1px solid var(--border)', minHeight: '100vh', padding: '16px 0', position: 'sticky', top: '33px', alignSelf: 'flex-start' },
-  navItem: (active) => ({ display: 'block', width: '100%', textAlign: 'left', padding: '8px 16px', fontSize: '11px', letterSpacing: '0.5px', background: 'none', border: 'none', cursor: 'pointer', color: active ? 'var(--accent)' : 'var(--text-3)', borderLeft: active ? '2px solid var(--accent)' : '2px solid transparent', fontFamily: 'IBM Plex Mono, monospace' }),
+  navItem: (active) => ({ display: 'block', width: '100%', textAlign: 'left', padding: '8px 16px', fontSize: '11px', letterSpacing: '0.5px', background: 'none', border: 'none', cursor: 'pointer', color: active ? 'var(--accent)' : 'var(--text-3)', borderLeft: active ? '2px solid var(--accent)' : '2px solid transparent', fontFamily: 'JetBrains Mono, monospace' }),
   content: { flex: 1, padding: '24px', overflow: 'hidden' },
   card: { background: 'var(--bg-1)', border: '1px solid var(--border)', padding: '16px', marginBottom: '1px' },
   label: { color: 'var(--text-3)', fontSize: '10px', letterSpacing: '2px', marginBottom: '4px' },
@@ -69,7 +69,7 @@ const MiniBar = ({ data, color = '#F59E0B' }) => {
         <YAxis hide domain={[0, max * 1.15]} />
         <Tooltip
           formatter={v => [`$${Math.abs(v).toFixed(1)}B`]}
-          contentStyle={{ background: 'var(--bg-2)', border: '1px solid var(--border)', fontSize: 10, fontFamily: 'IBM Plex Mono' }}
+          contentStyle={{ background: 'var(--bg-2)', border: '1px solid var(--border)', fontSize: 10, fontFamily: 'JetBrains Mono' }}
         />
         <Bar dataKey="value" radius={[2, 2, 0, 0]}>
           {data.map((_, i) => <Cell key={i} fill={i === data.length - 1 ? color : color + '55'} />)}
@@ -83,7 +83,7 @@ const MiniLine = ({ data, color = 'var(--accent)' }) => (
   <ResponsiveContainer width="100%" height={60}>
     <LineChart data={data}>
       <XAxis dataKey="year" tick={{ fill: '#555', fontSize: 9 }} axisLine={false} tickLine={false} />
-      <Tooltip contentStyle={{ background: 'var(--bg-2)', border: '1px solid var(--border)', fontSize: 10, fontFamily: 'IBM Plex Mono' }} />
+      <Tooltip contentStyle={{ background: 'var(--bg-2)', border: '1px solid var(--border)', fontSize: 10, fontFamily: 'JetBrains Mono' }} />
       <Line type="monotone" dataKey="value" stroke={color} strokeWidth={1.5} dot={{ fill: color, r: 2 }} />
     </LineChart>
   </ResponsiveContainer>
@@ -195,7 +195,7 @@ export default function StockPage({ params }) {
                 <span style={{ color: 'var(--accent)', fontSize: '11px', fontWeight: 700, letterSpacing: '1px' }}>🌍 INTERNATIONAL STOCK</span>
                 <span style={{ color: 'var(--text-2)', fontSize: '11px', marginLeft: '12px' }}>Limited data available. Upgrade to Pro for full access to international stocks.</span>
               </div>
-              <a href="/pricing" style={{ background: 'var(--accent)', color: '#000', padding: '4px 14px', fontFamily: 'IBM Plex Mono, monospace', fontSize: '10px', fontWeight: 700, letterSpacing: '1px', textDecoration: 'none', flexShrink: 0 }}>UPGRADE →</a>
+              <a href="/pricing" style={{ background: 'var(--accent)', color: '#000', padding: '4px 14px', fontFamily: 'JetBrains Mono, monospace', fontSize: '10px', fontWeight: 700, letterSpacing: '1px', textDecoration: 'none', flexShrink: 0 }}>UPGRADE →</a>
             </div>
           )}
 
@@ -228,7 +228,7 @@ export default function StockPage({ params }) {
         {NAV.map(n => (
           <button key={n.key}
             onClick={() => setTab(n.key)}
-            style={{ display: 'inline-block', padding: '10px 16px', fontSize: '11px', letterSpacing: '1px', background: 'none', border: 'none', color: tab === n.key ? 'var(--accent)' : 'var(--text-3)', borderBottom: tab === n.key ? '2px solid var(--accent)' : '2px solid transparent', fontFamily: 'IBM Plex Mono, monospace', cursor: 'pointer' }}>
+            style={{ display: 'inline-block', padding: '10px 16px', fontSize: '11px', letterSpacing: '1px', background: 'none', border: 'none', color: tab === n.key ? 'var(--accent)' : 'var(--text-3)', borderBottom: tab === n.key ? '2px solid var(--accent)' : '2px solid transparent', fontFamily: 'JetBrains Mono, monospace', cursor: 'pointer' }}>
             {n.label}
           </button>
         ))}
@@ -289,11 +289,11 @@ export default function StockPage({ params }) {
                   SEC FILINGS ↗
                 </a>
                 <button onClick={toggleWatchlist}
-                    style={{ background: 'none', border: `1px solid ${inWatchlist ? 'var(--accent)' : 'var(--border)'}`, color: inWatchlist ? 'var(--accent)' : 'var(--text-3)', fontFamily: 'IBM Plex Mono, monospace', fontSize: '10px', padding: '2px 10px', cursor: 'pointer', letterSpacing: '1px' }}>
+                    style={{ background: 'none', border: `1px solid ${inWatchlist ? 'var(--accent)' : 'var(--border)'}`, color: inWatchlist ? 'var(--accent)' : 'var(--text-3)', fontFamily: 'JetBrains Mono, monospace', fontSize: '10px', padding: '2px 10px', cursor: 'pointer', letterSpacing: '1px' }}>
                     {inWatchlist ? '★ WATCHLIST' : '☆ WATCHLIST'}
                   </button>
                   <button onClick={() => { window.location.href = `/stock/${ticker}?refresh=true`; }}
-                    style={{ background: 'none', border: '1px solid var(--border)', color: 'var(--text-3)', fontFamily: 'IBM Plex Mono, monospace', fontSize: '10px', padding: '2px 10px', cursor: 'pointer', letterSpacing: '1px' }}
+                    style={{ background: 'none', border: '1px solid var(--border)', color: 'var(--text-3)', fontFamily: 'JetBrains Mono, monospace', fontSize: '10px', padding: '2px 10px', cursor: 'pointer', letterSpacing: '1px' }}
                     title="Refresh data">
                     ↻ REFRESH
                   </button>
@@ -593,7 +593,7 @@ export default function StockPage({ params }) {
                   { key: 'dcf', title: 'DCF VALUATION', desc: "What's it really worth?" },
                 ].map(s => (
                   <button key={s.key} onClick={() => setTab(s.key)}
-                    style={{ background: 'var(--bg-1)', border: 'none', padding: '14px 16px', textAlign: 'left', cursor: 'pointer', fontFamily: 'IBM Plex Mono, monospace' }}
+                    style={{ background: 'var(--bg-1)', border: 'none', padding: '14px 16px', textAlign: 'left', cursor: 'pointer', fontFamily: 'JetBrains Mono, monospace' }}
                     onMouseEnter={e => e.currentTarget.style.background = 'var(--bg-2)'}
                     onMouseLeave={e => e.currentTarget.style.background = 'var(--bg-1)'}>
                     <div style={{ color: 'var(--accent)', fontSize: '11px', letterSpacing: '1px', marginBottom: '4px' }}>{s.title}</div>
@@ -841,7 +841,7 @@ export default function StockPage({ params }) {
             <div style={{ textAlign: 'center', padding: '80px 24px' }}>
               <div style={{ color: 'var(--accent)', fontSize: '13px', letterSpacing: '2px', marginBottom: '12px' }}>🔒 SIGN IN REQUIRED</div>
               <div style={{ color: 'var(--text-2)', fontSize: '12px', marginBottom: '24px' }}>Create a free account to access Financial Statements.</div>
-              <a href="/sign-in" style={{ background: 'var(--accent)', color: '#000', padding: '10px 24px', fontFamily: 'IBM Plex Mono, monospace', fontSize: '11px', fontWeight: 700, letterSpacing: '1px', textDecoration: 'none' }}>CREATE FREE ACCOUNT →</a>
+              <a href="/sign-in" style={{ background: 'var(--accent)', color: '#000', padding: '10px 24px', fontFamily: 'JetBrains Mono, monospace', fontSize: '11px', fontWeight: 700, letterSpacing: '1px', textDecoration: 'none' }}>CREATE FREE ACCOUNT →</a>
             </div>
           )}
           {tab === 'financials' && isPro && (
@@ -850,7 +850,7 @@ export default function StockPage({ params }) {
     <div style={{ display: 'flex', gap: '1px', background: 'var(--border)', marginBottom: '24px' }}>
       {[['income', 'INCOME STATEMENT'], ['balance', 'BALANCE SHEET'], ['cashflow', 'CASH FLOW']].map(([key, label]) => (
         <button key={key} onClick={() => setFinTab(key)}
-          style={{ padding: '8px 20px', fontSize: '11px', letterSpacing: '1px', background: finTab === key ? 'var(--accent)' : 'var(--bg-1)', color: finTab === key ? '#000' : 'var(--text-3)', border: 'none', cursor: 'pointer', fontFamily: 'IBM Plex Mono, monospace', fontWeight: finTab === key ? 600 : 400 }}>
+          style={{ padding: '8px 20px', fontSize: '11px', letterSpacing: '1px', background: finTab === key ? 'var(--accent)' : 'var(--bg-1)', color: finTab === key ? '#000' : 'var(--text-3)', border: 'none', cursor: 'pointer', fontFamily: 'JetBrains Mono, monospace', fontWeight: finTab === key ? 600 : 400 }}>
           {label}
         </button>
       ))}
@@ -1016,7 +1016,7 @@ export default function StockPage({ params }) {
             <div style={{ textAlign: 'center', padding: '80px 24px' }}>
               <div style={{ color: 'var(--accent)', fontSize: '13px', letterSpacing: '2px', marginBottom: '12px' }}>🔒 SIGN IN REQUIRED</div>
               <div style={{ color: 'var(--text-2)', fontSize: '12px', marginBottom: '24px' }}>Create a free account to access DCF Valuation.</div>
-              <a href="/sign-in" style={{ background: 'var(--accent)', color: '#000', padding: '10px 24px', fontFamily: 'IBM Plex Mono, monospace', fontSize: '11px', fontWeight: 700, letterSpacing: '1px', textDecoration: 'none' }}>CREATE FREE ACCOUNT →</a>
+              <a href="/sign-in" style={{ background: 'var(--accent)', color: '#000', padding: '10px 24px', fontFamily: 'JetBrains Mono, monospace', fontSize: '11px', fontWeight: 700, letterSpacing: '1px', textDecoration: 'none' }}>CREATE FREE ACCOUNT →</a>
             </div>
           )}
           {tab === 'dcf' && isPro && (

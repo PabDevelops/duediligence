@@ -13,7 +13,7 @@ const RANGES = [
 const CustomTooltip = ({ active, payload }) => {
   if (!active || !payload?.length) return null;
   return (
-    <div style={{ background: 'var(--bg-2)', border: '1px solid var(--border)', padding: '4px 8px', fontSize: '10px', fontFamily: 'IBM Plex Mono, monospace', color: 'var(--text)' }}>
+    <div style={{ background: 'var(--bg-2)', border: '1px solid var(--border)', padding: '4px 8px', fontSize: '10px', fontFamily: 'JetBrains Mono, monospace', color: 'var(--text)' }}>
       ${payload[0].value?.toFixed(2)}
     </div>
   );
@@ -43,7 +43,7 @@ export default function SparklineHeader({ ticker }) {
       <div style={{ display: 'flex', gap: '1px', marginBottom: '6px' }}>
         {RANGES.map(r => (
           <button key={r.label} onClick={() => setRange(r.range)}
-            style={{ padding: '2px 8px', fontSize: '9px', letterSpacing: '1px', background: range === r.range ? 'var(--accent)' : 'transparent', color: range === r.range ? '#000' : 'var(--text-3)', border: 'none', cursor: 'pointer', fontFamily: 'IBM Plex Mono, monospace', fontWeight: range === r.range ? 700 : 400 }}>
+            style={{ padding: '2px 8px', fontSize: '9px', letterSpacing: '1px', background: range === r.range ? 'var(--accent)' : 'transparent', color: range === r.range ? '#000' : 'var(--text-3)', border: 'none', cursor: 'pointer', fontFamily: 'JetBrains Mono, monospace', fontWeight: range === r.range ? 700 : 400 }}>
             {r.label}
           </button>
         ))}

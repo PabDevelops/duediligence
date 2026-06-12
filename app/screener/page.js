@@ -94,14 +94,14 @@ const loadSparkline = async (ticker) => {
   );
 
   return (
-    <div style={{ background: 'var(--bg)', minHeight: '100vh', color: 'var(--text)', fontFamily: 'IBM Plex Mono, monospace' }}>
+    <div style={{ background: 'var(--bg)', minHeight: '100vh', color: 'var(--text)', fontFamily: 'JetBrains Mono, monospace' }}>
 
       <Topbar />
       {/* Search bar */}
       <div style={{ borderBottom: '1px solid var(--border)', padding: '8px 16px', display: 'flex', alignItems: 'center', gap: '12px', background: 'var(--bg)', fontSize: '11px' }}>
         <div style={{ flex: 1 }}>
           <input
-            style={{ background: 'var(--bg-2)', border: '1px solid var(--border)', color: 'var(--text)', fontFamily: 'IBM Plex Mono, monospace', fontSize: '11px', padding: '4px 10px', width: '220px', outline: 'none', letterSpacing: '1px' }}
+            style={{ background: 'var(--bg-2)', border: '1px solid var(--border)', color: 'var(--text)', fontFamily: 'JetBrains Mono, monospace', fontSize: '11px', padding: '4px 10px', width: '220px', outline: 'none', letterSpacing: '1px' }}
             placeholder="SEARCH TICKER OR NAME..."
             value={search}
             onChange={e => setSearch(e.target.value)}
@@ -119,7 +119,7 @@ const loadSparkline = async (ticker) => {
             <div style={{ color: 'var(--text-3)', fontSize: '10px', marginBottom: '6px' }}>SECTOR</div>
             {['All', ...new Set(stocks.map(s => s.sector).filter(Boolean))].sort().map(sec => (
   <button key={sec} onClick={() => setSector(sec)}
-    style={{ display: 'block', width: '100%', textAlign: 'left', padding: '4px 8px', fontSize: '10px', background: 'none', border: 'none', cursor: 'pointer', fontFamily: 'IBM Plex Mono, monospace', color: sector === sec ? 'var(--accent)' : 'var(--text-3)', borderLeft: sector === sec ? '2px solid var(--accent)' : '2px solid transparent' }}>
+    style={{ display: 'block', width: '100%', textAlign: 'left', padding: '4px 8px', fontSize: '10px', background: 'none', border: 'none', cursor: 'pointer', fontFamily: 'JetBrains Mono, monospace', color: sector === sec ? 'var(--accent)' : 'var(--text-3)', borderLeft: sector === sec ? '2px solid var(--accent)' : '2px solid transparent' }}>
     {sec}
   </button>
 ))}
@@ -137,7 +137,7 @@ const loadSparkline = async (ticker) => {
                 <div style={{ color: 'var(--text-3)', fontSize: '9px', letterSpacing: '1px', marginBottom: '4px' }}>{f.label}</div>
                 <input
                   type="number"
-                  style={{ width: '100%', background: 'var(--bg-2)', border: '1px solid var(--border)', color: 'var(--text)', fontFamily: 'IBM Plex Mono, monospace', fontSize: '11px', padding: '4px 8px', outline: 'none' }}
+                  style={{ width: '100%', background: 'var(--bg-2)', border: '1px solid var(--border)', color: 'var(--text)', fontFamily: 'JetBrains Mono, monospace', fontSize: '11px', padding: '4px 8px', outline: 'none' }}
                   placeholder="—"
                   value={filters[f.key]}
                   onChange={e => setFilters(prev => ({ ...prev, [f.key]: e.target.value }))}
@@ -145,7 +145,7 @@ const loadSparkline = async (ticker) => {
               </div>
             ))}
             <button onClick={() => setFilters({ minMargin: '', maxPE: '', minFCFYield: '', minRevGrowth: '' })}
-              style={{ width: '100%', padding: '6px', fontSize: '10px', background: 'none', border: '1px solid var(--border)', color: 'var(--text-3)', cursor: 'pointer', fontFamily: 'IBM Plex Mono, monospace', letterSpacing: '1px', marginTop: '4px' }}>
+              style={{ width: '100%', padding: '6px', fontSize: '10px', background: 'none', border: '1px solid var(--border)', color: 'var(--text-3)', cursor: 'pointer', fontFamily: 'JetBrains Mono, monospace', letterSpacing: '1px', marginTop: '4px' }}>
               RESET FILTERS
             </button>
           </div>
@@ -156,7 +156,7 @@ const loadSparkline = async (ticker) => {
           {!isPro && (
           <div style={{ background: 'var(--accent-dim)', border: '1px solid var(--accent)', padding: '10px 16px', marginBottom: '12px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
             <span style={{ color: 'var(--accent)', fontSize: '11px', letterSpacing: '1px' }}>🔒 Upgrade to Pro to see full metrics</span>
-            <a href="/pricing" style={{ background: 'var(--accent)', color: '#000', padding: '4px 14px', fontFamily: 'IBM Plex Mono, monospace', fontSize: '10px', fontWeight: 700, letterSpacing: '1px', textDecoration: 'none' }}>UPGRADE →</a>
+            <a href="/pricing" style={{ background: 'var(--accent)', color: '#000', padding: '4px 14px', fontFamily: 'JetBrains Mono, monospace', fontSize: '10px', fontWeight: 700, letterSpacing: '1px', textDecoration: 'none' }}>UPGRADE →</a>
           </div>
         )}
 
@@ -240,14 +240,14 @@ onMouseLeave={e => e.currentTarget.style.background = 'var(--bg-1)'}>
           {totalPages > 1 && (
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', padding: '16px 0', borderTop: '1px solid var(--border)' }}>
               <button onClick={() => setPage(p => Math.max(1, p - 1))} disabled={page === 1}
-                style={{ padding: '4px 12px', background: 'none', border: '1px solid var(--border)', color: page === 1 ? 'var(--text-3)' : 'var(--text)', fontFamily: 'IBM Plex Mono, monospace', fontSize: '10px', cursor: page === 1 ? 'default' : 'pointer', letterSpacing: '1px' }}>
+                style={{ padding: '4px 12px', background: 'none', border: '1px solid var(--border)', color: page === 1 ? 'var(--text-3)' : 'var(--text)', fontFamily: 'JetBrains Mono, monospace', fontSize: '10px', cursor: page === 1 ? 'default' : 'pointer', letterSpacing: '1px' }}>
                 ← PREV
               </button>
               <span style={{ color: 'var(--text-3)', fontSize: '10px', letterSpacing: '1px' }}>
                 {page} / {totalPages} · {filtered.length} RESULTS
               </span>
               <button onClick={() => setPage(p => Math.min(totalPages, p + 1))} disabled={page === totalPages}
-                style={{ padding: '4px 12px', background: 'none', border: '1px solid var(--border)', color: page === totalPages ? 'var(--text-3)' : 'var(--text)', fontFamily: 'IBM Plex Mono, monospace', fontSize: '10px', cursor: page === totalPages ? 'default' : 'pointer', letterSpacing: '1px' }}>
+                style={{ padding: '4px 12px', background: 'none', border: '1px solid var(--border)', color: page === totalPages ? 'var(--text-3)' : 'var(--text)', fontFamily: 'JetBrains Mono, monospace', fontSize: '10px', cursor: page === totalPages ? 'default' : 'pointer', letterSpacing: '1px' }}>
                 NEXT →
               </button>
             </div>

@@ -152,13 +152,13 @@ export default function Compare() {
   const hasAny = stocks.some(s => s !== null);
 
   if (checkingPro) return (
-    <div style={{ background: 'var(--bg)', minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: 'IBM Plex Mono, monospace' }}>
+    <div style={{ background: 'var(--bg)', minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: 'JetBrains Mono, monospace' }}>
       <div style={{ color: 'var(--text-3)', fontSize: '10px', letterSpacing: '2px' }}>LOADING...</div>
     </div>
   );
 
   if (!isPro) return (
-    <div style={{ background: 'var(--bg)', minHeight: '100vh', color: 'var(--text)', fontFamily: 'IBM Plex Mono, monospace' }}>
+    <div style={{ background: 'var(--bg)', minHeight: '100vh', color: 'var(--text)', fontFamily: 'JetBrains Mono, monospace' }}>
       <Topbar />
       <div style={{ maxWidth: '600px', margin: '0 auto', padding: '100px 24px', textAlign: 'center' }}>
         <div style={{ fontSize: '48px', marginBottom: '24px' }}>🔒</div>
@@ -167,7 +167,7 @@ export default function Compare() {
         <p style={{ color: 'var(--text-2)', fontSize: '12px', lineHeight: 1.8, marginBottom: '32px' }}>
           Compare up to 3 stocks side by side with full metrics, sparklines and Traqcker scores. Upgrade to Pro to unlock.
         </p>
-        <a href="/pricing" style={{ background: 'var(--accent)', color: '#000', padding: '10px 28px', fontFamily: 'IBM Plex Mono, monospace', fontSize: '11px', fontWeight: 700, letterSpacing: '1px', textDecoration: 'none' }}>
+        <a href="/pricing" style={{ background: 'var(--accent)', color: '#000', padding: '10px 28px', fontFamily: 'JetBrains Mono, monospace', fontSize: '11px', fontWeight: 700, letterSpacing: '1px', textDecoration: 'none' }}>
           UPGRADE TO PRO →
         </a>
         <div style={{ marginTop: '16px' }}>
@@ -178,7 +178,7 @@ export default function Compare() {
   );
 
   return (
-    <div style={{ background: 'var(--bg)', minHeight: '100vh', color: 'var(--text)', fontFamily: 'IBM Plex Mono, monospace' }}>
+    <div style={{ background: 'var(--bg)', minHeight: '100vh', color: 'var(--text)', fontFamily: 'JetBrains Mono, monospace' }}>
 
       <Topbar />
 
@@ -193,7 +193,7 @@ export default function Compare() {
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                 <div style={{ color: 'var(--text-3)', fontSize: '9px', letterSpacing: '3px' }}>STOCK {i + 1}</div>
                 {stocks[i] && (
-                  <button onClick={() => removeStock(i)} style={{ background: 'none', border: 'none', color: 'var(--text-3)', fontFamily: 'IBM Plex Mono, monospace', fontSize: '9px', cursor: 'pointer', letterSpacing: '1px', padding: 0 }}>
+                  <button onClick={() => removeStock(i)} style={{ background: 'none', border: 'none', color: 'var(--text-3)', fontFamily: 'JetBrains Mono, monospace', fontSize: '9px', cursor: 'pointer', letterSpacing: '1px', padding: 0 }}>
                     ✕ CLEAR
                   </button>
                 )}
@@ -204,11 +204,11 @@ export default function Compare() {
                 <input
                   value={inputs[i]}
                   onChange={e => setInputs(prev => { const n = [...prev]; n[i] = e.target.value.toUpperCase(); return n; })}
-                  style={{ flex: 1, background: 'var(--bg-2)', border: '1px solid var(--border)', borderRight: 'none', color: 'var(--text)', fontFamily: 'IBM Plex Mono, monospace', fontSize: '12px', padding: '8px 10px', outline: 'none', letterSpacing: '2px' }}
+                  style={{ flex: 1, background: 'var(--bg-2)', border: '1px solid var(--border)', borderRight: 'none', color: 'var(--text)', fontFamily: 'JetBrains Mono, monospace', fontSize: '12px', padding: '8px 10px', outline: 'none', letterSpacing: '2px' }}
                   placeholder="TICKER..."
                 />
                 <button type="submit"
-                  style={{ padding: '8px 14px', background: 'var(--accent)', border: 'none', color: '#000', fontFamily: 'IBM Plex Mono, monospace', fontSize: '10px', fontWeight: 700, cursor: 'pointer', letterSpacing: '1px', whiteSpace: 'nowrap' }}>
+                  style={{ padding: '8px 14px', background: 'var(--accent)', border: 'none', color: '#000', fontFamily: 'JetBrains Mono, monospace', fontSize: '10px', fontWeight: 700, cursor: 'pointer', letterSpacing: '1px', whiteSpace: 'nowrap' }}>
                   {loading[i] ? '...' : 'ADD'}
                 </button>
               </form>

@@ -32,7 +32,7 @@ export default function Pricing() {
   const ANNUAL_ID = process.env.NEXT_PUBLIC_STRIPE_PRICE_ANNUAL || 'price_1TfcvtPqu5l8d1hxz5cmBDqO';
 
   return (
-    <div style={{ background: 'var(--bg)', minHeight: '100vh', color: 'var(--text)', fontFamily: 'IBM Plex Mono, monospace' }}>
+    <div style={{ background: 'var(--bg)', minHeight: '100vh', color: 'var(--text)', fontFamily: 'JetBrains Mono, monospace' }}>
       <Topbar />
       <div style={{ maxWidth: '800px', margin: '0 auto', padding: '60px 24px' }}>
 
@@ -49,11 +49,11 @@ export default function Pricing() {
         {/* Toggle */}
         <div style={{ display: 'flex', justifyContent: 'center', gap: '1px', background: 'var(--border)', marginBottom: '40px', maxWidth: '300px', margin: '0 auto 40px' }}>
           <button onClick={() => setAnnual(false)}
-            style={{ flex: 1, padding: '8px 16px', background: !annual ? 'var(--accent)' : 'var(--bg-1)', color: !annual ? '#000' : 'var(--text-3)', border: 'none', fontFamily: 'IBM Plex Mono, monospace', fontSize: '10px', fontWeight: 700, cursor: 'pointer', letterSpacing: '1px' }}>
+            style={{ flex: 1, padding: '8px 16px', background: !annual ? 'var(--accent)' : 'var(--bg-1)', color: !annual ? '#000' : 'var(--text-3)', border: 'none', fontFamily: 'JetBrains Mono, monospace', fontSize: '10px', fontWeight: 700, cursor: 'pointer', letterSpacing: '1px' }}>
             MONTHLY
           </button>
           <button onClick={() => setAnnual(true)}
-            style={{ flex: 1, padding: '8px 16px', background: annual ? 'var(--accent)' : 'var(--bg-1)', color: annual ? '#000' : 'var(--text-3)', border: 'none', fontFamily: 'IBM Plex Mono, monospace', fontSize: '10px', fontWeight: 700, cursor: 'pointer', letterSpacing: '1px' }}>
+            style={{ flex: 1, padding: '8px 16px', background: annual ? 'var(--accent)' : 'var(--bg-1)', color: annual ? '#000' : 'var(--text-3)', border: 'none', fontFamily: 'JetBrains Mono, monospace', fontSize: '10px', fontWeight: 700, cursor: 'pointer', letterSpacing: '1px' }}>
             ANNUAL · SAVE 17%
           </button>
         </div>
@@ -75,7 +75,7 @@ export default function Pricing() {
                 <div key={f} style={{ color: f.startsWith('✓') ? 'var(--text-2)' : 'var(--text-3)', fontSize: '11px', marginBottom: '8px', letterSpacing: '0.5px' }}>{f}</div>
               ))}
             </div>
-            <button disabled style={{ width: '100%', padding: '10px', background: 'transparent', border: '1px solid var(--border)', color: 'var(--text-3)', fontFamily: 'IBM Plex Mono, monospace', fontSize: '11px', letterSpacing: '1px', cursor: 'default' }}>
+            <button disabled style={{ width: '100%', padding: '10px', background: 'transparent', border: '1px solid var(--border)', color: 'var(--text-3)', fontFamily: 'JetBrains Mono, monospace', fontSize: '11px', letterSpacing: '1px', cursor: 'default' }}>
               FREE PLAN
             </button>
           </div>
@@ -105,7 +105,7 @@ export default function Pricing() {
             <button
               onClick={() => checkout(annual ? ANNUAL_ID : MONTHLY_ID)}
               disabled={loading !== null}
-              style={{ width: '100%', padding: '10px', background: 'var(--accent)', border: 'none', color: '#000', fontFamily: 'IBM Plex Mono, monospace', fontSize: '11px', fontWeight: 700, letterSpacing: '1px', cursor: 'pointer' }}>
+              style={{ width: '100%', padding: '10px', background: 'var(--accent)', border: 'none', color: '#000', fontFamily: 'JetBrains Mono, monospace', fontSize: '11px', fontWeight: 700, letterSpacing: '1px', cursor: 'pointer' }}>
               {loading ? 'LOADING...' : `GET PRO ${annual ? '· SAVE 17%' : ''} →`}
             </button>
           </div>

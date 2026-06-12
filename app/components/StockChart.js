@@ -52,7 +52,7 @@ export default function StockChart({ ticker }) {
         layout: {
           background: { type: ColorType.Solid, color: '#111111' },
           textColor: '#555555',
-          fontFamily: 'IBM Plex Mono, monospace',
+          fontFamily: 'JetBrains Mono, monospace',
           fontSize: 10,
         },
         grid: {
@@ -125,7 +125,7 @@ const series = chart.addSeries(AreaSeries, {
         <div style={{ display: 'flex', gap: '1px', background: 'var(--border)' }}>
           {RANGES.map(r => (
             <button key={r.value} onClick={() => setRange(r.value)}
-              style={{ padding: '4px 8px', fontSize: '10px', letterSpacing: '1px', background: range === r.value ? 'var(--accent)' : 'var(--bg-2)', color: range === r.value ? '#000' : 'var(--text-3)', border: 'none', cursor: 'pointer', fontFamily: 'IBM Plex Mono, monospace', fontWeight: range === r.value ? 600 : 400 }}>
+              style={{ padding: '4px 8px', fontSize: '10px', letterSpacing: '1px', background: range === r.value ? 'var(--accent)' : 'var(--bg-2)', color: range === r.value ? '#000' : 'var(--text-3)', border: 'none', cursor: 'pointer', fontFamily: 'JetBrains Mono, monospace', fontWeight: range === r.value ? 600 : 400 }}>
               {r.label}
             </button>
           ))}
@@ -133,7 +133,7 @@ const series = chart.addSeries(AreaSeries, {
         <div style={{ display: 'flex', gap: '1px', background: 'var(--border)' }}>
           {['line', 'candles'].map(m => (
             <button key={m} onClick={() => setMode(m)}
-              style={{ padding: '4px 10px', fontSize: '10px', letterSpacing: '1px', background: mode === m ? 'var(--accent)' : 'var(--bg-2)', color: mode === m ? '#000' : 'var(--text-3)', border: 'none', cursor: 'pointer', fontFamily: 'IBM Plex Mono, monospace', fontWeight: mode === m ? 600 : 400 }}>
+              style={{ padding: '4px 10px', fontSize: '10px', letterSpacing: '1px', background: mode === m ? 'var(--accent)' : 'var(--bg-2)', color: mode === m ? '#000' : 'var(--text-3)', border: 'none', cursor: 'pointer', fontFamily: 'JetBrains Mono, monospace', fontWeight: mode === m ? 600 : 400 }}>
               {m.toUpperCase()}
             </button>
           ))}
