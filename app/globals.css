@@ -126,6 +126,12 @@ html, body {
   .pricing-grid {
     grid-template-columns: 1fr !important;
   }
+  .screener-filter-btn {
+    display: flex !important;
+  }
+  .screener-cards {
+    display: flex !important;
+  }
 
   /* Stock page compact header - logo sizing on mobile */
   .stock-logo img {

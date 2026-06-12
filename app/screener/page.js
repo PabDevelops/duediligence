@@ -53,6 +53,7 @@ const loadSparkline = async (ticker) => {
   const [filters, setFilters] = useState({
     minMargin: '', maxPE: '', minFCFYield: '', minRevGrowth: '',
   });
+  const [filtersOpen, setFiltersOpen] = useState(false);
 
   useEffect(() => {
     fetch('/api/screener')
@@ -93,26 +94,35 @@ const loadSparkline = async (ticker) => {
     </th>
   );
 
+  const activeFilterCount = Object.values(filters).filter(v => v !== '').length + (sector !== 'All' ? 1 : 0);
+
   return (
-    <div style={{ background: 'var(--bg)', minHeight: '100vh', color: 'var(--text)', fontFamily: 'JetBrains Mono, monospace' }}>
+    <div style={{ background: 'var(--bg)', minHeight: '100vh', color: 'var(--text)', fontFamily: 'Inter, sans-serif' }}>
 
       <Topbar />
       {/* Search bar */}
-      <div style={{ borderBottom: '1px solid var(--border)', padding: '8px 16px', display: 'flex', alignItems: 'center', gap: '12px', background: 'var(--bg)', fontSize: '11px' }}>
-        <div style={{ flex: 1 }}>
+      <div style={{ borderBottom: '1px solid var(--border)', padding: '12px 16px', display: 'flex', alignItems: 'center', gap: '10px', background: 'var(--bg)' }}>
+        <div style={{ flex: 1, position: 'relative' }}>
           <input
-            style={{ background: 'var(--bg-2)', border: '1px solid var(--border)', color: 'var(--text)', fontFamily: 'JetBrains Mono, monospace', fontSize: '11px', padding: '4px 10px', width: '220px', outline: 'none', letterSpacing: '1px' }}
-            placeholder="SEARCH TICKER OR NAME..."
+            style={{ width: '100%', background: 'var(--bg-1)', border: '1px solid var(--border)', borderRadius: '12px', color: 'var(--text)', fontFamily: 'JetBrains Mono, monospace', fontSize: '12px', padding: '10px 14px', outline: 'none', letterSpacing: '0.5px' }}
+            placeholder="Search ticker or name..."
             value={search}
             onChange={e => setSearch(e.target.value)}
           />
         </div>
-        <span style={{ color: 'var(--text-3)', fontSize: '10px' }}>{filtered.length} COMPANIES</span>
+        <button className="screener-filter-btn" onClick={() => setFiltersOpen(true)}
+          style={{ display: 'none', alignItems: 'center', gap: '6px', background: 'var(--bg-1)', border: '1px solid var(--border)', borderRadius: '12px', color: 'var(--text-2)', padding: '10px 14px', fontFamily: 'Space Grotesk, sans-serif', fontSize: '12px', fontWeight: 600, cursor: 'pointer', flexShrink: 0 }}>
+          Filters
+          {activeFilterCount > 0 && (
+            <span style={{ background: 'var(--accent)', color: '#0B0E14', borderRadius: '6px', fontSize: '10px', fontWeight: 700, padding: '1px 6px' }}>{activeFilterCount}</span>
+          )}
+        </button>
+        <span className="desktop-only" style={{ color: 'var(--text-3)', fontSize: '11px', fontFamily: 'JetBrains Mono, monospace', flexShrink: 0 }}>{filtered.length} companies</span>
       </div>
 
       <div style={{ display: 'flex' }}>
-        {/* Filters sidebar */}
-        <div style={{ width: '200px', flexShrink: 0, borderRight: '1px solid var(--border)', padding: '16px', fontSize: '11px' }}>
+        {/* Filters sidebar (desktop only - mobile uses drawer) */}
+        <div className="desktop-only" style={{ width: '200px', flexShrink: 0, borderRight: '1px solid var(--border)', padding: '16px', fontSize: '11px' }}>
           <div style={{ color: 'var(--text-3)', fontSize: '9px', letterSpacing: '2px', marginBottom: '16px' }}>FILTERS</div>
 
           <div style={{ marginBottom: '16px' }}>
@@ -152,34 +162,34 @@ const loadSparkline = async (ticker) => {
         </div>
 
         {/* Table */}
-        <div ref={tableRef} style={{ flex: 1, overflow: 'auto', minHeight: '100vh' }}>
+        <div ref={tableRef} style={{ flex: 1, overflow: 'auto', minHeight: '100vh', padding: '0 0 80px' }}>
           {!isPro && (
-          <div style={{ background: 'var(--accent-dim)', border: '1px solid var(--accent)', padding: '10px 16px', marginBottom: '12px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-            <span style={{ color: 'var(--accent)', fontSize: '11px', letterSpacing: '1px' }}>🔒 Upgrade to Pro to see full metrics</span>
-            <a href="/pricing" style={{ background: 'var(--accent)', color: '#000', padding: '4px 14px', fontFamily: 'JetBrains Mono, monospace', fontSize: '10px', fontWeight: 700, letterSpacing: '1px', textDecoration: 'none' }}>UPGRADE →</a>
+          <div style={{ background: 'var(--accent-dim)', border: '1px solid var(--accent)', borderRadius: '14px', margin: '12px 16px', padding: '12px 16px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '10px', flexWrap: 'wrap' }}>
+            <span style={{ color: 'var(--accent)', fontSize: '12px' }}>🔒 Upgrade to Pro to see full metrics</span>
+            <a href="/pricing" style={{ background: 'var(--accent)', color: '#0B0E14', padding: '6px 16px', borderRadius: '10px', fontFamily: 'Space Grotesk, sans-serif', fontSize: '11px', fontWeight: 700, letterSpacing: '0.3px', textDecoration: 'none' }}>Upgrade →</a>
           </div>
         )}
 
         {loading ? (
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '400px', color: 'var(--text-3)', fontSize: '11px', letterSpacing: '2px' }}>
-              LOADING SCREENER DATA...
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '300px', color: 'var(--text-3)', fontSize: '12px', letterSpacing: '1px' }}>
+              Loading screener data...
             </div>
           ) : stocks.length === 0 ? (
-            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '400px', color: 'var(--text-3)', fontSize: '11px', textAlign: 'center', gap: '8px' }}>
-              <div style={{ color: 'var(--accent)', fontSize: '24px', letterSpacing: '4px' }}>EMPTY</div>
-              <div>No companies in cache yet.</div>
-              <div>Visit stock pages to populate the screener.</div>
+            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '300px', color: 'var(--text-3)', fontSize: '12px', textAlign: 'center', gap: '10px', padding: '0 24px' }}>
+              <div style={{ fontFamily: 'Space Grotesk, sans-serif', color: 'var(--text)', fontSize: '18px', fontWeight: 700 }}>No companies yet</div>
+              <div>Visit a few stock pages to populate the screener.</div>
               <div style={{ display: 'flex', gap: '8px', marginTop: '8px', flexWrap: 'wrap', justifyContent: 'center' }}>
                 {['AAPL', 'MSFT', 'NVDA', 'GOOGL', 'AMZN', 'META', 'VISA', 'ASML'].map(t => (
                   <a key={t} href={`/stock/${t}`}
-                    style={{ color: 'var(--accent)', fontSize: '11px', border: '1px solid var(--border)', padding: '4px 10px', textDecoration: 'none' }}>
+                    style={{ color: 'var(--accent)', fontSize: '12px', border: '1px solid var(--border)', borderRadius: '10px', padding: '6px 12px', textDecoration: 'none' }}>
                     {t}
                   </a>
                 ))}
               </div>
             </div>
           ) : (
-            <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '11px' }}>
+            <>
+            <table className="desktop-only" style={{ width: '100%', borderCollapse: 'collapse', fontSize: '11px' }}>
               <thead style={{ position: 'sticky', top: 0, background: 'var(--bg)' }}>
                 <tr style={{ borderBottom: '1px solid var(--border)' }}>
                   <th style={{ padding: '8px 12px', textAlign: 'left', fontWeight: 400, fontSize: '10px', letterSpacing: '1px', color: 'var(--text-3)', width: '120px' }}>TICKER</th>
@@ -234,6 +244,49 @@ onMouseLeave={e => e.currentTarget.style.background = 'var(--bg-1)'}>
                 ))}
               </tbody>
             </table>
+
+            {/* Mobile card list */}
+            <div className="screener-cards" style={{ display: 'none', flexDirection: 'column', gap: '10px', padding: '0 16px' }}>
+              {paginated.map(s => (
+                <div key={s.ticker} onClick={() => router.push(`/stock/${s.ticker}`)}
+                  style={{ background: 'var(--bg-1)', border: '1px solid var(--border)', borderRadius: '16px', padding: '14px 16px', cursor: 'pointer' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '10px' }}>
+                    <div style={{ width: '32px', height: '32px', borderRadius: '8px', background: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden', flexShrink: 0 }}>
+                      <img
+                        src={`https://img.logo.dev/${s.name?.toLowerCase().replace(/\binc\b|\bcorp\b|\bltd\b|\bplc\b|\bco\b|\bllc\b|\bgroup\b|\bholdings\b|\binternational\b|\bthe\b/g, '').trim().split(/\s+/)[0].replace(/[^a-z0-9]/g, '')}.com?token=pk_B4aaLZF6S4G1YbCgqZq2Ug`}
+                        alt=""
+                        style={{ width: '20px', height: '20px', objectFit: 'contain' }}
+                        onError={e => { e.target.style.display = 'none'; e.target.parentElement.style.background = 'var(--bg-2)'; e.target.parentElement.innerHTML = `<span style="color:var(--accent);font-size:10px;font-weight:600">${s.ticker.slice(0,2)}</span>`; }}
+                      />
+                    </div>
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <div style={{ fontFamily: 'Space Grotesk, sans-serif', fontWeight: 700, fontSize: '13px', color: 'var(--accent)' }}>{s.ticker}</div>
+                      <div style={{ color: 'var(--text-3)', fontSize: '11px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{s.name}</div>
+                    </div>
+                    <div style={{ textAlign: 'right', flexShrink: 0 }}>
+                      <div style={{ fontFamily: 'JetBrains Mono, monospace', fontWeight: 700, fontSize: '13px', filter: !isPro ? 'blur(4px)' : 'none', userSelect: !isPro ? 'none' : 'auto' }}>
+                        {s.currentPrice ? `$${s.currentPrice.toFixed(2)}` : '—'}
+                      </div>
+                      <div style={{ color: 'var(--text-3)', fontSize: '10px' }}>{s.sector || '—'}</div>
+                    </div>
+                  </div>
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '8px', borderTop: '1px solid var(--border)', paddingTop: '10px' }}>
+                    {[
+                      { label: 'P/E', val: fmtN(s.pe), color: s.pe > 30 ? 'var(--red)' : s.pe > 0 ? 'var(--green)' : 'var(--text-3)' },
+                      { label: 'REV GR.', val: s.revGrowth !== null ? `${s.revGrowth > 0 ? '+' : ''}${s.revGrowth}%` : '—', color: s.revGrowth > 10 ? 'var(--green)' : s.revGrowth > 0 ? 'var(--accent)' : 'var(--red)' },
+                      { label: 'OP MGN', val: fmtP(s.opMargin), color: s.opMargin > 15 ? 'var(--green)' : s.opMargin > 0 ? 'var(--accent)' : 'var(--red)' },
+                      { label: 'FCF YLD', val: s.fcfYield !== null ? `${s.fcfYield}%` : '—', color: s.fcfYield > 4 ? 'var(--green)' : s.fcfYield > 0 ? 'var(--accent)' : 'var(--red)' },
+                    ].map(m => (
+                      <div key={m.label}>
+                        <div style={{ color: 'var(--text-3)', fontSize: '9px', letterSpacing: '0.5px', marginBottom: '2px' }}>{m.label}</div>
+                        <div style={{ fontFamily: 'JetBrains Mono, monospace', fontWeight: 600, fontSize: '11px', color: m.color, filter: !isPro ? 'blur(4px)' : 'none', userSelect: !isPro ? 'none' : 'auto' }}>{m.val}</div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              ))}
+            </div>
+            </>
           )}
 
           {/* Paginador */}
@@ -254,6 +307,67 @@ onMouseLeave={e => e.currentTarget.style.background = 'var(--bg-1)'}>
           )}
         </div>
       </div>
+
+      {/* Mobile filter drawer */}
+      {filtersOpen && (
+        <div onClick={() => setFiltersOpen(false)}
+          style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', zIndex: 200, display: 'flex', alignItems: 'flex-end' }}>
+          <div onClick={e => e.stopPropagation()}
+            style={{ background: 'var(--bg-1)', borderTopLeftRadius: '20px', borderTopRightRadius: '20px', width: '100%', maxHeight: '80vh', overflow: 'auto', padding: '20px' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+              <div style={{ fontFamily: 'Space Grotesk, sans-serif', fontWeight: 700, fontSize: '16px' }}>Filters</div>
+              <button onClick={() => setFiltersOpen(false)}
+                style={{ background: 'var(--bg-2)', border: 'none', borderRadius: '10px', color: 'var(--text-2)', padding: '6px 10px', fontSize: '14px', cursor: 'pointer' }}>✕</button>
+            </div>
+
+            <div style={{ marginBottom: '20px' }}>
+              <div style={{ color: 'var(--text-3)', fontSize: '11px', letterSpacing: '1px', marginBottom: '10px' }}>SECTOR</div>
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
+                {['All', ...new Set(stocks.map(s => s.sector).filter(Boolean))].sort().map(sec => (
+                  <button key={sec} onClick={() => setSector(sec)}
+                    style={{ borderRadius: '10px', padding: '8px 14px', fontSize: '12px', background: sector === sec ? 'var(--accent)' : 'var(--bg-2)', border: sector === sec ? 'none' : '1px solid var(--border)', cursor: 'pointer', fontFamily: 'Space Grotesk, sans-serif', fontWeight: sector === sec ? 700 : 500, color: sector === sec ? '#0B0E14' : 'var(--text-2)' }}>
+                    {sec}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <div style={{ borderTop: '1px solid var(--border)', paddingTop: '16px', marginBottom: '20px' }}>
+              <div style={{ color: 'var(--text-3)', fontSize: '11px', letterSpacing: '1px', marginBottom: '12px' }}>METRICS</div>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+                {[
+                  { key: 'minMargin', label: 'Min op. margin %' },
+                  { key: 'maxPE', label: 'Max P/E' },
+                  { key: 'minFCFYield', label: 'Min FCF yield %' },
+                  { key: 'minRevGrowth', label: 'Min rev growth %' },
+                ].map(f => (
+                  <div key={f.key}>
+                    <div style={{ color: 'var(--text-3)', fontSize: '11px', marginBottom: '6px' }}>{f.label}</div>
+                    <input
+                      type="number"
+                      style={{ width: '100%', background: 'var(--bg-2)', border: '1px solid var(--border)', borderRadius: '10px', color: 'var(--text)', fontFamily: 'JetBrains Mono, monospace', fontSize: '13px', padding: '10px 12px', outline: 'none' }}
+                      placeholder="—"
+                      value={filters[f.key]}
+                      onChange={e => setFilters(prev => ({ ...prev, [f.key]: e.target.value }))}
+                    />
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            <div style={{ display: 'flex', gap: '10px' }}>
+              <button onClick={() => { setFilters({ minMargin: '', maxPE: '', minFCFYield: '', minRevGrowth: '' }); setSector('All'); }}
+                style={{ flex: 1, padding: '12px', borderRadius: '12px', background: 'var(--bg-2)', border: '1px solid var(--border)', color: 'var(--text-2)', fontFamily: 'Space Grotesk, sans-serif', fontSize: '13px', fontWeight: 600, cursor: 'pointer' }}>
+                Reset
+              </button>
+              <button onClick={() => setFiltersOpen(false)}
+                style={{ flex: 1, padding: '12px', borderRadius: '12px', background: 'var(--accent)', border: 'none', color: '#0B0E14', fontFamily: 'Space Grotesk, sans-serif', fontSize: '13px', fontWeight: 700, cursor: 'pointer' }}>
+                Show {filtered.length} results
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
