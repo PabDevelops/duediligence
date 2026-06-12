@@ -94,7 +94,7 @@ export default function BottomNav() {
       <div style={{ display: 'flex', alignItems: 'center', padding: '6px 8px' }}>
         <NavLink href="/" icon="home" label="Home" active={isHome} />
         <NavLink href="/screener" icon="search" label="Search" active={isSearch} />
-        <NavLink href="/watchlist" icon="watchlist" label="Watchlist" active={isWatchlist} />
+        <NavLink href="/about" icon="watchlist" label="About" active={path.startsWith('/about')} />
         <NavLink href="/profile" icon="profile" label="Profile" active={path.startsWith('/profile')} />
       </div>
     </nav>
