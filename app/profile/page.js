@@ -34,8 +34,11 @@ export default function ProfilePage() {
       // TODO: Create endpoint /api/user-votes
       
       // Load achievements
-      // TODO: Create endpoint /api/achievements
-      
+      if (user?.id) {
+        const achievRes = await fetch(`/api/achievements?userId=${user.id}`);
+        const achievData = await achievRes.json();
+        setAchievements(achievData.achievements || []);
+      }
     } catch (e) {
       console.error('Error loading profile:', e);
     } finally {
@@ -177,9 +180,39 @@ export default function ProfilePage() {
           <div style={{ fontSize: '11px', color: 'var(--text-3)', letterSpacing: '2px', marginBottom: '16px', paddingBottom: '8px', borderBottom: '1px solid var(--border)' }}>
             ACHIEVEMENTS ({achievements.length})
           </div>
-          <div style={{ color: 'var(--text-3)', fontSize: '12px', padding: '20px', textAlign: 'center', background: 'var(--bg-1)', borderRadius: '12px', border: '1px solid var(--accent)', borderStyle: 'dashed' }}>
-            🚀 Coming soon — Track your SOTW votes, predictions, and unlock achievements
-          </div>
+          {achievements.length > 0 ? (
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(140px, 1fr))', gap: '12px' }}>
+              {achievements.map(ach => (
+                <div key={ach.id} style={{ 
+                  background: 'var(--bg-1)', 
+                  border: '1px solid var(--border)', 
+                  borderRadius: '12px', 
+                  padding: '16px', 
+                  textAlign: 'center',
+                  transition: 'all 0.2s'
+                }}
+                  onMouseEnter={e => {
+                    e.currentTarget.style.borderColor = 'var(--accent)';
+                    e.currentTarget.style.background = 'rgba(167, 139, 250, 0.05)';
+                  }}
+                  onMouseLeave={e => {
+                    e.currentTarget.style.borderColor = 'var(--border)';
+                    e.currentTarget.style.background = 'var(--bg-1)';
+                  }}>
+                  <div style={{ fontSize: '32px', marginBottom: '8px' }}>{ach.icon}</div>
+                  <div style={{ fontSize: '12px', fontWeight: 600, color: 'var(--text)', marginBottom: '4px' }}>{ach.title}</div>
+                  <div style={{ fontSize: '10px', color: 'var(--text-3)', lineHeight: 1.4 }}>{ach.description}</div>
+                  {ach.rarity === 'uncommon' && (
+                    <div style={{ fontSize: '9px', color: 'var(--accent)', marginTop: '8px', letterSpacing: '1px' }}>⚡ RARE</div>
+                  )}
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div style={{ color: 'var(--text-3)', fontSize: '12px', padding: '20px', textAlign: 'center', background: 'var(--bg-1)', borderRadius: '12px', border: '1px solid var(--border)' }}>
+              🎯 Vote on stocks to unlock achievements
+            </div>
+          )}
         </div>
       </div>
     </div>

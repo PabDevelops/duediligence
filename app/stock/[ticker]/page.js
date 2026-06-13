@@ -438,12 +438,46 @@ export default function StockPage({ params }) {
                           method: 'POST',
                           headers: { 'Content-Type': 'application/json' },
                           body: JSON.stringify({ ticker, vote: v }),
-                        }).then(r => r.json()).then(() => {
+                        }).then(r => r.json()).then(async (voteData) => {
                           // Refetch consensus to update percentages
                           fetch(`/api/votes?ticker=${ticker}`)
                             .then(r => r.json())
                             .then(d => setVoteConsensus({ ...d.percentages, total: d.total }))
                             .catch(() => {});
+
+                          // Check achievements
+                          if (user?.id) {
+                            // Achievement: First vote
+                            const voteCount = await fetch(`/api/votes/count?userId=${user.id}`)
+                              .then(r => r.json())
+                              .catch(() => ({ count: 0 }));
+                            
+                            if (voteCount.count === 1) {
+                              fetch('/api/achievements', {
+                                method: 'POST',
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify({ userId: user.id, achievementKey: 'first_vote' })
+                              }).catch(() => {});
+                            }
+
+                            // Achievement: Serial voter (5 votes)
+                            if (voteCount.count === 5) {
+                              fetch('/api/achievements', {
+                                method: 'POST',
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify({ userId: user.id, achievementKey: 'serial_voter' })
+                              }).catch(() => {});
+                            }
+
+                            // Achievement: Contrarian (opposite to consensus)
+                            if (d.percentages[v] < 25 && v !== Object.keys(d.percentages).reduce((a, b) => d.percentages[a] > d.percentages[b] ? a : b)) {
+                              fetch('/api/achievements', {
+                                method: 'POST',
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify({ userId: user.id, achievementKey: 'contrarian' })
+                              }).catch(() => {});
+                            }
+                          }
                         }).catch(() => {});
                       }}
                         onMouseEnter={e => e.target.style.transform = 'scale(1.05)'}

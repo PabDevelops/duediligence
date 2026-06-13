@@ -5,9 +5,23 @@ export async function GET(req) {
   try {
     const { searchParams } = new URL(req.url);
     const ticker = searchParams.get('ticker')?.toUpperCase();
+    const userId = searchParams.get('userId');
 
+    // If userId provided, return vote count for that user
+    if (userId) {
+      const { data: userVotes, error } = await supabase
+        .from('votes')
+        .select('ticker')
+        .eq('user_id', userId);
+
+      if (error) throw error;
+
+      return Response.json({ count: userVotes?.length || 0 });
+    }
+
+    // Otherwise, return vote percentages for a ticker
     if (!ticker) {
-      return Response.json({ error: 'ticker required' }, { status: 400 });
+      return Response.json({ error: 'ticker or userId required' }, { status: 400 });
     }
 
     // Get vote counts for this ticker
