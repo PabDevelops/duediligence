@@ -6,6 +6,7 @@ import StockChart from '../../components/StockChart';
 import Sparkline from '../../components/Sparkline';
 import SparklineHeader from '../../components/SparklineHeader';
 import Topbar from '../../components/Topbar';
+import ShareCardComponent from '../../components/ShareCard';
 import { useUser } from '@clerk/nextjs';
 
 const fmt = (val) => {
@@ -517,7 +518,23 @@ export default function StockPage({ params }) {
                 </div>
               )}
 
-              {/* Share Stock Button */}
+              {/* Share Card - Generate beautiful stock image */}
+              <ShareCardComponent 
+                ticker={ticker}
+                name={data?.name || 'N/A'}
+                price={data?.currentPrice || 0}
+                priceChange={data?.priceChangePct || 0}
+                metrics={[
+                  { label: 'P/E', value: fmtN(data?.peRatio) },
+                  { label: 'Rev Growth', value: fmtP(data?.revenueGrowth) },
+                  { label: 'Op Margin', value: fmtP(data?.operatingMargin) },
+                  { label: 'FCF Yield', value: fmtP(data?.fcfYield) }
+                ]}
+                score={data?.healthScore || 50}
+                verdict={data?.verdict || 'HOLD'}
+              />
+              
+              {/* Simple Twitter Share Button */}
               <button onClick={() => {
                 const text = `${ticker} – ${data?.name || 'Stock'}\n\nScore: ${data?.healthScore || 50}/100 | Verdict: ${data?.verdict || 'HOLD'}\n\ntraqcker.com/stock/${ticker}`;
                 const encoded = encodeURIComponent(text);
@@ -525,27 +542,29 @@ export default function StockPage({ params }) {
               }}
                 style={{ 
                   width: '100%', 
-                  padding: '16px',
+                  padding: '12px',
                   marginBottom: '16px',
-                  borderRadius: '12px',
-                  border: '1px solid var(--accent)',
-                  background: 'var(--accent-dim)',
-                  color: 'var(--accent)',
+                  borderRadius: '8px',
+                  border: '1px solid var(--border)',
+                  background: 'var(--bg-2)',
+                  color: 'var(--text)',
                   fontFamily: 'Space Grotesk, sans-serif',
-                  fontWeight: 700,
-                  fontSize: '14px',
+                  fontWeight: 600,
+                  fontSize: '12px',
                   cursor: 'pointer',
                   transition: 'all 0.2s'
                 }}
                 onMouseEnter={e => {
                   e.target.style.background = 'var(--accent)';
                   e.target.style.color = '#0B0E14';
+                  e.target.style.borderColor = 'var(--accent)';
                 }}
                 onMouseLeave={e => {
-                  e.target.style.background = 'var(--accent-dim)';
-                  e.target.style.color = 'var(--accent)';
+                  e.target.style.background = 'var(--bg-2)';
+                  e.target.style.color = 'var(--text)';
+                  e.target.style.borderColor = 'var(--border)';
                 }}>
-                📸 Share
+                Share to Twitter
               </button>
 
               {/* The Numbers, Simplified - meter bars */}
