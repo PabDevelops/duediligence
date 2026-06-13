@@ -2,7 +2,7 @@
 import { useRef } from 'react';
 import html2canvas from 'html2canvas';
 
-export default function ShareCard({ ticker, name, price, priceChange, metrics, score, verdict, fairValue }) {
+export default function ShareCard({ ticker, name, price, priceChange, metrics, score, verdict, fairValue, fairValueNegative }) {
   const cardRef = useRef(null);
 
   const handleShare = async () => {
@@ -33,7 +33,7 @@ export default function ShareCard({ ticker, name, price, priceChange, metrics, s
   const verdictColor = verdict === 'BUY' ? '#22c55e' : verdict === 'SELL' ? '#ef4444' : '#eab308';
   const scoreNum = Math.round(score || 50);
   const scoreColor = scoreNum >= 70 ? '#22c55e' : scoreNum >= 50 ? '#a78bfa' : '#ef4444';
-  const scorePercent = (scoreNum / 100) * 360; // Convert to degrees for circle
+  const scoreDeg = (scoreNum / 100) * 360;
 
   return (
     <>
@@ -87,49 +87,46 @@ export default function ShareCard({ ticker, name, price, priceChange, metrics, s
           </div>
 
           {/* Fair Value / Intrinsic Value */}
-          {fairValue && (
+          {fairValue !== null && fairValue !== undefined && !fairValueNegative && (
             <div style={{ fontSize: '18px', color: '#94a3b8', marginTop: '12px' }}>
               Fair Value: <span style={{ color: '#a78bfa', fontWeight: 700 }}>${fairValue.toFixed(2)}</span>
             </div>
           )}
         </div>
 
-        {/* Score Ring Section */}
+        {/* Score Ring Section - using conic-gradient (html2canvas compatible) */}
         <div style={{ textAlign: 'center', marginBottom: '30px' }}>
           <div style={{ fontSize: '14px', color: '#94a3b8', letterSpacing: '2px', marginBottom: '20px' }}>
             EASY MODE SCORE
           </div>
           
-          {/* Visual Score Ring */}
+          {/* Visual Score Ring using conic-gradient */}
           <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '20px' }}>
-            <svg width="140" height="140" style={{ transform: 'rotate(-90deg)' }}>
-              {/* Background circle */}
-              <circle cx="70" cy="70" r="60" fill="none" stroke="#1e293b" strokeWidth="8" />
-              {/* Score circle */}
-              <circle 
-                cx="70" 
-                cy="70" 
-                r="60" 
-                fill="none" 
-                stroke={scoreColor} 
-                strokeWidth="8"
-                strokeDasharray={`${(scorePercent / 360) * 376.99} 376.99`}
-                style={{ transition: 'stroke-dasharray 0.3s' }}
-              />
-              {/* Center text - score number */}
-              <text 
-                x="70" 
-                y="80" 
-                textAnchor="middle" 
-                fontSize="32" 
-                fill={scoreColor}
-                fontWeight="700"
-                fontFamily="JetBrains Mono, monospace"
-                style={{ transform: 'rotate(90deg)', transformOrigin: '70px 70px' }}
-              >
+            <div style={{
+              width: '140px',
+              height: '140px',
+              borderRadius: '50%',
+              background: `conic-gradient(${scoreColor} ${scoreDeg}deg, #1e293b ${scoreDeg}deg 360deg)`,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              position: 'relative'
+            }}>
+              <div style={{
+                width: '110px',
+                height: '110px',
+                borderRadius: '50%',
+                background: '#0B0E14',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                fontSize: '36px',
+                fontWeight: 700,
+                color: scoreColor
+              }}>
                 {scoreNum}
-              </text>
-            </svg>
+              </div>
+            </div>
           </div>
         </div>
 

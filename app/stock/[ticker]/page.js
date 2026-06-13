@@ -296,6 +296,19 @@ export default function StockPage({ params }) {
 
   const fairValue = (() => {
     if (!grahamValue || !price) return null;
+    
+    // If Graham value is negative (negative EPS), stock is fundamentally overvalued
+    // by this metric since price/negativeValue gives a meaningless negative ratio
+    if (grahamValue <= 0) {
+      return { 
+        pct: 98, 
+        tag: 'EXPENSIVE', 
+        tagColor: 'var(--red)', 
+        estimate: grahamValue,
+        negative: true 
+      };
+    }
+    
     const ratio = price / grahamValue; // >1 = expensive, <1 = cheap
     // Map ratio 0.5x -> 1.5x onto 0% -> 100%
     const pct = Math.max(2, Math.min(98, ((ratio - 0.5) / 1.0) * 100));
@@ -305,7 +318,7 @@ export default function StockPage({ params }) {
     else if (ratio < 1.3) tag = 'SLIGHTLY EXPENSIVE';
     else tag = 'EXPENSIVE';
     const tagColor = ratio < 0.85 ? 'var(--green)' : ratio < 1.05 ? 'var(--green)' : ratio < 1.3 ? 'var(--amber)' : 'var(--red)';
-    return { pct, tag, tagColor, estimate: grahamValue };
+    return { pct, tag, tagColor, estimate: grahamValue, negative: false };
   })();
 
   // Community vote state (local-only placeholder until backend exists)
@@ -502,7 +515,11 @@ export default function StockPage({ params }) {
                     <span>Cheap</span><span>Fair</span><span>Expensive</span>
                   </div>
                   <div style={{ textAlign: 'center', marginTop: '14px', fontSize: '13px', color: 'var(--text-2)' }}>
-                    Trading at <b style={{ color: 'var(--text)', fontFamily: 'JetBrains Mono, monospace' }}>${price?.toFixed(2)}</b> — our estimate is <b style={{ color: 'var(--text)', fontFamily: 'JetBrains Mono, monospace' }}>${fairValue.estimate.toFixed(2)}</b>
+                    {fairValue.negative ? (
+                      <>This company has negative earnings, so our model can't estimate a positive fair value. Trading at <b style={{ color: 'var(--text)', fontFamily: 'JetBrains Mono, monospace' }}>${price?.toFixed(2)}</b>.</>
+                    ) : (
+                      <>Trading at <b style={{ color: 'var(--text)', fontFamily: 'JetBrains Mono, monospace' }}>${price?.toFixed(2)}</b> — our estimate is <b style={{ color: 'var(--text)', fontFamily: 'JetBrains Mono, monospace' }}>${fairValue.estimate.toFixed(2)}</b></>
+                    )}
                   </div>
                 </div>
               )}
@@ -532,7 +549,8 @@ export default function StockPage({ params }) {
                 ]}
                 score={data?.healthScore || 50}
                 verdict={data?.verdict || 'HOLD'}
-                fairValue={data?.fairValue || null}
+                fairValue={fairValue?.estimate ?? null}
+                fairValueNegative={fairValue?.negative ?? false}
               />
 
               {/* The Numbers, Simplified - meter bars */}
