@@ -533,39 +533,6 @@ export default function StockPage({ params }) {
                 score={data?.healthScore || 50}
                 verdict={data?.verdict || 'HOLD'}
               />
-              
-              {/* Simple Twitter Share Button */}
-              <button onClick={() => {
-                const text = `${ticker} – ${data?.name || 'Stock'}\n\nScore: ${data?.healthScore || 50}/100 | Verdict: ${data?.verdict || 'HOLD'}\n\ntraqcker.com/stock/${ticker}`;
-                const encoded = encodeURIComponent(text);
-                window.open(`https://twitter.com/intent/tweet?text=${encoded}`, '_blank');
-              }}
-                style={{ 
-                  width: '100%', 
-                  padding: '12px',
-                  marginBottom: '16px',
-                  borderRadius: '8px',
-                  border: '1px solid var(--border)',
-                  background: 'var(--bg-2)',
-                  color: 'var(--text)',
-                  fontFamily: 'Space Grotesk, sans-serif',
-                  fontWeight: 600,
-                  fontSize: '12px',
-                  cursor: 'pointer',
-                  transition: 'all 0.2s'
-                }}
-                onMouseEnter={e => {
-                  e.target.style.background = 'var(--accent)';
-                  e.target.style.color = '#0B0E14';
-                  e.target.style.borderColor = 'var(--accent)';
-                }}
-                onMouseLeave={e => {
-                  e.target.style.background = 'var(--bg-2)';
-                  e.target.style.color = 'var(--text)';
-                  e.target.style.borderColor = 'var(--border)';
-                }}>
-                Share to Twitter
-              </button>
 
               {/* The Numbers, Simplified - meter bars */}
               <div style={{ marginBottom: '16px' }}>
