@@ -150,13 +150,16 @@ export default function ShareCard({ ticker, name, price, priceChange, metrics, s
               padding: '12px 28px',
               borderRadius: '12px',
               border: `2px solid ${userVote === 'BUY' ? '#22c55e' : userVote === 'SELL' ? '#ef4444' : '#eab308'}`,
-              background: userVote === 'BUY' ? 'rgba(34,197,94,0.1)' : userVote === 'SELL' ? 'rgba(239,68,68,0.1)' : 'rgba(234,179,8,0.1)'
+              background: userVote === 'BUY' ? 'rgba(34,197,94,0.1)' : userVote === 'SELL' ? 'rgba(239,68,68,0.1)' : 'rgba(234,179,8,0.1)',
+              textAlign: 'center',
+              lineHeight: '1.6'
             }}>
-              <span style={{ fontSize: '18px', color: '#94a3b8' }}>This week I voted: </span>
+              <span style={{ fontSize: '18px', color: '#94a3b8', verticalAlign: 'middle' }}>This week I voted: </span>
               <span style={{ 
                 fontSize: '22px', 
                 fontWeight: 700, 
-                color: userVote === 'BUY' ? '#22c55e' : userVote === 'SELL' ? '#ef4444' : '#eab308' 
+                color: userVote === 'BUY' ? '#22c55e' : userVote === 'SELL' ? '#ef4444' : '#eab308',
+                verticalAlign: 'middle'
               }}>{userVote}</span>
             </div>
           </div>
