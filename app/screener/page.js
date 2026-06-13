@@ -283,6 +283,10 @@ onMouseLeave={e => e.currentTarget.style.background = 'var(--bg-1)'}>
                       </div>
                     ))}
                   </div>
+                  <button onClick={(e) => { e.stopPropagation(); const text = `Check out ${s.ticker} – ${s.name} on Traqcker: traqcker.com/stock/${s.ticker}`; window.open(`https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}`, '_blank'); }}
+                    style={{ width: '100%', marginTop: '10px', paddingTop: '10px', borderTop: '1px solid var(--border)', padding: '8px', fontSize: '11px', fontFamily: 'JetBrains Mono, monospace', fontWeight: 600, background: 'var(--bg-2)', color: 'var(--text)', border: 'none', borderRadius: '8px', cursor: 'pointer', display: 'block' }}>
+                    📸 Share on Twitter
+                  </button>
                 </div>
               ))}
             </div>
