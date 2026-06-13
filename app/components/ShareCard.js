@@ -2,7 +2,7 @@
 import { useRef } from 'react';
 import html2canvas from 'html2canvas';
 
-export default function ShareCard({ ticker, name, price, priceChange, metrics, score, verdict, fairValue, fairValueNegative }) {
+export default function ShareCard({ ticker, name, price, priceChange, metrics, score, verdict, fairValue, fairValueNegative, consensus }) {
   const cardRef = useRef(null);
 
   const handleShare = async () => {
@@ -34,11 +34,7 @@ export default function ShareCard({ ticker, name, price, priceChange, metrics, s
   const scoreNum = Math.max(0, Math.min(100, Math.round(score ?? 50)));
   const scoreColor = scoreNum >= 70 ? '#22c55e' : scoreNum >= 50 ? '#a78bfa' : '#ef4444';
 
-  // Build circular progress using two half-circle divs with rotation
-  // This is the most html2canvas-compatible way to do a progress ring
-  const pct = scoreNum / 100;
-  const rotation = pct * 360;
-  // For the right half (0-50%) and left half (50-100%)
+  const rotation = (scoreNum / 100) * 360;
   const rightRotation = Math.min(rotation, 180);
   const leftRotation = Math.max(0, rotation - 180);
 
@@ -49,7 +45,7 @@ export default function ShareCard({ ticker, name, price, priceChange, metrics, s
         position: 'fixed',
         left: '-9999px',
         width: '800px',
-        height: '1000px',
+        height: '1050px',
         background: '#0B0E14',
         padding: '60px',
         borderRadius: '24px',
@@ -87,7 +83,6 @@ export default function ShareCard({ ticker, name, price, priceChange, metrics, s
             )}
           </div>
 
-          {/* Fair Value */}
           {fairValue !== null && fairValue !== undefined && (
             <div style={{ fontSize: '20px', color: '#94a3b8' }}>
               Traqcker Fair Value: {fairValueNegative ? (
@@ -99,16 +94,15 @@ export default function ShareCard({ ticker, name, price, priceChange, metrics, s
           )}
         </div>
 
-        {/* Score Ring */}
+        {/* Score Ring - using flex centering wrapper for perfect alignment */}
         <div style={{ textAlign: 'center', marginBottom: '20px' }}>
           <div style={{ fontSize: '14px', color: '#94a3b8', letterSpacing: '2px', marginBottom: '20px' }}>
             EASY MODE SCORE
           </div>
           
-          {/* Circular ring using rotated half-circle divs */}
-          <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '10px' }}>
+          <div style={{ display: 'flex', justifyContent: 'center' }}>
             <div style={{ width: '180px', height: '180px', borderRadius: '50%', position: 'relative', background: '#1e293b' }}>
-              {/* Right half progress */}
+              {/* Right half (0-180deg) */}
               <div style={{
                 position: 'absolute',
                 width: '180px',
@@ -119,7 +113,7 @@ export default function ShareCard({ ticker, name, price, priceChange, metrics, s
                 transform: `rotate(${rightRotation}deg)`,
                 transformOrigin: '90px 90px'
               }} />
-              {/* Left half progress (only if > 50%) */}
+              {/* Left half (180-360deg) */}
               {rotation > 180 && (
                 <div style={{
                   position: 'absolute',
@@ -132,7 +126,7 @@ export default function ShareCard({ ticker, name, price, priceChange, metrics, s
                   transformOrigin: '90px 90px'
                 }} />
               )}
-              {/* Inner circle (hole) */}
+              {/* Inner hole + centered number - flex centering, no absolute positioning issues */}
               <div style={{
                 position: 'absolute',
                 top: '15px',
@@ -144,15 +138,20 @@ export default function ShareCard({ ticker, name, price, priceChange, metrics, s
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                fontSize: '56px',
-                fontWeight: 700,
-                color: scoreColor
+                textAlign: 'center'
               }}>
-                {scoreNum}
+                <div style={{
+                  fontSize: '56px',
+                  fontWeight: 700,
+                  color: scoreColor,
+                  lineHeight: 1,
+                  width: '100%'
+                }}>
+                  {scoreNum}
+                </div>
               </div>
             </div>
           </div>
-          <div style={{ fontSize: '18px', color: '#64748b' }}>/ 100</div>
         </div>
 
         {/* Verdict */}
@@ -164,6 +163,26 @@ export default function ShareCard({ ticker, name, price, priceChange, metrics, s
             {verdict}
           </div>
         </div>
+
+        {/* Community Sentiment */}
+        {consensus && consensus.total > 0 && (
+          <div style={{ textAlign: 'center', marginBottom: '20px' }}>
+            <div style={{ fontSize: '14px', color: '#94a3b8', letterSpacing: '2px', marginBottom: '14px' }}>
+              COMMUNITY SENTIMENT ({consensus.total} {consensus.total === 1 ? 'vote' : 'votes'})
+            </div>
+            {/* Consensus bar */}
+            <div style={{ display: 'flex', height: '20px', borderRadius: '10px', overflow: 'hidden', marginBottom: '12px' }}>
+              <div style={{ width: `${consensus.BUY}%`, background: '#22c55e' }} />
+              <div style={{ width: `${consensus.HOLD}%`, background: '#eab308' }} />
+              <div style={{ width: `${consensus.SELL}%`, background: '#ef4444' }} />
+            </div>
+            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '16px' }}>
+              <span style={{ color: '#22c55e' }}>● {consensus.BUY}% Buy</span>
+              <span style={{ color: '#eab308' }}>● {consensus.HOLD}% Hold</span>
+              <span style={{ color: '#ef4444' }}>● {consensus.SELL}% Sell</span>
+            </div>
+          </div>
+        )}
 
         {/* Footer */}
         <div style={{ fontSize: '13px', color: '#64748b', letterSpacing: '0.5px', textAlign: 'center' }}>

@@ -551,6 +551,7 @@ export default function StockPage({ params }) {
                 verdict={easyMode?.verdict ?? 'HOLD'}
                 fairValue={fairValue?.estimate ?? null}
                 fairValueNegative={fairValue?.negative ?? false}
+                consensus={voteConsensus}
               />
 
               {/* The Numbers, Simplified - meter bars */}
