@@ -552,6 +552,7 @@ export default function StockPage({ params }) {
                 fairValue={fairValue?.estimate ?? null}
                 fairValueNegative={fairValue?.negative ?? false}
                 consensus={voteConsensus}
+                userVote={userVote}
               />
 
               {/* The Numbers, Simplified - meter bars */}

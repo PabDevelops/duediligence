@@ -2,7 +2,7 @@
 import { useRef } from 'react';
 import html2canvas from 'html2canvas';
 
-export default function ShareCard({ ticker, name, price, priceChange, metrics, score, verdict, fairValue, fairValueNegative, consensus }) {
+export default function ShareCard({ ticker, name, price, priceChange, metrics, score, verdict, fairValue, fairValueNegative, consensus, userVote }) {
   const cardRef = useRef(null);
 
   const handleShare = async () => {
@@ -141,6 +141,26 @@ export default function ShareCard({ ticker, name, price, priceChange, metrics, s
             {verdict}
           </div>
         </div>
+
+        {/* User's Own Vote */}
+        {userVote && (
+          <div style={{ textAlign: 'center', width: '100%', marginBottom: '36px' }}>
+            <div style={{ 
+              display: 'inline-block',
+              padding: '12px 28px',
+              borderRadius: '12px',
+              border: `2px solid ${userVote === 'BUY' ? '#22c55e' : userVote === 'SELL' ? '#ef4444' : '#eab308'}`,
+              background: userVote === 'BUY' ? 'rgba(34,197,94,0.1)' : userVote === 'SELL' ? 'rgba(239,68,68,0.1)' : 'rgba(234,179,8,0.1)'
+            }}>
+              <span style={{ fontSize: '18px', color: '#94a3b8' }}>This week I voted: </span>
+              <span style={{ 
+                fontSize: '22px', 
+                fontWeight: 700, 
+                color: userVote === 'BUY' ? '#22c55e' : userVote === 'SELL' ? '#ef4444' : '#eab308' 
+              }}>{userVote}</span>
+            </div>
+          </div>
+        )}
 
         {/* Community Sentiment */}
         {consensus && consensus.total > 0 && (
