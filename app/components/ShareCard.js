@@ -34,10 +34,13 @@ export default function ShareCard({ ticker, name, price, priceChange, metrics, s
   const scoreNum = Math.max(0, Math.min(100, Math.round(score ?? 50)));
   const scoreColor = scoreNum >= 70 ? '#22c55e' : scoreNum >= 50 ? '#a78bfa' : '#ef4444';
 
-  // Build ring using two half-circles rotated via border trick
-  // This works reliably with html2canvas (no conic-gradient, no SVG transforms)
+  // Build circular progress using two half-circle divs with rotation
+  // This is the most html2canvas-compatible way to do a progress ring
   const pct = scoreNum / 100;
-  const deg = pct * 360;
+  const rotation = pct * 360;
+  // For the right half (0-50%) and left half (50-100%)
+  const rightRotation = Math.min(rotation, 180);
+  const leftRotation = Math.max(0, rotation - 180);
 
   return (
     <>
@@ -46,7 +49,7 @@ export default function ShareCard({ ticker, name, price, priceChange, metrics, s
         position: 'fixed',
         left: '-9999px',
         width: '800px',
-        height: '950px',
+        height: '1000px',
         background: '#0B0E14',
         padding: '60px',
         borderRadius: '24px',
@@ -59,7 +62,7 @@ export default function ShareCard({ ticker, name, price, priceChange, metrics, s
         boxSizing: 'border-box'
       }}>
         {/* Top Section - Logo + Ticker + Name */}
-        <div style={{ textAlign: 'center', marginBottom: '30px' }}>
+        <div style={{ textAlign: 'center', marginBottom: '20px' }}>
           <div style={{ fontSize: '48px', fontWeight: 700, color: '#a78bfa', marginBottom: '20px', fontFamily: 'Space Grotesk, sans-serif', letterSpacing: '2px' }}>
             Traq●cker
           </div>
@@ -72,8 +75,8 @@ export default function ShareCard({ ticker, name, price, priceChange, metrics, s
         </div>
 
         {/* Price Section */}
-        <div style={{ textAlign: 'center', marginBottom: '40px', borderTop: '2px solid #a78bfa', borderBottom: '2px solid #a78bfa', paddingTop: '25px', paddingBottom: '25px' }}>
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '12px', marginBottom: '15px' }}>
+        <div style={{ textAlign: 'center', marginBottom: '20px', borderTop: '2px solid #a78bfa', borderBottom: '2px solid #a78bfa', paddingTop: '25px', paddingBottom: '25px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '12px', marginBottom: '12px' }}>
             <div style={{ fontSize: '56px', fontWeight: 700, color: '#ffffff' }}>
               ${price?.toFixed(2) || '—'}
             </div>
@@ -84,37 +87,76 @@ export default function ShareCard({ ticker, name, price, priceChange, metrics, s
             )}
           </div>
 
-          {fairValue !== null && fairValue !== undefined && !fairValueNegative && (
-            <div style={{ fontSize: '18px', color: '#94a3b8', marginTop: '12px' }}>
-              Fair Value: <span style={{ color: '#a78bfa', fontWeight: 700 }}>${fairValue.toFixed(2)}</span>
+          {/* Fair Value */}
+          {fairValue !== null && fairValue !== undefined && (
+            <div style={{ fontSize: '20px', color: '#94a3b8' }}>
+              Traqcker Fair Value: {fairValueNegative ? (
+                <span style={{ color: '#ef4444', fontWeight: 700 }}>N/A (negative earnings)</span>
+              ) : (
+                <span style={{ color: '#a78bfa', fontWeight: 700 }}>${fairValue.toFixed(2)}</span>
+              )}
             </div>
           )}
         </div>
 
-        {/* Score Section - Bar instead of ring for guaranteed html2canvas compatibility */}
-        <div style={{ textAlign: 'center', marginBottom: '30px' }}>
+        {/* Score Ring */}
+        <div style={{ textAlign: 'center', marginBottom: '20px' }}>
           <div style={{ fontSize: '14px', color: '#94a3b8', letterSpacing: '2px', marginBottom: '20px' }}>
             EASY MODE SCORE
           </div>
           
-          {/* Big number */}
-          <div style={{ fontSize: '80px', fontWeight: 700, color: scoreColor, marginBottom: '20px', lineHeight: 1 }}>
-            {scoreNum}<span style={{ fontSize: '32px', color: '#64748b' }}>/100</span>
+          {/* Circular ring using rotated half-circle divs */}
+          <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '10px' }}>
+            <div style={{ width: '180px', height: '180px', borderRadius: '50%', position: 'relative', background: '#1e293b' }}>
+              {/* Right half progress */}
+              <div style={{
+                position: 'absolute',
+                width: '180px',
+                height: '180px',
+                borderRadius: '50%',
+                clip: 'rect(0px, 180px, 180px, 90px)',
+                background: scoreColor,
+                transform: `rotate(${rightRotation}deg)`,
+                transformOrigin: '90px 90px'
+              }} />
+              {/* Left half progress (only if > 50%) */}
+              {rotation > 180 && (
+                <div style={{
+                  position: 'absolute',
+                  width: '180px',
+                  height: '180px',
+                  borderRadius: '50%',
+                  clip: 'rect(0px, 90px, 180px, 0px)',
+                  background: scoreColor,
+                  transform: `rotate(${leftRotation}deg)`,
+                  transformOrigin: '90px 90px'
+                }} />
+              )}
+              {/* Inner circle (hole) */}
+              <div style={{
+                position: 'absolute',
+                top: '15px',
+                left: '15px',
+                width: '150px',
+                height: '150px',
+                borderRadius: '50%',
+                background: '#0B0E14',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                fontSize: '56px',
+                fontWeight: 700,
+                color: scoreColor
+              }}>
+                {scoreNum}
+              </div>
+            </div>
           </div>
-
-          {/* Horizontal progress bar */}
-          <div style={{ width: '100%', height: '16px', background: '#1e293b', borderRadius: '8px', overflow: 'hidden', position: 'relative' }}>
-            <div style={{ 
-              width: `${scoreNum}%`, 
-              height: '100%', 
-              background: scoreColor,
-              borderRadius: '8px'
-            }} />
-          </div>
+          <div style={{ fontSize: '18px', color: '#64748b' }}>/ 100</div>
         </div>
 
         {/* Verdict */}
-        <div style={{ textAlign: 'center', marginBottom: '30px' }}>
+        <div style={{ textAlign: 'center', marginBottom: '20px' }}>
           <div style={{ fontSize: '14px', color: '#94a3b8', letterSpacing: '2px', marginBottom: '12px' }}>
             VERDICT
           </div>
