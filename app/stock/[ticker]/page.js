@@ -532,6 +532,7 @@ export default function StockPage({ params }) {
                 ]}
                 score={data?.healthScore || 50}
                 verdict={data?.verdict || 'HOLD'}
+                fairValue={data?.fairValue || null}
               />
 
               {/* The Numbers, Simplified - meter bars */}

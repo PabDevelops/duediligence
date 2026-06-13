@@ -2,7 +2,7 @@
 import { useRef } from 'react';
 import html2canvas from 'html2canvas';
 
-export default function ShareCard({ ticker, name, price, priceChange, metrics, score, verdict }) {
+export default function ShareCard({ ticker, name, price, priceChange, metrics, score, verdict, fairValue }) {
   const cardRef = useRef(null);
 
   const handleShare = async () => {
@@ -31,6 +31,9 @@ export default function ShareCard({ ticker, name, price, priceChange, metrics, s
   };
 
   const verdictColor = verdict === 'BUY' ? '#22c55e' : verdict === 'SELL' ? '#ef4444' : '#eab308';
+  const scoreNum = Math.round(score || 50);
+  const scoreColor = scoreNum >= 70 ? '#22c55e' : scoreNum >= 50 ? '#a78bfa' : '#ef4444';
+  const scorePercent = (scoreNum / 100) * 360; // Convert to degrees for circle
 
   return (
     <>
@@ -39,7 +42,7 @@ export default function ShareCard({ ticker, name, price, priceChange, metrics, s
         position: 'fixed',
         left: '-9999px',
         width: '800px',
-        height: '900px',
+        height: '950px',
         background: '#0B0E14',
         padding: '60px',
         borderRadius: '24px',
@@ -52,64 +55,97 @@ export default function ShareCard({ ticker, name, price, priceChange, metrics, s
         boxSizing: 'border-box'
       }}>
         {/* Top Section - Logo + Ticker + Name */}
-        <div style={{ textAlign: 'center', marginBottom: '40px' }}>
+        <div style={{ textAlign: 'center', marginBottom: '30px' }}>
           {/* Logo */}
-          <div style={{ fontSize: '56px', fontWeight: 700, color: '#a78bfa', marginBottom: '30px', fontFamily: 'Space Grotesk, sans-serif', letterSpacing: '2px' }}>
+          <div style={{ fontSize: '48px', fontWeight: 700, color: '#a78bfa', marginBottom: '20px', fontFamily: 'Space Grotesk, sans-serif', letterSpacing: '2px' }}>
             Traq●cker
           </div>
           
           {/* Ticker */}
-          <div style={{ fontSize: '72px', fontWeight: 700, color: '#ffffff', marginBottom: '12px', fontFamily: 'Space Grotesk, sans-serif', letterSpacing: '1px' }}>
+          <div style={{ fontSize: '64px', fontWeight: 700, color: '#ffffff', marginBottom: '8px', fontFamily: 'Space Grotesk, sans-serif', letterSpacing: '1px' }}>
             {ticker}
           </div>
           
           {/* Company Name */}
-          <div style={{ fontSize: '28px', color: '#cbd5e1', marginBottom: '40px' }}>
+          <div style={{ fontSize: '24px', color: '#cbd5e1' }}>
             {name}
           </div>
         </div>
 
-        {/* Middle Section - Price */}
-        <div style={{ textAlign: 'center', marginBottom: '50px', borderTop: '2px solid #a78bfa', borderBottom: '2px solid #a78bfa', paddingTop: '30px', paddingBottom: '30px' }}>
+        {/* Price Section */}
+        <div style={{ textAlign: 'center', marginBottom: '40px', borderTop: '2px solid #a78bfa', borderBottom: '2px solid #a78bfa', paddingTop: '25px', paddingBottom: '25px' }}>
           {/* Current Price */}
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '16px', marginBottom: '20px' }}>
-            <div style={{ fontSize: '64px', fontWeight: 700, color: '#ffffff' }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '12px', marginBottom: '15px' }}>
+            <div style={{ fontSize: '56px', fontWeight: 700, color: '#ffffff' }}>
               ${price?.toFixed(2) || '—'}
             </div>
             {priceChange !== undefined && (
-              <div style={{ fontSize: '32px', color: priceChange >= 0 ? '#22c55e' : '#ef4444', fontWeight: 700 }}>
+              <div style={{ fontSize: '28px', color: priceChange >= 0 ? '#22c55e' : '#ef4444', fontWeight: 700 }}>
                 {priceChange >= 0 ? '↑' : '↓'} {Math.abs(priceChange).toFixed(2)}%
               </div>
             )}
           </div>
+
+          {/* Fair Value / Intrinsic Value */}
+          {fairValue && (
+            <div style={{ fontSize: '18px', color: '#94a3b8', marginTop: '12px' }}>
+              Fair Value: <span style={{ color: '#a78bfa', fontWeight: 700 }}>${fairValue.toFixed(2)}</span>
+            </div>
+          )}
         </div>
 
-        {/* Bottom Section - Score & Verdict */}
-        <div style={{ textAlign: 'center' }}>
-          {/* Score */}
-          <div style={{ marginBottom: '30px' }}>
-            <div style={{ fontSize: '16px', color: '#94a3b8', letterSpacing: '2px', marginBottom: '10px' }}>
-              EASY MODE SCORE
-            </div>
-            <div style={{ fontSize: '56px', fontWeight: 700, color: '#a78bfa' }}>
-              {score}/100
-            </div>
+        {/* Score Ring Section */}
+        <div style={{ textAlign: 'center', marginBottom: '30px' }}>
+          <div style={{ fontSize: '14px', color: '#94a3b8', letterSpacing: '2px', marginBottom: '20px' }}>
+            EASY MODE SCORE
           </div>
+          
+          {/* Visual Score Ring */}
+          <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '20px' }}>
+            <svg width="140" height="140" style={{ transform: 'rotate(-90deg)' }}>
+              {/* Background circle */}
+              <circle cx="70" cy="70" r="60" fill="none" stroke="#1e293b" strokeWidth="8" />
+              {/* Score circle */}
+              <circle 
+                cx="70" 
+                cy="70" 
+                r="60" 
+                fill="none" 
+                stroke={scoreColor} 
+                strokeWidth="8"
+                strokeDasharray={`${(scorePercent / 360) * 376.99} 376.99`}
+                style={{ transition: 'stroke-dasharray 0.3s' }}
+              />
+              {/* Center text - score number */}
+              <text 
+                x="70" 
+                y="80" 
+                textAnchor="middle" 
+                fontSize="32" 
+                fill={scoreColor}
+                fontWeight="700"
+                fontFamily="JetBrains Mono, monospace"
+                style={{ transform: 'rotate(90deg)', transformOrigin: '70px 70px' }}
+              >
+                {scoreNum}
+              </text>
+            </svg>
+          </div>
+        </div>
 
-          {/* Verdict */}
-          <div style={{ marginBottom: '40px' }}>
-            <div style={{ fontSize: '16px', color: '#94a3b8', letterSpacing: '2px', marginBottom: '10px' }}>
-              VERDICT
-            </div>
-            <div style={{ fontSize: '48px', fontWeight: 700, color: verdictColor }}>
-              {verdict}
-            </div>
+        {/* Verdict */}
+        <div style={{ textAlign: 'center', marginBottom: '30px' }}>
+          <div style={{ fontSize: '14px', color: '#94a3b8', letterSpacing: '2px', marginBottom: '12px' }}>
+            VERDICT
           </div>
+          <div style={{ fontSize: '44px', fontWeight: 700, color: verdictColor }}>
+            {verdict}
+          </div>
+        </div>
 
-          {/* Footer */}
-          <div style={{ fontSize: '14px', color: '#64748b', letterSpacing: '1px' }}>
-            traqcker.com — Fundamental analysis without noise
-          </div>
+        {/* Footer */}
+        <div style={{ fontSize: '13px', color: '#64748b', letterSpacing: '0.5px', textAlign: 'center' }}>
+          traqcker.com — Fundamental analysis without noise
         </div>
       </div>
 
