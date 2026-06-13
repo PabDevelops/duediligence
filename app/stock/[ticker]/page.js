@@ -547,8 +547,8 @@ export default function StockPage({ params }) {
                   { label: 'Op Margin', value: fmtP(data?.operatingMargin) },
                   { label: 'FCF Yield', value: fmtP(data?.fcfYield) }
                 ]}
-                score={data?.healthScore || 50}
-                verdict={data?.verdict || 'HOLD'}
+                score={easyMode?.score100 ?? 50}
+                verdict={easyMode?.verdict ?? 'HOLD'}
                 fairValue={fairValue?.estimate ?? null}
                 fairValueNegative={fairValue?.negative ?? false}
               />
