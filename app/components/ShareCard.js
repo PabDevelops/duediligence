@@ -45,7 +45,6 @@ export default function ShareCard({ ticker, name, price, priceChange, metrics, s
         position: 'fixed',
         left: '-9999px',
         width: '800px',
-        height: '1050px',
         background: '#0B0E14',
         padding: '60px',
         borderRadius: '24px',
@@ -101,34 +100,36 @@ export default function ShareCard({ ticker, name, price, priceChange, metrics, s
             EASY MODE SCORE
           </div>
           
-          <svg width="200" height="200" viewBox="0 0 200 200" style={{ display: 'block', margin: '0 auto' }}>
-            {/* Background track */}
-            <circle cx="100" cy="100" r="80" fill="none" stroke="#1e293b" strokeWidth="16" />
-            {/* Progress arc - starts at top (12 o'clock), goes clockwise */}
-            <circle 
-              cx="100" cy="100" r="80" 
-              fill="none" 
-              stroke={scoreColor} 
-              strokeWidth="16" 
-              strokeLinecap="round"
-              strokeDasharray={circumference}
-              strokeDashoffset={dashOffset}
-              transform="rotate(-90 100 100)"
-            />
-            {/* Centered number - directly in SVG */}
-            <text 
-              x="100" 
-              y="100" 
-              textAnchor="middle" 
-              dominantBaseline="central"
-              fontSize="56" 
-              fontWeight="700" 
-              fill={scoreColor}
-              fontFamily="JetBrains Mono, monospace"
-            >
-              {scoreNum}
-            </text>
-          </svg>
+          <div style={{ width: '200px', margin: '0 auto' }}>
+            <svg width="200" height="200" viewBox="0 0 200 200">
+              {/* Background track */}
+              <circle cx="100" cy="100" r="80" fill="none" stroke="#1e293b" strokeWidth="16" />
+              {/* Progress arc - starts at top (12 o'clock), goes clockwise */}
+              <circle 
+                cx="100" cy="100" r="80" 
+                fill="none" 
+                stroke={scoreColor} 
+                strokeWidth="16" 
+                strokeLinecap="round"
+                strokeDasharray={circumference}
+                strokeDashoffset={dashOffset}
+                transform="rotate(-90 100 100)"
+              />
+              {/* Centered number - directly in SVG */}
+              <text 
+                x="100" 
+                y="100" 
+                textAnchor="middle" 
+                dominantBaseline="central"
+                fontSize="56" 
+                fontWeight="700" 
+                fill={scoreColor}
+                fontFamily="JetBrains Mono, monospace"
+              >
+                {scoreNum}
+              </text>
+            </svg>
+          </div>
         </div>
 
         {/* Verdict */}
