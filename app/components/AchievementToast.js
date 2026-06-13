@@ -2,7 +2,10 @@
 import { useState, useEffect } from 'react';
 
 export default function AchievementToast({ achievement, onClose }) {
+  const [isMobile, setIsMobile] = useState(false);
+
   useEffect(() => {
+    setIsMobile(window.innerWidth < 768);
     const timer = setTimeout(onClose, 4000);
     return () => clearTimeout(timer);
   }, [onClose]);
@@ -10,20 +13,21 @@ export default function AchievementToast({ achievement, onClose }) {
   return (
     <div style={{
       position: 'fixed',
-      bottom: '20px',
-      right: '20px',
+      bottom: isMobile ? '16px' : '20px',
+      right: isMobile ? '16px' : '20px',
+      left: isMobile ? '16px' : 'auto',
       background: 'linear-gradient(135deg, var(--accent-dim), rgba(167, 139, 250, 0.05))',
       border: '2px solid var(--accent)',
       borderRadius: '16px',
-      padding: '20px 24px',
+      padding: isMobile ? '16px 16px' : '20px 24px',
       boxShadow: '0 10px 40px rgba(167, 139, 250, 0.3)',
       zIndex: 10000,
-      maxWidth: '320px',
-      animation: 'slideIn 0.4s ease-out',
+      maxWidth: isMobile ? 'calc(100% - 32px)' : '320px',
+      animation: isMobile ? 'slideInMobile 0.4s ease-out' : 'slideInDesktop 0.4s ease-out',
       fontFamily: 'JetBrains Mono, monospace'
     }}>
       <style>{`
-        @keyframes slideIn {
+        @keyframes slideInDesktop {
           from {
             transform: translateX(400px);
             opacity: 0;
@@ -33,44 +37,46 @@ export default function AchievementToast({ achievement, onClose }) {
             opacity: 1;
           }
         }
-        @keyframes slideOut {
+        @keyframes slideInMobile {
           from {
-            transform: translateX(0);
-            opacity: 1;
+            transform: translateY(100px);
+            opacity: 0;
           }
           to {
-            transform: translateX(400px);
-            opacity: 0;
+            transform: translateY(0);
+            opacity: 1;
           }
         }
       `}</style>
 
       <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-        <div style={{ fontSize: '40px', animation: 'pulse 0.6s ease-in-out' }}>
+        <div style={{ fontSize: isMobile ? '32px' : '40px', flexShrink: 0, animation: 'pulse 0.6s ease-in-out' }}>
           {achievement.icon}
         </div>
-        <div style={{ flex: 1 }}>
+        <div style={{ flex: 1, minWidth: 0 }}>
           <div style={{ 
-            fontSize: '14px', 
+            fontSize: isMobile ? '12px' : '14px', 
             fontWeight: 700, 
             color: 'var(--accent)', 
             marginBottom: '4px',
             letterSpacing: '0.5px'
           }}>
-            🎉 ACHIEVEMENT UNLOCKED
+            🎉 UNLOCKED
           </div>
           <div style={{ 
-            fontSize: '13px', 
+            fontSize: isMobile ? '12px' : '13px', 
             fontWeight: 600, 
             color: 'var(--text)',
-            marginBottom: '2px'
+            marginBottom: '2px',
+            wordBreak: 'break-word'
           }}>
             {achievement.title}
           </div>
           <div style={{ 
-            fontSize: '11px', 
+            fontSize: isMobile ? '10px' : '11px', 
             color: 'var(--text-3)',
-            lineHeight: 1.4
+            lineHeight: 1.4,
+            wordBreak: 'break-word'
           }}>
             {achievement.description}
           </div>
