@@ -441,9 +441,6 @@ export default function StockPage({ params }) {
                           headers: { 'Content-Type': 'application/json' },
                           body: JSON.stringify({ ticker, vote: v }),
                         }).then(r => r.json()).then(async (voteData) => {
-                          alert(`DEBUG: Vote response = ${JSON.stringify(voteData)}`);
-                          alert(`DEBUG: user.id = ${user?.id}, voteCount = ${voteData.voteCount}, isNewVote = ${voteData.isNewVote}`);
-
                           // Refetch consensus to update percentages
                           fetch(`/api/votes?ticker=${ticker}`)
                             .then(r => r.json())
@@ -451,14 +448,11 @@ export default function StockPage({ params }) {
                             .catch(() => {});
 
                           // Check achievements using the vote data returned from POST
-                          if (user?.id) {
-                            // Achievement: First vote OVERALL (total vote count = 1)
-                            // NOTE: This won't trigger if user already voted before
-                            // Alternative: Track "first vote ever" separately or remove this achievement
-                            
+                          if (user?.id && voteData.voteCount) {
+                            const voteCount = voteData.voteCount;
+
                             // Achievement: Serial voter (5 total votes)
-                            if (voteData.voteCount === 5) {
-                              alert('DEBUG: Attempting serial_voter achievement');
+                            if (voteCount === 5) {
                               fetch('/api/achievements', {
                                 method: 'POST',
                                 headers: { 'Content-Type': 'application/json' },
@@ -466,12 +460,11 @@ export default function StockPage({ params }) {
                               })
                               .then(r => r.json())
                               .then(data => {
-                                alert(`DEBUG: Serial voter response = ${JSON.stringify(data)}`);
                                 if (data.unlocked) {
                                   setAchievementToast(data.achievement);
                                 }
                               })
-                              .catch(err => alert(`DEBUG: Error = ${err.message}`));
+                              .catch(() => {});
                             }
 
                             // Achievement: Contrarian (opposite to consensus)
@@ -481,8 +474,6 @@ export default function StockPage({ params }) {
                                 const majorityVote = Object.keys(d.percentages).reduce((a, b) => d.percentages[a] > d.percentages[b] ? a : b);
                                 const isContrarian = v !== majorityVote && d.percentages[v] < 25;
                                 
-                                alert(`DEBUG: Checking contrarian - myVote=${v}, majority=${majorityVote}, isContrarian=${isContrarian}`);
-                                
                                 if (isContrarian) {
                                   fetch('/api/achievements', {
                                     method: 'POST',
@@ -491,15 +482,14 @@ export default function StockPage({ params }) {
                                   })
                                   .then(r => r.json())
                                   .then(data => {
-                                    alert(`DEBUG: Contrarian response = ${JSON.stringify(data)}`);
                                     if (data.unlocked) {
                                       setAchievementToast(data.achievement);
                                     }
                                   })
-                                  .catch(err => alert(`DEBUG: Contrarian error = ${err.message}`));
+                                  .catch(() => {});
                                 }
                               })
-                              .catch(() => alert('DEBUG: Error fetching consensus'));
+                              .catch(() => {});
                           }
                         }).catch(() => {});
                       }}
