@@ -422,9 +422,9 @@ export default function StockPage({ params }) {
             <div>
               {/* Community vote */}
               <div style={{ background: 'var(--bg-1)', border: '1px solid var(--border)', borderRadius: '20px', padding: '20px', marginBottom: '16px' }}>
-                <div style={{ fontFamily: 'Space Grotesk, sans-serif', fontWeight: 600, fontSize: '15px', marginBottom: '4px' }}>What's your call?</div>
-                <div style={{ color: 'var(--text-3)', fontSize: '12px', marginBottom: '16px' }}>
-                  {isSignedIn ? "Tap one — we'll remember your call" : 'Sign in to save your call'}
+                <div style={{ fontFamily: 'Space Grotesk, sans-serif', fontWeight: 600, fontSize: '13px', marginBottom: '8px', color: 'var(--text-3)' }}>Your vote</div>
+                <div style={{ color: 'var(--text-3)', fontSize: '11px', marginBottom: '14px', opacity: 0.7 }}>
+                  {isSignedIn ? "Choose your call" : 'Sign in to vote'}
                 </div>
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '8px', marginBottom: '16px' }}>
                   {['BUY', 'HOLD', 'SELL'].map(v => {
