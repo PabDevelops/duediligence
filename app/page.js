@@ -241,10 +241,9 @@ export default function Home() {
             </div>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
               {[
-                { icon: '🟢', title: 'Easy Mode score', desc: 'A simple 0-100 score and a plain-English verdict for any stock' },
-                { icon: '👍', title: 'Community votes', desc: "See what other everyday investors think — Buy, Hold, or Sell" },
-                { icon: '📊', title: 'Fair value check', desc: 'Know if a stock looks cheap, fair, or expensive right now' },
-                { icon: '🔍', title: 'Full screener', desc: '8,000+ US stocks, searchable in seconds' },
+                { icon: '🟢', title: 'Easy Mode score', desc: 'A simple 0-100 verdict for any stock' },
+                { icon: '👍', title: 'Community votes', desc: 'See what other everyday investors think' },
+                { icon: '💰', title: 'Price check', desc: 'Is it overpriced, fair, or underpriced right now?' },
               ].map(f => (
                 <div key={f.title} style={{ background: 'var(--bg-1)', border: '1px solid var(--border)', borderRadius: '16px', padding: '14px 16px', display: 'flex', gap: '12px', alignItems: 'flex-start' }}>
                   <div style={{ fontSize: '20px', lineHeight: 1.4 }}>{f.icon}</div>
@@ -254,6 +253,13 @@ export default function Home() {
                   </div>
                 </div>
               ))}
+            </div>
+
+            {/* Free access callout */}
+            <div style={{ marginTop: '16px', padding: '14px 12px', background: 'rgba(167, 139, 250, 0.08)', border: '1px solid var(--accent)', borderRadius: '12px', textAlign: 'center' }}>
+              <div style={{ fontSize: '12px', color: 'var(--accent)', fontWeight: 600, letterSpacing: '0.5px' }}>
+                ✨ Everything free. No paywalls.
+              </div>
             </div>
           </div>
 
@@ -368,9 +374,9 @@ export default function Home() {
             </div>
 
             <h1 className="hero-title" style={{ fontSize: '52px', fontWeight: 700, letterSpacing: '-2px', lineHeight: 1.05, marginBottom: '20px' }}>
-              Fundamental<br />
-              analysis<span style={{ color: 'var(--accent)' }}>.</span><br />
-              <span style={{ color: 'var(--accent)' }}>Without noise.</span>
+              Know if a<br />
+              stock is worth<span style={{ color: 'var(--accent)' }}>.</span><br />
+              <span style={{ color: 'var(--accent)' }}>In seconds.</span>
             </h1>
 
             <p style={{ color: 'var(--text-2)', fontSize: '14px', lineHeight: 1.8, marginBottom: '32px', maxWidth: '440px' }}>
@@ -454,12 +460,11 @@ export default function Home() {
           </div>
 
           {/* Right — feature grid */}
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1px', background: 'var(--border)' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '1px', background: 'var(--border)' }}>
             {[
-              { icon: '◈', title: 'QUALITY SCORE', desc: 'ROIC, margins, leverage — sector-adjusted scoring from 1 to 5' },
-              { icon: '◎', title: 'DCF VALUATION', desc: 'Graham formula with conservative, base, and optimistic scenarios' },
-              { icon: '⊞', title: 'SCREENER', desc: 'Filter 8,000+ US stocks by margins, P/E, FCF yield and more' },
-              { icon: '⊟', title: 'COMPARE', desc: 'Side-by-side comparison with winner highlighting across all metrics' },
+              { icon: '🟢', title: 'Easy Score', desc: '0-100 verdict on any stock in seconds' },
+              { icon: '👍', title: 'Community Votes', desc: 'What other investors think — Buy, Hold, or Sell' },
+              { icon: '💰', title: 'Price Check', desc: 'Is it overpriced, fair, or underpriced right now?' },
             ].map(f => (
               <div key={f.title} style={{ background: 'var(--bg-1)', padding: '28px' }}>
                 <div style={{ color: 'var(--accent)', fontSize: '24px', marginBottom: '10px' }}>{f.icon}</div>
