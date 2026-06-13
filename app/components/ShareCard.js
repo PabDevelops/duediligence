@@ -16,7 +16,6 @@ export default function ShareCard({ ticker, name, price, priceChange, metrics, s
         useCORS: true
       });
       
-      // Convert to blob and download
       canvas.toBlob(blob => {
         const url = URL.createObjectURL(blob);
         const a = document.createElement('a');
@@ -34,8 +33,8 @@ export default function ShareCard({ ticker, name, price, priceChange, metrics, s
   const verdictColor = verdict === 'BUY' ? 'var(--green)' : verdict === 'SELL' ? 'var(--red)' : 'var(--amber)';
 
   return (
-    <div>
-      {/* Card (hidden, only for rendering) */}
+    <>
+      {/* Hidden card for rendering to image */}
       <div ref={cardRef} style={{
         position: 'fixed',
         left: '-9999px',
@@ -47,7 +46,6 @@ export default function ShareCard({ ticker, name, price, priceChange, metrics, s
         fontFamily: 'JetBrains Mono, monospace',
         color: 'var(--text)'
       }}>
-        {/* Header */}
         <div style={{ marginBottom: '24px' }}>
           <div style={{ fontSize: '14px', color: 'var(--accent)', fontWeight: 700, letterSpacing: '2px', marginBottom: '8px' }}>
             TRAQCKER
@@ -60,7 +58,6 @@ export default function ShareCard({ ticker, name, price, priceChange, metrics, s
           </div>
         </div>
 
-        {/* Price */}
         <div style={{ display: 'flex', alignItems: 'baseline', gap: '12px', marginBottom: '24px' }}>
           <div style={{ fontSize: '28px', fontWeight: 700 }}>
             ${price?.toFixed(2) || 'N/A'}
@@ -70,7 +67,6 @@ export default function ShareCard({ ticker, name, price, priceChange, metrics, s
           </div>
         </div>
 
-        {/* Metrics Grid */}
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', marginBottom: '24px', paddingBottom: '24px', borderBottom: '1px solid var(--border)' }}>
           {metrics && metrics.map((m, i) => (
             <div key={i}>
@@ -84,7 +80,6 @@ export default function ShareCard({ ticker, name, price, priceChange, metrics, s
           ))}
         </div>
 
-        {/* Score & Verdict */}
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           <div>
             <div style={{ fontSize: '11px', color: 'var(--text-3)', letterSpacing: '1px', marginBottom: '4px' }}>
@@ -104,38 +99,38 @@ export default function ShareCard({ ticker, name, price, priceChange, metrics, s
           </div>
         </div>
 
-        {/* Footer */}
         <div style={{ marginTop: '24px', paddingTop: '16px', borderTop: '1px solid var(--border)', fontSize: '11px', color: 'var(--text-3)', textAlign: 'center' }}>
           traqcker.com — Fundamental analysis without noise
         </div>
       </div>
 
-      {/* Share Button */}
+      {/* Visible Share Button - Downloads PNG */}
       <button onClick={handleShare}
         style={{
-          padding: '10px 16px',
-          borderRadius: '8px',
-          border: '1px solid var(--border)',
-          background: 'var(--bg-2)',
-          color: 'var(--text)',
+          width: '100%',
+          padding: '16px',
+          marginBottom: '16px',
+          borderRadius: '12px',
+          border: '1px solid var(--accent)',
+          background: 'var(--accent-dim)',
+          color: 'var(--accent)',
           cursor: 'pointer',
-          fontSize: '12px',
+          fontSize: '14px',
           fontFamily: 'Space Grotesk, sans-serif',
-          fontWeight: 600,
-          transition: 'all 0.2s'
+          fontWeight: 700,
+          transition: 'all 0.2s',
+          letterSpacing: '0.5px'
         }}
         onMouseEnter={e => {
           e.target.style.background = 'var(--accent)';
           e.target.style.color = '#0B0E14';
-          e.target.style.borderColor = 'var(--accent)';
         }}
         onMouseLeave={e => {
-          e.target.style.background = 'var(--bg-2)';
-          e.target.style.color = 'var(--text)';
-          e.target.style.borderColor = 'var(--border)';
+          e.target.style.background = 'var(--accent-dim)';
+          e.target.style.color = 'var(--accent)';
         }}>
-        📸 Share Card
+        📸 Share as Image
       </button>
-    </div>
+    </>
   );
 }
