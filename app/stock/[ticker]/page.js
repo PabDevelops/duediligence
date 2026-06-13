@@ -442,7 +442,7 @@ export default function StockPage({ params }) {
                           body: JSON.stringify({ ticker, vote: v }),
                         }).then(r => r.json()).then(async (voteData) => {
                           alert(`DEBUG: Vote response = ${JSON.stringify(voteData)}`);
-                          alert(`DEBUG: user.id = ${user?.id}, voteCount = ${voteData.voteCount}`);
+                          alert(`DEBUG: user.id = ${user?.id}, voteCount = ${voteData.voteCount}, isNewVote = ${voteData.isNewVote}`);
 
                           // Refetch consensus to update percentages
                           fetch(`/api/votes?ticker=${ticker}`)
@@ -450,49 +450,56 @@ export default function StockPage({ params }) {
                             .then(d => setVoteConsensus({ ...d.percentages, total: d.total }))
                             .catch(() => {});
 
-                          // Check achievements using the vote count returned from POST
-                          if (user?.id && voteData.voteCount) {
-                            const voteCount = voteData.voteCount;
-                            console.log('Vote data received:', voteCount);
-                            alert(`DEBUG: Inside achievement check, voteCount = ${voteCount}`);
-
-                            // Achievement: First vote (on first vote ever)
-                            if (voteCount === 1) {
-                              alert('DEBUG: Attempting first_vote achievement');
+                          // Check achievements using the vote data returned from POST
+                          if (user?.id) {
+                            // Achievement: First vote OVERALL (total vote count = 1)
+                            // NOTE: This won't trigger if user already voted before
+                            // Alternative: Track "first vote ever" separately or remove this achievement
+                            
+                            // Achievement: Serial voter (5 total votes)
+                            if (voteData.voteCount === 5) {
+                              alert('DEBUG: Attempting serial_voter achievement');
                               fetch('/api/achievements', {
                                 method: 'POST',
                                 headers: { 'Content-Type': 'application/json' },
-                                body: JSON.stringify({ userId: user.id, achievementKey: 'first_vote' })
+                                body: JSON.stringify({ userId: user.id, achievementKey: 'serial_voter' })
                               })
                               .then(r => r.json())
                               .then(data => {
-                                console.log('First vote achievement response:', data);
-                                alert(`DEBUG: Achievement response = ${JSON.stringify(data)}`);
+                                alert(`DEBUG: Serial voter response = ${JSON.stringify(data)}`);
                                 if (data.unlocked) {
-                                  alert('DEBUG: Setting toast now!');
                                   setAchievementToast(data.achievement);
-                                } else {
-                                  alert('DEBUG: data.unlocked is false or missing');
                                 }
                               })
-                              .catch(err => {
-                                console.error('First vote achievement error:', err);
-                                alert(`DEBUG: Error = ${err.message}`);
-                              });
-                            } else {
-                              alert(`DEBUG: voteCount is ${voteCount}, not 1, skipping first_vote`);
+                              .catch(err => alert(`DEBUG: Error = ${err.message}`));
                             }
 
-                            // TODO: Serial voter and Contrarian temporarily disabled for debugging
-                            /*
-                            // Achievement: Serial voter (5 votes)
-                            if (voteCount === 5) {
-                              ...
-                            }
-
-                            // Achievement: Contrarian
-                            fetch(...).then(...)
-                            */
+                            // Achievement: Contrarian (opposite to consensus)
+                            fetch(`/api/votes?ticker=${ticker}`)
+                              .then(r => r.json())
+                              .then(d => {
+                                const majorityVote = Object.keys(d.percentages).reduce((a, b) => d.percentages[a] > d.percentages[b] ? a : b);
+                                const isContrarian = v !== majorityVote && d.percentages[v] < 25;
+                                
+                                alert(`DEBUG: Checking contrarian - myVote=${v}, majority=${majorityVote}, isContrarian=${isContrarian}`);
+                                
+                                if (isContrarian) {
+                                  fetch('/api/achievements', {
+                                    method: 'POST',
+                                    headers: { 'Content-Type': 'application/json' },
+                                    body: JSON.stringify({ userId: user.id, achievementKey: 'contrarian' })
+                                  })
+                                  .then(r => r.json())
+                                  .then(data => {
+                                    alert(`DEBUG: Contrarian response = ${JSON.stringify(data)}`);
+                                    if (data.unlocked) {
+                                      setAchievementToast(data.achievement);
+                                    }
+                                  })
+                                  .catch(err => alert(`DEBUG: Contrarian error = ${err.message}`));
+                                }
+                              })
+                              .catch(() => alert('DEBUG: Error fetching consensus'));
                           }
                         }).catch(() => {});
                       }}
