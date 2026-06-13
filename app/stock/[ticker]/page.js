@@ -441,6 +441,9 @@ export default function StockPage({ params }) {
                           headers: { 'Content-Type': 'application/json' },
                           body: JSON.stringify({ ticker, vote: v }),
                         }).then(r => r.json()).then(async (voteData) => {
+                          alert(`DEBUG: Vote response = ${JSON.stringify(voteData)}`);
+                          alert(`DEBUG: user.id = ${user?.id}, voteCount = ${voteData.voteCount}`);
+
                           // Refetch consensus to update percentages
                           fetch(`/api/votes?ticker=${ticker}`)
                             .then(r => r.json())
@@ -451,7 +454,7 @@ export default function StockPage({ params }) {
                           if (user?.id && voteData.voteCount) {
                             const voteCount = voteData.voteCount;
                             console.log('Vote data received:', voteCount);
-                            alert(`DEBUG: voteCount = ${voteCount}`);
+                            alert(`DEBUG: Inside achievement check, voteCount = ${voteCount}`);
 
                             // Achievement: First vote (on first vote ever)
                             if (voteCount === 1) {
