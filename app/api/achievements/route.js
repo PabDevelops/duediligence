@@ -1,13 +1,16 @@
 import { createClient } from '@supabase/supabase-js';
 import { auth } from '@clerk/nextjs/server';
 
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL || '',
-  process.env.SUPABASE_SERVICE_ROLE_KEY || ''
-);
+function getSupabase() {
+  return createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL || '',
+    process.env.SUPABASE_SERVICE_ROLE_KEY || ''
+  );
+}
 
 export async function GET(req) {
   try {
+    const supabase = getSupabase();
     const { searchParams } = new URL(req.url);
     const userId = searchParams.get('userId');
 
@@ -32,6 +35,7 @@ export async function GET(req) {
 
 export async function POST(req) {
   try {
+    const supabase = getSupabase();
     const body = await req.json();
     const { userId, achievementKey } = body;
 
