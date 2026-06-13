@@ -1,7 +1,17 @@
 import Stripe from 'stripe';
 import { supabase } from '../../../../lib/supabase';
 
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
+let stripe;
+
+function getStripe() {
+  if (!stripe) {
+    if (!process.env.STRIPE_SECRET_KEY) {
+      throw new Error('STRIPE_SECRET_KEY is not set');
+    }
+    stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
+  }
+  return stripe;
+}
 
 export async function POST(request) {
   const body = await request.text();
@@ -9,7 +19,8 @@ export async function POST(request) {
 
   let event;
   try {
-    event = stripe.webhooks.constructEvent(body, sig, process.env.STRIPE_WEBHOOK_SECRET);
+    const stripeClient = getStripe();
+    event = stripeClient.webhooks.constructEvent(body, sig, process.env.STRIPE_WEBHOOK_SECRET);
   } catch (e) {
     return Response.json({ error: e.message }, { status: 400 });
   }

@@ -1,7 +1,17 @@
 import Stripe from 'stripe';
 import { auth } from '@clerk/nextjs/server';
 
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
+let stripe;
+
+function getStripe() {
+  if (!stripe) {
+    if (!process.env.STRIPE_SECRET_KEY) {
+      throw new Error('STRIPE_SECRET_KEY is not set');
+    }
+    stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
+  }
+  return stripe;
+}
 
 export async function POST(request) {
   const { userId } = await auth();
@@ -10,7 +20,8 @@ export async function POST(request) {
   const { priceId } = await request.json();
 
   try {
-    const session = await stripe.checkout.sessions.create({
+    const stripeClient = getStripe();
+    const session = await stripeClient.checkout.sessions.create({
       mode: 'subscription',
       payment_method_types: ['card'],
       line_items: [{ price: priceId, quantity: 1 }],
