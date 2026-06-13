@@ -6,7 +6,6 @@ import StockChart from '../../components/StockChart';
 import Sparkline from '../../components/Sparkline';
 import SparklineHeader from '../../components/SparklineHeader';
 import Topbar from '../../components/Topbar';
-import ShareCard from '../../components/ShareCard';
 import { useUser } from '@clerk/nextjs';
 
 const fmt = (val) => {
@@ -518,23 +517,35 @@ export default function StockPage({ params }) {
                 </div>
               )}
 
-              {/* Share Card - Top placement for visibility */}
-              <div style={{ marginBottom: '16px' }}>
-                <ShareCard 
-                  ticker={ticker}
-                  name={data?.name || 'N/A'}
-                  price={data?.currentPrice}
-                  priceChange={data?.priceChangePct}
-                  metrics={[
-                    { label: 'P/E', value: fmtN(data?.peRatio) },
-                    { label: 'Rev Growth', value: fmtP(data?.revenueGrowth) },
-                    { label: 'Op Margin', value: fmtP(data?.operatingMargin) },
-                    { label: 'FCF Yield', value: fmtP(data?.fcfYield) }
-                  ]}
-                  score={data?.healthScore || 50}
-                  verdict={data?.verdict || 'HOLD'}
-                />
-              </div>
+              {/* Share Stock Button */}
+              <button onClick={() => {
+                const text = `Check out ${ticker} – ${data?.name} on Traqcker\n\nScore: ${data?.healthScore || 50}/100\nVerdict: ${data?.verdict || 'HOLD'}\n\ntraqcker.com/stock/${ticker}`;
+                window.open(`https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}`, '_blank');
+              }}
+                style={{ 
+                  width: '100%', 
+                  padding: '16px',
+                  marginBottom: '16px',
+                  borderRadius: '12px',
+                  border: '1px solid var(--accent)',
+                  background: 'var(--accent-dim)',
+                  color: 'var(--accent)',
+                  fontFamily: 'Space Grotesk, sans-serif',
+                  fontWeight: 700,
+                  fontSize: '14px',
+                  cursor: 'pointer',
+                  transition: 'all 0.2s'
+                }}
+                onMouseEnter={e => {
+                  e.target.style.background = 'var(--accent)';
+                  e.target.style.color = '#0B0E14';
+                }}
+                onMouseLeave={e => {
+                  e.target.style.background = 'var(--accent-dim)';
+                  e.target.style.color = 'var(--accent)';
+                }}>
+                📸 Share {ticker} on Twitter
+              </button>
 
               {/* The Numbers, Simplified - meter bars */}
               <div style={{ marginBottom: '16px' }}>
