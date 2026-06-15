@@ -37,7 +37,7 @@ export async function GET() {
       .eq('week_start', weekStart)
       .single();
 
-    if (!checkError && existing) {
+    if (!checkError && existing && existing.ticker) {
       // Get name from cache, fallback to known companies
       const { data: stock } = await supabase
         .from('stock_cache')
@@ -46,6 +46,14 @@ export async function GET() {
         .single();
       const name = stock?.name || getCompanyName(existing.ticker);
       return Response.json({ ticker: existing.ticker, name, isNew: false });
+    }
+
+    // If existing record has null/empty ticker, delete it so we can create a fresh one
+    if (!checkError && existing && !existing.ticker) {
+      await supabase
+        .from('stock_of_week')
+        .delete()
+        .eq('week_start', weekStart);
     }
 
     // Get all stocks in cache with name

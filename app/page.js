@@ -98,15 +98,19 @@ export default function Home() {
     fetch('/api/stock-of-week')
       .then(r => r.json())
       .then(d => {
-        // d has: { ticker, name } from API
-        setSotw({ ticker: d.ticker, name: d.name || 'N/A' });
+        // Check if API returned an error
+        if (d.error || !d.ticker) {
+          console.error('SOTW error:', d.error || 'No ticker returned');
+          return;
+        }
+        setSotw({ ticker: d.ticker, name: d.name || d.ticker });
         // Load votes for this stock
         fetch(`/api/votes?ticker=${d.ticker}`)
           .then(r => r.json())
           .then(v => setSotwVotes({ ...v.percentages, total: v.total }))
           .catch(() => {});
       })
-      .catch(() => {});
+      .catch(err => console.error('SOTW fetch failed:', err));
   }, []);
 
   useEffect(() => {
