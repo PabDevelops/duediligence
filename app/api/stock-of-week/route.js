@@ -75,6 +75,12 @@ export async function GET() {
     // Pick random stock
     const randomStock = pickFrom[Math.floor(Math.random() * pickFrom.length)];
 
+    if (!randomStock) {
+      // Fallback: return a hardcoded popular stock
+      const fallback = { ticker: 'AAPL', name: 'Apple Inc.' };
+      return Response.json(fallback);
+    }
+
     // Insert into stock_of_week
     const { error: insertError } = await supabase
       .from('stock_of_week')
