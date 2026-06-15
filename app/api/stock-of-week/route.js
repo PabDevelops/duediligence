@@ -62,15 +62,20 @@ export async function GET() {
     }
 
     // Step 3: Get stocks from cache to pick a new SOTW
-    const { data: allStocks } = await supabase
+    const { data: allStocks, error: cacheError, count } = await supabase
       .from('stock_cache')
-      .select('ticker, name')
+      .select('ticker, name', { count: 'exact' })
       .order('updated_at', { ascending: false })
       .limit(500);
 
     if (!allStocks || allStocks.length === 0) {
       // No stocks in cache at all - return hardcoded fallback WITHOUT inserting
-      return Response.json({ ...HARDCODED_FALLBACK, isNew: false, source: 'fallback' });
+      return Response.json({ 
+        ...HARDCODED_FALLBACK, 
+        isNew: false, 
+        source: 'fallback',
+        debug: { cacheError: cacheError?.message, count, allStocksLength: allStocks?.length }
+      });
     }
 
     // Step 4: Avoid repeating recently used tickers
