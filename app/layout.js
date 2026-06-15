@@ -15,13 +15,13 @@ export const metadata = {
     other: [{ rel: 'icon', url: '/icon-512.png', sizes: '512x512' }],
   },
   openGraph: {
-    title: "Traqcker — Fundamental Stock Analysis",
-    description: "No opinions. No noise. Just data from SEC EDGAR filings.",
+    title: "Traqcker — Easy Mode Stock Analysis",
+    description: "Stock scores in seconds. Community votes. Free. Easy mode for everyday investors.",
     url: "https://traqcker.com",
     siteName: "Traqcker",
     images: [
       {
-        url: "https://traqcker.com/og-image.png",
+        url: "https://traqcker.com/og-image-v2.png",
         width: 1200,
         height: 630,
       },
@@ -30,9 +30,9 @@ export const metadata = {
   },
   twitter: {
     card: "summary_large_image",
-    title: "Traqcker — Fundamental Stock Analysis",
-    description: "No opinions. No noise. Just data from SEC EDGAR filings.",
-    images: ["https://traqcker.com/og-image.png"],
+    title: "Traqcker — Easy Mode Stock Analysis",
+    description: "Stock scores in seconds. Community votes. Free. Easy mode for everyday investors.",
+    images: ["https://traqcker.com/og-image-v2.png"],
   },
 };
 
