@@ -50,7 +50,7 @@ export async function GET() {
         .limit(1);
 
       const name = stock?.[0]?.name || getCompanyName(existing.ticker);
-      return Response.json({ ticker: existing.ticker, name, isNew: false });
+      return Response.json({ ticker: existing.ticker, name, isNew: false, source: 'existing' });
     }
 
     // Step 2: Clean up any corrupt record (null ticker) for this week
@@ -70,7 +70,7 @@ export async function GET() {
 
     if (!allStocks || allStocks.length === 0) {
       // No stocks in cache at all - return hardcoded fallback WITHOUT inserting
-      return Response.json({ ...HARDCODED_FALLBACK, isNew: false });
+      return Response.json({ ...HARDCODED_FALLBACK, isNew: false, source: 'fallback' });
     }
 
     // Step 4: Avoid repeating recently used tickers
@@ -85,7 +85,7 @@ export async function GET() {
     const randomStock = pickFrom[Math.floor(Math.random() * pickFrom.length)];
 
     if (!randomStock?.ticker) {
-      return Response.json({ ...HARDCODED_FALLBACK, isNew: false });
+      return Response.json({ ...HARDCODED_FALLBACK, isNew: false, source: 'fallback' });
     }
 
     // Step 5: Try to save the pick for this week (best-effort, don't fail if it errors)
@@ -98,10 +98,10 @@ export async function GET() {
     }
 
     const name = randomStock.name || getCompanyName(randomStock.ticker);
-    return Response.json({ ticker: randomStock.ticker, name, isNew: true });
+    return Response.json({ ticker: randomStock.ticker, name, isNew: true, source: 'random_pick' });
   } catch (error) {
     console.error('stock-of-week error:', error);
     // Always return a valid stock, even on unexpected errors
-    return Response.json({ ...HARDCODED_FALLBACK, isNew: false });
+    return Response.json({ ...HARDCODED_FALLBACK, isNew: false, source: 'fallback' });
   }
 }

@@ -103,6 +103,7 @@ export default function Home() {
           console.error('SOTW error:', d.error || 'No ticker returned');
           return;
         }
+        console.log('SOTW source:', d.source, '| ticker:', d.ticker, '| name:', d.name);
         setSotw({ ticker: d.ticker, name: d.name || d.ticker });
         // Load votes for this stock
         fetch(`/api/votes?ticker=${d.ticker}`)
