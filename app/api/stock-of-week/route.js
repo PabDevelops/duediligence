@@ -1,5 +1,8 @@
 import { supabase } from '../../../lib/supabase';
 
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
+
 // Fallback company names for stocks not in cache
 const companyNames = {
   'MOH': 'Molina Healthcare, Inc.',
