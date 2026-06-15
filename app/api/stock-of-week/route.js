@@ -45,11 +45,11 @@ export async function GET() {
       // Valid existing record - get name and return
       const { data: stock } = await supabase
         .from('stock_cache')
-        .select('name')
+        .select('data')
         .eq('ticker', existing.ticker)
         .limit(1);
 
-      const name = stock?.[0]?.name || getCompanyName(existing.ticker);
+      const name = stock?.[0]?.data?.name || getCompanyName(existing.ticker);
       return Response.json({ ticker: existing.ticker, name, isNew: false, source: 'existing' });
     }
 
@@ -62,11 +62,13 @@ export async function GET() {
     }
 
     // Step 3: Get stocks from cache to pick a new SOTW
-    const { data: allStocks, error: cacheError, count } = await supabase
+    const { data: allStocksRaw, error: cacheError, count } = await supabase
       .from('stock_cache')
-      .select('ticker, name', { count: 'exact' })
+      .select('ticker, data', { count: 'exact' })
       .order('updated_at', { ascending: false })
       .limit(500);
+
+    const allStocks = (allStocksRaw || []).map(s => ({ ticker: s.ticker, name: s.data?.name }));
 
     if (!allStocks || allStocks.length === 0) {
       // No stocks in cache at all - return hardcoded fallback WITHOUT inserting
