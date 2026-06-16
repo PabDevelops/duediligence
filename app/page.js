@@ -612,11 +612,14 @@ export default function Home() {
 
         {/* FOOTER */}
         <div style={{ borderTop: '1px solid var(--border)', paddingTop: '20px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', color: 'var(--text-3)', fontSize: '10px', flexWrap: 'wrap', gap: '12px' }}>
-          <div style={{ display: 'flex', gap: '24px' }}>
+          <div style={{ display: 'flex', gap: '24px', alignItems: 'center' }}>
             <a href="/privacy" style={{ color: 'var(--text-3)', textDecoration: 'none', letterSpacing: '1px' }}>PRIVACY</a>
             <a href="/terms" style={{ color: 'var(--text-3)', textDecoration: 'none', letterSpacing: '1px' }}>TERMS</a>
             <a href="/about" style={{ color: 'var(--text-3)', textDecoration: 'none', letterSpacing: '1px' }}>ABOUT</a>
             <a href="/pricing" style={{ color: 'var(--text-3)', textDecoration: 'none', letterSpacing: '1px' }}>PRICING</a>
+            <a href="https://launchllama.co?utm_source=badge&utm_medium=referral" target="_blank" rel="noopener">
+              <img src="https://speaktechenglish.com/wp-content/uploads/2026/04/Screenshot_2026-04-09_at_17.40.44-removebg-preview.png" alt="Featured on Launch Llama" width="100" height="25" style={{ opacity: 0.7, verticalAlign: 'middle' }} />
+            </a>
           </div>
           <div style={{ letterSpacing: '1px' }}>DATA: SEC EDGAR · FINNHUB · YAHOO FINANCE · NOT INVESTMENT ADVICE · © 2026 TRAQCKER</div>
         </div>
