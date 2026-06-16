@@ -292,10 +292,15 @@ export default function Home() {
           )}
 
           <div style={{ borderTop: '1px solid var(--border)', paddingTop: '16px', color: 'var(--text-3)', fontSize: '9px', letterSpacing: '1px', textAlign: 'center' }}>
-            <div style={{ display: 'flex', gap: '16px', justifyContent: 'center', marginBottom: '8px' }}>
+            <div style={{ display: 'flex', gap: '16px', justifyContent: 'center', marginBottom: '8px', alignItems: 'center' }}>
               <a href="/privacy" style={{ color: 'var(--text-3)', textDecoration: 'none' }}>PRIVACY</a>
               <a href="/terms" style={{ color: 'var(--text-3)', textDecoration: 'none' }}>TERMS</a>
               <a href="/about" style={{ color: 'var(--text-3)', textDecoration: 'none' }}>ABOUT</a>
+            </div>
+            <div style={{ marginBottom: '8px' }}>
+              <a href="https://launchllama.co?utm_source=badge&utm_medium=referral" target="_blank" rel="noopener">
+                <img src="https://speaktechenglish.com/wp-content/uploads/2026/04/Screenshot_2026-04-09_at_17.40.44-removebg-preview.png" alt="Featured on Launch Llama" width="100" height="25" style={{ opacity: 0.7, verticalAlign: 'middle' }} />
+              </a>
             </div>
             NOT INVESTMENT ADVICE · © 2026 TRAQCKER
           </div>
