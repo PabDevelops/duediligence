@@ -571,49 +571,6 @@ export default function Home() {
           </div>
         </div>
 
-        {/* MARKET DATA */}
-        {movers && (
-          <>
-            <div style={{ color: 'var(--text-3)', fontSize: '9px', letterSpacing: '3px', marginBottom: '12px' }}>MARKET DATA · UPDATED DAILY</div>
-
-            {/* Gainers / Losers / Earnings */}
-            <div className="market-grid" style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr 1fr 1fr 1fr' : '1fr 1fr', gap: '1px', background: 'var(--border)', marginBottom: '1px' }}>
-              <div style={{ background: 'var(--bg-1)', gridColumn: '1' }}>
-                <TableHeader title="▲ TOP GAINERS" sub="TOP 10" color="var(--green)" />
-                {movers.gainers.slice(0, 10).map(s => <MoverRow key={s.ticker} s={s} router={router} />)}
-              </div>
-              <div style={{ background: 'var(--bg-1)', gridColumn: '2' }}>
-                <TableHeader title="▼ TOP LOSERS" sub="TOP 10" color="var(--red)" />
-                {movers.losers.slice(0, 10).map(s => <MoverRow key={s.ticker} s={s} router={router} />)}
-              </div>
-              {isMobile && (
-              <div style={{ background: 'var(--bg-1)', gridColumn: '3 / 5' }}>
-                <TableHeader title="📅 UPCOMING EARNINGS" sub="NEXT 7 DAYS" />
-                {earnings ? earnings.map(e => <EarningRow key={e.ticker + e.date} e={e} router={router} />) :
-                  <div style={{ padding: '20px 12px', color: 'var(--text-3)', fontSize: '10px' }}>LOADING...</div>}
-                {earnings?.length === 0 && <div style={{ padding: '20px 12px', color: 'var(--text-3)', fontSize: '10px' }}>NO EARNINGS THIS WEEK</div>}
-              </div>
-              )}
-            </div>
-
-            {/* Rankings - MOBILE ONLY */}
-            {isMobile && (
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '1px', background: 'var(--border)', marginBottom: '48px' }}>
-              {[
-                { title: 'TOP ROIC', data: movers.topRoic, metric: 'roic', suffix: '%' },
-                { title: 'TOP FCF YIELD', data: movers.topFcfYield, metric: 'fcfYield', suffix: '%' },
-                { title: 'TOP REV GROWTH', data: movers.topRevGrowth, metric: 'revGrowth', suffix: '%' },
-                { title: 'TOP TRAQCKER SCORE', data: movers.topScore, metric: 'score', suffix: '' },
-              ].map(({ title, data, metric, suffix }) => (
-                <div key={title} style={{ background: 'var(--bg-1)' }}>
-                  <TableHeader title={title} />
-                  {data.map((s, i) => <RankRow key={s.ticker} s={s} rank={i + 1} metric={metric} suffix={suffix} router={router} />)}
-                </div>
-              ))}
-            </div>
-            )}
-          </>
-        )}
 
         {/* CTA BOTTOM */}
         <div style={{ border: '1px solid var(--border)', padding: '48px 32px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '48px', background: 'var(--bg-1)' }}>
