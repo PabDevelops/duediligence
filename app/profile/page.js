@@ -1,9 +1,9 @@
 'use client';
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { useUser } from '@clerk/nextjs';
-import { SignOutButton } from '@clerk/nextjs';
+import { useUser, SignOutButton } from '@clerk/nextjs';
 import Topbar from '../components/Topbar';
+import MobileHeader from '../components/MobileHeader';
 
 export default function ProfilePage() {
   const router = useRouter();
@@ -25,20 +25,21 @@ export default function ProfilePage() {
   const loadProfileData = async () => {
     try {
       setLoading(true);
-      // Load watchlist
-      const wlRes = await fetch('/api/watchlist');
-      const wlData = await wlRes.json();
-      setWatchlist(wlData.stocks || []);
 
-      // Load SOTW votes (from votes table - user's votes across all tickers)
-      // TODO: Create endpoint /api/user-votes
-      
-      // Load achievements
-      if (user?.id) {
-        const achievRes = await fetch(`/api/achievements?userId=${user.id}`);
-        const achievData = await achievRes.json();
-        setAchievements(achievData.achievements || []);
-      }
+      const [wlRes, votesRes, achievRes] = await Promise.all([
+        fetch('/api/watchlist'),
+        fetch('/api/votes'),
+        fetch(`/api/achievements?userId=${user.id}`),
+      ]);
+
+      const wlData = await wlRes.json();
+      setWatchlist(wlData.tickers || []);
+
+      const votesData = await votesRes.json();
+      setSotwVotes(votesData.votes || []);
+
+      const achievData = await achievRes.json();
+      setAchievements(achievData.achievements || []);
     } catch (e) {
       console.error('Error loading profile:', e);
     } finally {
@@ -50,6 +51,7 @@ export default function ProfilePage() {
     return (
       <div style={{ background: 'var(--bg)', minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--text)' }}>
         <Topbar />
+        <MobileHeader />
         <div style={{ fontSize: '12px', color: 'var(--text-3)' }}>Loading...</div>
       </div>
     );
@@ -58,8 +60,9 @@ export default function ProfilePage() {
   return (
     <div style={{ background: 'var(--bg)', minHeight: '100vh', color: 'var(--text)', fontFamily: 'JetBrains Mono, monospace' }}>
       <Topbar />
-      
-      <div style={{ maxWidth: '900px', margin: '0 auto', padding: '24px' }}>
+      <MobileHeader />
+
+      <div style={{ maxWidth: '900px', margin: '0 auto', padding: '24px 16px', paddingBottom: 'calc(80px + env(safe-area-inset-bottom, 0px))' }}>
         {/* Header */}
         <div style={{ marginBottom: '32px', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
           <div>
@@ -83,14 +86,11 @@ export default function ProfilePage() {
                 fontSize: '12px',
                 fontWeight: 600,
                 fontFamily: 'Space Grotesk, sans-serif',
-                transition: 'all 0.2s'
+                transition: 'all 0.2s',
+                flexShrink: 0,
               }}
-              onMouseEnter={e => {
-                e.currentTarget.style.background = 'var(--red-dim)';
-              }}
-              onMouseLeave={e => {
-                e.currentTarget.style.background = 'transparent';
-              }}>
+              onMouseEnter={e => { e.currentTarget.style.background = 'var(--red-dim)'; }}
+              onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; }}>
                 Sign out
               </button>
             </SignOutButton>
@@ -98,16 +98,16 @@ export default function ProfilePage() {
         </div>
 
         {/* Stats grid */}
-        <div style={{ display: 'grid', gridTemplateColumns: isMobile => isMobile ? '1fr' : 'repeat(3, 1fr)', gap: '12px', marginBottom: '32px' }}>
+        <div className="profile-stats-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '12px', marginBottom: '32px' }}>
           <div style={{ background: 'var(--bg-1)', border: '1px solid var(--border)', borderRadius: '16px', padding: '20px' }}>
-            <div style={{ color: 'var(--text-3)', fontSize: '10px', letterSpacing: '1px', marginBottom: '8px' }}>WATCHLIST STOCKS</div>
+            <div style={{ color: 'var(--text-3)', fontSize: '10px', letterSpacing: '1px', marginBottom: '8px' }}>WATCHLIST</div>
             <div style={{ fontFamily: 'Space Grotesk, sans-serif', fontSize: '24px', fontWeight: 700, color: 'var(--accent)' }}>
               {watchlist.length}
             </div>
           </div>
-          
+
           <div style={{ background: 'var(--bg-1)', border: '1px solid var(--border)', borderRadius: '16px', padding: '20px' }}>
-            <div style={{ color: 'var(--text-3)', fontSize: '10px', letterSpacing: '1px', marginBottom: '8px' }}>SOTW VOTES</div>
+            <div style={{ color: 'var(--text-3)', fontSize: '10px', letterSpacing: '1px', marginBottom: '8px' }}>VOTES</div>
             <div style={{ fontFamily: 'Space Grotesk, sans-serif', fontSize: '24px', fontWeight: 700, color: 'var(--accent)' }}>
               {sotwVotes.length}
             </div>
@@ -131,11 +131,11 @@ export default function ProfilePage() {
               No stocks in your watchlist yet
             </div>
           ) : (
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(150px, 1fr))', gap: '12px' }}>
-              {watchlist.map(ticker => (
-                <button key={ticker} onClick={() => router.push(`/stock/${ticker}`)}
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(120px, 1fr))', gap: '12px' }}>
+              {watchlist.map(item => (
+                <button key={item.ticker} onClick={() => router.push(`/stock/${item.ticker}`)}
                   style={{ background: 'var(--bg-1)', border: '1px solid var(--border)', borderRadius: '12px', padding: '16px', textAlign: 'center', cursor: 'pointer', color: 'var(--accent)', fontFamily: 'Space Grotesk, sans-serif', fontWeight: 700, fontSize: '14px' }}>
-                  {ticker}
+                  {item.ticker}
                 </button>
               ))}
             </div>
@@ -153,21 +153,19 @@ export default function ProfilePage() {
             </div>
           ) : (
             <div style={{ background: 'var(--bg-1)', border: '1px solid var(--border)', borderRadius: '12px', overflow: 'hidden' }}>
-              {/* Table headers */}
-              <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr 2fr', gap: '0', borderBottom: '1px solid var(--border)', background: 'var(--bg-2)' }}>
+              <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr 2fr', borderBottom: '1px solid var(--border)', background: 'var(--bg-2)' }}>
                 <div style={{ padding: '12px 16px', fontSize: '10px', color: 'var(--text-3)', fontWeight: 600, letterSpacing: '1px' }}>TICKER</div>
-                <div style={{ padding: '12px 16px', fontSize: '10px', color: 'var(--text-3)', fontWeight: 600, letterSpacing: '1px' }}>YOUR VOTE</div>
+                <div style={{ padding: '12px 16px', fontSize: '10px', color: 'var(--text-3)', fontWeight: 600, letterSpacing: '1px' }}>VOTE</div>
                 <div style={{ padding: '12px 16px', fontSize: '10px', color: 'var(--text-3)', fontWeight: 600, letterSpacing: '1px' }}>DATE</div>
               </div>
-              {/* Rows */}
               {sotwVotes.map((vote, i) => (
-                <div key={i} style={{ display: 'grid', gridTemplateColumns: '2fr 1fr 2fr', gap: '0', borderBottom: i < sotwVotes.length - 1 ? '1px solid var(--border)' : 'none' }}>
+                <div key={i} style={{ display: 'grid', gridTemplateColumns: '2fr 1fr 2fr', borderBottom: i < sotwVotes.length - 1 ? '1px solid var(--border)' : 'none' }}>
                   <div style={{ padding: '12px 16px', fontSize: '12px', color: 'var(--accent)', fontWeight: 600 }}>{vote.ticker}</div>
                   <div style={{ padding: '12px 16px', fontSize: '12px', color: vote.vote === 'BUY' ? 'var(--green)' : vote.vote === 'SELL' ? 'var(--red)' : 'var(--amber)' }}>
                     {vote.vote}
                   </div>
                   <div style={{ padding: '12px 16px', fontSize: '12px', color: 'var(--text-3)' }}>
-                    {vote.date ? new Date(vote.date).toLocaleDateString() : '—'}
+                    {vote.created_at ? new Date(vote.created_at).toLocaleDateString() : '—'}
                   </div>
                 </div>
               ))}
@@ -183,22 +181,22 @@ export default function ProfilePage() {
           {achievements.length > 0 ? (
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(140px, 1fr))', gap: '12px' }}>
               {achievements.map(ach => (
-                <div key={ach.id} style={{ 
-                  background: 'var(--bg-1)', 
-                  border: '1px solid var(--border)', 
-                  borderRadius: '12px', 
-                  padding: '16px', 
+                <div key={ach.id} style={{
+                  background: 'var(--bg-1)',
+                  border: '1px solid var(--border)',
+                  borderRadius: '12px',
+                  padding: '16px',
                   textAlign: 'center',
                   transition: 'all 0.2s'
                 }}
-                  onMouseEnter={e => {
-                    e.currentTarget.style.borderColor = 'var(--accent)';
-                    e.currentTarget.style.background = 'rgba(167, 139, 250, 0.05)';
-                  }}
-                  onMouseLeave={e => {
-                    e.currentTarget.style.borderColor = 'var(--border)';
-                    e.currentTarget.style.background = 'var(--bg-1)';
-                  }}>
+                onMouseEnter={e => {
+                  e.currentTarget.style.borderColor = 'var(--accent)';
+                  e.currentTarget.style.background = 'rgba(167, 139, 250, 0.05)';
+                }}
+                onMouseLeave={e => {
+                  e.currentTarget.style.borderColor = 'var(--border)';
+                  e.currentTarget.style.background = 'var(--bg-1)';
+                }}>
                   <div style={{ fontSize: '32px', marginBottom: '8px' }}>{ach.icon}</div>
                   <div style={{ fontSize: '12px', fontWeight: 600, color: 'var(--text)', marginBottom: '4px' }}>{ach.title}</div>
                   <div style={{ fontSize: '10px', color: 'var(--text-3)', lineHeight: 1.4 }}>{ach.description}</div>
@@ -215,6 +213,14 @@ export default function ProfilePage() {
           )}
         </div>
       </div>
+
+      <style>{`
+        @media (max-width: 767px) {
+          .profile-stats-grid {
+            grid-template-columns: 1fr !important;
+          }
+        }
+      `}</style>
     </div>
   );
 }

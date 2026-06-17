@@ -71,7 +71,7 @@ export default function BottomNav() {
   const isHome = path === '/';
   const isSearch = path === '/screener' || path === '/compare';
   const isWatchlist = path.startsWith('/watchlist');
-  const isProfile = path.startsWith('/sign-in') || path.startsWith('/sign-up');
+  const isProfile = path.startsWith('/profile');
 
   const userButtonRef = useRef(null);
 

@@ -8,18 +8,19 @@ export async function GET(req) {
 
     const { userId } = await auth();
 
-    // If no ticker, return vote count for the authenticated user
+    // If no ticker, return all votes for the authenticated user (for profile page)
     if (!ticker) {
       if (!userId) return Response.json({ error: 'Not authenticated' }, { status: 401 });
 
       const { data: userVotes, error } = await supabase
         .from('votes')
-        .select('ticker')
-        .eq('user_id', userId);
+        .select('ticker, vote, created_at')
+        .eq('user_id', userId)
+        .order('created_at', { ascending: false });
 
       if (error) throw error;
 
-      return Response.json({ count: userVotes?.length || 0 });
+      return Response.json({ votes: userVotes || [], count: userVotes?.length || 0 });
     }
 
     // Return vote percentages for a ticker
