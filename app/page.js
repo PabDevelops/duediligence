@@ -366,161 +366,112 @@ export default function Home() {
       </div>
 
       {/* HERO */}
-      <div style={{ borderBottom: '1px solid var(--border)', padding: '48px 24px 40px', maxWidth: '1400px', margin: '0 auto', boxSizing: 'border-box', width: '100%' }}>
-        <div className="hero-grid" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '64px', alignItems: 'center' }}>
+      <div style={{ borderBottom: '1px solid var(--border)', padding: '48px 24px 0', maxWidth: '1400px', margin: '0 auto', boxSizing: 'border-box', width: '100%' }}>
 
-          {/* Left — copy */}
-          <div>
-            <div style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', background: 'var(--accent-dim)', border: '1px solid var(--accent)', padding: '4px 12px', marginBottom: '24px' }}>
-              <span style={{ width: 6, height: 6, borderRadius: '50%', background: 'var(--green)', display: 'inline-block' }} />
-              <span style={{ color: 'var(--accent)', fontSize: '10px', letterSpacing: '2px', fontWeight: 700 }}>LIVE · SEC EDGAR · FINNHUB</span>
-            </div>
-
-            <h1 className="hero-title" style={{ fontSize: '52px', fontWeight: 700, letterSpacing: '-2px', lineHeight: 1.05, marginBottom: '20px' }}>
-              Know if a<br />
-              stock is worth<span style={{ color: 'var(--accent)' }}>.</span><br />
-              <span style={{ color: 'var(--accent)' }}>In seconds.</span>
-            </h1>
-
-            <p style={{ color: 'var(--text-2)', fontSize: '14px', lineHeight: 1.8, marginBottom: '32px', maxWidth: '440px' }}>
-              Primary data from SEC EDGAR. No opinions. No buy/sell calls. 
-              15 due diligence questions across 5 dimensions — built for investors who do their own work.
-            </p>
-
-            {/* Search */}
-            <div style={{ marginBottom: '16px' }}>
-              <div style={{ color: 'var(--text-3)', fontSize: '10px', letterSpacing: '2px', marginBottom: '8px' }}>
-                ENTER TICKER{blink ? '_' : ' '}
-              </div>
-              <div style={{ position: 'relative', zIndex: 50 }}>
-                <div style={{ display: 'flex', gap: '0' }}>
-                  <input
-                    style={{ flex: 1, maxWidth: isMobile ? '100%' : '280px', background: 'var(--bg-2)', border: '1px solid var(--border-2)', borderRight: 'none', color: 'var(--accent)', fontFamily: 'JetBrains Mono, monospace', fontSize: isMobile ? '16px' : '22px', fontWeight: 700, padding: '12px 16px', outline: 'none', letterSpacing: isMobile ? '2px' : '4px' }}
-                    placeholder="AAPL"
-                    value={searchQ || ticker}
-                    onChange={e => { const v = e.target.value; setSearchQ(v); setTicker(v.toUpperCase()); setShowSuggestions(true); }}
-                    onKeyDown={e => { if (e.key === 'Enter') { go(); setShowSuggestions(false); } if (e.key === 'Escape') setShowSuggestions(false); }}
-                    maxLength={50}
-                    onFocus={e => { e.target.style.borderColor = 'var(--accent)'; setShowSuggestions(true); }}
-                    onBlur={e => { e.target.style.borderColor = 'var(--border-2)'; setTimeout(() => setShowSuggestions(false), 200); }}
-                  />
-                  <button onClick={() => go()}
-                    style={{ background: 'var(--accent)', color: '#000', border: 'none', padding: '12px 24px', fontFamily: 'JetBrains Mono, monospace', fontSize: '13px', fontWeight: 700, cursor: 'pointer', letterSpacing: '1px' }}
-                    onMouseEnter={e => e.target.style.opacity = '0.85'}
-                    onMouseLeave={e => e.target.style.opacity = '1'}>
-                    ANALYZE →
-                  </button>
-                </div>
-                {showSuggestions && suggestions.length > 0 && (
-                  <div style={{ position: 'absolute', top: '100%', left: 0, right: 0, background: 'var(--bg-1)', border: '1px solid var(--border)', width: '100%', maxHeight: '300px', overflowY: 'auto', zIndex: 9999, marginTop: '4px', boxSizing: 'border-box' }}>
-                    {suggestions.map(s => (
-                      <div key={s.ticker}
-                        onMouseDown={() => { router.push(`/stock/${s.ticker}`); setShowSuggestions(false); }}
-                        onTouchEnd={() => { router.push(`/stock/${s.ticker}`); setShowSuggestions(false); }}
-                        style={{ padding: '12px 12px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '8px', borderBottom: '1px solid var(--border)' }}
-                        onMouseEnter={e => e.currentTarget.style.background = 'var(--bg-2)'}
-                        onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
-                        onTouchStart={e => e.currentTarget.style.background = 'var(--bg-2)'}
-                        onTouchEnd={e => e.currentTarget.style.background = 'transparent'}>
-                        <span style={{ color: 'var(--accent)', fontSize: '13px', fontWeight: 700, width: 56, flexShrink: 0 }}>{s.ticker}</span>
-                        <span style={{ color: 'var(--text-2)', fontSize: '12px', flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{s.name}</span>
-                        <span style={{ color: 'var(--text-3)', fontSize: '10px', flexShrink: 0 }}>{s.exchange}</span>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </div>
-            </div>
-
-            <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', marginBottom: '20px' }}>
-              {['AAPL', 'MSFT', 'NVDA', 'V', 'ASML', 'GOOGL'].map(t => (
-                <button key={t} onClick={() => go(t)}
-                  style={{ background: 'none', border: '1px solid var(--border)', color: 'var(--text-3)', padding: '3px 10px', fontFamily: 'JetBrains Mono, monospace', fontSize: '10px', cursor: 'pointer', letterSpacing: '1px' }}
-                  onMouseEnter={e => { e.target.style.borderColor = 'var(--accent)'; e.target.style.color = 'var(--accent)'; }}
-                  onMouseLeave={e => { e.target.style.borderColor = 'var(--border)'; e.target.style.color = 'var(--text-3)'; }}>
-                  {t}
-                </button>
-              ))}
-            </div>
-
-            {/* Feature cards */}
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '1px', background: 'var(--border)', marginBottom: '24px' }}>
-              {[
-                { icon: '🟢', title: 'Easy Score', desc: '0-100 verdict on any stock' },
-                { icon: '👍', title: 'Community', desc: 'Buy, Hold or Sell votes' },
-                { icon: '💰', title: 'Price Check', desc: 'Over, fair or underpriced?' },
-              ].map(f => (
-                <div key={f.title} style={{ background: 'var(--bg-1)', padding: '16px' }}>
-                  <div style={{ fontSize: '18px', marginBottom: '6px' }}>{f.icon}</div>
-                  <div style={{ color: 'var(--text)', fontSize: '11px', fontWeight: 700, letterSpacing: '0.5px', marginBottom: '4px' }}>{f.title}</div>
-                  <div style={{ color: 'var(--text-3)', fontSize: '10px', lineHeight: 1.5 }}>{f.desc}</div>
-                </div>
-              ))}
-            </div>
-
-            {/* CTAs */}
-            <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
-              <a href="/sign-up" style={{ background: 'var(--accent)', color: '#000', padding: '10px 20px', fontFamily: 'JetBrains Mono, monospace', fontSize: '11px', fontWeight: 700, letterSpacing: '1px', textDecoration: 'none' }}>
-                START FREE →
-              </a>
-              <a href="/pricing" style={{ background: 'none', border: '1px solid var(--border)', color: 'var(--text-3)', padding: '10px 20px', fontFamily: 'JetBrains Mono, monospace', fontSize: '11px', letterSpacing: '1px', textDecoration: 'none' }}
-                onMouseEnter={e => { e.currentTarget.style.borderColor = 'var(--accent)'; e.currentTarget.style.color = 'var(--accent)'; }}
-                onMouseLeave={e => { e.currentTarget.style.borderColor = 'var(--border)'; e.currentTarget.style.color = 'var(--text-3)'; }}>
-                SEE PRICING
-              </a>
-              <button onClick={async () => { const r = await fetch('/api/random'); if (r.status === 429) { const d = await r.json(); alert(d.isAnon ? 'Sign in to get 3 daily discovers. Pro gets unlimited.' : 'Daily limit reached. Upgrade to Pro for unlimited discovers.'); return; } const { ticker } = await r.json(); router.push(`/stock/${ticker}`); }}
-                style={{ background: 'none', border: '1px solid var(--border)', color: 'var(--text-3)', padding: '10px 20px', fontFamily: 'JetBrains Mono, monospace', fontSize: '11px', letterSpacing: '1px', cursor: 'pointer' }}
-                onMouseEnter={e => { e.currentTarget.style.borderColor = 'var(--accent)'; e.currentTarget.style.color = 'var(--accent)'; }}
-                onMouseLeave={e => { e.currentTarget.style.borderColor = 'var(--border)'; e.currentTarget.style.color = 'var(--text-3)'; }}>
-                ⚡ DISCOVER
-              </button>
-            </div>
+        {/* Top: headline + search */}
+        <div style={{ marginBottom: '40px' }}>
+          <div style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', background: 'var(--accent-dim)', border: '1px solid var(--accent)', padding: '4px 12px', marginBottom: '20px' }}>
+            <span style={{ width: 6, height: 6, borderRadius: '50%', background: 'var(--green)', display: 'inline-block' }} />
+            <span style={{ color: 'var(--accent)', fontSize: '10px', letterSpacing: '2px', fontWeight: 700 }}>LIVE · SEC EDGAR · FINNHUB</span>
           </div>
 
-          {/* Right — SOTW + Discover */}
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '1px', background: 'var(--border)' }}>
+          <h1 style={{ fontSize: '56px', fontWeight: 700, letterSpacing: '-2px', lineHeight: 1.0, marginBottom: '28px', whiteSpace: 'nowrap' }}>
+            Know if a stock is worth it.<span style={{ color: 'var(--accent)' }}> In seconds.</span>
+          </h1>
 
-            {/* SOTW compact */}
-            {sotw ? (
-              <div style={{ background: 'var(--bg-1)', padding: '24px 28px', flex: '0 0 auto' }}>
-                <a href={`/stock/${sotw.ticker}`} style={{ textDecoration: 'none', display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '12px' }}>
-                  <span style={{ fontSize: '16px' }}>🔥</span>
-                  <span style={{ color: 'var(--accent)', fontSize: '10px', fontWeight: 700, letterSpacing: '1px' }}>STOCK OF THE WEEK</span>
-                  <span style={{ color: 'var(--text)', fontSize: '13px', fontWeight: 700 }}>{sotw.ticker}</span>
-                  <span style={{ color: 'var(--text-3)', fontSize: '11px' }}>– {sotw.name}</span>
-                </a>
-                <div style={{ display: 'flex', height: '6px', borderRadius: '3px', overflow: 'hidden', marginBottom: '6px' }}>
-                  <div style={{ background: 'var(--green)', width: `${sotwVotes.BUY}%`, transition: 'width 0.4s' }} />
-                  <div style={{ background: 'var(--amber)', width: `${sotwVotes.HOLD}%`, transition: 'width 0.4s' }} />
-                  <div style={{ background: 'var(--red)', width: `${sotwVotes.SELL}%`, transition: 'width 0.4s' }} />
-                </div>
-                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '10px', color: 'var(--text-3)' }}>
-                  <span style={{ color: 'var(--green)' }}>● {sotwVotes.BUY}% Buy</span>
-                  <span>{sotwVotes.total} votes</span>
-                  <span style={{ color: 'var(--red)' }}>{sotwVotes.SELL}% Sell ●</span>
-                </div>
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', borderTop: '1px solid var(--border)', marginTop: '12px' }}>
-                  {['BUY', 'HOLD', 'SELL'].map((v, i) => (
-                    <button key={v}
-                      onClick={async (e) => {
-                        e.preventDefault();
-                        if (!isSignedIn) { router.push('/sign-in'); return; }
-                        await fetch('/api/votes', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ ticker: sotw.ticker, vote: v }) });
-                        fetch(`/api/votes?ticker=${sotw.ticker}`).then(r => r.json()).then(d => setSotwVotes({ ...d.percentages, total: d.total }));
-                      }}
-                      style={{ padding: '8px', background: 'none', border: 'none', borderRight: i < 2 ? '1px solid var(--border)' : 'none', color: v === 'BUY' ? 'var(--green)' : v === 'SELL' ? 'var(--red)' : 'var(--amber)', fontFamily: 'JetBrains Mono, monospace', fontWeight: 700, fontSize: '10px', cursor: 'pointer', letterSpacing: '1px' }}
-                      onMouseEnter={e => e.currentTarget.style.background = 'var(--bg-2)'}
-                      onMouseLeave={e => e.currentTarget.style.background = 'none'}>
-                      {v}
-                    </button>
-                  ))}
-                </div>
-              </div>
-            ) : (
-              <div style={{ background: 'var(--bg-1)', padding: '24px 28px', flex: '0 0 auto', display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '120px' }}>
-                <span style={{ color: 'var(--text-3)', fontSize: '10px', letterSpacing: '2px' }}>LOADING STOCK OF THE WEEK...</span>
+          {/* Search bar — full width */}
+          <div style={{ position: 'relative', zIndex: 50, maxWidth: '600px' }}>
+            <div style={{ display: 'flex' }}>
+              <input
+                style={{ flex: 1, background: 'var(--bg-2)', border: '1px solid var(--border-2)', borderRight: 'none', color: 'var(--accent)', fontFamily: 'JetBrains Mono, monospace', fontSize: '22px', fontWeight: 700, padding: '14px 20px', outline: 'none', letterSpacing: '4px' }}
+                placeholder="AAPL"
+                value={searchQ || ticker}
+                onChange={e => { const v = e.target.value; setSearchQ(v); setTicker(v.toUpperCase()); setShowSuggestions(true); }}
+                onKeyDown={e => { if (e.key === 'Enter') { go(); setShowSuggestions(false); } if (e.key === 'Escape') setShowSuggestions(false); }}
+                maxLength={50}
+                onFocus={e => { e.target.style.borderColor = 'var(--accent)'; setShowSuggestions(true); }}
+                onBlur={e => { e.target.style.borderColor = 'var(--border-2)'; setTimeout(() => setShowSuggestions(false), 200); }}
+              />
+              <button onClick={() => go()}
+                style={{ background: 'var(--accent)', color: '#000', border: 'none', padding: '14px 32px', fontFamily: 'JetBrains Mono, monospace', fontSize: '13px', fontWeight: 700, cursor: 'pointer', letterSpacing: '1px', whiteSpace: 'nowrap' }}
+                onMouseEnter={e => e.target.style.opacity = '0.85'}
+                onMouseLeave={e => e.target.style.opacity = '1'}>
+                ANALYZE →
+              </button>
+            </div>
+            {showSuggestions && suggestions.length > 0 && (
+              <div style={{ position: 'absolute', top: '100%', left: 0, right: 0, background: 'var(--bg-1)', border: '1px solid var(--border)', maxHeight: '300px', overflowY: 'auto', zIndex: 9999, marginTop: '4px', boxSizing: 'border-box' }}>
+                {suggestions.map(s => (
+                  <div key={s.ticker}
+                    onMouseDown={() => { router.push(`/stock/${s.ticker}`); setShowSuggestions(false); }}
+                    style={{ padding: '12px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '8px', borderBottom: '1px solid var(--border)' }}
+                    onMouseEnter={e => e.currentTarget.style.background = 'var(--bg-2)'}
+                    onMouseLeave={e => e.currentTarget.style.background = 'transparent'}>
+                    <span style={{ color: 'var(--accent)', fontSize: '13px', fontWeight: 700, width: 56, flexShrink: 0 }}>{s.ticker}</span>
+                    <span style={{ color: 'var(--text-2)', fontSize: '12px', flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{s.name}</span>
+                    <span style={{ color: 'var(--text-3)', fontSize: '10px', flexShrink: 0 }}>{s.exchange}</span>
+                  </div>
+                ))}
               </div>
             )}
+          </div>
+
+          <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', marginTop: '12px' }}>
+            {['AAPL', 'MSFT', 'NVDA', 'V', 'ASML', 'GOOGL'].map(t => (
+              <button key={t} onClick={() => go(t)}
+                style={{ background: 'none', border: '1px solid var(--border)', color: 'var(--text-3)', padding: '3px 10px', fontFamily: 'JetBrains Mono, monospace', fontSize: '10px', cursor: 'pointer', letterSpacing: '1px' }}
+                onMouseEnter={e => { e.target.style.borderColor = 'var(--accent)'; e.target.style.color = 'var(--accent)'; }}
+                onMouseLeave={e => { e.target.style.borderColor = 'var(--border)'; e.target.style.color = 'var(--text-3)'; }}>
+                {t}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* Bottom: SOTW left | Spin right */}
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1px', background: 'var(--border)' }}>
+
+          {/* SOTW */}
+          {sotw ? (
+            <div style={{ background: 'var(--bg-1)', padding: '24px 28px' }}>
+              <a href={`/stock/${sotw.ticker}`} style={{ textDecoration: 'none', display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '12px' }}>
+                <span style={{ fontSize: '16px' }}>🔥</span>
+                <span style={{ color: 'var(--accent)', fontSize: '10px', fontWeight: 700, letterSpacing: '1px' }}>STOCK OF THE WEEK</span>
+                <span style={{ color: 'var(--text)', fontSize: '13px', fontWeight: 700 }}>{sotw.ticker}</span>
+                <span style={{ color: 'var(--text-3)', fontSize: '11px' }}>– {sotw.name}</span>
+              </a>
+              <div style={{ display: 'flex', height: '6px', overflow: 'hidden', marginBottom: '6px' }}>
+                <div style={{ background: 'var(--green)', width: `${sotwVotes.BUY}%`, transition: 'width 0.4s' }} />
+                <div style={{ background: 'var(--amber)', width: `${sotwVotes.HOLD}%`, transition: 'width 0.4s' }} />
+                <div style={{ background: 'var(--red)', width: `${sotwVotes.SELL}%`, transition: 'width 0.4s' }} />
+              </div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '10px', marginBottom: '12px' }}>
+                <span style={{ color: 'var(--green)' }}>● {sotwVotes.BUY}% Buy</span>
+                <span style={{ color: 'var(--text-3)' }}>{sotwVotes.total} votes</span>
+                <span style={{ color: 'var(--red)' }}>{sotwVotes.SELL}% Sell ●</span>
+              </div>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', borderTop: '1px solid var(--border)' }}>
+                {['BUY', 'HOLD', 'SELL'].map((v, i) => (
+                  <button key={v}
+                    onClick={async (e) => {
+                      e.preventDefault();
+                      if (!isSignedIn) { router.push('/sign-in'); return; }
+                      await fetch('/api/votes', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ ticker: sotw.ticker, vote: v }) });
+                      fetch(`/api/votes?ticker=${sotw.ticker}`).then(r => r.json()).then(d => setSotwVotes({ ...d.percentages, total: d.total }));
+                    }}
+                    style={{ padding: '10px', background: 'none', border: 'none', borderRight: i < 2 ? '1px solid var(--border)' : 'none', color: v === 'BUY' ? 'var(--green)' : v === 'SELL' ? 'var(--red)' : 'var(--amber)', fontFamily: 'JetBrains Mono, monospace', fontWeight: 700, fontSize: '11px', cursor: 'pointer', letterSpacing: '1px' }}
+                    onMouseEnter={e => e.currentTarget.style.background = 'var(--bg-2)'}
+                    onMouseLeave={e => e.currentTarget.style.background = 'none'}>
+                    {v}
+                  </button>
+                ))}
+              </div>
+            </div>
+          ) : (
+            <div style={{ background: 'var(--bg-1)', padding: '24px 28px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <span style={{ color: 'var(--text-3)', fontSize: '10px', letterSpacing: '2px' }}>LOADING...</span>
+            </div>
+          )}
 
             {/* Discover / Slot machine */}
             <div style={{ background: 'var(--bg-1)', padding: '24px 28px', flex: 1, display: 'flex', flexDirection: 'column', gap: '16px' }}>
@@ -586,7 +537,6 @@ export default function Home() {
                 <span style={{ color: 'var(--accent)' }}>💎 Pro: unlimited</span>
               </div>
             </div>
-          </div>
         </div>
       </div>
 
