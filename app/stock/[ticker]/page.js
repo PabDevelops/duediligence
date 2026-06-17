@@ -123,7 +123,7 @@ export default function StockPage({ params }) {
   const [expanded, setExpanded] = useState(false);
   const [sotw, setSotw] = useState(null);
   const [achievementToast, setAchievementToast] = useState(null);
-  const { isSignedIn } = useUser();
+  const { isSignedIn, user } = useUser();
 
 
   useEffect(() => {
