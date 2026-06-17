@@ -419,11 +419,11 @@ export default function Home() {
         </div>
 
         {/* Bottom: SOTW left | Spin right */}
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', alignItems: 'start' }}>
 
           {/* SOTW */}
           {sotw ? (
-            <div style={{ background: 'var(--bg-1)', border: '1px solid var(--border)', padding: '24px 28px', display: 'flex', flexDirection: 'column' }}>
+            <div style={{ background: 'var(--bg-1)', border: '1px solid var(--border)', padding: '24px 28px' }}>
               <div>
                 <a href={`/stock/${sotw.ticker}`} style={{ textDecoration: 'none', display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '16px' }}>
                   <span style={{ fontSize: '16px' }}>🔥</span>
@@ -442,7 +442,7 @@ export default function Home() {
                   <span style={{ color: 'var(--red)' }}>{sotwVotes.SELL}% Sell ●</span>
                 </div>
               </div>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', borderTop: '1px solid var(--border)', marginTop: 'auto', paddingTop: '0' }}>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', borderTop: '1px solid var(--border)', marginTop: '16px' }}>
                 {['BUY', 'HOLD', 'SELL'].map((v, i) => (
                   <button key={v}
                     onClick={async (e) => {
