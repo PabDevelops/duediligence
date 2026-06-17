@@ -37,20 +37,6 @@ export async function POST(request) {
       client_reference_id: userId,
     });
 
-    // Unlock pro_subscriber achievement (best-effort)
-    try {
-      const { supabase } = await import('../../../../lib/supabase');
-      const { data: existing } = await supabase
-        .from('user_achievements')
-        .select('id')
-        .eq('user_id', userId)
-        .eq('achievement_type', 'pro_subscriber')
-        .single();
-      if (!existing) {
-        await supabase.from('user_achievements').insert([{ user_id: userId, achievement_type: 'pro_subscriber' }]);
-      }
-    } catch (_) {}
-
     return Response.json({ url: session.url });
   } catch (e) {
     console.error(e);

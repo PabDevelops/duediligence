@@ -17,7 +17,7 @@ export default function WatchlistWidget() {
     fetch('/api/watchlist')
       .then(r => r.json())
       .then(async d => {
-        const top4 = (d.tickers || []).slice(0, 4);
+        const top4 = (d.tickers || []).slice(0, 10);
         const results = await Promise.all(
           top4.map(({ ticker }) =>
             fetch(`/api/stock?ticker=${ticker}`)
@@ -36,7 +36,7 @@ export default function WatchlistWidget() {
   return (
     <div className="watchlist-widget" style={{ position: 'fixed', bottom: '24px', right: '24px', zIndex: 50, fontFamily: 'JetBrains Mono, monospace' }}>
       {open && (
-        <div style={{ background: 'var(--bg-1)', border: '1px solid var(--border)', marginBottom: '8px', width: '280px' }}>
+        <div style={{ background: 'var(--bg-1)', border: '1px solid var(--border)', marginBottom: '8px', width: '280px', maxHeight: '420px', overflowY: 'auto' }}>
           <div style={{ padding: '10px 14px', borderBottom: '1px solid var(--border)', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
             <span style={{ color: 'var(--accent)', fontSize: '10px', letterSpacing: '2px', fontWeight: 700 }}>WATCHLIST</span>
             <a href="/watchlist" style={{ color: 'var(--text-3)', fontSize: '9px', letterSpacing: '1px', textDecoration: 'none' }}>VIEW ALL →</a>

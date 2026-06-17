@@ -37,6 +37,19 @@ export async function POST(request) {
       status: 'active',
       updated_at: new Date().toISOString(),
     });
+
+    // Unlock pro_subscriber achievement (best-effort)
+    try {
+      const { data: existing } = await supabase
+        .from('user_achievements')
+        .select('id')
+        .eq('user_id', userId)
+        .eq('achievement_type', 'pro_subscriber')
+        .single();
+      if (!existing) {
+        await supabase.from('user_achievements').insert([{ user_id: userId, achievement_type: 'pro_subscriber' }]);
+      }
+    } catch (_) {}
   }
 
   if (event.type === 'customer.subscription.deleted') {
