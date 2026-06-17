@@ -195,7 +195,7 @@ export default function Home() {
           <div style={{ marginBottom: '24px' }}>
             <div style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', background: 'var(--accent-dim)', border: '1px solid var(--accent)', padding: '4px 12px', marginBottom: '16px' }}>
               <span style={{ width: 6, height: 6, borderRadius: '50%', background: 'var(--green)', display: 'inline-block' }} />
-              <span style={{ color: 'var(--accent)', fontSize: '10px', letterSpacing: '2px', fontWeight: 700 }}>LIVE · SEC EDGAR · FINNHUB</span>
+              <span style={{ color: 'var(--accent)', fontSize: '10px', letterSpacing: '2px', fontWeight: 700 }}>DATA FROM COMPANY FILINGS</span>
             </div>
             <h1 style={{ fontSize: '32px', fontWeight: 700, letterSpacing: '-1.5px', lineHeight: 1.05, marginBottom: '20px' }}>
               Know if a stock is worth it.<span style={{ color: 'var(--accent)' }}> In seconds.</span>
@@ -203,7 +203,7 @@ export default function Home() {
             <div style={{ display: 'flex', marginBottom: '12px' }}>
               <input
                 style={{ flex: 1, background: 'var(--bg-2)', border: '1px solid var(--border-2)', borderRight: 'none', color: 'var(--accent)', fontFamily: 'JetBrains Mono, monospace', fontSize: '18px', fontWeight: 700, padding: '12px 16px', outline: 'none', letterSpacing: '3px' }}
-                placeholder="AAPL"
+                placeholder="Search a Company, e.g. Apple"
                 value={ticker}
                 onChange={e => setTicker(e.target.value.toUpperCase())}
                 onKeyDown={e => e.key === 'Enter' && go()}
@@ -469,8 +469,8 @@ export default function Home() {
           {/* Stats below SOTW */}
           <div style={{ background: 'var(--bg-1)', border: '1px solid var(--border)', padding: '20px 28px', display: 'flex', gap: '40px', alignItems: 'center', justifyContent: 'center' }}>
             {[
-              { val: '8,000+', label: 'US STOCKS' },
-              { val: '100%', label: 'PRIMARY DATA' },
+              { val: '8,000+', label: 'US COMPANIES' },
+              { val: '100%', label: 'ACCURATE DATA' },
               { val: 'FREE', label: 'TO START' },
             ].map(s => (
               <div key={s.label} style={{ textAlign: 'center' }}>
