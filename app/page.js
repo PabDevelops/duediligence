@@ -309,15 +309,27 @@ export default function Home() {
             </div>
           </div>
 
-          {movers && (
-            <div style={{ marginBottom: '16px' }}>
-              <div style={{ fontFamily: 'JetBrains Mono, monospace', color: 'var(--text-3)', fontSize: '11px', letterSpacing: '2px', marginBottom: '10px', paddingLeft: '4px' }}>MARKET MOVERS</div>
-              <div style={{ background: 'var(--bg-1)', border: '1px solid var(--border)', borderRadius: '16px', overflow: 'hidden' }}>
-                <TableHeader title="▲ TOP GAINERS" color="var(--green)" />
-                {movers.gainers.slice(0, 5).map(s => <MoverRow key={s.ticker} s={s} router={router} />)}
+          {/* HOW IT WORKS */}
+        <div style={{ marginBottom: '48px' }}>
+          <div style={{ color: 'var(--text-3)', fontSize: '18px', letterSpacing: '3px', marginBottom: '24px', borderBottom: '1px solid var(--border)', paddingBottom: '8px' }}>
+            HOW IT WORKS
+          </div>
+          <div className="how-it-works-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '1px', background: 'var(--border)' }}>
+            {[
+              { step: '01', title: 'SEARCH A COMPANY', desc: 'Search any company by name. Traqcker fetches real-time data directly from company filings.' },
+              { step: '02', title: 'DOES IT DESERVE YOUR MONEY?', desc: 'See instantly if the company is financially healthy and worth your investment' },
+              { step: '03', title: 'MAKE THE DECISION', desc: 'No recommendations. JUST the necessary information you need to know to make the decision' },
+            ].map(s => (
+              <div key={s.step} style={{ background: 'var(--bg-1)', padding: '24px' }}>
+                <div style={{ color: 'var(--accent)', fontSize: '32px', fontWeight: 700, letterSpacing: '-1px', marginBottom: '12px', opacity: 0.4 }}>{s.step}</div>
+                <div style={{ color: 'var(--text)', fontSize: '12px', fontWeight: 700, letterSpacing: '1px', marginBottom: '8px' }}>{s.title}</div>
+                <div style={{ color: 'var(--text-3)', fontSize: '11px', lineHeight: 1.7 }}>{s.desc}</div>
               </div>
-            </div>
-          )}
+            ))}
+          </div>
+        </div>
+
+         
 
           <div style={{ borderTop: '1px solid var(--border)', paddingTop: '16px', color: 'var(--text-3)', fontSize: '9px', letterSpacing: '1px', textAlign: 'center' }}>
             <div style={{ display: 'flex', gap: '16px', justifyContent: 'center', marginBottom: '8px', alignItems: 'center' }}>
@@ -551,25 +563,7 @@ export default function Home() {
       {/* STATS BAR */}
       <div style={{ maxWidth: '1400px', margin: '0 auto', padding: '32px 24px' }}>
 
-        {/* HOW IT WORKS */}
-        <div style={{ marginBottom: '48px' }}>
-          <div style={{ color: 'var(--text-3)', fontSize: '9px', letterSpacing: '3px', marginBottom: '24px', borderBottom: '1px solid var(--border)', paddingBottom: '8px' }}>
-            HOW IT WORKS
-          </div>
-          <div className="how-it-works-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '1px', background: 'var(--border)' }}>
-            {[
-              { step: '01', title: 'SEARCH A COMPANY', desc: 'Search any company by name. Traqcker fetches real-time data directly from company filings.' },
-              { step: '02', title: 'DOES IT DESERVE YOUR MONEY?', desc: 'See instantly if the company is financially healthy and worth your investment' },
-              { step: '03', title: 'MAKE THE DECISION', desc: 'No recommendations. JUST the necessary information you need to know to make the decision' },
-            ].map(s => (
-              <div key={s.step} style={{ background: 'var(--bg-1)', padding: '24px' }}>
-                <div style={{ color: 'var(--accent)', fontSize: '32px', fontWeight: 700, letterSpacing: '-1px', marginBottom: '12px', opacity: 0.4 }}>{s.step}</div>
-                <div style={{ color: 'var(--text)', fontSize: '12px', fontWeight: 700, letterSpacing: '1px', marginBottom: '8px' }}>{s.title}</div>
-                <div style={{ color: 'var(--text-3)', fontSize: '11px', lineHeight: 1.7 }}>{s.desc}</div>
-              </div>
-            ))}
-          </div>
-        </div>
+        
 
 
         {/* CTA BOTTOM */}
