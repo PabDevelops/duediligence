@@ -373,7 +373,7 @@ export default function Home() {
           <div style={{ position: 'relative', zIndex: 50, maxWidth: '600px' }}>
             <div style={{ display: 'flex' }}>
               <input
-                style={{ flex: 1, background: 'var(--bg-2)', border: '1px solid var(--border-2)', borderRight: 'none', color: 'var(--accent)', fontFamily: 'JetBrains Mono, monospace', fontSize: '22px', fontWeight: 700, padding: '14px 20px', outline: 'none', letterSpacing: '4px' }}
+                style={{ flex: 1, background: 'var(--bg-2)', border: '1px solid var(--border-2)', borderRight: 'none', color: 'var(--accent)', fontFamily: 'JetBrains Mono, monospace', fontSize: '18px', fontWeight: 700, padding: '14px 20px', outline: 'none', letterSpacing: '4px' }}
                 placeholder="Search a Company, e.g. Apple"
                 value={searchQ || ticker}
                 onChange={e => { const v = e.target.value; setSearchQ(v); setTicker(v.toUpperCase()); setShowSuggestions(true); }}
