@@ -419,7 +419,7 @@ export default function Home() {
         </div>
 
         {/* Bottom: SOTW left | Spin right */}
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', alignItems: 'start' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', alignItems: 'stretch' }}>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
 
           {/* SOTW */}
@@ -467,13 +467,13 @@ export default function Home() {
           )}
 
           {/* Stats below SOTW */}
-          <div style={{ background: 'var(--bg-1)', border: '1px solid var(--border)', padding: '20px 28px', display: 'flex', gap: '40px', alignItems: 'center' }}>
+          <div style={{ background: 'var(--bg-1)', border: '1px solid var(--border)', padding: '20px 28px', display: 'flex', gap: '40px', alignItems: 'center', justifyContent: 'center' }}>
             {[
               { val: '8,000+', label: 'US STOCKS' },
               { val: '100%', label: 'PRIMARY DATA' },
               { val: 'FREE', label: 'TO START' },
             ].map(s => (
-              <div key={s.label}>
+              <div key={s.label} style={{ textAlign: 'center' }}>
                 <div style={{ color: 'var(--accent)', fontSize: '20px', fontWeight: 700, letterSpacing: '-0.5px' }}>{s.val}</div>
                 <div style={{ color: 'var(--text-3)', fontSize: '9px', letterSpacing: '2px', marginTop: '2px' }}>{s.label}</div>
               </div>
@@ -482,11 +482,11 @@ export default function Home() {
           </div>
 
             {/* Discover / Slot machine */}
-            <div style={{ background: 'var(--bg-1)', border: '1px solid var(--border)', padding: '24px 28px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
+            <div style={{ background: 'var(--bg-1)', border: '1px solid var(--border)', padding: '24px 28px', display: 'flex', flexDirection: 'column', gap: '16px', boxSizing: 'border-box' }}>
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                <div>
-                  <div style={{ color: 'var(--accent)', fontSize: '10px', letterSpacing: '2px', marginBottom: '4px' }}>⚡ SPIN THE MARKET</div>
-                  <div style={{ color: 'var(--text-2)', fontSize: '11px' }}>Discover a random stock from 8,000+</div>
+                <div style={{ flex: 1, textAlign: 'center' }}>
+                  <div style={{ color: 'var(--accent)', fontSize: '16px', fontWeight: 700, letterSpacing: '2px', marginBottom: '6px' }}>⚡ SPIN THE MARKET</div>
+                  <div style={{ color: 'var(--text-2)', fontSize: '12px' }}>Discover a random stock from 8,000+</div>
                 </div>
                 {discoverRemaining !== null && discoverRemaining !== 'unlimited' && discoverState !== 'limited' && (
                   <span style={{ color: 'var(--text-3)', fontSize: '10px', letterSpacing: '1px', background: 'var(--bg-2)', border: '1px solid var(--border)', padding: '3px 8px' }}>
