@@ -423,24 +423,26 @@ export default function Home() {
 
           {/* SOTW */}
           {sotw ? (
-            <div style={{ background: 'var(--bg-1)', padding: '24px 28px' }}>
-              <a href={`/stock/${sotw.ticker}`} style={{ textDecoration: 'none', display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '12px' }}>
-                <span style={{ fontSize: '16px' }}>🔥</span>
-                <span style={{ color: 'var(--accent)', fontSize: '10px', fontWeight: 700, letterSpacing: '1px' }}>STOCK OF THE WEEK</span>
-                <span style={{ color: 'var(--text)', fontSize: '13px', fontWeight: 700 }}>{sotw.ticker}</span>
-                <span style={{ color: 'var(--text-3)', fontSize: '11px' }}>– {sotw.name}</span>
-              </a>
-              <div style={{ display: 'flex', height: '6px', overflow: 'hidden', marginBottom: '6px' }}>
-                <div style={{ background: 'var(--green)', width: `${sotwVotes.BUY}%`, transition: 'width 0.4s' }} />
-                <div style={{ background: 'var(--amber)', width: `${sotwVotes.HOLD}%`, transition: 'width 0.4s' }} />
-                <div style={{ background: 'var(--red)', width: `${sotwVotes.SELL}%`, transition: 'width 0.4s' }} />
+            <div style={{ background: 'var(--bg-1)', padding: '24px 28px', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
+              <div>
+                <a href={`/stock/${sotw.ticker}`} style={{ textDecoration: 'none', display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '16px' }}>
+                  <span style={{ fontSize: '16px' }}>🔥</span>
+                  <span style={{ color: 'var(--accent)', fontSize: '10px', fontWeight: 700, letterSpacing: '1px' }}>STOCK OF THE WEEK</span>
+                  <span style={{ color: 'var(--text)', fontSize: '13px', fontWeight: 700 }}>{sotw.ticker}</span>
+                  <span style={{ color: 'var(--text-3)', fontSize: '11px' }}>– {sotw.name}</span>
+                </a>
+                <div style={{ display: 'flex', height: '6px', overflow: 'hidden', marginBottom: '8px' }}>
+                  <div style={{ background: 'var(--green)', width: `${sotwVotes.BUY}%`, transition: 'width 0.4s' }} />
+                  <div style={{ background: 'var(--amber)', width: `${sotwVotes.HOLD}%`, transition: 'width 0.4s' }} />
+                  <div style={{ background: 'var(--red)', width: `${sotwVotes.SELL}%`, transition: 'width 0.4s' }} />
+                </div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '10px' }}>
+                  <span style={{ color: 'var(--green)' }}>● {sotwVotes.BUY}% Buy</span>
+                  <span style={{ color: 'var(--text-3)' }}>{sotwVotes.total} votes</span>
+                  <span style={{ color: 'var(--red)' }}>{sotwVotes.SELL}% Sell ●</span>
+                </div>
               </div>
-              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '10px', marginBottom: '12px' }}>
-                <span style={{ color: 'var(--green)' }}>● {sotwVotes.BUY}% Buy</span>
-                <span style={{ color: 'var(--text-3)' }}>{sotwVotes.total} votes</span>
-                <span style={{ color: 'var(--red)' }}>{sotwVotes.SELL}% Sell ●</span>
-              </div>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', borderTop: '1px solid var(--border)' }}>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', borderTop: '1px solid var(--border)', marginTop: '16px' }}>
                 {['BUY', 'HOLD', 'SELL'].map((v, i) => (
                   <button key={v}
                     onClick={async (e) => {
@@ -449,7 +451,7 @@ export default function Home() {
                       await fetch('/api/votes', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ ticker: sotw.ticker, vote: v }) });
                       fetch(`/api/votes?ticker=${sotw.ticker}`).then(r => r.json()).then(d => setSotwVotes({ ...d.percentages, total: d.total }));
                     }}
-                    style={{ padding: '10px', background: 'none', border: 'none', borderRight: i < 2 ? '1px solid var(--border)' : 'none', color: v === 'BUY' ? 'var(--green)' : v === 'SELL' ? 'var(--red)' : 'var(--amber)', fontFamily: 'JetBrains Mono, monospace', fontWeight: 700, fontSize: '11px', cursor: 'pointer', letterSpacing: '1px' }}
+                    style={{ padding: '14px 10px', background: 'none', border: 'none', borderRight: i < 2 ? '1px solid var(--border)' : 'none', color: v === 'BUY' ? 'var(--green)' : v === 'SELL' ? 'var(--red)' : 'var(--amber)', fontFamily: 'JetBrains Mono, monospace', fontWeight: 700, fontSize: '11px', cursor: 'pointer', letterSpacing: '1px' }}
                     onMouseEnter={e => e.currentTarget.style.background = 'var(--bg-2)'}
                     onMouseLeave={e => e.currentTarget.style.background = 'none'}>
                     {v}
