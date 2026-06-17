@@ -541,12 +541,10 @@ export default function Home() {
       </div>
 
       {/* STATS BAR */}
-      <div style={{ borderBottom: '1px solid var(--border)', background: 'var(--bg-1)' }}>
+      <div style={{ borderBottom: '1px solid var(--border)', background: 'var(--bg-1)', marginTop: '32px' }}>
         <div style={{ maxWidth: '1400px', margin: '0 auto', padding: '16px 24px', display: 'flex', gap: '48px', alignItems: 'center' }}>
           {[
             { val: '8,000+', label: 'US STOCKS' },
-            { val: '15', label: 'DD QUESTIONS' },
-            { val: '5', label: 'ANALYSIS DIMENSIONS' },
             { val: '100%', label: 'PRIMARY DATA' },
             { val: 'FREE', label: 'TO START' },
           ].map(s => (

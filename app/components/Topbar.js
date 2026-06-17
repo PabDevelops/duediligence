@@ -89,7 +89,7 @@ export default function Topbar() {
         </div>
 
         {/* Desktop nav */}
-        <div className="desktop-nav" style={{ display: 'flex', alignItems: 'center', gap: '20px', flex: 1 }}>
+        <div className="desktop-nav" style={{ display: 'flex', alignItems: 'center', gap: '20px', flex: 1, justifyContent: 'flex-end' }}>
           {/* Search */}
           <div style={{ position: 'relative' }}>
             <div style={{ display: 'flex', gap: '0' }}>
