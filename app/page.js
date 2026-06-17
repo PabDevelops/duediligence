@@ -420,6 +420,7 @@ export default function Home() {
 
         {/* Bottom: SOTW left | Spin right */}
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', alignItems: 'start' }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
 
           {/* SOTW */}
           {sotw ? (
@@ -464,6 +465,21 @@ export default function Home() {
               <span style={{ color: 'var(--text-3)', fontSize: '10px', letterSpacing: '2px' }}>LOADING...</span>
             </div>
           )}
+
+          {/* Stats below SOTW */}
+          <div style={{ background: 'var(--bg-1)', border: '1px solid var(--border)', padding: '20px 28px', display: 'flex', gap: '40px', alignItems: 'center' }}>
+            {[
+              { val: '8,000+', label: 'US STOCKS' },
+              { val: '100%', label: 'PRIMARY DATA' },
+              { val: 'FREE', label: 'TO START' },
+            ].map(s => (
+              <div key={s.label}>
+                <div style={{ color: 'var(--accent)', fontSize: '20px', fontWeight: 700, letterSpacing: '-0.5px' }}>{s.val}</div>
+                <div style={{ color: 'var(--text-3)', fontSize: '9px', letterSpacing: '2px', marginTop: '2px' }}>{s.label}</div>
+              </div>
+            ))}
+          </div>
+          </div>
 
             {/* Discover / Slot machine */}
             <div style={{ background: 'var(--bg-1)', border: '1px solid var(--border)', padding: '24px 28px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
@@ -533,21 +549,6 @@ export default function Home() {
       </div>
 
       {/* STATS BAR */}
-      <div style={{ borderBottom: '1px solid var(--border)', background: 'var(--bg-1)', marginTop: '32px' }}>
-        <div style={{ maxWidth: '1400px', margin: '0 auto', padding: '16px 24px', display: 'flex', gap: '48px', alignItems: 'center' }}>
-          {[
-            { val: '8,000+', label: 'US STOCKS' },
-            { val: '100%', label: 'PRIMARY DATA' },
-            { val: 'FREE', label: 'TO START' },
-          ].map(s => (
-            <div key={s.label} style={{ textAlign: 'center' }}>
-              <div style={{ color: 'var(--accent)', fontSize: '18px', fontWeight: 700, letterSpacing: '-0.5px' }}>{s.val}</div>
-              <div style={{ color: 'var(--text-3)', fontSize: '9px', letterSpacing: '2px', marginTop: '2px' }}>{s.label}</div>
-            </div>
-          ))}
-        </div>
-      </div>
-
       <div style={{ maxWidth: '1400px', margin: '0 auto', padding: '32px 24px' }}>
 
         {/* MARKET DATA */}
