@@ -443,62 +443,20 @@ export default function Home() {
               ))}
             </div>
 
-            {/* Stock of the Week — compact card below search */}
-            {sotw && (
-              <div style={{ marginBottom: '24px', background: 'var(--bg-1)', border: '1px solid var(--accent)', borderRadius: '12px', overflow: 'hidden' }}>
-                {/* Header row: label + ticker name — clicking navega al stock */}
-                <a href={`/stock/${sotw.ticker}`} style={{ textDecoration: 'none', display: 'flex', alignItems: 'center', gap: '10px', padding: '12px 16px', borderBottom: '1px solid var(--border)' }}>
-                  <span style={{ fontSize: '16px' }}>🔥</span>
-                  <span style={{ color: 'var(--accent)', fontSize: '10px', fontWeight: 700, letterSpacing: '1px' }}>STOCK OF THE WEEK</span>
-                  <span style={{ color: 'var(--text)', fontSize: '13px', fontWeight: 700, marginLeft: '4px' }}>{sotw.ticker}</span>
-                  <span style={{ color: 'var(--text-3)', fontSize: '12px' }}>– {sotw.name}</span>
-                </a>
-
-                {/* Consensus bar — barra de colores proporcional a los votos */}
-                <div style={{ padding: '10px 16px' }}>
-                  <div style={{ display: 'flex', height: '8px', borderRadius: '4px', overflow: 'hidden', marginBottom: '6px' }}>
-                    <div style={{ background: 'var(--green)', width: `${sotwVotes.BUY}%`, transition: 'width 0.4s' }} />
-                    <div style={{ background: 'var(--amber)', width: `${sotwVotes.HOLD}%`, transition: 'width 0.4s' }} />
-                    <div style={{ background: 'var(--red)', width: `${sotwVotes.SELL}%`, transition: 'width 0.4s' }} />
-                  </div>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '10px', color: 'var(--text-3)' }}>
-                    <span style={{ color: 'var(--green)' }}>● {sotwVotes.BUY}% Buy</span>
-                    <span style={{ color: 'var(--text-3)' }}>{sotwVotes.total} {sotwVotes.total === 1 ? 'vote' : 'votes'}</span>
-                    <span style={{ color: 'var(--red)' }}>{sotwVotes.SELL}% Sell ●</span>
-                  </div>
+            {/* Feature cards */}
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '1px', background: 'var(--border)', marginBottom: '24px' }}>
+              {[
+                { icon: '🟢', title: 'Easy Score', desc: '0-100 verdict on any stock' },
+                { icon: '👍', title: 'Community', desc: 'Buy, Hold or Sell votes' },
+                { icon: '💰', title: 'Price Check', desc: 'Over, fair or underpriced?' },
+              ].map(f => (
+                <div key={f.title} style={{ background: 'var(--bg-1)', padding: '16px' }}>
+                  <div style={{ fontSize: '18px', marginBottom: '6px' }}>{f.icon}</div>
+                  <div style={{ color: 'var(--text)', fontSize: '11px', fontWeight: 700, letterSpacing: '0.5px', marginBottom: '4px' }}>{f.title}</div>
+                  <div style={{ color: 'var(--text-3)', fontSize: '10px', lineHeight: 1.5 }}>{f.desc}</div>
                 </div>
-
-                {/* Botones de voto — stopPropagation evita que el click navegue al stock */}
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', borderTop: '1px solid var(--border)' }}>
-                  {['BUY', 'HOLD', 'SELL'].map((v, i) => (
-                    <button key={v}
-                      onClick={async (e) => {
-                        e.preventDefault();
-                        if (!isSignedIn) { router.push('/sign-in'); return; }
-                        await fetch('/api/votes', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ ticker: sotw.ticker, vote: v }) });
-                        fetch(`/api/votes?ticker=${sotw.ticker}`).then(r => r.json()).then(d => setSotwVotes({ ...d.percentages, total: d.total }));
-                      }}
-                      style={{
-                        padding: '10px',
-                        background: 'none',
-                        border: 'none',
-                        borderRight: i < 2 ? '1px solid var(--border)' : 'none',
-                        color: v === 'BUY' ? 'var(--green)' : v === 'SELL' ? 'var(--red)' : 'var(--amber)',
-                        fontFamily: 'JetBrains Mono, monospace',
-                        fontWeight: 700,
-                        fontSize: '11px',
-                        cursor: 'pointer',
-                        letterSpacing: '1px',
-                        transition: 'background 0.15s',
-                      }}
-                      onMouseEnter={e => { e.currentTarget.style.background = 'var(--bg-2)'; }}
-                      onMouseLeave={e => { e.currentTarget.style.background = 'none'; }}>
-                      {v}
-                    </button>
-                  ))}
-                </div>
-              </div>
-            )}
+              ))}
+            </div>
 
             {/* CTAs */}
             <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
