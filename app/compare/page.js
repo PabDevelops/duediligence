@@ -178,7 +178,7 @@ export default function Compare() {
   );
 
   return (
-    <div style={{ background: 'var(--bg)', minHeight: '100vh', color: 'var(--text)', fontFamily: 'Space Grotesk, sans-serif' }}>
+    <div style={{ background: 'var(--bg)', minHeight: '100vh', color: 'var(--text)', fontFamily: 'Space Grotesk, sans-serif', paddingBottom: 'calc(72px + env(safe-area-inset-bottom, 0px))' }}>
 
       <Topbar />
 

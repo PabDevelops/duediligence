@@ -97,7 +97,7 @@ const loadSparkline = async (ticker) => {
   const activeFilterCount = Object.values(filters).filter(v => v !== '').length + (sector !== 'All' ? 1 : 0);
 
   return (
-    <div style={{ background: 'var(--bg)', minHeight: '100vh', color: 'var(--text)', fontFamily: 'Inter, sans-serif' }}>
+    <div className="screener-root" style={{ background: 'var(--bg)', minHeight: '100vh', color: 'var(--text)', fontFamily: 'Inter, sans-serif' }}>
 
       <Topbar />
       {/* Search bar */}
@@ -372,6 +372,11 @@ onMouseLeave={e => e.currentTarget.style.background = 'var(--bg-1)'}>
           </div>
         </div>
       )}
+      <style>{`
+        @media (max-width: 767px) {
+          .screener-root { padding-bottom: calc(72px + env(safe-area-inset-bottom, 0px)) !important; }
+        }
+      `}</style>
     </div>
   );
 }

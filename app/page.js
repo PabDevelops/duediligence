@@ -1,8 +1,10 @@
 'use client';
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import { useUser } from '@clerk/nextjs';
 import MarketBar from './components/MarketBar';
 import Topbar from './components/Topbar';
+import MobileHeader from './components/MobileHeader';
 
 const fmt = (val) => {
   if (val === null || val === undefined) return '—';
@@ -93,6 +95,7 @@ export default function Home() {
   const [sotw, setSotw] = useState(null); // { ticker, name } or null
   const [sotwVotes, setSotwVotes] = useState({ BUY: 0, HOLD: 0, SELL: 0, total: 0 });
   const router = useRouter();
+  const { isSignedIn } = useUser();
 
   useEffect(() => {
     fetch('/api/stock-of-week')

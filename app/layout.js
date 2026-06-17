@@ -6,16 +6,16 @@ import BottomNav from './components/BottomNav';
 import { Analytics } from '@vercel/analytics/react';
 
 export const metadata = {
-  title: "Traqcker — Fundamental Stock Analysis",
-  description: "Easy Mode score and plain-English verdict for any stock. Free access to 260+ companies with SEC data.",
+  title: "Traqcker — Stock Analysis in Seconds",
+  description: "Know if a stock is worth it in seconds. Easy score, fair value, and community votes for 8,000+ US stocks. Free.",
   icons: {
     icon: '/favicon.png',
     apple: '/apple-touch-icon.png',
     other: [{ rel: 'icon', url: '/icon-512.png', sizes: '512x512' }],
   },
   openGraph: {
-    title: "Traqcker — Easy Mode Stock Analysis",
-    description: "Stock scores in seconds. Community votes. Free. Easy mode for everyday investors.",
+    title: "Traqcker — Know if a stock is worth it. In seconds.",
+    description: "Easy score, fair value check, and community Buy/Hold/Sell votes for 8,000+ US stocks. Free forever.",
     url: "https://traqcker.com",
     siteName: "Traqcker",
     images: [
@@ -27,6 +27,12 @@ export const metadata = {
     ],
     type: "website",
   },
+  twitter: {
+    card: "summary_large_image",
+    title: "Traqcker — Know if a stock is worth it. In seconds.",
+    description: "Easy score, fair value check, and community votes for 8,000+ US stocks. Free.",
+    images: ["https://traqcker.com/og-screenshot.png"],
+  },
 };
 
 export const viewport = {
@@ -36,7 +42,7 @@ export const viewport = {
 
 export default function RootLayout({ children }) {
   return (
-    <ClerkProvider publishableKey="pk_live_Y2xlcmsudHJhcWNrZXIuY29tJA">
+    <ClerkProvider publishableKey={process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY}>
       <html lang="en">
         <body>
           {children}

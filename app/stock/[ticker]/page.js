@@ -203,19 +203,57 @@ export default function StockPage({ params }) {
   };
 
   if (loading) return (
-    <div style={{ ...S.page, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-      <div style={{ textAlign: 'center' }}>
-        <div style={{ color: 'var(--accent)', fontSize: '11px', letterSpacing: '2px', marginBottom: '8px' }}>LOADING SEC EDGAR DATA...</div>
-        <div style={{ color: 'var(--text-3)', fontSize: '11px' }}>{ticker}</div>
+    <div style={{ ...S.page }}>
+      <Topbar />
+      <div style={{ maxWidth: '900px', margin: '40px auto', padding: '0 24px' }}>
+        {/* Ticker header skeleton */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '32px' }}>
+          <div style={{ width: 40, height: 40, background: 'var(--bg-1)', border: '1px solid var(--border)' }} />
+          <div>
+            <div style={{ width: 80, height: 20, background: 'var(--bg-1)', marginBottom: 6 }} />
+            <div style={{ width: 160, height: 12, background: 'var(--bg-1)' }} />
+          </div>
+        </div>
+        {/* Metric cards skeleton */}
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '1px', background: 'var(--border)', marginBottom: '24px' }}>
+          {[...Array(4)].map((_, i) => (
+            <div key={i} style={{ background: 'var(--bg-1)', padding: '16px' }}>
+              <div style={{ width: '60%', height: 10, background: 'var(--bg-2)', marginBottom: 10 }} />
+              <div style={{ width: '80%', height: 22, background: 'var(--bg-2)' }} />
+            </div>
+          ))}
+        </div>
+        {/* Content skeleton */}
+        {[...Array(3)].map((_, i) => (
+          <div key={i} style={{ height: 60, background: 'var(--bg-1)', border: '1px solid var(--border)', marginBottom: '1px' }} />
+        ))}
+        <div style={{ marginTop: '20px', color: 'var(--text-3)', fontSize: '10px', letterSpacing: '2px', textAlign: 'center' }}>
+          FETCHING {ticker} FROM SEC EDGAR...
+        </div>
       </div>
     </div>
   );
 
   if (error) return (
-    <div style={{ ...S.page, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-      <div style={{ textAlign: 'center' }}>
-        <div style={{ color: 'var(--red)', fontSize: '11px', marginBottom: '8px' }}>ERROR: {error}</div>
-        <a href="/" style={{ color: 'var(--text-3)', fontSize: '11px' }}>← BACK</a>
+    <div style={{ ...S.page }}>
+      <Topbar />
+      <div style={{ maxWidth: '480px', margin: '80px auto', padding: '0 24px', textAlign: 'center' }}>
+        <div style={{ fontSize: '32px', marginBottom: '16px' }}>🔍</div>
+        <div style={{ fontFamily: 'Space Grotesk, sans-serif', fontSize: '20px', fontWeight: 700, marginBottom: '8px' }}>
+          Ticker not found
+        </div>
+        <div style={{ color: 'var(--text-3)', fontSize: '13px', marginBottom: '32px', lineHeight: 1.6 }}>
+          <strong style={{ color: 'var(--accent)' }}>{ticker}</strong> wasn't found in SEC EDGAR or Finnhub.
+          Try checking the ticker symbol or search for a different stock.
+        </div>
+        <div style={{ display: 'flex', gap: '12px', justifyContent: 'center' }}>
+          <a href="/" style={{ background: 'var(--accent)', color: '#000', padding: '10px 20px', fontFamily: 'JetBrains Mono, monospace', fontSize: '11px', fontWeight: 700, letterSpacing: '1px', textDecoration: 'none' }}>
+            ← SEARCH AGAIN
+          </a>
+          <a href="/screener" style={{ background: 'none', border: '1px solid var(--border)', color: 'var(--text-3)', padding: '10px 20px', fontFamily: 'JetBrains Mono, monospace', fontSize: '11px', letterSpacing: '1px', textDecoration: 'none' }}>
+            SCREENER →
+          </a>
+        </div>
       </div>
     </div>
   );

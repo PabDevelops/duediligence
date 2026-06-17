@@ -28,8 +28,8 @@ export default function Pricing() {
     setLoading(null);
   };
 
-  const MONTHLY_ID = process.env.NEXT_PUBLIC_STRIPE_PRICE_MONTHLY || 'price_1TfcvtPqu5l8d1hxrUZUlT1E';
-  const ANNUAL_ID = process.env.NEXT_PUBLIC_STRIPE_PRICE_ANNUAL || 'price_1TfcvtPqu5l8d1hxz5cmBDqO';
+  const MONTHLY_ID = process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY ? process.env.NEXT_PUBLIC_STRIPE_PRICE_MONTHLY : 'price_1TfSfrLMHeyYvnlV7VzKo3Hc';
+  const ANNUAL_ID = process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY ? process.env.NEXT_PUBLIC_STRIPE_PRICE_ANNUAL : 'price_1TfSh7LMHeyYvnlVdmrYKhJj';
 
   return (
     <div style={{ background: 'var(--bg)', minHeight: '100vh', color: 'var(--text)', fontFamily: 'Inter, sans-serif' }}>
