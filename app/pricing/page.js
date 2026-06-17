@@ -54,7 +54,7 @@ export default function Pricing() {
           </button>
           <button onClick={() => setAnnual(true)}
             style={{ flex: 1, padding: '10px 16px', borderRadius: '12px', background: annual ? 'var(--accent)' : 'var(--bg-1)', color: annual ? '#0B0E14' : 'var(--text-2)', border: annual ? 'none' : '1px solid var(--border)', fontFamily: 'Space Grotesk, sans-serif', fontSize: '12px', fontWeight: 700, cursor: 'pointer', letterSpacing: '0.3px' }}>
-            Annual · Save 17%
+            Annual · Save 27%
           </button>
         </div>
 
@@ -91,10 +91,10 @@ export default function Pricing() {
             </div>
             <div style={{ color: 'var(--accent)', fontSize: '11px', letterSpacing: '2px', marginBottom: '12px', fontFamily: 'JetBrains Mono, monospace' }}>PRO</div>
             <div style={{ fontFamily: 'Space Grotesk, sans-serif', fontSize: '32px', fontWeight: 700, marginBottom: '4px' }}>
-              {annual ? '£9.99' : '£11.99'}
+              {annual ? '$2.92' : '$3.99'}
             </div>
             <div style={{ color: 'var(--text-3)', fontSize: '12px', marginBottom: '20px' }}>
-              {annual ? '/month · billed £119.88/year' : '/month'}
+              {annual ? '/month · billed $34.99/year' : '/month'}
             </div>
             <div style={{ borderTop: '1px solid var(--border)', paddingTop: '18px', marginBottom: '20px', display: 'flex', flexDirection: 'column', gap: '10px' }}>
               {[
