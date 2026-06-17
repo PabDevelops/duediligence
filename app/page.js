@@ -191,132 +191,122 @@ export default function Home() {
       {isMobile && (
         <div style={{ padding: '20px 16px' }}>
 
-          {/* Hero card */}
-          <div style={{ background: 'var(--bg-1)', border: '1px solid var(--border)', borderRadius: '20px', padding: '24px 20px', marginBottom: '16px' }}>
-            <h1 style={{ fontFamily: 'Space Grotesk, sans-serif', fontSize: '30px', fontWeight: 700, letterSpacing: '-0.5px', lineHeight: 1.15, marginBottom: '12px' }}>
-              Know if a stock is worth buying.<br />
-              <span style={{ color: 'var(--accent)' }}>In seconds.</span>
+          {/* Hero */}
+          <div style={{ marginBottom: '24px' }}>
+            <div style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', background: 'var(--accent-dim)', border: '1px solid var(--accent)', padding: '4px 12px', marginBottom: '16px' }}>
+              <span style={{ width: 6, height: 6, borderRadius: '50%', background: 'var(--green)', display: 'inline-block' }} />
+              <span style={{ color: 'var(--accent)', fontSize: '10px', letterSpacing: '2px', fontWeight: 700 }}>LIVE · SEC EDGAR · FINNHUB</span>
+            </div>
+            <h1 style={{ fontSize: '32px', fontWeight: 700, letterSpacing: '-1.5px', lineHeight: 1.05, marginBottom: '20px' }}>
+              Know if a stock is worth it.<span style={{ color: 'var(--accent)' }}> In seconds.</span>
             </h1>
-            <p style={{ color: 'var(--text-2)', fontSize: '13px', lineHeight: 1.7, marginBottom: '20px' }}>
-              Type a ticker. Get a simple score, a fair value, and what other everyday investors think. No jargon.
-            </p>
-            <div style={{ display: 'flex', gap: '0', marginBottom: '14px', borderRadius: '14px', overflow: 'hidden', border: '1px solid var(--border-2)' }}>
+            <div style={{ display: 'flex', marginBottom: '12px' }}>
               <input
-                style={{ flex: 1, minWidth: 0, background: 'var(--bg-2)', border: 'none', color: 'var(--accent)', fontFamily: 'JetBrains Mono, monospace', fontSize: '18px', fontWeight: 700, padding: '14px 16px', outline: 'none', letterSpacing: '3px' }}
+                style={{ flex: 1, background: 'var(--bg-2)', border: '1px solid var(--border-2)', borderRight: 'none', color: 'var(--accent)', fontFamily: 'JetBrains Mono, monospace', fontSize: '18px', fontWeight: 700, padding: '12px 16px', outline: 'none', letterSpacing: '3px' }}
                 placeholder="AAPL"
                 value={ticker}
                 onChange={e => setTicker(e.target.value.toUpperCase())}
                 onKeyDown={e => e.key === 'Enter' && go()}
-                maxLength={6}
+                maxLength={10}
               />
               <button onClick={() => go()}
-                style={{ flexShrink: 0, whiteSpace: 'nowrap', background: 'var(--accent)', color: '#0B0E14', border: 'none', padding: '14px 18px', fontFamily: 'Space Grotesk, sans-serif', fontSize: '13px', fontWeight: 700, cursor: 'pointer', letterSpacing: '0.5px' }}>
-                GO →
+                style={{ background: 'var(--accent)', color: '#000', border: 'none', padding: '12px 20px', fontFamily: 'JetBrains Mono, monospace', fontSize: '12px', fontWeight: 700, cursor: 'pointer', letterSpacing: '1px', whiteSpace: 'nowrap' }}>
+                ANALYZE →
               </button>
             </div>
-            <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', marginBottom: '20px' }}>
+            <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
               {['AAPL', 'MSFT', 'NVDA', 'V', 'GOOGL'].map(t => (
                 <button key={t} onClick={() => go(t)}
-                  style={{ background: 'var(--bg-2)', border: '1px solid var(--border)', borderRadius: '10px', color: 'var(--text-2)', padding: '6px 12px', fontFamily: 'JetBrains Mono, monospace', fontSize: '11px', cursor: 'pointer', letterSpacing: '1px' }}>
+                  style={{ background: 'none', border: '1px solid var(--border)', color: 'var(--text-3)', padding: '3px 10px', fontFamily: 'JetBrains Mono, monospace', fontSize: '10px', cursor: 'pointer', letterSpacing: '1px' }}>
                   {t}
                 </button>
               ))}
             </div>
-            <div style={{ display: 'flex', gap: '10px' }}>
-              <a href="/sign-up" style={{ flex: 1, background: 'var(--accent)', color: '#0B0E14', padding: '14px', borderRadius: '14px', fontFamily: 'Space Grotesk, sans-serif', fontSize: '13px', fontWeight: 700, letterSpacing: '0.3px', textDecoration: 'none', textAlign: 'center' }}>
-                Start free
-              </a>
-              <a href="/pricing" style={{ flex: 1, background: 'none', border: '1px solid var(--border-2)', borderRadius: '14px', color: 'var(--text-2)', padding: '14px', fontFamily: 'Space Grotesk, sans-serif', fontSize: '13px', fontWeight: 600, letterSpacing: '0.3px', textDecoration: 'none', textAlign: 'center' }}>
-                Pricing
-              </a>
-            </div>
           </div>
 
-          {/* Stock of the Week - MOBILE ONLY - right after hero */}
-          {sotw && (
-            <a href={`/stock/${sotw?.ticker}`} style={{ display: 'block', padding: '0', marginBottom: '24px', textDecoration: 'none' }}>
-              <div style={{ background: 'linear-gradient(135deg, var(--accent-dim), transparent)', border: '1.5px solid var(--accent)', borderRadius: '20px', padding: '24px', cursor: 'pointer', transition: 'all 0.2s', marginBottom: '16px' }} onMouseEnter={e => { e.currentTarget.style.borderColor = 'var(--accent)'; e.currentTarget.style.transform = 'scale(1.02)'; }} onMouseLeave={e => { e.currentTarget.style.borderColor = 'var(--accent)'; e.currentTarget.style.transform = 'scale(1)'; }}>
-                <div style={{ display: 'flex', alignItems: 'flex-start', gap: '14px', marginBottom: '16px' }}>
-                  <div style={{ fontSize: '28px', flexShrink: 0 }}>🔥</div>
-                  <div style={{ flex: 1 }}>
-                    <div style={{ fontFamily: 'Space Grotesk, sans-serif', color: 'var(--accent)', fontWeight: 600, fontSize: '11px', letterSpacing: '1px', marginBottom: '4px' }}>STOCK OF THE WEEK</div>
-                    <div style={{ fontFamily: 'Space Grotesk, sans-serif', fontSize: '16px', fontWeight: 700, color: 'var(--text)' }}>
-                      {sotw?.ticker}
-                      <span style={{ fontSize: '13px', fontWeight: 500, color: 'var(--text-2)', marginLeft: '6px' }}>– {sotw?.name}</span>
-                    </div>
-                  </div>
+          {/* SOTW + Spin stacked */}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '1px', background: 'var(--border)', marginBottom: '32px' }}>
+            {/* SOTW */}
+            {sotw ? (
+              <div style={{ background: 'var(--bg-1)', padding: '20px' }}>
+                <a href={`/stock/${sotw.ticker}`} style={{ textDecoration: 'none', display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '12px' }}>
+                  <span style={{ fontSize: '14px' }}>🔥</span>
+                  <span style={{ color: 'var(--accent)', fontSize: '10px', fontWeight: 700, letterSpacing: '1px' }}>STOCK OF THE WEEK</span>
+                  <span style={{ color: 'var(--text)', fontSize: '13px', fontWeight: 700 }}>{sotw.ticker}</span>
+                  <span style={{ color: 'var(--text-3)', fontSize: '11px' }}>– {sotw.name}</span>
+                </a>
+                <div style={{ display: 'flex', height: '6px', overflow: 'hidden', marginBottom: '6px' }}>
+                  <div style={{ background: 'var(--green)', width: `${sotwVotes.BUY}%` }} />
+                  <div style={{ background: 'var(--amber)', width: `${sotwVotes.HOLD}%` }} />
+                  <div style={{ background: 'var(--red)', width: `${sotwVotes.SELL}%` }} />
                 </div>
-                
-                <div style={{ borderTop: '1px solid var(--accent)', paddingTop: '16px', marginBottom: '16px' }}>
-                  <div style={{ color: 'var(--text-3)', fontSize: '10px', letterSpacing: '1px', marginBottom: '8px' }}>COMMUNITY CONSENSUS</div>
-                  <div style={{ display: 'flex', height: '12px', borderRadius: '6px', overflow: 'hidden', marginBottom: '10px' }}>
-                    <div style={{ background: `linear-gradient(90deg, var(--green) 0%, rgba(52, 211, 153, 0.7) 100%)`, width: `${sotwVotes.BUY}%` }} />
-                    <div style={{ background: `linear-gradient(90deg, var(--amber) 0%, rgba(251, 191, 36, 0.7) 100%)`, width: `${sotwVotes.HOLD}%` }} />
-                    <div style={{ background: `linear-gradient(90deg, var(--red) 0%, rgba(248, 113, 113, 0.7) 100%)`, width: `${sotwVotes.SELL}%` }} />
-                  </div>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '11px', fontFamily: 'JetBrains Mono, monospace', color: 'var(--text-2)' }}>
-                    <span>● {sotwVotes.BUY}% Buy</span>
-                    <span>● {sotwVotes.HOLD}% Hold</span>
-                    <span>● {sotwVotes.SELL}% Sell</span>
-                  </div>
-                  {sotwVotes.total > 0 && (
-                    <div style={{ marginTop: '8px', fontSize: '10px', color: 'var(--text-3)', textAlign: 'center' }}>
-                      {sotwVotes.total} {sotwVotes.total === 1 ? 'person' : 'people'} voted
-                    </div>
-                  )}
+                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '10px', marginBottom: '12px' }}>
+                  <span style={{ color: 'var(--green)' }}>● {sotwVotes.BUY}% Buy</span>
+                  <span style={{ color: 'var(--text-3)' }}>{sotwVotes.total} votes</span>
+                  <span style={{ color: 'var(--red)' }}>{sotwVotes.SELL}% Sell ●</span>
                 </div>
-
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
-                  {['BUY', 'HOLD', 'SELL'].slice(0, 2).map(v => (
-                    <button key={v} onClick={async (e) => { e.stopPropagation(); if (!isSignedIn) { router.push('/sign-in'); return; } fetch('/api/votes', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ ticker: sotw?.ticker, vote: v }) }).then(() => { fetch(`/api/votes?ticker=${sotw?.ticker}`).then(r => r.json()).then(d => setSotwVotes({ ...d.percentages, total: d.total })); }); }} style={{ padding: '10px', borderRadius: '12px', background: 'var(--accent)', color: '#0B0E14', border: 'none', fontFamily: 'Space Grotesk, sans-serif', fontWeight: 700, fontSize: '12px', cursor: 'pointer' }}>
-                      Vote {v}
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', borderTop: '1px solid var(--border)' }}>
+                  {['BUY', 'HOLD', 'SELL'].map((v, i) => (
+                    <button key={v}
+                      onClick={async (e) => { e.preventDefault(); if (!isSignedIn) { router.push('/sign-in'); return; } await fetch('/api/votes', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ ticker: sotw.ticker, vote: v }) }); fetch(`/api/votes?ticker=${sotw.ticker}`).then(r => r.json()).then(d => setSotwVotes({ ...d.percentages, total: d.total })); }}
+                      style={{ padding: '10px', background: 'none', border: 'none', borderRight: i < 2 ? '1px solid var(--border)' : 'none', color: v === 'BUY' ? 'var(--green)' : v === 'SELL' ? 'var(--red)' : 'var(--amber)', fontFamily: 'JetBrains Mono, monospace', fontWeight: 700, fontSize: '11px', cursor: 'pointer', letterSpacing: '1px' }}
+                      onMouseEnter={e => e.currentTarget.style.background = 'var(--bg-2)'}
+                      onMouseLeave={e => e.currentTarget.style.background = 'none'}>
+                      {v}
                     </button>
                   ))}
                 </div>
               </div>
-            </a>
-          )}
+            ) : (
+              <div style={{ background: 'var(--bg-1)', padding: '20px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <span style={{ color: 'var(--text-3)', fontSize: '10px', letterSpacing: '2px' }}>LOADING...</span>
+              </div>
+            )}
 
-          {/* What you get - meter-style cards instead of plain grid */}
-          <div style={{ marginBottom: '16px' }}>
-            <div style={{ fontFamily: 'JetBrains Mono, monospace', color: 'var(--text-3)', fontSize: '11px', letterSpacing: '2px', marginBottom: '10px', paddingLeft: '4px' }}>
-              WHAT YOU GET
-            </div>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-              {[
-                { icon: '🟢', title: 'Easy Mode score', desc: 'A simple 0-100 verdict for any stock' },
-                { icon: '👍', title: 'Community votes', desc: 'See what other everyday investors think' },
-                { icon: '💰', title: 'Price check', desc: 'Is it overpriced, fair, or underpriced right now?' },
-              ].map(f => (
-                <div key={f.title} style={{ background: 'var(--bg-1)', border: '1px solid var(--border)', borderRadius: '16px', padding: '14px 16px', display: 'flex', gap: '12px', alignItems: 'flex-start' }}>
-                  <div style={{ fontSize: '20px', lineHeight: 1.4 }}>{f.icon}</div>
-                  <div>
-                    <div style={{ fontFamily: 'Space Grotesk, sans-serif', color: 'var(--text)', fontSize: '14px', fontWeight: 600, marginBottom: '3px' }}>{f.title}</div>
-                    <div style={{ color: 'var(--text-3)', fontSize: '12px', lineHeight: 1.5 }}>{f.desc}</div>
-                  </div>
+            {/* Spin */}
+            <div style={{ background: 'var(--bg-1)', padding: '20px', display: 'flex', flexDirection: 'column', gap: '12px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                <div>
+                  <div style={{ color: 'var(--accent)', fontSize: '10px', letterSpacing: '2px', marginBottom: '4px' }}>⚡ SPIN THE MARKET</div>
+                  <div style={{ color: 'var(--text-2)', fontSize: '11px' }}>Discover a random stock from 8,000+</div>
                 </div>
-              ))}
-            </div>
-
-            {/* Free access callout */}
-            <div style={{ marginTop: '16px', padding: '14px 12px', background: 'rgba(167, 139, 250, 0.08)', border: '1px solid var(--accent)', borderRadius: '12px', textAlign: 'center' }}>
-              <div style={{ fontSize: '12px', color: 'var(--accent)', fontWeight: 600, letterSpacing: '0.5px' }}>
-                ✨ Everything free. No paywalls.
+                {discoverRemaining !== null && discoverRemaining !== 'unlimited' && discoverState !== 'limited' && (
+                  <span style={{ color: 'var(--text-3)', fontSize: '10px', background: 'var(--bg-2)', border: '1px solid var(--border)', padding: '3px 8px' }}>{discoverRemaining} LEFT</span>
+                )}
+              </div>
+              <div style={{ background: 'var(--bg)', border: `1.5px solid ${discoverState === 'revealed' ? 'var(--accent)' : discoverState === 'limited' ? 'var(--red)' : 'var(--border)'}`, height: '60px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <span className={discoverState === 'spinning' ? 'slot-spinning' : ''}
+                  style={{ fontFamily: 'Space Grotesk, sans-serif', fontSize: '28px', fontWeight: 700, letterSpacing: '6px', color: discoverState === 'revealed' ? 'var(--accent)' : discoverState === 'limited' ? 'var(--red)' : 'var(--text-3)' }}>
+                  {discoverState === 'idle' ? '? ? ?' : discoverSlot}
+                </span>
+              </div>
+              {discoverState !== 'limited' ? (
+                <div style={{ display: 'flex', gap: '8px' }}>
+                  <button onClick={handleDiscover} disabled={discoverState === 'spinning'}
+                    style={{ flex: 1, background: discoverState === 'spinning' ? 'var(--bg-2)' : 'var(--accent)', color: discoverState === 'spinning' ? 'var(--text-3)' : '#000', border: 'none', padding: '10px', cursor: discoverState === 'spinning' ? 'default' : 'pointer', fontFamily: 'JetBrains Mono, monospace', fontSize: '11px', fontWeight: 700, letterSpacing: '1px' }}>
+                    {discoverState === 'spinning' ? 'SPINNING...' : discoverState === 'revealed' ? '⚡ SPIN AGAIN' : '⚡ SPIN'}
+                  </button>
+                  {discoverState === 'revealed' && discoverTicker && (
+                    <button onClick={() => router.push(`/stock/${discoverTicker}`)}
+                      style={{ flex: 1, background: 'none', border: '1px solid var(--accent)', color: 'var(--accent)', padding: '10px', cursor: 'pointer', fontFamily: 'JetBrains Mono, monospace', fontSize: '11px', fontWeight: 700, letterSpacing: '1px' }}>
+                      ANALYZE →
+                    </button>
+                  )}
+                </div>
+              ) : (
+                <div>
+                  <div style={{ color: 'var(--red)', fontSize: '10px', letterSpacing: '1px', marginBottom: '8px', textAlign: 'center' }}>{isSignedIn ? 'DAILY LIMIT REACHED' : 'SIGN IN FOR MORE'}</div>
+                  <a href={isSignedIn ? '/pricing' : '/sign-up'} style={{ display: 'block', background: 'var(--accent)', color: '#000', padding: '10px', fontFamily: 'JetBrains Mono, monospace', fontSize: '11px', fontWeight: 700, letterSpacing: '1px', textDecoration: 'none', textAlign: 'center' }}>
+                    {isSignedIn ? 'UPGRADE TO PRO →' : 'SIGN UP FREE →'}
+                  </a>
+                </div>
+              )}
+              <div style={{ display: 'flex', gap: '8px', fontSize: '9px', color: 'var(--text-3)' }}>
+                <span>👤 1/day</span><span style={{ color: 'var(--border)' }}>·</span>
+                <span>🆓 Free: 3/day</span><span style={{ color: 'var(--border)' }}>·</span>
+                <span style={{ color: 'var(--accent)' }}>💎 Pro: unlimited</span>
               </div>
             </div>
-          </div>
-
-          {/* Stats strip */}
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px', marginBottom: '16px' }}>
-            {[
-              { val: '8,000+', label: 'US STOCKS' },
-              { val: 'FREE', label: 'EASY MODE' },
-            ].map(s => (
-              <div key={s.label} style={{ background: 'var(--bg-1)', border: '1px solid var(--border)', borderRadius: '16px', padding: '16px', textAlign: 'center' }}>
-                <div style={{ fontFamily: 'Space Grotesk, sans-serif', color: 'var(--accent)', fontSize: '22px', fontWeight: 700 }}>{s.val}</div>
-                <div style={{ color: 'var(--text-3)', fontSize: '10px', letterSpacing: '2px', marginTop: '4px' }}>{s.label}</div>
-              </div>
-            ))}
           </div>
 
           {movers && (
