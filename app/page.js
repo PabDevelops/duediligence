@@ -197,13 +197,13 @@ export default function Home() {
               <span style={{ width: 6, height: 6, borderRadius: '50%', background: 'var(--green)', display: 'inline-block' }} />
               <span style={{ color: 'var(--accent)', fontSize: '10px', letterSpacing: '2px', fontWeight: 700 }}>DATA FROM COMPANY FILINGS</span>
             </div>
-            <h1 style={{ fontSize: '32px', fontWeight: 700, letterSpacing: '-1.5px', lineHeight: 1.05, marginBottom: '20px' }}>
-              Know if a stock is worth it.<span style={{ color: 'var(--accent)' }}> In seconds.</span>
+            <h1 style={{ fontSize: '42px', fontWeight: 700, letterSpacing: '-1.5px', lineHeight: 1.05, marginBottom: '20px' }}>
+              Know if a company is worth it.<span style={{ color: 'var(--accent)' }}> In seconds.</span>
             </h1>
             <div style={{ display: 'flex', marginBottom: '12px' }}>
               <input
                 style={{ flex: 1, background: 'var(--bg-2)', border: '1px solid var(--border-2)', borderRight: 'none', color: 'var(--accent)', fontFamily: 'JetBrains Mono, monospace', fontSize: '18px', fontWeight: 700, padding: '12px 16px', outline: 'none', letterSpacing: '3px' }}
-                placeholder="Search a Company, e.g. Apple"
+                placeholder="Search a Company"
                 value={ticker}
                 onChange={e => setTicker(e.target.value.toUpperCase())}
                 onKeyDown={e => e.key === 'Enter' && go()}
@@ -365,8 +365,8 @@ export default function Home() {
             <span style={{ color: 'var(--accent)', fontSize: '10px', letterSpacing: '2px', fontWeight: 700 }}>DATA FROM COMPANY FILINGS</span>
           </div>
 
-          <h1 style={{ fontSize: '56px', fontWeight: 700, letterSpacing: '-2px', lineHeight: 1.0, marginBottom: '28px', whiteSpace: 'nowrap' }}>
-            Know if a stock is worth it.<span style={{ color: 'var(--accent)' }}> In seconds.</span>
+          <h1 style={{ fontSize: '64px', fontWeight: 700, letterSpacing: '-2px', lineHeight: 1.0, marginBottom: '28px', whiteSpace: 'nowrap' }}>
+            Know if a company is worth it.<span style={{ color: 'var(--accent)' }}> In seconds.</span>
           </h1>
 
           {/* Search bar — full width */}
