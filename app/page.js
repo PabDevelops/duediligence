@@ -93,6 +93,10 @@ export default function Home() {
   const [showSuggestions, setShowSuggestions] = useState(false);
   const [sotw, setSotw] = useState(null); // { ticker, name } or null
   const [sotwVotes, setSotwVotes] = useState({ BUY: 0, HOLD: 0, SELL: 0, total: 0 });
+  const [discoverState, setDiscoverState] = useState('idle'); // idle | spinning | revealed | limited
+  const [discoverTicker, setDiscoverTicker] = useState(null);
+  const [discoverRemaining, setDiscoverRemaining] = useState(null);
+  const [discoverSlot, setDiscoverSlot] = useState('???');
   const router = useRouter();
   const { isSignedIn } = useUser();
 
@@ -140,6 +144,39 @@ export default function Home() {
     const interval = setInterval(() => setBlink(b => !b), 600);
     return () => clearInterval(interval);
   }, []);
+
+  const SLOT_TICKERS = ['AAPL','MSFT','NVDA','TSLA','GOOGL','AMZN','META','V','JPM','NFLX','AMD','INTC','PYPL','SHOP','UBER','COIN','PLTR','SQ','ROKU','SNAP'];
+
+  async function handleDiscover() {
+    if (discoverState === 'spinning') return;
+    setDiscoverState('spinning');
+    setDiscoverTicker(null);
+
+    // Slot machine animation
+    let i = 0;
+    const interval = setInterval(() => {
+      setDiscoverSlot(SLOT_TICKERS[i % SLOT_TICKERS.length]);
+      i++;
+    }, 80);
+
+    const res = await fetch('/api/random');
+    const data = await res.json();
+
+    // Keep spinning at least 1.5s
+    await new Promise(r => setTimeout(r, 1500));
+    clearInterval(interval);
+
+    if (res.status === 429) {
+      setDiscoverSlot('???');
+      setDiscoverState('limited');
+      setDiscoverRemaining(0);
+    } else {
+      setDiscoverSlot(data.ticker);
+      setDiscoverTicker(data.ticker);
+      setDiscoverRemaining(data.remaining);
+      setDiscoverState('revealed');
+    }
+  }
 
   function go(t) {
     const tk = (t || ticker).toUpperCase().trim();
@@ -518,6 +555,105 @@ export default function Home() {
       </div>
 
       <div style={{ maxWidth: '1400px', margin: '0 auto', padding: '32px 24px' }}>
+
+        {/* DISCOVER SECTION */}
+        <div style={{ marginBottom: '48px', border: '1px solid var(--border)', background: 'var(--bg-1)' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0' }}>
+
+            {/* Left: copy */}
+            <div style={{ padding: '40px 40px', borderRight: '1px solid var(--border)' }}>
+              <div style={{ color: 'var(--accent)', fontSize: '10px', letterSpacing: '3px', marginBottom: '16px' }}>⚡ DISCOVER</div>
+              <h2 style={{ fontSize: '28px', fontWeight: 700, letterSpacing: '-1px', lineHeight: 1.1, marginBottom: '16px' }}>
+                Don't know what<br />to look at next?
+              </h2>
+              <p style={{ color: 'var(--text-2)', fontSize: '13px', lineHeight: 1.8, marginBottom: '24px', maxWidth: '340px' }}>
+                Hit the button. We'll spin through 8,000+ stocks and land on one worth checking out. Think of it as a stock lottery — no buy recommendations, just exploration.
+              </p>
+              <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', fontSize: '11px', color: 'var(--text-3)', marginBottom: '24px' }}>
+                <span style={{ background: 'var(--bg-2)', border: '1px solid var(--border)', padding: '3px 10px' }}>👤 Not signed in: 1/day</span>
+                <span style={{ background: 'var(--bg-2)', border: '1px solid var(--border)', padding: '3px 10px' }}>🆓 Free: 3/day</span>
+                <span style={{ background: 'var(--accent)', color: '#000', padding: '3px 10px', fontWeight: 700 }}>💎 Pro: unlimited</span>
+              </div>
+              {discoverRemaining !== null && discoverRemaining !== 'unlimited' && discoverState !== 'limited' && (
+                <div style={{ color: 'var(--text-3)', fontSize: '10px', letterSpacing: '1px', marginBottom: '12px' }}>
+                  {discoverRemaining} DISCOVER{discoverRemaining !== 1 ? 'S' : ''} LEFT TODAY
+                </div>
+              )}
+            </div>
+
+            {/* Right: slot machine */}
+            <div style={{ padding: '40px', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '24px' }}>
+
+              {/* Slot display */}
+              <div style={{
+                width: '100%', maxWidth: '280px', height: '100px',
+                background: 'var(--bg)', border: `2px solid ${discoverState === 'revealed' ? 'var(--accent)' : discoverState === 'limited' ? 'var(--red)' : 'var(--border)'}`,
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                transition: 'border-color 0.3s',
+                position: 'relative', overflow: 'hidden',
+              }}>
+                <style>{`
+                  @keyframes slot-blur { 0%,100% { opacity:1; transform:translateY(0); } 50% { opacity:0.3; transform:translateY(-4px); } }
+                  .slot-spinning { animation: slot-blur 0.16s infinite; }
+                `}</style>
+                <span className={discoverState === 'spinning' ? 'slot-spinning' : ''}
+                  style={{
+                    fontFamily: 'Space Grotesk, sans-serif',
+                    fontSize: discoverState === 'idle' ? '28px' : '42px',
+                    fontWeight: 700,
+                    letterSpacing: '4px',
+                    color: discoverState === 'revealed' ? 'var(--accent)' : discoverState === 'limited' ? 'var(--red)' : 'var(--text-3)',
+                  }}>
+                  {discoverState === 'idle' ? '? ? ?' : discoverSlot}
+                </span>
+                {discoverState === 'spinning' && (
+                  <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(transparent 20%, var(--bg) 80%)', pointerEvents: 'none' }} />
+                )}
+              </div>
+
+              {/* Button */}
+              {discoverState !== 'limited' ? (
+                <button
+                  onClick={discoverState === 'revealed' ? handleDiscover : handleDiscover}
+                  disabled={discoverState === 'spinning'}
+                  style={{
+                    width: '100%', maxWidth: '280px',
+                    background: discoverState === 'spinning' ? 'var(--bg-2)' : 'var(--accent)',
+                    color: discoverState === 'spinning' ? 'var(--text-3)' : '#000',
+                    border: 'none', padding: '14px', cursor: discoverState === 'spinning' ? 'default' : 'pointer',
+                    fontFamily: 'JetBrains Mono, monospace', fontSize: '12px', fontWeight: 700, letterSpacing: '2px',
+                    transition: 'all 0.2s',
+                  }}>
+                  {discoverState === 'spinning' ? 'SPINNING...' : discoverState === 'revealed' ? '⚡ SPIN AGAIN' : '⚡ SPIN'}
+                </button>
+              ) : (
+                <div style={{ width: '100%', maxWidth: '280px', textAlign: 'center' }}>
+                  <div style={{ color: 'var(--red)', fontSize: '11px', letterSpacing: '1px', marginBottom: '12px' }}>
+                    {isSignedIn ? "DAILY LIMIT REACHED" : "SIGN IN FOR MORE DISCOVERS"}
+                  </div>
+                  <a href={isSignedIn ? '/pricing' : '/sign-up'}
+                    style={{ display: 'block', background: 'var(--accent)', color: '#000', padding: '12px', fontFamily: 'JetBrains Mono, monospace', fontSize: '11px', fontWeight: 700, letterSpacing: '1px', textDecoration: 'none', textAlign: 'center' }}>
+                    {isSignedIn ? 'UPGRADE TO PRO →' : 'SIGN UP FREE →'}
+                  </a>
+                </div>
+              )}
+
+              {/* Go to stock */}
+              {discoverState === 'revealed' && discoverTicker && (
+                <button
+                  onClick={() => router.push(`/stock/${discoverTicker}`)}
+                  style={{
+                    width: '100%', maxWidth: '280px',
+                    background: 'none', border: '1px solid var(--accent)',
+                    color: 'var(--accent)', padding: '12px', cursor: 'pointer',
+                    fontFamily: 'JetBrains Mono, monospace', fontSize: '12px', fontWeight: 700, letterSpacing: '1px',
+                  }}>
+                  ANALYZE {discoverTicker} →
+                </button>
+              )}
+            </div>
+          </div>
+        </div>
 
         {/* MARKET DATA */}
         {movers && (
