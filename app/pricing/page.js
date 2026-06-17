@@ -115,7 +115,7 @@ export default function Pricing() {
               onClick={() => checkout(annual ? ANNUAL_ID : MONTHLY_ID)}
               disabled={loading !== null}
               style={{ width: '100%', padding: '12px', borderRadius: '12px', background: 'var(--accent)', border: 'none', color: '#0B0E14', fontFamily: 'Space Grotesk, sans-serif', fontSize: '13px', fontWeight: 700, letterSpacing: '0.3px', cursor: 'pointer' }}>
-              {loading ? 'Loading...' : `Go Pro ${annual ? '— Save 17%' : ''} →`}
+              {loading ? 'Loading...' : `Go Pro ${annual ? '— Save 27%' : ''} →`}
             </button>
           </div>
         </div>
