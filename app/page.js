@@ -419,11 +419,11 @@ export default function Home() {
         </div>
 
         {/* Bottom: SOTW left | Spin right */}
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1px', background: 'var(--border)' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
 
           {/* SOTW */}
           {sotw ? (
-            <div style={{ background: 'var(--bg-1)', padding: '24px 28px', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
+            <div style={{ background: 'var(--bg-1)', border: '1px solid var(--border)', padding: '24px 28px', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
               <div>
                 <a href={`/stock/${sotw.ticker}`} style={{ textDecoration: 'none', display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '16px' }}>
                   <span style={{ fontSize: '16px' }}>🔥</span>
@@ -460,13 +460,13 @@ export default function Home() {
               </div>
             </div>
           ) : (
-            <div style={{ background: 'var(--bg-1)', padding: '24px 28px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <div style={{ background: 'var(--bg-1)', border: '1px solid var(--border)', padding: '24px 28px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
               <span style={{ color: 'var(--text-3)', fontSize: '10px', letterSpacing: '2px' }}>LOADING...</span>
             </div>
           )}
 
             {/* Discover / Slot machine */}
-            <div style={{ background: 'var(--bg-1)', padding: '24px 28px', flex: 1, display: 'flex', flexDirection: 'column', gap: '16px' }}>
+            <div style={{ background: 'var(--bg-1)', border: '1px solid var(--border)', padding: '24px 28px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                 <div>
                   <div style={{ color: 'var(--accent)', fontSize: '10px', letterSpacing: '2px', marginBottom: '4px' }}>⚡ SPIN THE MARKET</div>
