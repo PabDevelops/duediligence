@@ -98,6 +98,8 @@ export default function Home() {
   const [discoverSlot, setDiscoverSlot] = useState('???');
   const [faqOpen, setFaqOpen] = useState(null);
   const [showStickyBar, setShowStickyBar] = useState(false);
+  const [userCount, setUserCount] = useState(null);
+  const [displayCount, setDisplayCount] = useState(0);
   const router = useRouter();
   const { isSignedIn } = useUser();
 
@@ -131,6 +133,28 @@ export default function Home() {
     }, 200);
     return () => clearTimeout(timeout);
   }, [searchQ]);
+
+  useEffect(() => {
+    fetch('/api/user-count')
+      .then(r => r.json())
+      .then(d => setUserCount(d.count))
+      .catch(() => setUserCount(2863));
+  }, []);
+
+  useEffect(() => {
+    if (!userCount) return;
+    const duration = 1800;
+    const start = performance.now();
+    const from = Math.max(1, userCount - 300);
+    const to = userCount;
+    const easeOut = t => 1 - Math.pow(1 - t, 3);
+    const frame = (now) => {
+      const progress = Math.min((now - start) / duration, 1);
+      setDisplayCount(Math.floor(from + (to - from) * easeOut(progress)));
+      if (progress < 1) requestAnimationFrame(frame);
+    };
+    requestAnimationFrame(frame);
+  }, [userCount]);
 
   useEffect(() => {
     const onScroll = () => setShowStickyBar(window.scrollY > 300);
@@ -200,9 +224,19 @@ export default function Home() {
               <h1 style={{ fontSize: '32px', fontWeight: 800, letterSpacing: '-1px', lineHeight: 1.1, marginBottom: '12px', fontFamily: 'Nunito, sans-serif' }}>
                 Know if a company is worth it.<span style={{ color: 'var(--accent)' }}> In seconds.</span>
               </h1>
-              <p style={{ color: 'var(--text-2)', fontSize: '15px', lineHeight: 1.6, marginBottom: '20px', fontFamily: 'Nunito, sans-serif' }}>
+              <p style={{ color: 'var(--text-2)', fontSize: '15px', lineHeight: 1.6, marginBottom: '16px', fontFamily: 'Nunito, sans-serif' }}>
                 Real data from company filings. No finance degree needed. Free to start.
               </p>
+              {displayCount > 0 && (
+                <div style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', marginBottom: '20px' }}>
+                  <div style={{ display: 'flex', gap: '2px' }}>
+                    {[...String(displayCount)].map((d, i) => (
+                      <span key={i} style={{ display: 'inline-block', background: 'rgba(167,139,250,0.12)', border: '1px solid rgba(167,139,250,0.2)', borderRadius: '6px', padding: '2px 5px', fontWeight: 800, fontSize: '16px', color: 'var(--accent)', fontVariantNumeric: 'tabular-nums', minWidth: '14px', textAlign: 'center' }}>{d}</span>
+                    ))}
+                  </div>
+                  <span style={{ color: 'var(--text-3)', fontSize: '13px', fontWeight: 600 }}>investors already using Traqcker</span>
+                </div>
+              )}
               <div style={{ display: 'flex', borderRadius: '14px', overflow: 'hidden', boxShadow: '0 0 0 1px rgba(255,255,255,0.1)', marginBottom: '12px' }}>
                 <input
                   style={{ flex: 1, background: 'rgba(255,255,255,0.06)', backdropFilter: 'blur(20px)', border: 'none', color: 'var(--text)', fontFamily: 'Nunito, sans-serif', fontSize: '16px', fontWeight: 500, padding: '14px 16px', outline: 'none' }}
@@ -549,9 +583,19 @@ export default function Home() {
           <h1 style={{ fontSize: '64px', fontWeight: 800, letterSpacing: '-2px', lineHeight: 1.0, marginBottom: '16px', whiteSpace: 'nowrap', fontFamily: 'Nunito, sans-serif' }}>
             Know if a company is worth it.<span style={{ color: 'var(--accent)' }}> In seconds.</span>
           </h1>
-          <p style={{ color: 'var(--text-2)', fontSize: '17px', lineHeight: 1.6, marginBottom: '28px', maxWidth: '560px' }}>
+          <p style={{ color: 'var(--text-2)', fontSize: '17px', lineHeight: 1.6, marginBottom: '16px', maxWidth: '560px' }}>
             Real data from company filings. No finance degree needed. Free to start.
           </p>
+          {displayCount > 0 && (
+            <div style={{ display: 'inline-flex', alignItems: 'center', gap: '10px', marginBottom: '28px' }}>
+              <div style={{ display: 'flex', gap: '3px' }}>
+                {[...String(displayCount)].map((d, i) => (
+                  <span key={i} style={{ display: 'inline-block', background: 'rgba(167,139,250,0.12)', border: '1px solid rgba(167,139,250,0.2)', borderRadius: '7px', padding: '3px 7px', fontWeight: 800, fontSize: '18px', color: 'var(--accent)', fontVariantNumeric: 'tabular-nums', minWidth: '16px', textAlign: 'center' }}>{d}</span>
+                ))}
+              </div>
+              <span style={{ color: 'var(--text-3)', fontSize: '14px', fontWeight: 600 }}>investors already using Traqcker</span>
+            </div>
+          )}
 
           {/* Search bar — full width */}
           <div style={{ position: 'relative', zIndex: 50, maxWidth: '600px' }}>
