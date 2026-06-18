@@ -132,7 +132,7 @@ export default function Home() {
   }, [searchQ]);
 
   useEffect(() => {
-    const check = () => setIsMobile(window.innerWidth < 768);
+    const check = () => setIsMobile(window.innerWidth < 1080);
     check();
     window.addEventListener('resize', check);
     return () => window.removeEventListener('resize', check);
