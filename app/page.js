@@ -189,7 +189,7 @@ export default function Home() {
       <Topbar />
       <MarketBar />
       {isMobile && (
-        <div style={{ padding: '20px 16px' }}>
+        <div style={{ padding: '20px 16px', overflowX: 'hidden' }}>
 
           {/* Hero */}
           <div style={{ marginBottom: '24px' }}>
@@ -202,7 +202,7 @@ export default function Home() {
             </h1>
             <div style={{ display: 'flex', marginBottom: '12px' }}>
               <input
-                style={{ flex: 1, background: 'var(--bg-2)', border: '1px solid var(--border-2)', borderRight: 'none', color: 'var(--accent)', fontFamily: 'JetBrains Mono, monospace', fontSize: '18px', fontWeight: 700, padding: '12px 16px', outline: 'none', letterSpacing: '3px' }}
+                style={{ flex: 1, background: 'var(--bg-2)', border: '1px solid var(--border-2)', borderRight: 'none', color: 'var(--accent)', fontFamily: 'JetBrains Mono, monospace', fontSize: '16px', fontWeight: 700, padding: '12px 16px', outline: 'none', letterSpacing: '1px' }}
                 placeholder="Search a Company"
                 value={ticker}
                 onChange={e => setTicker(e.target.value.toUpperCase())}
