@@ -112,7 +112,7 @@ export default function StockPage({ params }) {
   const [error, setError] = useState(null);
   const [tab, setTab] = useState('overview');
   const [answers, setAnswers] = useState({});
-  const [finTab, setFinTab] = useState('income');
+  const [finTab, setFinTab] = useState('snapshot');
   const [evidence, setEvidence] = useState({});
   const [sparklineData, setSparklineData] = useState(null);
   const [isPro, setIsPro] = useState(false);
@@ -956,7 +956,7 @@ export default function StockPage({ params }) {
   <div>
     {/* Fin tabs */}
     <div style={{ display: 'flex', gap: '8px', marginBottom: '16px' }}>
-      {[['income', 'INCOME'], ['balance', 'BALANCE'], ['cashflow', 'CASH FLOW']].map(([key, label]) => (
+      {[['snapshot', 'SNAPSHOT'], ['income', 'INCOME'], ['balance', 'BALANCE'], ['cashflow', 'CASH FLOW']].map(([key, label]) => (
         <button key={key} onClick={() => setFinTab(key)}
           style={{ flex: 1, padding: '10px 8px', fontSize: '10px', letterSpacing: '0.5px', borderRadius: '12px', background: finTab === key ? 'var(--accent)' : 'var(--bg-1)', color: finTab === key ? '#0B0E14' : 'var(--text-2)', border: finTab === key ? 'none' : '1px solid var(--border)', cursor: 'pointer', fontFamily: 'Space Grotesk, sans-serif', fontWeight: finTab === key ? 700 : 500 }}>
           {label}
@@ -964,6 +964,7 @@ export default function StockPage({ params }) {
       ))}
     </div>
 
+    {finTab === 'snapshot' && <div>
               {/* Metrics Table */}
 <div style={{ marginBottom: '16px' }}>
   <div className="grid-4" style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '10px' }}>
@@ -1136,6 +1137,8 @@ export default function StockPage({ params }) {
                   </div>
                 ))}
               </div>
+    </div>}
+
     {finTab === 'income' && (() => {
       const years = data.revHistory?.map(r => r.year) || [];
       const rows = [
