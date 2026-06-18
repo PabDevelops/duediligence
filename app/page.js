@@ -987,6 +987,70 @@ export default function Home() {
           </div>
         </div>
 
+        {/* FREE VS PRO TABLE */}
+        {(() => {
+          const rows = [
+            { feature: 'Easy Mode Score',         free: true,        pro: true },
+            { feature: 'Fair Value Check',         free: true,        pro: true },
+            { feature: 'Community Votes',          free: true,        pro: true },
+            { feature: 'Stock of the Week',        free: true,        pro: true },
+            { feature: 'Price Charts',             free: true,        pro: true },
+            { feature: 'Watchlist',                free: '5 stocks',  pro: 'Unlimited' },
+            { feature: 'Spin the Market',          free: '3 / day',   pro: 'Unlimited' },
+            { feature: 'Quality Scorecard',        free: false,       pro: true },
+            { feature: 'Full Financial Statements',free: false,       pro: true },
+            { feature: 'DCF / Graham Valuation',   free: false,       pro: true },
+            { feature: 'Stock Screener (8,000+)',  free: false,       pro: true },
+            { feature: 'Compare Stocks',           free: false,       pro: true },
+          ];
+          const Cell = ({ val, accent }) => {
+            if (val === true)  return <span style={{ color: '#34d399', fontSize: '16px', fontWeight: 800 }}>✓</span>;
+            if (val === false) return <span style={{ color: 'var(--border-2)', fontSize: '14px' }}>—</span>;
+            return <span style={{ color: accent ? 'var(--accent)' : 'var(--text-3)', fontSize: '12px', fontWeight: 700 }}>{val}</span>;
+          };
+          return (
+            <div style={{ marginBottom: '64px' }}>
+              <div style={{ textAlign: 'center', marginBottom: '40px' }}>
+                <div style={{ color: 'var(--accent)', fontSize: '10px', letterSpacing: '3px', fontWeight: 700, marginBottom: '12px' }}>PLANS</div>
+                <div style={{ fontSize: '32px', fontWeight: 800, letterSpacing: '-0.5px' }}>Free vs Pro</div>
+              </div>
+              <div className="glass" style={{ overflow: 'hidden' }}>
+                <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+                  <thead>
+                    <tr style={{ borderBottom: '1px solid var(--border)' }}>
+                      <th style={{ padding: '16px 24px', textAlign: 'left', color: 'var(--text-3)', fontSize: '12px', fontWeight: 700, letterSpacing: '1px', width: '55%' }}>FEATURE</th>
+                      <th style={{ padding: '16px 24px', textAlign: 'center', color: 'var(--text-3)', fontSize: '12px', fontWeight: 700, letterSpacing: '1px' }}>FREE</th>
+                      <th style={{ padding: '16px 24px', textAlign: 'center', fontSize: '12px', fontWeight: 800, letterSpacing: '1px', background: 'rgba(167,139,250,0.06)', borderLeft: '1px solid rgba(167,139,250,0.15)' }}>
+                        <span style={{ background: 'linear-gradient(135deg,#a78bfa,#60a5fa)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>PRO</span>
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {rows.map((r, i) => (
+                      <tr key={i} style={{ borderBottom: i < rows.length - 1 ? '1px solid var(--border)' : 'none', background: i % 2 === 0 ? 'transparent' : 'rgba(255,255,255,0.01)' }}>
+                        <td style={{ padding: '14px 24px', fontSize: '14px', color: 'var(--text-2)', fontWeight: 600 }}>{r.feature}</td>
+                        <td style={{ padding: '14px 24px', textAlign: 'center' }}><Cell val={r.free} /></td>
+                        <td style={{ padding: '14px 24px', textAlign: 'center', background: 'rgba(167,139,250,0.04)', borderLeft: '1px solid rgba(167,139,250,0.15)' }}><Cell val={r.pro} accent /></td>
+                      </tr>
+                    ))}
+                  </tbody>
+                  <tfoot>
+                    <tr style={{ borderTop: '1px solid var(--border)', background: 'rgba(167,139,250,0.04)' }}>
+                      <td style={{ padding: '20px 24px', color: 'var(--text-3)', fontSize: '13px', fontWeight: 600' }}>No credit card required to start</td>
+                      <td style={{ padding: '20px 24px', textAlign: 'center' }}>
+                        <a href="/sign-up" className="btn-secondary" style={{ textDecoration: 'none', fontSize: '13px', padding: '9px 18px' }}>Start free</a>
+                      </td>
+                      <td style={{ padding: '20px 24px', textAlign: 'center', borderLeft: '1px solid rgba(167,139,250,0.15)' }}>
+                        <a href="/pricing" className="btn-primary" style={{ textDecoration: 'none', fontSize: '13px', padding: '9px 18px' }}>Go Pro →</a>
+                      </td>
+                    </tr>
+                  </tfoot>
+                </table>
+              </div>
+            </div>
+          );
+        })()}
+
         {/* FAQ */}
         {(() => {
           const faqs = [
