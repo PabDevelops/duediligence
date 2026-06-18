@@ -1036,7 +1036,7 @@ export default function Home() {
                   </tbody>
                   <tfoot>
                     <tr style={{ borderTop: '1px solid var(--border)', background: 'rgba(167,139,250,0.04)' }}>
-                      <td style={{ padding: '20px 24px', color: 'var(--text-3)', fontSize: '13px', fontWeight: 600' }}>No credit card required to start</td>
+                      <td style={{ padding: '20px 24px', color: 'var(--text-3)', fontSize: '13px', fontWeight: 600 }}>No credit card required to start</td>
                       <td style={{ padding: '20px 24px', textAlign: 'center' }}>
                         <a href="/sign-up" className="btn-secondary" style={{ textDecoration: 'none', fontSize: '13px', padding: '9px 18px' }}>Start free</a>
                       </td>
