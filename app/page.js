@@ -197,7 +197,7 @@ export default function Home() {
               <span style={{ width: 6, height: 6, borderRadius: '50%', background: 'var(--green)', display: 'inline-block' }} />
               <span style={{ color: 'var(--accent)', fontSize: '10px', letterSpacing: '2px', fontWeight: 700 }}>DATA FROM COMPANY FILINGS</span>
             </div>
-            <h1 style={{ fontSize: '34px', fontWeight: 700, letterSpacing: '-1.5px', lineHeight: 1.05, marginBottom: '20px' }}>
+            <h1 style={{ fontSize: '18px', fontWeight: 700, letterSpacing: '-1.5px', lineHeight: 1.05, marginBottom: '20px' }}>
               Know if a company is worth it.<span style={{ color: 'var(--accent)' }}> In seconds.</span>
             </h1>
             <div style={{ display: 'flex', marginBottom: '12px' }}>
