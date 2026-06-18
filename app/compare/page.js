@@ -152,64 +152,66 @@ export default function Compare() {
   const hasAny = stocks.some(s => s !== null);
 
   if (checkingPro) return (
-    <div style={{ background: 'var(--bg)', minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: 'Space Grotesk, sans-serif' }}>
-      <div style={{ color: 'var(--text-3)', fontSize: '10px', letterSpacing: '2px' }}>LOADING...</div>
+    <div style={{ background: 'var(--bg)', minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: 'Nunito, sans-serif' }}>
+      <div style={{ color: 'var(--text-3)', fontSize: '14px' }}>Loading...</div>
     </div>
   );
 
   if (!isPro) return (
-    <div style={{ background: 'var(--bg)', minHeight: '100vh', color: 'var(--text)', fontFamily: 'Space Grotesk, sans-serif' }}>
+    <div style={{ background: 'var(--bg)', minHeight: '100vh', color: 'var(--text)', fontFamily: 'Nunito, sans-serif' }}>
       <Topbar />
       <div style={{ maxWidth: '600px', margin: '0 auto', padding: '100px 24px', textAlign: 'center' }}>
-        <div style={{ fontSize: '48px', marginBottom: '24px' }}>🔒</div>
-        <div style={{ color: 'var(--accent)', fontSize: '10px', letterSpacing: '3px', marginBottom: '12px' }}>PRO FEATURE</div>
-        <h1 style={{ fontSize: '24px', fontWeight: 600, marginBottom: '12px' }}>Compare is a Pro feature</h1>
-        <p style={{ color: 'var(--text-2)', fontSize: '12px', lineHeight: 1.8, marginBottom: '32px' }}>
-          Compare up to 3 stocks side by side with full metrics, sparklines and Traqcker scores. Upgrade to Pro to unlock.
-        </p>
-        <a href="/pricing" style={{ background: 'var(--accent)', color: '#000', padding: '10px 28px', fontFamily: 'Space Grotesk, sans-serif', fontSize: '11px', fontWeight: 700, letterSpacing: '1px', textDecoration: 'none' }}>
-          UPGRADE TO PRO →
-        </a>
-        <div style={{ marginTop: '16px' }}>
-          <a href="/" style={{ color: 'var(--text-3)', fontSize: '10px', textDecoration: 'none', letterSpacing: '1px' }}>← BACK TO HOME</a>
+        <div className="glass" style={{ padding: '48px 40px' }}>
+          <div style={{ fontSize: '48px', marginBottom: '20px' }}>🔒</div>
+          <div style={{ color: 'var(--accent)', fontSize: '11px', letterSpacing: '2px', marginBottom: '12px', fontWeight: 700 }}>PRO FEATURE</div>
+          <h1 style={{ fontSize: '28px', fontWeight: 800, marginBottom: '12px' }}>Compare is a Pro feature</h1>
+          <p style={{ color: 'var(--text-2)', fontSize: '14px', lineHeight: 1.8, marginBottom: '32px' }}>
+            Compare up to 3 stocks side by side with full metrics, sparklines and Traqcker scores.
+          </p>
+          <a href="/pricing" className="btn-primary" style={{ display: 'inline-block' }}>Upgrade to Pro →</a>
+          <div style={{ marginTop: '16px' }}>
+            <a href="/" style={{ color: 'var(--text-3)', fontSize: '13px', textDecoration: 'none' }}>← Back to home</a>
+          </div>
         </div>
       </div>
     </div>
   );
 
   return (
-    <div style={{ background: 'var(--bg)', minHeight: '100vh', color: 'var(--text)', fontFamily: 'Space Grotesk, sans-serif', paddingBottom: 'calc(72px + env(safe-area-inset-bottom, 0px))' }}>
+    <div style={{ background: 'var(--bg)', minHeight: '100vh', color: 'var(--text)', fontFamily: 'Nunito, sans-serif', paddingBottom: 'calc(72px + env(safe-area-inset-bottom, 0px))' }}>
 
       <Topbar />
 
       <div style={{ maxWidth: '1200px', margin: '0 auto', padding: '24px' }}>
 
         {/* Stock slots */}
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '1px', background: 'var(--border)', marginBottom: '24px' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '12px', marginBottom: '24px' }}>
           {Array.from({ length: N }, (_, i) => (
-            <div key={i} style={{ background: 'var(--bg-1)', padding: '16px', display: 'flex', flexDirection: 'column', gap: '12px' }}>
+            <div key={i} className="glass" style={{ padding: '20px', display: 'flex', flexDirection: 'column', gap: '12px' }}>
 
               {/* Slot label + clear */}
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                <div style={{ color: 'var(--text-3)', fontSize: '9px', letterSpacing: '3px' }}>STOCK {i + 1}</div>
+                <div style={{ color: 'var(--text-3)', fontSize: '10px', letterSpacing: '1px', fontWeight: 700 }}>STOCK {i + 1}</div>
                 {stocks[i] && (
-                  <button onClick={() => removeStock(i)} style={{ background: 'none', border: 'none', color: 'var(--text-3)', fontFamily: 'Space Grotesk, sans-serif', fontSize: '9px', cursor: 'pointer', letterSpacing: '1px', padding: 0 }}>
-                    ✕ CLEAR
+                  <button onClick={() => removeStock(i)} style={{ background: 'none', border: 'none', color: 'var(--text-3)', fontFamily: 'Nunito, sans-serif', fontSize: '12px', cursor: 'pointer', padding: 0 }}
+                    onMouseEnter={e => e.target.style.color = 'var(--red)'}
+                    onMouseLeave={e => e.target.style.color = 'var(--text-3)'}>
+                    ✕ Clear
                   </button>
                 )}
               </div>
 
               {/* Search */}
-              <form onSubmit={e => { e.preventDefault(); fetchStock(i, inputs[i]); }} style={{ display: 'flex', gap: '0' }}>
+              <form onSubmit={e => { e.preventDefault(); fetchStock(i, inputs[i]); }} style={{ display: 'flex', borderRadius: '10px', overflow: 'hidden', boxShadow: '0 0 0 1px rgba(255,255,255,0.1)' }}>
                 <input
                   value={inputs[i]}
                   onChange={e => setInputs(prev => { const n = [...prev]; n[i] = e.target.value.toUpperCase(); return n; })}
-                  style={{ flex: 1, background: 'var(--bg-2)', border: '1px solid var(--border)', borderRight: 'none', color: 'var(--text)', fontFamily: 'Space Grotesk, sans-serif', fontSize: '12px', padding: '8px 10px', outline: 'none', letterSpacing: '2px' }}
-                  placeholder="TICKER..."
+                  style={{ flex: 1, background: 'rgba(255,255,255,0.06)', border: 'none', color: 'var(--text)', fontFamily: 'Nunito, sans-serif', fontSize: '13px', fontWeight: 700, padding: '9px 12px', outline: 'none', letterSpacing: '1px' }}
+                  placeholder="Ticker..."
                 />
-                <button type="submit"
-                  style={{ padding: '8px 14px', background: 'var(--accent)', border: 'none', color: '#000', fontFamily: 'Space Grotesk, sans-serif', fontSize: '10px', fontWeight: 700, cursor: 'pointer', letterSpacing: '1px', whiteSpace: 'nowrap' }}>
-                  {loading[i] ? '...' : 'ADD'}
+                <button type="submit" className="btn-primary"
+                  style={{ borderRadius: '0 9px 9px 0', padding: '9px 16px', fontSize: '13px', whiteSpace: 'nowrap' }}>
+                  {loading[i] ? '...' : 'Add'}
                 </button>
               </form>
 
@@ -251,15 +253,15 @@ export default function Compare() {
                     </div>
 
                     {/* Score strip */}
-                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '1px', background: 'var(--border)', borderTop: '1px solid var(--border)', marginTop: '4px' }}>
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '6px', marginTop: '4px' }}>
                       {[
                         { label: 'CORE', val: sc.cbs },
                         { label: 'OPPO', val: sc.oppo },
                         { label: 'FINAL', val: sc.final },
                       ].map(({ label, val }) => (
-                        <div key={label} style={{ background: 'var(--bg-2)', padding: '8px 10px', textAlign: 'center' }}>
-                          <div style={{ fontSize: '8px', color: 'var(--text-3)', letterSpacing: '2px' }}>{label}</div>
-                          <div style={{ fontSize: '16px', fontWeight: 700, letterSpacing: '-1px', marginTop: '3px', color: scoreColor(val) }}>
+                        <div key={label} style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid var(--border)', borderRadius: '8px', padding: '8px', textAlign: 'center' }}>
+                          <div style={{ fontSize: '9px', color: 'var(--text-3)', fontWeight: 700, letterSpacing: '1px' }}>{label}</div>
+                          <div style={{ fontSize: '18px', fontWeight: 800, letterSpacing: '-0.5px', marginTop: '2px', color: scoreColor(val) }}>
                             {val?.toFixed(1) || '—'}
                           </div>
                         </div>
@@ -274,10 +276,10 @@ export default function Compare() {
 
         {/* Comparison table */}
         {hasAny && (
-          <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '11px', tableLayout: 'fixed' }}>
+          <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '13px', tableLayout: 'fixed', fontFamily: 'Nunito, sans-serif' }}>
             <thead>
               <tr style={{ borderBottom: '1px solid var(--border)' }}>
-                <th style={{ padding: '8px 0', textAlign: 'left', fontWeight: 400, fontSize: '9px', color: 'var(--text-3)', width: '170px', letterSpacing: '1px' }}>METRIC</th>
+                <th style={{ padding: '10px 0', textAlign: 'left', fontWeight: 700, fontSize: '11px', color: 'var(--text-3)', width: '170px', letterSpacing: '0.5px' }}>METRIC</th>
                 {Array.from({ length: N }, (_, i) => (
                   <th key={i} style={{ padding: '8px 12px', textAlign: 'right', fontWeight: 700, fontSize: '11px', letterSpacing: '2px', color: stocks[i] ? 'var(--accent)' : 'var(--text-3)' }}>
                     {tickers[i] || `—`}
@@ -320,8 +322,8 @@ export default function Compare() {
         )}
 
         {!hasAny && (
-          <div style={{ textAlign: 'center', padding: '80px 0', color: 'var(--text-3)', fontSize: '10px', letterSpacing: '3px' }}>
-            ADD UP TO THREE TICKERS TO COMPARE
+          <div style={{ textAlign: 'center', padding: '60px 0', color: 'var(--text-3)', fontSize: '14px' }}>
+            Add up to three tickers above to compare them side by side
           </div>
         )}
       </div>
