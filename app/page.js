@@ -399,6 +399,52 @@ export default function Home() {
 
          
 
+          {/* TESTIMONIALS — mobile */}
+          {(() => {
+            const cols = [
+              [
+                { text: "Finally understand what I'm buying. The Easy Mode score tells me everything in 10 seconds.", name: "Sarah K.", role: "Retail investor" },
+                { text: "I avoided a disaster — the score flagged weak cash flow before the stock dropped 40%.", name: "David M.", role: "Self-taught investor" },
+                { text: "Free tier is already better than paid tools I've tried before.", name: "Nate F.", role: "College student" },
+                { text: "The Fair Value bar is brilliant. So simple but so powerful.", name: "Priya S.", role: "Software engineer" },
+              ],
+              [
+                { text: "Screener + Compare is insane for finding undervalued stocks. Worth every penny of Pro.", name: "Chris B.", role: "Pro subscriber" },
+                { text: "As someone with zero finance background, this is the first tool that makes sense.", name: "Mia J.", role: "First-time investor" },
+                { text: "Data straight from SEC filings — not some analyst's opinion. That's what I needed.", name: "Tom H.", role: "Independent investor" },
+                { text: "Been investing for 10 years. This is the most honest stock tool I've found.", name: "Anita W.", role: "Experienced investor" },
+              ],
+            ];
+            return (
+              <div style={{ marginBottom: '40px' }}>
+                <div style={{ textAlign: 'center', marginBottom: '20px' }}>
+                  <div style={{ color: 'var(--accent)', fontSize: '10px', letterSpacing: '2px', fontWeight: 700, marginBottom: '8px' }}>WHAT INVESTORS SAY</div>
+                  <div style={{ fontSize: '20px', fontWeight: 800 }}>Trusted by independent investors</div>
+                </div>
+                <div style={{
+                  display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px',
+                  height: '380px', overflow: 'hidden',
+                  WebkitMaskImage: 'linear-gradient(to bottom, transparent 0%, black 12%, black 88%, transparent 100%)',
+                  maskImage: 'linear-gradient(to bottom, transparent 0%, black 12%, black 88%, transparent 100%)',
+                }}>
+                  {cols.map((cards, ci) => (
+                    <div key={ci} style={{ overflow: 'hidden' }}>
+                      <div className={`testimonial-col testimonial-col-${ci === 0 ? 'up' : 'down'}`} style={{ animationDuration: ci === 0 ? '28s' : '24s' }}>
+                        {[...cards, ...cards].map((c, i) => (
+                          <div key={i} className="glass" style={{ padding: '14px', marginBottom: '10px', flexShrink: 0 }}>
+                            <div style={{ fontSize: '11px', color: 'var(--text-2)', lineHeight: 1.6, marginBottom: '10px' }}>"{c.text}"</div>
+                            <div style={{ fontSize: '11px', fontWeight: 800 }}>{c.name}</div>
+                            <div style={{ fontSize: '10px', color: 'var(--text-3)' }}>{c.role}</div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            );
+          })()}
+
           <div style={{ borderTop: '1px solid var(--border)', paddingTop: '16px', color: 'var(--text-3)', fontSize: '9px', letterSpacing: '1px', textAlign: 'center' }}>
             <div style={{ display: 'flex', gap: '16px', justifyContent: 'center', marginBottom: '8px', alignItems: 'center' }}>
               <a href="/privacy" style={{ color: 'var(--text-3)', textDecoration: 'none' }}>PRIVACY</a>
@@ -726,6 +772,75 @@ export default function Home() {
             ))}
           </div>
         </div>
+
+        {/* TESTIMONIALS */}
+        {(() => {
+          const cols = [
+            [
+              { text: "Finally understand what I'm buying. The Easy Mode score tells me everything in 10 seconds.", name: "Sarah K.", role: "Retail investor, 3 years" },
+              { text: "I use it every Sunday to check my watchlist. Takes 5 minutes instead of 5 hours.", name: "Marcus T.", role: "Long-term investor" },
+              { text: "My whole family now uses Traqcker before making any investment decision.", name: "Elena R.", role: "Parent & part-time investor" },
+              { text: "Spin the Market helped me discover stocks I never would have found otherwise.", name: "James L.", role: "Dividend investor" },
+            ],
+            [
+              { text: "I avoided a disaster — the quality score flagged weak cash flow before the stock dropped 40%.", name: "David M.", role: "Self-taught investor" },
+              { text: "The Fair Value bar is brilliant. So simple but so powerful.", name: "Priya S.", role: "Software engineer & investor" },
+              { text: "Data straight from SEC filings — not some analyst's opinion. That's what I needed.", name: "Tom H.", role: "Former banker, now indie" },
+            ],
+            [
+              { text: "Screener + Compare is insane for finding undervalued stocks. Worth every penny of Pro.", name: "Chris B.", role: "Pro subscriber" },
+              { text: "Been investing for 10 years and this is the most honest stock tool I've found.", name: "Anita W.", role: "Experienced retail investor" },
+              { text: "I cancelled my Bloomberg subscription after finding this.", name: "Rafael G.", role: "Independent analyst" },
+            ],
+            [
+              { text: "As someone with zero finance background, this is the first tool that actually makes sense to me.", name: "Mia J.", role: "First-time investor" },
+              { text: "Free tier is already better than paid tools I've tried before.", name: "Nate F.", role: "College student investor" },
+              { text: "The sector-adjusted scoring is a game changer. A 20% margin means different things in tech vs retail.", name: "Sophie D.", role: "Finance grad, DIY investor" },
+            ],
+          ];
+          const dirs = ['up', 'down', 'up', 'down'];
+          const speeds = ['32s', '28s', '36s', '30s'];
+          return (
+            <div style={{ marginBottom: '64px' }}>
+              <style>{`
+                @keyframes scrollUp { 0% { transform: translateY(0); } 100% { transform: translateY(-50%); } }
+                @keyframes scrollDown { 0% { transform: translateY(-50%); } 100% { transform: translateY(0); } }
+                .testimonial-col { display: flex; flex-direction: column; gap: 14px; }
+                .testimonial-col-up { animation-name: scrollUp; animation-timing-function: linear; animation-iteration-count: infinite; }
+                .testimonial-col-down { animation-name: scrollDown; animation-timing-function: linear; animation-iteration-count: infinite; }
+              `}</style>
+              <div style={{ textAlign: 'center', marginBottom: '40px' }}>
+                <div style={{ color: 'var(--accent)', fontSize: '10px', letterSpacing: '3px', fontWeight: 700, marginBottom: '12px' }}>WHAT INVESTORS SAY</div>
+                <div style={{ fontSize: '32px', fontWeight: 800, letterSpacing: '-0.5px' }}>Trusted by independent investors</div>
+              </div>
+              <div style={{
+                display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '14px',
+                height: '480px', overflow: 'hidden',
+                WebkitMaskImage: 'linear-gradient(to bottom, transparent 0%, black 12%, black 88%, transparent 100%)',
+                maskImage: 'linear-gradient(to bottom, transparent 0%, black 12%, black 88%, transparent 100%)',
+              }}>
+                {cols.map((cards, ci) => (
+                  <div key={ci} style={{ overflow: 'hidden' }}>
+                    <div
+                      className={`testimonial-col testimonial-col-${dirs[ci]}`}
+                      style={{ animationDuration: speeds[ci] }}
+                    >
+                      {[...cards, ...cards].map((c, i) => (
+                        <div key={i} className="glass" style={{ padding: '20px', flexShrink: 0 }}>
+                          <div style={{ fontSize: '13px', color: 'var(--text-2)', lineHeight: 1.7, marginBottom: '14px' }}>"{c.text}"</div>
+                          <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
+                            <div style={{ fontSize: '13px', fontWeight: 800, color: 'var(--text)' }}>{c.name}</div>
+                            <div style={{ fontSize: '11px', color: 'var(--text-3)' }}>{c.role}</div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          );
+        })()}
 
         {/* CTA BOTTOM */}
         <div className="glass reveal" style={{ padding: '48px 40px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '48px', background: 'linear-gradient(135deg, rgba(167,139,250,0.08), rgba(96,165,250,0.05))' }}>
