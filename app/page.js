@@ -399,6 +399,35 @@ export default function Home() {
 
          
 
+          {/* CTA MID — mobile */}
+          <div style={{ marginBottom: '40px', borderRadius: '20px', padding: '32px 24px', background: 'linear-gradient(135deg, rgba(167,139,250,0.10) 0%, rgba(96,165,250,0.06) 100%)', border: '1px solid rgba(167,139,250,0.2)', position: 'relative', overflow: 'hidden' }}>
+            <div style={{ position: 'absolute', top: '-40px', right: '-40px', width: '200px', height: '200px', background: 'radial-gradient(ellipse, rgba(167,139,250,0.15) 0%, transparent 70%)', pointerEvents: 'none' }} />
+            <div style={{ position: 'relative', zIndex: 1 }}>
+              <div style={{ color: 'var(--accent)', fontSize: '10px', letterSpacing: '2px', fontWeight: 700, marginBottom: '10px' }}>FREE · NO CREDIT CARD</div>
+              <div style={{ fontSize: '24px', fontWeight: 800, letterSpacing: '-0.5px', lineHeight: 1.2, marginBottom: '16px' }}>
+                Start in 30 seconds.<br /><span style={{ color: 'var(--accent)' }}>Cancel whenever.</span>
+              </div>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginBottom: '24px' }}>
+                {[
+                  'Easy Mode score for 8,000+ stocks',
+                  'Fair Value estimate',
+                  'Community votes',
+                  'Stock of the Week',
+                ].map(f => (
+                  <div key={f} style={{ display: 'flex', gap: '10px', alignItems: 'center', color: 'var(--text-2)', fontSize: '13px' }}>
+                    <span style={{ color: '#34d399', fontWeight: 800, flexShrink: 0 }}>✓</span>{f}
+                  </div>
+                ))}
+              </div>
+              <a href="/sign-up" className="btn-primary" style={{ display: 'block', textAlign: 'center', fontSize: '15px', padding: '14px', borderRadius: '12px' }}>
+                Start for free →
+              </a>
+              <a href="/pricing" style={{ display: 'block', textAlign: 'center', color: 'var(--text-3)', fontSize: '12px', textDecoration: 'none', fontWeight: 600, marginTop: '12px' }}>
+                See what Pro unlocks →
+              </a>
+            </div>
+          </div>
+
           {/* TESTIMONIALS — mobile */}
           {(() => {
             const cols = [
@@ -841,6 +870,42 @@ export default function Home() {
             </div>
           );
         })()}
+
+        {/* CTA MID */}
+        <div className="reveal" style={{ marginBottom: '64px', position: 'relative', borderRadius: '24px', overflow: 'hidden', padding: '56px 48px', background: 'linear-gradient(135deg, rgba(167,139,250,0.10) 0%, rgba(96,165,250,0.06) 100%)', border: '1px solid rgba(167,139,250,0.2)' }}>
+          <div style={{ position: 'absolute', top: '-60px', right: '-60px', width: '300px', height: '300px', background: 'radial-gradient(ellipse, rgba(167,139,250,0.18) 0%, transparent 70%)', pointerEvents: 'none' }} />
+          <div style={{ position: 'relative', zIndex: 1, display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '48px', flexWrap: 'wrap' }}>
+            <div style={{ flex: 1, minWidth: '280px' }}>
+              <div style={{ color: 'var(--accent)', fontSize: '11px', letterSpacing: '3px', fontWeight: 700, marginBottom: '14px' }}>FREE TO START · NO CREDIT CARD</div>
+              <div style={{ fontSize: '36px', fontWeight: 800, letterSpacing: '-1px', lineHeight: 1.1, marginBottom: '20px' }}>
+                Start in 30 seconds.<br /><span style={{ color: 'var(--accent)' }}>Cancel whenever.</span>
+              </div>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                {[
+                  'Easy Mode score for any of 8,000+ stocks',
+                  'Fair Value estimate based on real earnings',
+                  'Community Buy / Hold / Sell votes',
+                  'Stock of the Week picks',
+                ].map(f => (
+                  <div key={f} style={{ display: 'flex', gap: '10px', alignItems: 'center', color: 'var(--text-2)', fontSize: '14px' }}>
+                    <span style={{ color: '#34d399', fontWeight: 800, fontSize: '16px', flexShrink: 0 }}>✓</span>
+                    {f}
+                  </div>
+                ))}
+              </div>
+            </div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', alignItems: 'center', flexShrink: 0 }}>
+              <a href="/sign-up" className="btn-primary" style={{ fontSize: '16px', padding: '16px 40px', borderRadius: '14px', whiteSpace: 'nowrap' }}>
+                Start for free →
+              </a>
+              <a href="/pricing" style={{ color: 'var(--text-3)', fontSize: '13px', textDecoration: 'none', fontWeight: 600 }}
+                onMouseEnter={e => e.currentTarget.style.color = 'var(--accent)'}
+                onMouseLeave={e => e.currentTarget.style.color = 'var(--text-3)'}>
+                See what Pro unlocks →
+              </a>
+            </div>
+          </div>
+        </div>
 
         {/* CTA BOTTOM */}
         <div className="glass reveal" style={{ padding: '48px 40px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '48px', background: 'linear-gradient(135deg, rgba(167,139,250,0.08), rgba(96,165,250,0.05))' }}>
