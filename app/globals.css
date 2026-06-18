@@ -54,7 +54,15 @@ html, body {
 ::-webkit-scrollbar-thumb { background: var(--border-2); }
 ::-webkit-scrollbar-thumb:hover { background: var(--text-3); }
 
+/* Mobile/desktop block switching — handled by CSS so it works without JS */
+.mobile-only {
+  display: none;
+}
+
 @media (max-width: 768px) {
+  .mobile-only {
+    display: block !important;
+  }
   .desktop-only {
     display: none !important;
   }

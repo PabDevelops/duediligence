@@ -87,7 +87,6 @@ export default function Home() {
   const [movers, setMovers] = useState(null);
   const [earnings, setEarnings] = useState(null);
   const [blink, setBlink] = useState(true);
-  const [isMobile, setIsMobile] = useState(false);
   const [searchQ, setSearchQ] = useState('');
   const [suggestions, setSuggestions] = useState([]);
   const [showSuggestions, setShowSuggestions] = useState(false);
@@ -130,13 +129,6 @@ export default function Home() {
     }, 200);
     return () => clearTimeout(timeout);
   }, [searchQ]);
-
-  useEffect(() => {
-    const check = () => setIsMobile(window.innerWidth < 1080);
-    check();
-    window.addEventListener('resize', check);
-    return () => window.removeEventListener('resize', check);
-  }, []);
 
   useEffect(() => {
     fetch('/api/movers').then(r => r.json()).then(d => setMovers(d)).catch(() => {});
@@ -188,8 +180,7 @@ export default function Home() {
     <main style={{ background: 'var(--bg)', minHeight: '100vh', color: 'var(--text)', fontFamily: 'JetBrains Mono, monospace' }}>
       <Topbar />
       <MarketBar />
-      {isMobile && (
-        <div style={{ padding: '20px 16px', overflowX: 'hidden' }}>
+      <div className="mobile-only" style={{ padding: '20px 16px', overflowX: 'hidden' }}>
 
           {/* Hero */}
           <div style={{ marginBottom: '24px' }}>
@@ -345,9 +336,8 @@ export default function Home() {
             NOT INVESTMENT ADVICE · © 2026 TRAQCKER
           </div>
         </div>
-      )}
 
-      {!isMobile && <>
+      <div className="desktop-only">
       {/* Ticker tape */}
       <div style={{ borderBottom: '1px solid var(--border)', background: 'var(--bg-1)', overflow: 'hidden', whiteSpace: 'nowrap', padding: '6px 0' }}>
         <style>{`
@@ -603,7 +593,7 @@ export default function Home() {
           <div style={{ letterSpacing: '1px' }}>DATA: SEC EDGAR · FINNHUB · YAHOO FINANCE · NOT INVESTMENT ADVICE · © 2026 TRAQCKER</div>
         </div>
       </div>
-    </>}
+    </div>
 
     </main>
   );
