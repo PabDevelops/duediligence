@@ -952,7 +952,7 @@ export default function Home() {
             { q: 'What exactly does Pro include?', a: 'Full income statement, balance sheet and cash flow history. DCF / Graham intrinsic value model. Stock screener across 8,000+ companies with 10+ filters. Side-by-side comparison of up to 3 stocks. Unlimited Spin the Market.' },
           ];
           return (
-            <div style={{ marginBottom: '64px', maxWidth: '720px', margin: '0 auto 64px' }}>
+            <div style={{ marginBottom: '64px' }}>
               <div style={{ textAlign: 'center', marginBottom: '40px' }}>
                 <div style={{ color: 'var(--accent)', fontSize: '10px', letterSpacing: '3px', fontWeight: 700, marginBottom: '12px' }}>FAQ</div>
                 <div style={{ fontSize: '32px', fontWeight: 800, letterSpacing: '-0.5px' }}>Common questions</div>
