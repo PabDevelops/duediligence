@@ -189,9 +189,12 @@ export default function Home() {
                 <span style={{ width: 6, height: 6, borderRadius: '50%', background: 'var(--green)', display: 'inline-block' }} />
                 <span style={{ color: 'var(--accent)', fontSize: '10px', letterSpacing: '2px', fontWeight: 700 }}>DATA FROM COMPANY FILINGS</span>
               </div>
-              <h1 style={{ fontSize: '32px', fontWeight: 800, letterSpacing: '-1px', lineHeight: 1.1, marginBottom: '20px', fontFamily: 'Nunito, sans-serif' }}>
+              <h1 style={{ fontSize: '32px', fontWeight: 800, letterSpacing: '-1px', lineHeight: 1.1, marginBottom: '12px', fontFamily: 'Nunito, sans-serif' }}>
                 Know if a company is worth it.<span style={{ color: 'var(--accent)' }}> In seconds.</span>
               </h1>
+              <p style={{ color: 'var(--text-2)', fontSize: '15px', lineHeight: 1.6, marginBottom: '20px', fontFamily: 'Nunito, sans-serif' }}>
+                Real data from company filings. No finance degree needed. Free to start.
+              </p>
               <div style={{ display: 'flex', borderRadius: '14px', overflow: 'hidden', boxShadow: '0 0 0 1px rgba(255,255,255,0.1)', marginBottom: '12px' }}>
                 <input
                   style={{ flex: 1, background: 'rgba(255,255,255,0.06)', backdropFilter: 'blur(20px)', border: 'none', color: 'var(--text)', fontFamily: 'Nunito, sans-serif', fontSize: '16px', fontWeight: 500, padding: '14px 16px', outline: 'none' }}
@@ -362,9 +365,12 @@ export default function Home() {
             <span style={{ color: 'var(--accent)', fontSize: '10px', letterSpacing: '2px', fontWeight: 700 }}>DATA FROM COMPANY FILINGS</span>
           </div>
 
-          <h1 style={{ fontSize: '64px', fontWeight: 800, letterSpacing: '-2px', lineHeight: 1.0, marginBottom: '28px', whiteSpace: 'nowrap', fontFamily: 'Nunito, sans-serif' }}>
+          <h1 style={{ fontSize: '64px', fontWeight: 800, letterSpacing: '-2px', lineHeight: 1.0, marginBottom: '16px', whiteSpace: 'nowrap', fontFamily: 'Nunito, sans-serif' }}>
             Know if a company is worth it.<span style={{ color: 'var(--accent)' }}> In seconds.</span>
           </h1>
+          <p style={{ color: 'var(--text-2)', fontSize: '17px', lineHeight: 1.6, marginBottom: '28px', maxWidth: '560px' }}>
+            Real data from company filings. No finance degree needed. Free to start.
+          </p>
 
           {/* Search bar — full width */}
           <div style={{ position: 'relative', zIndex: 50, maxWidth: '600px' }}>
