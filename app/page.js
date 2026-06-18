@@ -311,10 +311,10 @@ export default function Home() {
 
           {/* HOW IT WORKS */}
         <div style={{ marginBottom: '48px' }}>
-          <div style={{ color: 'var(--text-3)', fontSize: '18px', letterSpacing: '3px', marginBottom: '24px', borderBottom: '1px solid var(--border)', paddingBottom: '8px' }}>
+          <div style={{ color: 'var(--text-3)', fontSize: '9px', letterSpacing: '3px', marginBottom: '24px', borderBottom: '1px solid var(--border)', paddingBottom: '8px' }}>
             HOW IT WORKS
           </div>
-          <div className="how-it-works-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '1px', background: 'var(--border)' }}>
+          <div className="how-it-works-grid" style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '1px', background: 'var(--border)' }}>
             {[
               { step: '01', title: 'SEARCH A COMPANY', desc: 'Search any company by name. Traqcker fetches real-time data directly from company filings.' },
               { step: '02', title: 'DOES IT DESERVE YOUR MONEY?', desc: 'See instantly if the company is financially healthy and worth your investment' },
