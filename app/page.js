@@ -315,6 +315,70 @@ export default function Home() {
             </div>
           </div>
 
+          {/* FEATURE SHOWCASE — mobile */}
+          <div style={{ marginBottom: '40px' }}>
+            <div style={{ textAlign: 'center', marginBottom: '24px' }}>
+              <div style={{ color: 'var(--accent)', fontSize: '10px', letterSpacing: '3px', fontWeight: 700, marginBottom: '10px' }}>WHAT YOU GET</div>
+              <div style={{ fontSize: '22px', fontWeight: 800, letterSpacing: '-0.5px', marginBottom: '8px' }}>Everything you need. Nothing you don't.</div>
+              <div style={{ color: 'var(--text-3)', fontSize: '13px', lineHeight: 1.6 }}>Three tools that tell you if a stock deserves your money.</div>
+            </div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+
+              {/* Easy Mode */}
+              <div className="glass" style={{ padding: '20px', display: 'flex', gap: '16px', alignItems: 'center' }}>
+                <div style={{ position: 'relative', width: '72px', height: '72px', flexShrink: 0 }}>
+                  <svg width="72" height="72" viewBox="0 0 72 72" style={{ transform: 'rotate(-90deg)' }}>
+                    <circle cx="36" cy="36" r="30" fill="none" stroke="rgba(255,255,255,0.06)" strokeWidth="7" />
+                    <circle cx="36" cy="36" r="30" fill="none" stroke="#34d399" strokeWidth="7" strokeLinecap="round"
+                      strokeDasharray="188" strokeDashoffset={188 - 188 * 0.78} />
+                  </svg>
+                  <div style={{ position: 'absolute', inset: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
+                    <div style={{ fontSize: '20px', fontWeight: 800, color: '#34d399', lineHeight: 1 }}>78</div>
+                    <div style={{ fontSize: '8px', color: 'var(--text-3)' }}>/100</div>
+                  </div>
+                </div>
+                <div>
+                  <div style={{ fontSize: '15px', fontWeight: 800, marginBottom: '4px' }}>Easy Mode Score</div>
+                  <div style={{ color: 'var(--text-3)', fontSize: '12px', lineHeight: 1.6 }}>A health score from 0 to 100. No spreadsheets needed.</div>
+                </div>
+              </div>
+
+              {/* Fair Value */}
+              <div className="glass" style={{ padding: '20px' }}>
+                <div style={{ fontSize: '15px', fontWeight: 800, marginBottom: '12px' }}>Fair Value Check</div>
+                <div style={{ position: 'relative', height: '8px', borderRadius: '6px', background: 'linear-gradient(90deg, #34d399 0%, #fbbf24 50%, #f87171 100%)', opacity: 0.45, marginBottom: '6px' }}>
+                  <div style={{ position: 'absolute', top: '-4px', width: '4px', height: '16px', borderRadius: '2px', background: 'white', left: '36%' }} />
+                </div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '10px', color: 'var(--text-3)', marginBottom: '10px' }}>
+                  <span>Cheap</span><span>Fair</span><span>Expensive</span>
+                </div>
+                <div style={{ background: 'rgba(52,211,153,0.1)', border: '1px solid rgba(52,211,153,0.25)', borderRadius: '8px', padding: '6px 12px', textAlign: 'center' }}>
+                  <span style={{ color: '#34d399', fontSize: '12px', fontWeight: 700 }}>UNDERVALUED · +15% upside</span>
+                </div>
+              </div>
+
+              {/* Quality Scorecard */}
+              <div className="glass" style={{ padding: '20px' }}>
+                <div style={{ fontSize: '15px', fontWeight: 800, marginBottom: '12px' }}>Quality Scorecard</div>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '6px' }}>
+                  {[
+                    { label: 'Core Business', score: 4.2, color: '#34d399' },
+                    { label: 'Opportunity', score: 3.8, color: '#a78bfa' },
+                    { label: 'Growth Quality', score: 4.5, color: '#34d399' },
+                    { label: 'Final Note', score: 4.2, color: '#34d399', highlight: true },
+                  ].map(m => (
+                    <div key={m.label} style={{ background: m.highlight ? 'rgba(167,139,250,0.08)' : 'rgba(255,255,255,0.04)', border: `1px solid ${m.highlight ? 'rgba(167,139,250,0.2)' : 'rgba(255,255,255,0.06)'}`, borderRadius: '8px', padding: '8px', textAlign: 'center' }}>
+                      <div style={{ fontSize: '8px', color: 'var(--text-3)', marginBottom: '4px', fontWeight: 700 }}>{m.label.toUpperCase()}</div>
+                      <div style={{ fontSize: '20px', fontWeight: 800, color: m.color, lineHeight: 1 }}>{m.score}</div>
+                      <div style={{ fontSize: '8px', color: 'var(--text-3)' }}>/5</div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+            </div>
+          </div>
+
           {/* HOW IT WORKS */}
         <div style={{ marginBottom: '48px' }}>
           <div style={{ color: 'var(--text-3)', fontSize: '10px', letterSpacing: '3px', marginBottom: '16px', fontFamily: 'Nunito, sans-serif' }}>HOW IT WORKS</div>
@@ -555,6 +619,93 @@ export default function Home() {
 
       {/* STATS BAR */}
       <div style={{ maxWidth: '1400px', margin: '0 auto', padding: '32px 24px' }}>
+
+        {/* FEATURE SHOWCASE */}
+        <div style={{ marginBottom: '64px' }}>
+          <div style={{ textAlign: 'center', marginBottom: '40px' }}>
+            <div style={{ color: 'var(--accent)', fontSize: '10px', letterSpacing: '3px', fontWeight: 700, marginBottom: '12px' }}>WHAT YOU GET</div>
+            <div style={{ fontSize: '32px', fontWeight: 800, letterSpacing: '-0.5px', marginBottom: '10px' }}>Everything you need. Nothing you don't.</div>
+            <div style={{ color: 'var(--text-3)', fontSize: '15px', maxWidth: '520px', margin: '0 auto', lineHeight: 1.6 }}>Three tools that tell you if a stock deserves your money — in plain language.</div>
+          </div>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '16px' }}>
+
+            {/* Easy Mode Score */}
+            <div className="glass reveal" style={{ padding: '32px 28px', display: 'flex', flexDirection: 'column', gap: '24px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <div style={{ position: 'relative', width: '100px', height: '100px' }}>
+                  <svg width="100" height="100" viewBox="0 0 100 100" style={{ transform: 'rotate(-90deg)' }}>
+                    <circle cx="50" cy="50" r="42" fill="none" stroke="rgba(255,255,255,0.06)" strokeWidth="9" />
+                    <circle cx="50" cy="50" r="42" fill="none" stroke="#34d399" strokeWidth="9" strokeLinecap="round"
+                      strokeDasharray="264" strokeDashoffset={264 - 264 * 0.78} />
+                  </svg>
+                  <div style={{ position: 'absolute', inset: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
+                    <div style={{ fontSize: '28px', fontWeight: 800, color: '#34d399', lineHeight: 1 }}>78</div>
+                    <div style={{ fontSize: '10px', color: 'var(--text-3)', marginTop: '2px' }}>/ 100</div>
+                  </div>
+                </div>
+              </div>
+              <div>
+                <div style={{ fontSize: '18px', fontWeight: 800, marginBottom: '10px' }}>Easy Mode Score</div>
+                <div style={{ color: 'var(--text-3)', fontSize: '14px', lineHeight: 1.7 }}>A 0–100 health score that weighs margins, growth, cash flow and debt — so you don't have to.</div>
+              </div>
+              <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
+                {['ROIC', 'Margins', 'FCF', 'Debt'].map(t => (
+                  <span key={t} style={{ background: 'rgba(52,211,153,0.1)', border: '1px solid rgba(52,211,153,0.2)', color: '#34d399', fontSize: '10px', fontWeight: 700, padding: '3px 9px', borderRadius: '6px' }}>{t}</span>
+                ))}
+              </div>
+            </div>
+
+            {/* Fair Value */}
+            <div className="glass reveal" style={{ padding: '32px 28px', display: 'flex', flexDirection: 'column', gap: '24px' }}>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', paddingTop: '4px' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <span style={{ fontSize: '13px', color: 'var(--text-3)', fontWeight: 600 }}>Current price</span>
+                  <span style={{ fontSize: '17px', fontWeight: 800 }}>$182.50</span>
+                </div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <span style={{ fontSize: '13px', color: 'var(--text-3)', fontWeight: 600 }}>Our estimate</span>
+                  <span style={{ fontSize: '17px', fontWeight: 800, color: '#34d399' }}>$210.00</span>
+                </div>
+                <div style={{ position: 'relative', height: '10px', borderRadius: '6px', background: 'linear-gradient(90deg, #34d399 0%, #fbbf24 50%, #f87171 100%)', opacity: 0.4, marginTop: '4px' }}>
+                  <div style={{ position: 'absolute', top: '-5px', width: '4px', height: '20px', borderRadius: '2px', background: 'white', left: '36%' }} />
+                </div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '10px', color: 'var(--text-3)' }}>
+                  <span>Cheap</span><span>Fair</span><span>Expensive</span>
+                </div>
+                <div style={{ background: 'rgba(52,211,153,0.1)', border: '1px solid rgba(52,211,153,0.25)', borderRadius: '10px', padding: '8px 12px', textAlign: 'center' }}>
+                  <span style={{ color: '#34d399', fontSize: '13px', fontWeight: 700 }}>UNDERVALUED · +15% upside</span>
+                </div>
+              </div>
+              <div>
+                <div style={{ fontSize: '18px', fontWeight: 800, marginBottom: '10px' }}>Fair Value Check</div>
+                <div style={{ color: 'var(--text-3)', fontSize: '14px', lineHeight: 1.7 }}>See instantly if a stock is cheap, fairly priced or overvalued — based on earnings and growth.</div>
+              </div>
+            </div>
+
+            {/* Quality Scorecard */}
+            <div className="glass reveal" style={{ padding: '32px 28px', display: 'flex', flexDirection: 'column', gap: '24px' }}>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
+                {[
+                  { label: 'Core Business', score: 4.2, color: '#34d399' },
+                  { label: 'Opportunity', score: 3.8, color: '#a78bfa' },
+                  { label: 'Growth Quality', score: 4.5, color: '#34d399' },
+                  { label: 'Final Note', score: 4.2, color: '#34d399', highlight: true },
+                ].map(m => (
+                  <div key={m.label} style={{ background: m.highlight ? 'rgba(167,139,250,0.08)' : 'rgba(255,255,255,0.04)', border: `1px solid ${m.highlight ? 'rgba(167,139,250,0.2)' : 'rgba(255,255,255,0.06)'}`, borderRadius: '10px', padding: '12px', textAlign: 'center' }}>
+                    <div style={{ fontSize: '9px', color: 'var(--text-3)', marginBottom: '6px', fontWeight: 700, letterSpacing: '0.5px' }}>{m.label.toUpperCase()}</div>
+                    <div style={{ fontSize: '26px', fontWeight: 800, color: m.color, lineHeight: 1 }}>{m.score}</div>
+                    <div style={{ fontSize: '9px', color: 'var(--text-3)', marginTop: '2px' }}>/5</div>
+                  </div>
+                ))}
+              </div>
+              <div>
+                <div style={{ fontSize: '18px', fontWeight: 800, marginBottom: '10px' }}>Quality Scorecard</div>
+                <div style={{ color: 'var(--text-3)', fontSize: '14px', lineHeight: 1.7 }}>Sector-adjusted scoring across 4 dimensions. Cuts through noise to find genuinely great businesses.</div>
+              </div>
+            </div>
+
+          </div>
+        </div>
 
         {/* HOW IT WORKS */}
         <div style={{ marginBottom: '48px' }}>
