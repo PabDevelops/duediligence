@@ -15,10 +15,14 @@ const SP500_TICKERS = [
 
 export default async function sitemap() {
   const staticPages = [
-    { url: BASE_URL, changeFrequency: 'weekly', priority: 1.0 },
-    { url: `${BASE_URL}/pricing`, changeFrequency: 'monthly', priority: 0.8 },
-    { url: `${BASE_URL}/sign-in`, changeFrequency: 'yearly', priority: 0.3 },
-    { url: `${BASE_URL}/sign-up`, changeFrequency: 'yearly', priority: 0.5 },
+    { url: BASE_URL,                        changeFrequency: 'weekly',  priority: 1.0 },
+    { url: `${BASE_URL}/screener`,          changeFrequency: 'weekly',  priority: 0.9 },
+    { url: `${BASE_URL}/compare`,           changeFrequency: 'weekly',  priority: 0.8 },
+    { url: `${BASE_URL}/pricing`,           changeFrequency: 'monthly', priority: 0.8 },
+    { url: `${BASE_URL}/about`,             changeFrequency: 'monthly', priority: 0.6 },
+    { url: `${BASE_URL}/watchlist`,         changeFrequency: 'monthly', priority: 0.5 },
+    { url: `${BASE_URL}/sign-up`,           changeFrequency: 'yearly',  priority: 0.5 },
+    { url: `${BASE_URL}/sign-in`,           changeFrequency: 'yearly',  priority: 0.3 },
   ];
 
   const stockPages = SP500_TICKERS.map(ticker => ({

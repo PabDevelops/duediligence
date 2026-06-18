@@ -6,6 +6,7 @@ import BottomNav from './components/BottomNav';
 import { Analytics } from '@vercel/analytics/react';
 
 export const metadata = {
+  metadataBase: new URL('https://traqcker.com'),
   title: "Traqcker — Stock Analysis in Seconds",
   description: "Know if a stock is worth it in seconds. Easy score, fair value, and community votes for 8,000+ US stocks. Free.",
   icons: {
