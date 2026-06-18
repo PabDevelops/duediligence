@@ -50,6 +50,18 @@ export default function RootLayout({ children }) {
           <WatchlistWidget />
           <CookieBanner />
           <Analytics />
+          <script dangerouslySetInnerHTML={{ __html: `
+            (function() {
+              const obs = new IntersectionObserver((entries) => {
+                entries.forEach(e => { if (e.isIntersecting) { e.target.classList.add('visible'); obs.unobserve(e.target); } });
+              }, { threshold: 0.1 });
+              document.querySelectorAll('.reveal').forEach(el => obs.observe(el));
+              const mo = new MutationObserver(() => {
+                document.querySelectorAll('.reveal:not(.visible)').forEach(el => obs.observe(el));
+              });
+              mo.observe(document.body, { childList: true, subtree: true });
+            })();
+          ` }} />
         </body>
       </html>
     </ClerkProvider>

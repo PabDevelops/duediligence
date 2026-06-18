@@ -40,7 +40,6 @@ export default function MarketBar() {
                 </span>
               </div>
             </div>
-            <Sparkline data={m.candles} width={80} height={32} />
           </div>
         );
       })}

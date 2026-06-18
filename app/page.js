@@ -177,95 +177,106 @@ export default function Home() {
   }
 
   return (
-    <main style={{ background: 'var(--bg)', minHeight: '100vh', color: 'var(--text)', fontFamily: 'JetBrains Mono, monospace' }}>
+    <main style={{ background: 'var(--bg)', minHeight: '100vh', color: 'var(--text)', fontFamily: 'Nunito, sans-serif' }}>
       <Topbar />
-      <MarketBar />
       <div className="mobile-only" style={{ padding: '20px 16px', overflowX: 'hidden' }}>
 
           {/* Hero */}
-          <div style={{ marginBottom: '24px' }}>
-            <div style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', background: 'var(--accent-dim)', border: '1px solid var(--accent)', padding: '4px 12px', marginBottom: '16px' }}>
-              <span style={{ width: 6, height: 6, borderRadius: '50%', background: 'var(--green)', display: 'inline-block' }} />
-              <span style={{ color: 'var(--accent)', fontSize: '10px', letterSpacing: '2px', fontWeight: 700 }}>DATA FROM COMPANY FILINGS</span>
-            </div>
-            <h1 style={{ fontSize: '18px', fontWeight: 700, letterSpacing: '-1.5px', lineHeight: 1.05, marginBottom: '20px' }}>
-              Know if a company is worth it.<span style={{ color: 'var(--accent)' }}> In seconds.</span>
-            </h1>
-            <div style={{ display: 'flex', marginBottom: '12px' }}>
-              <input
-                style={{ flex: 1, background: 'var(--bg-2)', border: '1px solid var(--border-2)', borderRight: 'none', color: 'var(--accent)', fontFamily: 'JetBrains Mono, monospace', fontSize: '16px', fontWeight: 700, padding: '12px 16px', outline: 'none', letterSpacing: '1px' }}
-                placeholder="Search a Company"
-                value={ticker}
-                onChange={e => setTicker(e.target.value.toUpperCase())}
-                onKeyDown={e => e.key === 'Enter' && go()}
-                maxLength={10}
-              />
-              <button onClick={() => go()}
-                style={{ background: 'var(--accent)', color: '#000', border: 'none', padding: '12px 20px', fontFamily: 'JetBrains Mono, monospace', fontSize: '12px', fontWeight: 700, cursor: 'pointer', letterSpacing: '1px', whiteSpace: 'nowrap' }}>
-                ANALYZE →
-              </button>
-            </div>
-            <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
-              {['AAPL', 'MSFT', 'NVDA', 'V', 'GOOGL'].map(t => (
-                <button key={t} onClick={() => go(t)}
-                  style={{ background: 'none', border: '1px solid var(--border)', color: 'var(--text-3)', padding: '3px 10px', fontFamily: 'JetBrains Mono, monospace', fontSize: '10px', cursor: 'pointer', letterSpacing: '1px' }}>
-                  {t}
+          <div style={{ marginBottom: '24px', position: 'relative' }}>
+            <div style={{ position: 'absolute', top: '-40px', left: '-20px', width: '300px', height: '300px', background: 'radial-gradient(ellipse, rgba(167,139,250,0.15) 0%, transparent 70%)', pointerEvents: 'none', zIndex: 0 }} />
+            <div style={{ position: 'relative', zIndex: 1 }}>
+              <div style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', background: 'var(--accent-dim)', border: '1px solid var(--accent)', padding: '4px 12px', borderRadius: '20px', marginBottom: '16px' }}>
+                <span style={{ width: 6, height: 6, borderRadius: '50%', background: 'var(--green)', display: 'inline-block' }} />
+                <span style={{ color: 'var(--accent)', fontSize: '10px', letterSpacing: '2px', fontWeight: 700 }}>DATA FROM COMPANY FILINGS</span>
+              </div>
+              <h1 style={{ fontSize: '32px', fontWeight: 800, letterSpacing: '-1px', lineHeight: 1.1, marginBottom: '20px', fontFamily: 'Nunito, sans-serif' }}>
+                Know if a company is worth it.<span style={{ color: 'var(--accent)' }}> In seconds.</span>
+              </h1>
+              <div style={{ display: 'flex', borderRadius: '14px', overflow: 'hidden', boxShadow: '0 0 0 1px rgba(255,255,255,0.1)', marginBottom: '12px' }}>
+                <input
+                  style={{ flex: 1, background: 'rgba(255,255,255,0.06)', backdropFilter: 'blur(20px)', border: 'none', color: 'var(--text)', fontFamily: 'Nunito, sans-serif', fontSize: '16px', fontWeight: 500, padding: '14px 16px', outline: 'none' }}
+                  placeholder="Search a company, e.g. Apple"
+                  value={ticker}
+                  onChange={e => setTicker(e.target.value.toUpperCase())}
+                  onKeyDown={e => e.key === 'Enter' && go()}
+                  maxLength={10}
+                />
+                <button onClick={() => go()} className="btn-primary" style={{ borderRadius: '0 12px 12px 0', whiteSpace: 'nowrap', padding: '14px 20px' }}>
+                  Analyze →
                 </button>
-              ))}
+              </div>
+              <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+                {['AAPL', 'MSFT', 'NVDA', 'V', 'GOOGL'].map(t => (
+                  <button key={t} onClick={() => go(t)}
+                    style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid var(--border)', color: 'var(--text-3)', padding: '4px 12px', fontFamily: 'Nunito, sans-serif', fontSize: '11px', fontWeight: 500, cursor: 'pointer', borderRadius: '8px' }}
+                    onMouseEnter={e => { e.target.style.borderColor = 'var(--accent)'; e.target.style.color = 'var(--accent)'; }}
+                    onMouseLeave={e => { e.target.style.borderColor = 'var(--border)'; e.target.style.color = 'var(--text-3)'; }}>
+                    {t}
+                  </button>
+                ))}
+              </div>
             </div>
           </div>
 
           {/* SOTW + Spin stacked */}
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '1px', background: 'var(--border)', marginBottom: '32px' }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '16px', marginBottom: '32px' }}>
             {/* SOTW */}
             {sotw ? (
-              <div style={{ background: 'var(--bg-1)', padding: '20px' }}>
+              <div className="glass" style={{ padding: '20px' }}>
                 <a href={`/stock/${sotw.ticker}`} style={{ textDecoration: 'none', display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '12px' }}>
                   <span style={{ fontSize: '14px' }}>🔥</span>
                   <span style={{ color: 'var(--accent)', fontSize: '10px', fontWeight: 700, letterSpacing: '1px' }}>STOCK OF THE WEEK</span>
                   <span style={{ color: 'var(--text)', fontSize: '13px', fontWeight: 700 }}>{sotw.ticker}</span>
                   <span style={{ color: 'var(--text-3)', fontSize: '11px' }}>– {sotw.name}</span>
                 </a>
-                <div style={{ display: 'flex', height: '6px', overflow: 'hidden', marginBottom: '6px' }}>
-                  <div style={{ background: 'var(--green)', width: `${sotwVotes.BUY}%` }} />
-                  <div style={{ background: 'var(--amber)', width: `${sotwVotes.HOLD}%` }} />
-                  <div style={{ background: 'var(--red)', width: `${sotwVotes.SELL}%` }} />
+                <div style={{ display: 'flex', height: '6px', borderRadius: '4px', overflow: 'hidden', marginBottom: '6px' }}>
+                  <div style={{ background: 'var(--green)', width: `${sotwVotes.BUY}%`, transition: 'width 0.4s' }} />
+                  <div style={{ background: 'var(--amber)', width: `${sotwVotes.HOLD}%`, transition: 'width 0.4s' }} />
+                  <div style={{ background: 'var(--red)', width: `${sotwVotes.SELL}%`, transition: 'width 0.4s' }} />
                 </div>
                 <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '10px', marginBottom: '12px' }}>
                   <span style={{ color: 'var(--green)' }}>● {sotwVotes.BUY}% Buy</span>
                   <span style={{ color: 'var(--text-3)' }}>{sotwVotes.total} votes</span>
                   <span style={{ color: 'var(--red)' }}>{sotwVotes.SELL}% Sell ●</span>
                 </div>
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', borderTop: '1px solid var(--border)' }}>
-                  {['BUY', 'HOLD', 'SELL'].map((v, i) => (
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '8px' }}>
+                  {['BUY', 'HOLD', 'SELL'].map((v) => (
                     <button key={v}
                       onClick={async (e) => { e.preventDefault(); if (!isSignedIn) { router.push('/sign-in'); return; } await fetch('/api/votes', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ ticker: sotw.ticker, vote: v }) }); fetch(`/api/votes?ticker=${sotw.ticker}`).then(r => r.json()).then(d => setSotwVotes({ ...d.percentages, total: d.total })); }}
-                      style={{ padding: '10px', background: 'none', border: 'none', borderRight: i < 2 ? '1px solid var(--border)' : 'none', color: v === 'BUY' ? 'var(--green)' : v === 'SELL' ? 'var(--red)' : 'var(--amber)', fontFamily: 'JetBrains Mono, monospace', fontWeight: 700, fontSize: '11px', cursor: 'pointer', letterSpacing: '1px' }}
-                      onMouseEnter={e => e.currentTarget.style.background = 'var(--bg-2)'}
-                      onMouseLeave={e => e.currentTarget.style.background = 'none'}>
+                      style={{ padding: '10px 6px', background: 'rgba(255,255,255,0.04)', border: `1px solid ${v === 'BUY' ? 'rgba(52,211,153,0.3)' : v === 'SELL' ? 'rgba(248,113,113,0.3)' : 'rgba(251,191,36,0.3)'}`, borderRadius: '10px', color: v === 'BUY' ? 'var(--green)' : v === 'SELL' ? 'var(--red)' : 'var(--amber)', fontFamily: 'Nunito, sans-serif', fontWeight: 700, fontSize: '12px', cursor: 'pointer' }}
+                      onMouseEnter={e => e.currentTarget.style.background = 'rgba(255,255,255,0.08)'}
+                      onMouseLeave={e => e.currentTarget.style.background = 'rgba(255,255,255,0.04)'}>
                       {v}
                     </button>
                   ))}
                 </div>
               </div>
             ) : (
-              <div style={{ background: 'var(--bg-1)', padding: '20px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                <span style={{ color: 'var(--text-3)', fontSize: '10px', letterSpacing: '2px' }}>LOADING...</span>
+              <div className="glass" style={{ padding: '20px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <span style={{ color: 'var(--text-3)', fontSize: '12px' }}>Loading...</span>
               </div>
             )}
 
-            {/* Spin */}
-            <div style={{ background: 'var(--bg-1)', padding: '20px', display: 'flex', flexDirection: 'column', gap: '12px' }}>
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                <div>
-                  <div style={{ color: 'var(--accent)', fontSize: '10px', letterSpacing: '2px', marginBottom: '4px' }}>⚡ SPIN THE MARKET</div>
-                  <div style={{ color: 'var(--text-2)', fontSize: '11px' }}>Discover a random stock from 8,000+</div>
+            {/* Stats */}
+            <div className="glass" style={{ padding: '16px 20px', display: 'flex', gap: '0', alignItems: 'center', justifyContent: 'space-around' }}>
+              {[{ val: '8,000+', label: 'US COMPANIES' }, { val: '100%', label: 'ACCURATE DATA' }, { val: 'FREE', label: 'TO START' }].map(s => (
+                <div key={s.label} style={{ textAlign: 'center' }}>
+                  <div style={{ color: 'var(--accent)', fontSize: '18px', fontWeight: 700 }}>{s.val}</div>
+                  <div style={{ color: 'var(--text-3)', fontSize: '9px', letterSpacing: '1.5px', marginTop: '2px' }}>{s.label}</div>
                 </div>
+              ))}
+            </div>
+
+            {/* Spin */}
+            <div className="glass" style={{ padding: '20px', display: 'flex', flexDirection: 'column', gap: '12px' }}>
+              <div style={{ textAlign: 'center' }}>
+                <div style={{ color: 'var(--accent)', fontSize: '16px', fontWeight: 700, marginBottom: '4px' }}>⚡ SPIN THE MARKET</div>
+                <div style={{ color: 'var(--text-2)', fontSize: '12px' }}>Discover a random stock from 8,000+</div>
                 {discoverRemaining !== null && discoverRemaining !== 'unlimited' && discoverState !== 'limited' && (
-                  <span style={{ color: 'var(--text-3)', fontSize: '10px', background: 'var(--bg-2)', border: '1px solid var(--border)', padding: '3px 8px' }}>{discoverRemaining} LEFT</span>
+                  <span style={{ color: 'var(--text-3)', fontSize: '10px', background: 'var(--bg-2)', border: '1px solid var(--border)', padding: '2px 8px', borderRadius: '20px', display: 'inline-block', marginTop: '6px' }}>{discoverRemaining} LEFT</span>
                 )}
               </div>
-              <div style={{ background: 'var(--bg)', border: `1.5px solid ${discoverState === 'revealed' ? 'var(--accent)' : discoverState === 'limited' ? 'var(--red)' : 'var(--border)'}`, height: '60px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <div style={{ background: 'rgba(0,0,0,0.3)', backdropFilter: 'blur(10px)', border: `1.5px solid ${discoverState === 'revealed' ? 'var(--accent)' : discoverState === 'limited' ? 'var(--red)' : 'rgba(255,255,255,0.08)'}`, borderRadius: '12px', height: '64px', display: 'flex', alignItems: 'center', justifyContent: 'center', transition: 'border-color 0.3s', boxShadow: discoverState === 'revealed' ? '0 0 24px rgba(167,139,250,0.2)' : 'none' }}>
                 <span className={discoverState === 'spinning' ? 'slot-spinning' : ''}
                   style={{ fontFamily: 'Space Grotesk, sans-serif', fontSize: '28px', fontWeight: 700, letterSpacing: '6px', color: discoverState === 'revealed' ? 'var(--accent)' : discoverState === 'limited' ? 'var(--red)' : 'var(--text-3)' }}>
                   {discoverState === 'idle' ? '? ? ?' : discoverSlot}
@@ -274,25 +285,26 @@ export default function Home() {
               {discoverState !== 'limited' ? (
                 <div style={{ display: 'flex', gap: '8px' }}>
                   <button onClick={handleDiscover} disabled={discoverState === 'spinning'}
-                    style={{ flex: 1, background: discoverState === 'spinning' ? 'var(--bg-2)' : 'var(--accent)', color: discoverState === 'spinning' ? 'var(--text-3)' : '#000', border: 'none', padding: '10px', cursor: discoverState === 'spinning' ? 'default' : 'pointer', fontFamily: 'JetBrains Mono, monospace', fontSize: '11px', fontWeight: 700, letterSpacing: '1px' }}>
-                    {discoverState === 'spinning' ? 'SPINNING...' : discoverState === 'revealed' ? '⚡ SPIN AGAIN' : '⚡ SPIN'}
+                    className={discoverState === 'spinning' ? '' : 'btn-primary'}
+                    style={{ flex: 1, ...(discoverState === 'spinning' ? { background: 'var(--bg-2)', color: 'var(--text-3)', border: 'none', padding: '11px', borderRadius: '10px', cursor: 'default', fontFamily: 'Nunito, sans-serif', fontSize: '13px', fontWeight: 600 } : { borderRadius: '10px', padding: '11px 10px' }) }}>
+                    {discoverState === 'spinning' ? 'Spinning...' : discoverState === 'revealed' ? '⚡ Spin Again' : '⚡ Spin'}
                   </button>
                   {discoverState === 'revealed' && discoverTicker && (
                     <button onClick={() => router.push(`/stock/${discoverTicker}`)}
-                      style={{ flex: 1, background: 'none', border: '1px solid var(--accent)', color: 'var(--accent)', padding: '10px', cursor: 'pointer', fontFamily: 'JetBrains Mono, monospace', fontSize: '11px', fontWeight: 700, letterSpacing: '1px' }}>
-                      ANALYZE →
+                      style={{ flex: 1, background: 'none', border: '1px solid var(--accent)', color: 'var(--accent)', padding: '11px', cursor: 'pointer', fontFamily: 'Nunito, sans-serif', fontSize: '13px', fontWeight: 600, borderRadius: '10px' }}>
+                      Analyze →
                     </button>
                   )}
                 </div>
               ) : (
                 <div>
-                  <div style={{ color: 'var(--red)', fontSize: '10px', letterSpacing: '1px', marginBottom: '8px', textAlign: 'center' }}>{isSignedIn ? 'DAILY LIMIT REACHED' : 'SIGN IN FOR MORE'}</div>
-                  <a href={isSignedIn ? '/pricing' : '/sign-up'} style={{ display: 'block', background: 'var(--accent)', color: '#000', padding: '10px', fontFamily: 'JetBrains Mono, monospace', fontSize: '11px', fontWeight: 700, letterSpacing: '1px', textDecoration: 'none', textAlign: 'center' }}>
-                    {isSignedIn ? 'UPGRADE TO PRO →' : 'SIGN UP FREE →'}
+                  <div style={{ color: 'var(--red)', fontSize: '11px', marginBottom: '8px', textAlign: 'center' }}>{isSignedIn ? 'Daily limit reached' : 'Sign in for more spins'}</div>
+                  <a href={isSignedIn ? '/pricing' : '/sign-up'} className="btn-primary" style={{ display: 'block', textAlign: 'center', borderRadius: '10px' }}>
+                    {isSignedIn ? 'Upgrade to Pro →' : 'Sign up free →'}
                   </a>
                 </div>
               )}
-              <div style={{ display: 'flex', gap: '8px', fontSize: '9px', color: 'var(--text-3)' }}>
+              <div style={{ display: 'flex', gap: '8px', fontSize: '10px', color: 'var(--text-3)' }}>
                 <span>👤 1/day</span><span style={{ color: 'var(--border)' }}>·</span>
                 <span>🆓 Free: 3/day</span><span style={{ color: 'var(--border)' }}>·</span>
                 <span style={{ color: 'var(--accent)' }}>💎 Pro: unlimited</span>
@@ -302,19 +314,17 @@ export default function Home() {
 
           {/* HOW IT WORKS */}
         <div style={{ marginBottom: '48px' }}>
-          <div style={{ color: 'var(--text-3)', fontSize: '9px', letterSpacing: '3px', marginBottom: '24px', borderBottom: '1px solid var(--border)', paddingBottom: '8px' }}>
-            HOW IT WORKS
-          </div>
-          <div className="how-it-works-grid" style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '1px', background: 'var(--border)' }}>
+          <div style={{ color: 'var(--text-3)', fontSize: '10px', letterSpacing: '3px', marginBottom: '16px', fontFamily: 'Nunito, sans-serif' }}>HOW IT WORKS</div>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
             {[
-              { step: '01', title: 'SEARCH A COMPANY', desc: 'Search any company by name. Traqcker fetches real-time data directly from company filings.' },
-              { step: '02', title: 'DOES IT DESERVE YOUR MONEY?', desc: 'See instantly if the company is financially healthy and worth your investment' },
-              { step: '03', title: 'MAKE THE DECISION', desc: 'No recommendations. JUST the necessary information you need to know to make the decision' },
+              { step: '01', title: 'Search a company', desc: 'Type any company name. Traqcker pulls real data directly from company filings — no opinions, no noise.' },
+              { step: '02', title: 'Does it deserve your money?', desc: 'See instantly if the company is financially healthy and whether the price makes sense.' },
+              { step: '03', title: 'Make the decision', desc: 'No buy or sell recommendations. Just the facts you need to decide for yourself.' },
             ].map(s => (
-              <div key={s.step} style={{ background: 'var(--bg-1)', padding: '24px' }}>
-                <div style={{ color: 'var(--accent)', fontSize: '32px', fontWeight: 700, letterSpacing: '-1px', marginBottom: '12px', opacity: 0.4 }}>{s.step}</div>
-                <div style={{ color: 'var(--text)', fontSize: '12px', fontWeight: 700, letterSpacing: '1px', marginBottom: '8px' }}>{s.title}</div>
-                <div style={{ color: 'var(--text-3)', fontSize: '11px', lineHeight: 1.7 }}>{s.desc}</div>
+              <div key={s.step} className="glass" style={{ padding: '20px' }}>
+                <div style={{ color: 'var(--accent)', fontSize: '28px', fontWeight: 700, letterSpacing: '-1px', marginBottom: '10px', opacity: 0.35 }}>{s.step}</div>
+                <div style={{ color: 'var(--text)', fontSize: '14px', fontWeight: 600, marginBottom: '6px' }}>{s.title}</div>
+                <div style={{ color: 'var(--text-3)', fontSize: '13px', lineHeight: 1.7 }}>{s.desc}</div>
               </div>
             ))}
           </div>
@@ -338,45 +348,30 @@ export default function Home() {
         </div>
 
       <div className="desktop-only">
-      {/* Ticker tape */}
-      <div style={{ borderBottom: '1px solid var(--border)', background: 'var(--bg-1)', overflow: 'hidden', whiteSpace: 'nowrap', padding: '6px 0' }}>
-        <style>{`
-          @keyframes ticker { 0% { transform: translateX(0); } 100% { transform: translateX(-50%); } }
-          .ticker-inner { display: inline-flex; animation: ticker 40s linear infinite; }
-          .ticker-inner:hover { animation-play-state: paused; }
-        `}</style>
-        <div className="ticker-inner">
-          {['AAPL','MSFT','NVDA','GOOGL','AMZN','META','TSLA','V','JPM','JNJ','WMT','PG','XOM','CVX','HD','KO','PEP','ABBV','MRK','LLY','COST','TMO','ABT','MCD','CRM','ACN','BAC','AVGO','CSCO','TXN','QCOM','INTC','AMD','ORCL','ADBE','NFLX','PYPL','UNH','GS','MS','AAPL','MSFT','NVDA','GOOGL','AMZN','META','TSLA','V','JPM','JNJ','WMT','PG','XOM','CVX','HD','KO','PEP','ABBV','MRK','LLY','COST','TMO','ABT','MCD','CRM','ACN','BAC','AVGO','CSCO','TXN','QCOM','INTC','AMD','ORCL','ADBE','NFLX','PYPL','UNH','GS','MS'].map((t, i) => (
-            <span key={i} onClick={() => router.push(`/stock/${t}`)}
-              style={{ display: 'inline-block', padding: '0 20px', color: 'var(--text-3)', fontSize: '10px', letterSpacing: '2px', cursor: 'pointer', borderRight: '1px solid var(--border)' }}
-              onMouseEnter={e => e.target.style.color = 'var(--accent)'}
-              onMouseLeave={e => e.target.style.color = 'var(--text-3)'}>
-              {t}
-            </span>
-          ))}
-        </div>
-      </div>
 
       {/* HERO */}
-      <div style={{ borderBottom: '1px solid var(--border)', padding: '48px 24px 0', maxWidth: '1400px', margin: '0 auto', boxSizing: 'border-box', width: '100%' }}>
+      <div style={{ borderBottom: '1px solid rgba(255,255,255,0.06)', padding: '64px 24px 48px', maxWidth: '1400px', margin: '0 auto', boxSizing: 'border-box', width: '100%', position: 'relative', zIndex: 1 }}>
+        {/* Hero background glow */}
+        <div style={{ position: 'absolute', top: '-80px', left: '10%', width: '700px', height: '500px', background: 'radial-gradient(ellipse, rgba(167,139,250,0.18) 0%, rgba(96,165,250,0.08) 45%, transparent 70%)', pointerEvents: 'none', zIndex: 0 }} />
+        <div style={{ position: 'absolute', top: '0', right: '5%', width: '400px', height: '400px', background: 'radial-gradient(ellipse, rgba(96,165,250,0.1) 0%, transparent 65%)', pointerEvents: 'none', zIndex: 0 }} />
 
         {/* Top: headline + search */}
-        <div style={{ marginBottom: '40px' }}>
-          <div style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', background: 'var(--accent-dim)', border: '1px solid var(--accent)', padding: '4px 12px', marginBottom: '20px' }}>
+        <div style={{ marginBottom: '40px', position: 'relative', zIndex: 1 }}>
+          <div style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', background: 'var(--accent-dim)', border: '1px solid var(--accent)', padding: '4px 12px', borderRadius: '20px', marginBottom: '20px' }}>
             <span style={{ width: 6, height: 6, borderRadius: '50%', background: 'var(--green)', display: 'inline-block' }} />
             <span style={{ color: 'var(--accent)', fontSize: '10px', letterSpacing: '2px', fontWeight: 700 }}>DATA FROM COMPANY FILINGS</span>
           </div>
 
-          <h1 style={{ fontSize: '64px', fontWeight: 700, letterSpacing: '-2px', lineHeight: 1.0, marginBottom: '28px', whiteSpace: 'nowrap' }}>
+          <h1 style={{ fontSize: '64px', fontWeight: 800, letterSpacing: '-2px', lineHeight: 1.0, marginBottom: '28px', whiteSpace: 'nowrap', fontFamily: 'Nunito, sans-serif' }}>
             Know if a company is worth it.<span style={{ color: 'var(--accent)' }}> In seconds.</span>
           </h1>
 
           {/* Search bar — full width */}
           <div style={{ position: 'relative', zIndex: 50, maxWidth: '600px' }}>
-            <div style={{ display: 'flex' }}>
+            <div style={{ display: 'flex', borderRadius: '14px', overflow: 'hidden', boxShadow: '0 0 0 1px rgba(255,255,255,0.1)' }}>
               <input
-                style={{ flex: 1, background: 'var(--bg-2)', border: '1px solid var(--border-2)', borderRight: 'none', color: 'var(--accent)', fontFamily: 'JetBrains Mono, monospace', fontSize: '18px', fontWeight: 700, padding: '14px 20px', outline: 'none', letterSpacing: '4px' }}
-                placeholder="Search a Company, e.g. Apple"
+                style={{ flex: 1, background: 'rgba(255,255,255,0.06)', backdropFilter: 'blur(20px)', border: 'none', color: 'var(--text)', fontFamily: 'Space Grotesk, sans-serif', fontSize: '16px', fontWeight: 500, padding: '14px 20px', outline: 'none', letterSpacing: '0.5px' }}
+                placeholder="Search a company, e.g. Apple"
                 value={searchQ || ticker}
                 onChange={e => { const v = e.target.value; setSearchQ(v); setTicker(v.toUpperCase()); setShowSuggestions(true); }}
                 onKeyDown={e => { if (e.key === 'Enter') { go(); setShowSuggestions(false); } if (e.key === 'Escape') setShowSuggestions(false); }}
@@ -384,11 +379,8 @@ export default function Home() {
                 onFocus={e => { e.target.style.borderColor = 'var(--accent)'; setShowSuggestions(true); }}
                 onBlur={e => { e.target.style.borderColor = 'var(--border-2)'; setTimeout(() => setShowSuggestions(false), 200); }}
               />
-              <button onClick={() => go()}
-                style={{ background: 'var(--accent)', color: '#000', border: 'none', padding: '14px 32px', fontFamily: 'JetBrains Mono, monospace', fontSize: '13px', fontWeight: 700, cursor: 'pointer', letterSpacing: '1px', whiteSpace: 'nowrap' }}
-                onMouseEnter={e => e.target.style.opacity = '0.85'}
-                onMouseLeave={e => e.target.style.opacity = '1'}>
-                ANALYZE →
+              <button onClick={() => go()} className="btn-primary" style={{ borderRadius: '0 12px 12px 0', whiteSpace: 'nowrap', padding: '14px 32px' }}>
+                Analyze →
               </button>
             </div>
             {showSuggestions && suggestions.length > 0 && (
@@ -411,7 +403,7 @@ export default function Home() {
           <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', marginTop: '12px' }}>
             {['AAPL', 'MSFT', 'NVDA', 'V', 'ASML', 'GOOGL'].map(t => (
               <button key={t} onClick={() => go(t)}
-                style={{ background: 'none', border: '1px solid var(--border)', color: 'var(--text-3)', padding: '3px 10px', fontFamily: 'JetBrains Mono, monospace', fontSize: '10px', cursor: 'pointer', letterSpacing: '1px' }}
+                style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid var(--border)', color: 'var(--text-3)', padding: '4px 12px', fontFamily: 'Nunito, sans-serif', fontSize: '11px', fontWeight: 500, cursor: 'pointer', borderRadius: '8px' }}
                 onMouseEnter={e => { e.target.style.borderColor = 'var(--accent)'; e.target.style.color = 'var(--accent)'; }}
                 onMouseLeave={e => { e.target.style.borderColor = 'var(--border)'; e.target.style.color = 'var(--text-3)'; }}>
                 {t}
@@ -426,7 +418,7 @@ export default function Home() {
 
           {/* SOTW */}
           {sotw ? (
-            <div style={{ background: 'var(--bg-1)', border: '1px solid var(--border)', padding: '24px 28px' }}>
+            <div className="glass" style={{ padding: '24px 28px' }}>
               <div>
                 <a href={`/stock/${sotw.ticker}`} style={{ textDecoration: 'none', display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '16px' }}>
                   <span style={{ fontSize: '16px' }}>🔥</span>
@@ -445,8 +437,8 @@ export default function Home() {
                   <span style={{ color: 'var(--red)' }}>{sotwVotes.SELL}% Sell ●</span>
                 </div>
               </div>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', borderTop: '1px solid var(--border)', marginTop: '16px' }}>
-                {['BUY', 'HOLD', 'SELL'].map((v, i) => (
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '8px', marginTop: '16px' }}>
+                {['BUY', 'HOLD', 'SELL'].map((v) => (
                   <button key={v}
                     onClick={async (e) => {
                       e.preventDefault();
@@ -454,22 +446,22 @@ export default function Home() {
                       await fetch('/api/votes', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ ticker: sotw.ticker, vote: v }) });
                       fetch(`/api/votes?ticker=${sotw.ticker}`).then(r => r.json()).then(d => setSotwVotes({ ...d.percentages, total: d.total }));
                     }}
-                    style={{ padding: '14px 10px', background: 'none', border: 'none', borderRight: i < 2 ? '1px solid var(--border)' : 'none', color: v === 'BUY' ? 'var(--green)' : v === 'SELL' ? 'var(--red)' : 'var(--amber)', fontFamily: 'JetBrains Mono, monospace', fontWeight: 700, fontSize: '11px', cursor: 'pointer', letterSpacing: '1px' }}
-                    onMouseEnter={e => e.currentTarget.style.background = 'var(--bg-2)'}
-                    onMouseLeave={e => e.currentTarget.style.background = 'none'}>
+                    style={{ padding: '12px 10px', background: 'rgba(255,255,255,0.04)', border: `1px solid ${v === 'BUY' ? 'rgba(52,211,153,0.3)' : v === 'SELL' ? 'rgba(248,113,113,0.3)' : 'rgba(251,191,36,0.3)'}`, borderRadius: '10px', color: v === 'BUY' ? 'var(--green)' : v === 'SELL' ? 'var(--red)' : 'var(--amber)', fontFamily: 'Nunito, sans-serif', fontWeight: 700, fontSize: '13px', cursor: 'pointer' }}
+                    onMouseEnter={e => e.currentTarget.style.background = 'rgba(255,255,255,0.08)'}
+                    onMouseLeave={e => e.currentTarget.style.background = 'rgba(255,255,255,0.04)'}>
                     {v}
                   </button>
                 ))}
               </div>
             </div>
           ) : (
-            <div style={{ background: 'var(--bg-1)', border: '1px solid var(--border)', padding: '24px 28px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <div className="glass" style={{ padding: '24px 28px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
               <span style={{ color: 'var(--text-3)', fontSize: '10px', letterSpacing: '2px' }}>LOADING...</span>
             </div>
           )}
 
           {/* Stats below SOTW */}
-          <div style={{ background: 'var(--bg-1)', border: '1px solid var(--border)', padding: '20px 28px', display: 'flex', gap: '40px', alignItems: 'center', justifyContent: 'center' }}>
+          <div className="glass" style={{ padding: '20px 28px', display: 'flex', gap: '40px', alignItems: 'center', justifyContent: 'center' }}>
             {[
               { val: '8,000+', label: 'US COMPANIES' },
               { val: '100%', label: 'ACCURATE DATA' },
@@ -484,13 +476,13 @@ export default function Home() {
           </div>
 
             {/* Discover / Slot machine */}
-            <div style={{ background: 'var(--bg-1)', border: '1px solid var(--border)', padding: '24px 28px', display: 'flex', flexDirection: 'column', gap: '16px', justifyContent: 'space-between' }}>
+            <div className="glass" style={{ padding: '24px 28px', display: 'flex', flexDirection: 'column', gap: '16px', justifyContent: 'space-between' }}>
               <div style={{ textAlign: 'center' }}>
                 <div style={{ color: 'var(--accent)', fontSize: '18px', fontWeight: 700, letterSpacing: '2px', marginBottom: '6px' }}>⚡ SPIN THE MARKET</div>
                 <div style={{ color: 'var(--text-2)', fontSize: '12px' }}>Discover a random stock from 8,000+</div>
                 {discoverRemaining !== null && discoverRemaining !== 'unlimited' && discoverState !== 'limited' && (
                   <div style={{ marginTop: '6px' }}>
-                    <span style={{ color: 'var(--text-3)', fontSize: '10px', letterSpacing: '1px', background: 'var(--bg-2)', border: '1px solid var(--border)', padding: '3px 8px' }}>
+                    <span style={{ color: 'var(--text-3)', fontSize: '10px', background: 'var(--bg-2)', border: '1px solid var(--border)', padding: '3px 10px', borderRadius: '20px' }}>
                       {discoverRemaining} LEFT
                     </span>
                   </div>
@@ -499,9 +491,13 @@ export default function Home() {
 
               {/* Slot display */}
               <div style={{
-                background: 'var(--bg)', border: `1.5px solid ${discoverState === 'revealed' ? 'var(--accent)' : discoverState === 'limited' ? 'var(--red)' : 'var(--border)'}`,
+                background: 'rgba(0,0,0,0.3)',
+                backdropFilter: 'blur(10px)',
+                border: `1.5px solid ${discoverState === 'revealed' ? 'var(--accent)' : discoverState === 'limited' ? 'var(--red)' : 'rgba(255,255,255,0.08)'}`,
+                borderRadius: '12px',
                 height: '72px', display: 'flex', alignItems: 'center', justifyContent: 'center',
                 transition: 'border-color 0.3s',
+                boxShadow: discoverState === 'revealed' ? '0 0 24px rgba(167,139,250,0.2)' : 'none',
               }}>
                 <style>{`
                   @keyframes slot-blur { 0%,100%{opacity:1;transform:translateY(0)} 50%{opacity:0.3;transform:translateY(-3px)} }
@@ -517,13 +513,14 @@ export default function Home() {
               {discoverState !== 'limited' ? (
                 <div style={{ display: 'flex', gap: '8px' }}>
                   <button onClick={handleDiscover} disabled={discoverState === 'spinning'}
-                    style={{ flex: 1, background: discoverState === 'spinning' ? 'var(--bg-2)' : 'var(--accent)', color: discoverState === 'spinning' ? 'var(--text-3)' : '#000', border: 'none', padding: '10px', cursor: discoverState === 'spinning' ? 'default' : 'pointer', fontFamily: 'JetBrains Mono, monospace', fontSize: '11px', fontWeight: 700, letterSpacing: '1px' }}>
-                    {discoverState === 'spinning' ? 'SPINNING...' : discoverState === 'revealed' ? '⚡ SPIN AGAIN' : '⚡ SPIN'}
+                    className={discoverState === 'spinning' ? '' : 'btn-primary'}
+                    style={{ flex: 1, ...(discoverState === 'spinning' ? { background: 'var(--bg-2)', color: 'var(--text-3)', border: 'none', padding: '11px', borderRadius: '10px', cursor: 'default', fontFamily: 'Nunito, sans-serif', fontSize: '13px', fontWeight: 600 } : { borderRadius: '10px', padding: '11px 10px' }) }}>
+                    {discoverState === 'spinning' ? 'Spinning...' : discoverState === 'revealed' ? '⚡ Spin Again' : '⚡ Spin'}
                   </button>
                   {discoverState === 'revealed' && discoverTicker && (
                     <button onClick={() => router.push(`/stock/${discoverTicker}`)}
-                      style={{ flex: 1, background: 'none', border: '1px solid var(--accent)', color: 'var(--accent)', padding: '10px', cursor: 'pointer', fontFamily: 'JetBrains Mono, monospace', fontSize: '11px', fontWeight: 700, letterSpacing: '1px' }}>
-                      ANALYZE →
+                      style={{ flex: 1, background: 'none', border: '1px solid var(--accent)', color: 'var(--accent)', padding: '11px', cursor: 'pointer', fontFamily: 'Nunito, sans-serif', fontSize: '13px', fontWeight: 600, borderRadius: '10px' }}>
+                      Analyze →
                     </button>
                   )}
                 </div>
@@ -532,9 +529,9 @@ export default function Home() {
                   <div style={{ color: 'var(--red)', fontSize: '10px', letterSpacing: '1px', marginBottom: '8px', textAlign: 'center' }}>
                     {isSignedIn ? 'DAILY LIMIT REACHED' : 'SIGN IN FOR MORE'}
                   </div>
-                  <a href={isSignedIn ? '/pricing' : '/sign-up'}
-                    style={{ display: 'block', background: 'var(--accent)', color: '#000', padding: '10px', fontFamily: 'JetBrains Mono, monospace', fontSize: '11px', fontWeight: 700, letterSpacing: '1px', textDecoration: 'none', textAlign: 'center' }}>
-                    {isSignedIn ? 'UPGRADE TO PRO →' : 'SIGN UP FREE →'}
+                  <a href={isSignedIn ? '/pricing' : '/sign-up'} className="btn-primary"
+                    style={{ display: 'block', textAlign: 'center', borderRadius: '10px' }}>
+                    {isSignedIn ? 'Upgrade to Pro →' : 'Sign up free →'}
                   </a>
                 </div>
               )}
@@ -558,38 +555,36 @@ export default function Home() {
           <div style={{ color: 'var(--text-3)', fontSize: '9px', letterSpacing: '3px', marginBottom: '24px', borderBottom: '1px solid var(--border)', paddingBottom: '8px' }}>
             HOW IT WORKS
           </div>
-          <div className="how-it-works-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '1px', background: 'var(--border)' }}>
+          <div className="how-it-works-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '16px' }}>
             {[
-              { step: '01', title: 'SEARCH A COMPANY', desc: 'Search any company by name. Traqcker fetches real-time data directly from company filings.' },
-              { step: '02', title: 'DOES IT DESERVE YOUR MONEY?', desc: 'See instantly if the company is financially healthy and worth your investment' },
-              { step: '03', title: 'MAKE THE DECISION', desc: 'No recommendations. JUST the necessary information you need to know to make the decision' },
+              { step: '01', title: 'Search a company', desc: 'Type any company name. Traqcker pulls real data directly from company filings — no opinions, no noise.' },
+              { step: '02', title: 'Does it deserve your money?', desc: 'See instantly if the company is financially healthy and whether the price makes sense.' },
+              { step: '03', title: 'Make the decision', desc: 'No buy or sell recommendations. Just the facts you need to decide for yourself.' },
             ].map(s => (
-              <div key={s.step} style={{ background: 'var(--bg-1)', padding: '24px' }}>
-                <div style={{ color: 'var(--accent)', fontSize: '32px', fontWeight: 700, letterSpacing: '-1px', marginBottom: '12px', opacity: 0.4 }}>{s.step}</div>
-                <div style={{ color: 'var(--text)', fontSize: '12px', fontWeight: 700, letterSpacing: '1px', marginBottom: '8px' }}>{s.title}</div>
-                <div style={{ color: 'var(--text-3)', fontSize: '11px', lineHeight: 1.7 }}>{s.desc}</div>
+              <div key={s.step} className="glass reveal" style={{ padding: '28px 24px' }}>
+                <div style={{ color: 'var(--accent)', fontSize: '36px', fontWeight: 700, letterSpacing: '-1px', marginBottom: '16px', opacity: 0.35, fontFamily: 'Space Grotesk, sans-serif' }}>{s.step}</div>
+                <div style={{ color: 'var(--text)', fontSize: '14px', fontWeight: 600, marginBottom: '8px', fontFamily: 'Space Grotesk, sans-serif' }}>{s.title}</div>
+                <div style={{ color: 'var(--text-3)', fontSize: '13px', lineHeight: 1.7 }}>{s.desc}</div>
               </div>
             ))}
           </div>
         </div>
 
         {/* CTA BOTTOM */}
-        <div style={{ border: '1px solid var(--border)', padding: '48px 32px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '48px', background: 'var(--bg-1)' }}>
+        <div className="glass reveal" style={{ padding: '48px 40px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '48px', background: 'linear-gradient(135deg, rgba(167,139,250,0.08), rgba(96,165,250,0.05))' }}>
           <div>
-            <div style={{ color: 'var(--accent)', fontSize: '10px', letterSpacing: '3px', marginBottom: '8px' }}>GET STARTED TODAY</div>
-            <div style={{ fontSize: '24px', fontWeight: 700, letterSpacing: '-0.5px', marginBottom: '8px' }}>
+            <div style={{ color: 'var(--accent)', fontSize: '11px', letterSpacing: '3px', marginBottom: '10px', fontFamily: 'Space Grotesk, sans-serif' }}>GET STARTED TODAY</div>
+            <div style={{ fontSize: '28px', fontWeight: 700, letterSpacing: '-0.5px', marginBottom: '8px', fontFamily: 'Space Grotesk, sans-serif' }}>
               Free access. No credit card.
             </div>
-            <div style={{ color: 'var(--text-3)', fontSize: '12px' }}>
+            <div style={{ color: 'var(--text-3)', fontSize: '13px' }}>
               Overview + Quality Scorecard for every stock. Upgrade to Pro for Financials, DCF, Screener and Compare.
             </div>
           </div>
           <div style={{ display: 'flex', gap: '12px', flexShrink: 0 }}>
-            <a href="/sign-up" style={{ background: 'var(--accent)', color: '#000', padding: '12px 28px', fontFamily: 'JetBrains Mono, monospace', fontSize: '12px', fontWeight: 700, letterSpacing: '1px', textDecoration: 'none' }}>
-              START FOR FREE →
-            </a>
-            <a href="/pricing" style={{ background: 'none', border: '1px solid var(--border)', color: 'var(--text-3)', padding: '12px 28px', fontFamily: 'JetBrains Mono, monospace', fontSize: '12px', letterSpacing: '1px', textDecoration: 'none' }}
-              onMouseEnter={e => { e.currentTarget.style.borderColor = 'var(--accent)'; e.currentTarget.style.color = 'var(--accent)'; }}
+            <a href="/sign-up" className="btn-primary">Start for free →</a>
+            <a href="/pricing" className="btn-secondary"
+              onMouseEnter={e => { e.currentTarget.style.borderColor = 'rgba(167,139,250,0.4)'; e.currentTarget.style.color = 'var(--accent)'; }}
               onMouseLeave={e => { e.currentTarget.style.borderColor = 'var(--border)'; e.currentTarget.style.color = 'var(--text-3)'; }}>
               VIEW PRICING
             </a>
