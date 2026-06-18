@@ -91,7 +91,7 @@ export default function Home() {
   const [suggestions, setSuggestions] = useState([]);
   const [showSuggestions, setShowSuggestions] = useState(false);
   const [sotw, setSotw] = useState(null); // { ticker, name } or null
-  const [sotwVotes, setSotwVotes] = useState({ BUY: 0, HOLD: 0, SELL: 0, total: 0 });
+  const [sotwVotes, setSotwVotes] = useState({ BUY: 0, HOLD: 0, SELL: 0, total: 0, source: 'none' });
   const [discoverState, setDiscoverState] = useState('idle'); // idle | spinning | revealed | limited
   const [discoverTicker, setDiscoverTicker] = useState(null);
   const [discoverRemaining, setDiscoverRemaining] = useState(null);
@@ -117,7 +117,7 @@ export default function Home() {
         // Load votes for this stock
         fetch(`/api/votes?ticker=${d.ticker}`)
           .then(r => r.json())
-          .then(v => setSotwVotes({ ...v.percentages, total: v.total }))
+          .then(v => setSotwVotes({ ...v.percentages, total: v.total, source: v.source || 'none' }))
           .catch(() => {});
       })
       .catch(err => console.error('SOTW fetch failed:', err));
@@ -278,7 +278,7 @@ export default function Home() {
                 </div>
                 <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '10px', marginBottom: '12px' }}>
                   <span style={{ color: 'var(--green)' }}>● {sotwVotes.BUY}% Buy</span>
-                  <span style={{ color: 'var(--text-3)' }}>{sotwVotes.total} votes</span>
+                  <span style={{ color: 'var(--text-3)' }}>{sotwVotes.source === 'analysts' ? `${sotwVotes.total} analysts` : `${sotwVotes.total} votes`}</span>
                   <span style={{ color: 'var(--red)' }}>{sotwVotes.SELL}% Sell ●</span>
                 </div>
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '8px' }}>
@@ -720,7 +720,7 @@ export default function Home() {
                 </div>
                 <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '10px' }}>
                   <span style={{ color: 'var(--green)' }}>● {sotwVotes.BUY}% Buy</span>
-                  <span style={{ color: 'var(--text-3)' }}>{sotwVotes.total} votes</span>
+                  <span style={{ color: 'var(--text-3)' }}>{sotwVotes.source === 'analysts' ? `${sotwVotes.total} analysts` : `${sotwVotes.total} votes`}</span>
                   <span style={{ color: 'var(--red)' }}>{sotwVotes.SELL}% Sell ●</span>
                 </div>
               </div>

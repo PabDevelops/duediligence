@@ -1,7 +1,19 @@
 import { supabase } from '../../../lib/supabase';
 
 const FH_KEY = process.env.FINNHUB_API_KEY;
+const AV_KEY = 'HQ3HYMDJQK4QBM4I';
 const CACHE_HOURS = 24;
+
+async function fetchDescription(ticker) {
+  try {
+    const res = await fetch(
+      `https://www.alphavantage.co/query?function=OVERVIEW&symbol=${ticker}&apikey=${AV_KEY}`,
+      { next: { revalidate: 86400 } }
+    );
+    const d = await res.json();
+    return d.Description && d.Description !== 'None' ? d.Description : null;
+  } catch { return null; }
+}
 
 export async function GET(request) {
   const { searchParams } = new URL(request.url);
@@ -21,7 +33,7 @@ export async function GET(request) {
     const forceRefresh = searchParams.get('refresh') === 'true';
     if (cached && !forceRefresh) {
       const hoursOld = (Date.now() - new Date(cached.updated_at).getTime()) / (1000 * 60 * 60);
-      if (hoursOld < CACHE_HOURS) {
+      if (hoursOld < CACHE_HOURS && cached.data?.description) {
         return Response.json({ ...cached.data, cached: true });
       }
     }
@@ -63,7 +75,7 @@ export async function GET(request) {
         sector: fhProfile.finnhubIndustry || null,
         industry: fhProfile.finnhubIndustry || null,
         exchange: fhProfile.exchange || null,
-        description: fhProfile.description || null,
+        description: fhProfile.description || await fetchDescription(ticker),
         currentPrice,
         priceChange: fh.d || null,
         priceChangePct: fh.dp || null,
@@ -341,7 +353,7 @@ const sharesForCalc = sharesValAdj || sharesFinnhub;
       sector: fhProfile.finnhubIndustry || null,
       industry: fhProfile.finnhubIndustry || null,
       exchange: fhProfile.exchange || null,
-      description: fhProfile.description || null,
+      description: fhProfile.description || await fetchDescription(ticker),
       employees: fhProfile.employeeTotal || null,
       weburl: fhProfile.weburl || null,
       revVal, niVal, oiVal, fcfVal, assetsVal, equityVal, debtVal, cashVal, sharesVal, rdVal,

@@ -31,15 +31,6 @@ export async function GET(req) {
 
     if (error) throw error;
 
-    const counts = { BUY: 0, HOLD: 0, SELL: 0 };
-    votes.forEach(v => counts[v.vote]++);
-    const total = votes.length || 1;
-    const percentages = {
-      BUY: Math.round((counts.BUY / total) * 100),
-      HOLD: Math.round((counts.HOLD / total) * 100),
-      SELL: Math.round((counts.SELL / total) * 100),
-    };
-
     let userVote = null;
     if (userId) {
       const { data: userVotes } = await supabase
@@ -51,7 +42,46 @@ export async function GET(req) {
       if (userVotes) userVote = userVotes.vote;
     }
 
-    return Response.json({ percentages, userVote, total });
+    const userTotal = votes.length;
+    const COMMUNITY_THRESHOLD = 5;
+
+    // Enough community votes — use them
+    if (userTotal >= COMMUNITY_THRESHOLD) {
+      const counts = { BUY: 0, HOLD: 0, SELL: 0 };
+      votes.forEach(v => counts[v.vote]++);
+      const total = userTotal;
+      const percentages = {
+        BUY: Math.round((counts.BUY / total) * 100),
+        HOLD: Math.round((counts.HOLD / total) * 100),
+        SELL: Math.round((counts.SELL / total) * 100),
+      };
+      return Response.json({ percentages, userVote, total, source: 'community' });
+    }
+
+    // Few votes — seed with Finnhub analyst recommendations
+    try {
+      const fhRes = await fetch(
+        `https://finnhub.io/api/v1/stock/recommendation?symbol=${ticker}&token=${process.env.FINNHUB_API_KEY}`,
+        { next: { revalidate: 3600 } }
+      );
+      const fhData = await fhRes.json();
+      const rec = Array.isArray(fhData) && fhData[0];
+      if (rec) {
+        const buy  = (rec.strongBuy || 0) + (rec.buy || 0);
+        const hold = rec.hold || 0;
+        const sell = (rec.sell || 0) + (rec.strongSell || 0);
+        const total = buy + hold + sell || 1;
+        const percentages = {
+          BUY:  Math.round((buy  / total) * 100),
+          HOLD: Math.round((hold / total) * 100),
+          SELL: Math.round((sell / total) * 100),
+        };
+        return Response.json({ percentages, userVote, total: rec.buy + rec.strongBuy + rec.hold + rec.sell + rec.strongSell, source: 'analysts' });
+      }
+    } catch { /* fallback below */ }
+
+    // No analyst data either — return equal split
+    return Response.json({ percentages: { BUY: 33, HOLD: 34, SELL: 33 }, userVote, total: 0, source: 'none' });
   } catch (error) {
     console.error('votes GET error:', error);
     return Response.json({ error: 'Error fetching votes' }, { status: 500 });

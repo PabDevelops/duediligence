@@ -119,7 +119,7 @@ export default function StockPage({ params }) {
   const [checkingPro, setCheckingPro] = useState(true);
   const [inWatchlist, setInWatchlist] = useState(false);
   const [userVote, setUserVote] = useState(null);
-  const [voteConsensus, setVoteConsensus] = useState({ BUY: 0, HOLD: 0, SELL: 0, total: 0 });
+  const [voteConsensus, setVoteConsensus] = useState({ BUY: 0, HOLD: 0, SELL: 0, total: 0, source: 'none' });
   const [expanded, setExpanded] = useState(false);
   const [sotw, setSotw] = useState(null);
   const [achievementToast, setAchievementToast] = useState(null);
@@ -176,7 +176,7 @@ export default function StockPage({ params }) {
       .then(r => r.json())
       .then(d => {
         if (d.userVote) setUserVote(d.userVote);
-        setVoteConsensus({ ...d.percentages, total: d.total });
+        setVoteConsensus({ ...d.percentages, total: d.total, source: d.source || 'none' });
       })
       .catch(() => {});
   }, [ticker]);
@@ -466,17 +466,21 @@ export default function StockPage({ params }) {
 
 
           {data.description && (() => {
-            const short = data.description.slice(0, 200);
+            const LIMIT = 320;
+            const short = data.description.slice(0, LIMIT);
             const full = data.description;
             return (
-              <div style={{ color: 'var(--text-3)', fontSize: '11px', lineHeight: 1.7, marginBottom: '20px', paddingBottom: '16px', borderBottom: '1px solid var(--border)' }}>
-                {expanded ? full : `${short}...`}
-                {data.description.length > 200 && (
-                  <span onClick={() => setExpanded(!expanded)}
-                    style={{ color: 'var(--accent)', cursor: 'pointer', marginLeft: '6px', letterSpacing: '0.5px' }}>
-                    {expanded ? 'COLLAPSE ↑' : 'READ MORE ↓'}
-                  </span>
-                )}
+              <div style={{ background: 'var(--bg-1)', border: '1px solid var(--border)', borderRadius: '14px', padding: '16px 18px', marginBottom: '16px' }}>
+                <div style={{ fontSize: '10px', color: 'var(--text-3)', letterSpacing: '1.5px', fontWeight: 700, marginBottom: '8px' }}>ABOUT</div>
+                <div style={{ color: 'var(--text-2)', fontSize: '13px', lineHeight: 1.75 }}>
+                  {expanded ? full : `${short}${data.description.length > LIMIT ? '…' : ''}`}
+                  {data.description.length > LIMIT && (
+                    <span onClick={() => setExpanded(!expanded)}
+                      style={{ color: 'var(--accent)', cursor: 'pointer', marginLeft: '6px', fontWeight: 700, fontSize: '12px' }}>
+                      {expanded ? 'Show less' : 'Read more'}
+                    </span>
+                  )}
+                </div>
               </div>
             );
           })()}
@@ -559,11 +563,13 @@ export default function StockPage({ params }) {
                     <span style={{ color: 'var(--amber)' }}>● {voteConsensus.HOLD}% Hold</span>
                     <span style={{ color: 'var(--red)' }}>● {voteConsensus.SELL}% Sell</span>
                   </div>
-                  {voteConsensus.total > 0 && (
-                    <div style={{ marginTop: '6px', fontSize: '10px', color: 'var(--text-3)', textAlign: 'center' }}>
-                      {voteConsensus.total} {voteConsensus.total === 1 ? 'person' : 'people'} voted
-                    </div>
-                  )}
+                  <div style={{ marginTop: '6px', fontSize: '10px', color: 'var(--text-3)', textAlign: 'center' }}>
+                    {voteConsensus.source === 'analysts'
+                      ? `Analyst consensus · ${voteConsensus.total} analysts`
+                      : voteConsensus.source === 'community'
+                      ? `${voteConsensus.total} ${voteConsensus.total === 1 ? 'person' : 'people'} voted`
+                      : null}
+                  </div>
                 </div>
               </div>
 
