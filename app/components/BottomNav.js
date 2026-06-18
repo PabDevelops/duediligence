@@ -36,7 +36,7 @@ function NavLink({ href, icon, label, active }) {
     }}>
       {ICONS[icon](active)}
       <span style={{
-        fontFamily: 'JetBrains Mono, monospace', fontSize: '10px',
+        fontFamily: 'Nunito, sans-serif', fontSize: '11px',
         color: active ? 'var(--accent)' : 'var(--text-3)',
         fontWeight: active ? 600 : 400,
       }}>
@@ -86,7 +86,7 @@ export default function BottomNav() {
     <nav className="bottom-nav" style={{
       display: 'none',
       position: 'fixed', bottom: `${cookieOffset}px`, left: 0, right: 0,
-      background: 'var(--bg-1)', borderTop: '1px solid var(--border)',
+      background: 'rgba(15,17,25,0.95)', backdropFilter: 'blur(20px)', borderTop: '1px solid var(--border)',
       paddingBottom: cookieOffset > 0 ? 0 : 'env(safe-area-inset-bottom, 0px)',
       zIndex: 99,
       transition: 'bottom 0.2s ease',

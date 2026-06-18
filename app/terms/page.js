@@ -3,12 +3,12 @@ import Topbar from '../components/Topbar';
 
 export default function Terms() {
   return (
-    <div style={{ background: 'var(--bg)', minHeight: '100vh', color: 'var(--text)', fontFamily: 'JetBrains Mono, monospace' }}>
+    <div style={{ background: 'var(--bg)', minHeight: '100vh', color: 'var(--text)', fontFamily: 'Nunito, sans-serif' }}>
       <Topbar />
       <div style={{ maxWidth: '800px', margin: '0 auto', padding: '60px 24px' }}>
-        <div style={{ color: 'var(--accent)', fontSize: '10px', letterSpacing: '3px', marginBottom: '12px' }}>LEGAL</div>
-        <h1 style={{ fontSize: '28px', fontWeight: 600, marginBottom: '8px' }}>Terms of Service</h1>
-        <div style={{ color: 'var(--text-3)', fontSize: '11px', marginBottom: '40px' }}>Last updated: June 2026 · Governed by the laws of England and Wales</div>
+        <div style={{ color: 'var(--accent)', fontSize: '11px', letterSpacing: '2px', marginBottom: '12px', fontWeight: 700 }}>LEGAL</div>
+        <h1 style={{ fontSize: '36px', fontWeight: 800, letterSpacing: '-1px', marginBottom: '8px' }}>Terms of Service</h1>
+        <div style={{ color: 'var(--text-3)', fontSize: '13px', marginBottom: '40px' }}>Last updated: June 2026 · Governed by the laws of England and Wales</div>
 
         {[
           {
@@ -135,8 +135,8 @@ Financial data sourced from SEC EDGAR is in the public domain. Data from Finnhub
           },
         ].map(s => (
           <div key={s.title} style={{ marginBottom: '32px', paddingBottom: '32px', borderBottom: '1px solid var(--border)' }}>
-            <div style={{ color: 'var(--accent)', fontSize: '11px', fontWeight: 600, letterSpacing: '1px', marginBottom: '12px' }}>{s.title}</div>
-            <div style={{ color: 'var(--text-2)', fontSize: '12px', lineHeight: 1.9, whiteSpace: 'pre-line' }}>{s.content}</div>
+            <div style={{ color: 'var(--accent)', fontSize: '13px', fontWeight: 700, marginBottom: '12px' }}>{s.title}</div>
+            <div style={{ color: 'var(--text-2)', fontSize: '14px', lineHeight: 1.9, whiteSpace: 'pre-line' }}>{s.content}</div>
           </div>
         ))}
       </div>
