@@ -23,10 +23,6 @@ const fmtN = (v, d = 2) => v !== null && v !== undefined ? v.toFixed(d) : 'N/A';
 
 const S = {
   page: { background: 'var(--bg)', minHeight: '100vh', color: 'var(--text)', fontFamily: 'Nunito, sans-serif' },
-  topbar: { borderBottom: '1px solid var(--border)', padding: '8px 16px', display: 'flex', alignItems: 'center', gap: '12px', position: 'sticky', top: 0, background: 'var(--bg)', zIndex: 10, fontSize: '11px' },
-  sidebar: { width: '160px', flexShrink: 0, borderRight: '1px solid var(--border)', minHeight: '100vh', padding: '16px 0', position: 'sticky', top: '49px', alignSelf: 'flex-start' },
-  navItem: (active) => ({ display: 'block', width: '100%', textAlign: 'left', padding: '8px 16px', fontSize: '12px', letterSpacing: '0.5px', background: 'none', border: 'none', cursor: 'pointer', color: active ? 'var(--accent)' : 'var(--text-3)', borderLeft: active ? '2px solid var(--accent)' : '2px solid transparent', fontFamily: 'Nunito, sans-serif', fontWeight: active ? 700 : 500 }),
-  content: { flex: 1, padding: '24px', overflow: 'hidden' },
   card: { background: 'var(--bg-1)', border: '1px solid var(--border)', padding: '16px', marginBottom: '1px' },
   label: { color: 'var(--text-3)', fontSize: '10px', letterSpacing: '2px', marginBottom: '4px' },
   val: { fontSize: '22px', fontWeight: 600, marginBottom: '2px' },
@@ -170,8 +166,6 @@ export default function StockPage({ params }) {
     }
   }, [ticker, isSignedIn]);
 
-  // Load persisted vote (per ticker) from localStorage, only when signed in.
-  // Load user vote and consensus from API
   useEffect(() => {
     fetch(`/api/votes?ticker=${ticker}`)
       .then(r => r.json())
@@ -182,7 +176,6 @@ export default function StockPage({ params }) {
       .catch(() => {});
   }, [ticker]);
 
-  // Load stock of the week
   useEffect(() => {
     fetch('/api/stock-of-week')
       .then(r => r.json())
@@ -232,16 +225,14 @@ export default function StockPage({ params }) {
   if (loading) return (
     <div style={{ ...S.page }}>
       <Topbar />
-      <div style={{ maxWidth: '900px', margin: '40px auto', padding: '0 24px' }}>
-        {/* Ticker header skeleton */}
+      <div style={{ maxWidth: '960px', margin: '40px auto', padding: '0 20px' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '32px' }}>
-          <div style={{ width: 40, height: 40, background: 'var(--bg-1)', border: '1px solid var(--border)' }} />
+          <div style={{ width: 56, height: 56, borderRadius: '14px', background: 'var(--bg-1)', border: '1px solid var(--border)' }} />
           <div>
-            <div style={{ width: 80, height: 20, background: 'var(--bg-1)', marginBottom: 6 }} />
-            <div style={{ width: 160, height: 12, background: 'var(--bg-1)' }} />
+            <div style={{ width: 160, height: 22, background: 'var(--bg-1)', marginBottom: 8, borderRadius: '6px' }} />
+            <div style={{ width: 100, height: 14, background: 'var(--bg-1)', borderRadius: '6px' }} />
           </div>
         </div>
-        {/* Metric cards skeleton */}
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '1px', background: 'var(--border)', marginBottom: '24px' }}>
           {[...Array(4)].map((_, i) => (
             <div key={i} style={{ background: 'var(--bg-1)', padding: '16px' }}>
@@ -250,9 +241,8 @@ export default function StockPage({ params }) {
             </div>
           ))}
         </div>
-        {/* Content skeleton */}
         {[...Array(3)].map((_, i) => (
-          <div key={i} style={{ height: 60, background: 'var(--bg-1)', border: '1px solid var(--border)', marginBottom: '1px' }} />
+          <div key={i} style={{ height: 60, background: 'var(--bg-1)', border: '1px solid var(--border)', marginBottom: '1px', borderRadius: '8px' }} />
         ))}
         <div style={{ marginTop: '20px', color: 'var(--text-3)', fontSize: '10px', letterSpacing: '2px', textAlign: 'center' }}>
           FETCHING {ticker} FROM SEC EDGAR...
@@ -285,20 +275,6 @@ export default function StockPage({ params }) {
     </div>
   );
 
-  {data?.finnhubFallback && !isPro && !checkingPro && (
-            <div style={{ background: 'var(--bg-1)', border: '1px solid var(--accent)', padding: '12px 16px', marginBottom: '16px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '16px' }}>
-              <div>
-                <span style={{ color: 'var(--accent)', fontSize: '11px', fontWeight: 700, letterSpacing: '1px' }}>🌍 INTERNATIONAL STOCK</span>
-                <span style={{ color: 'var(--text-2)', fontSize: '11px', marginLeft: '12px' }}>Limited data available. Upgrade to Pro for full access to international stocks.</span>
-              </div>
-              <a href="/pricing" style={{ background: 'var(--accent)', color: '#000', padding: '4px 14px', fontFamily: 'JetBrains Mono, monospace', fontSize: '10px', fontWeight: 700, letterSpacing: '1px', textDecoration: 'none', flexShrink: 0 }}>UPGRADE →</a>
-            </div>
-          )}
-
-         
-
-  {/* Company header */}
-
   const score = totalScore();
   const revChart = data.revHistory.map(r => ({ year: r.year, value: +(r.val / 1e9).toFixed(1) }));
   const fcfChart = data.fcfHistory.map(r => ({ year: r.year, value: +(r.val / 1e9).toFixed(1) }));
@@ -308,7 +284,6 @@ export default function StockPage({ params }) {
   const change = data.priceChange;
   const changePct = data.priceChangePct;
 
-  // Easy Mode score (0-100) - same methodology as quality tab, scaled up
   const easyMode = (() => {
     const sector = (data.sector || '').toLowerCase();
     const isFinancial = sector.includes('bank') || sector.includes('insurance') || sector.includes('financial');
@@ -351,9 +326,6 @@ export default function StockPage({ params }) {
     return { score100, verdict, verdictColor, summary };
   })();
 
-  // Fair value positioning (0-100% along Cheap -> Fair -> Expensive bar)
-  // Graham intrinsic value (base scenario) - same formula as DCF tab
-  // V = EPS x (8.5 + 2g) x (4.4/5.5), g = 5Y EPS CAGR (capped 0-20%)
   const grahamValue = (() => {
     if (!data.eps) return null;
     const cagr = data.epsCagr;
@@ -363,21 +335,10 @@ export default function StockPage({ params }) {
 
   const fairValue = (() => {
     if (!grahamValue || !price) return null;
-    
-    // If Graham value is negative (negative EPS), stock is fundamentally overvalued
-    // by this metric since price/negativeValue gives a meaningless negative ratio
     if (grahamValue <= 0) {
-      return { 
-        pct: 98, 
-        tag: 'EXPENSIVE', 
-        tagColor: 'var(--red)', 
-        estimate: grahamValue,
-        negative: true 
-      };
+      return { pct: 98, tag: 'EXPENSIVE', tagColor: 'var(--red)', estimate: grahamValue, negative: true };
     }
-    
-    const ratio = price / grahamValue; // >1 = expensive, <1 = cheap
-    // Map ratio 0.5x -> 1.5x onto 0% -> 100%
+    const ratio = price / grahamValue;
     const pct = Math.max(2, Math.min(98, ((ratio - 0.5) / 1.0) * 100));
     let tag;
     if (ratio < 0.85) tag = 'UNDERVALUED';
@@ -388,113 +349,97 @@ export default function StockPage({ params }) {
     return { pct, tag, tagColor, estimate: grahamValue, negative: false };
   })();
 
-  // Community vote state (local-only placeholder until backend exists)
-
-
   return (
     <div style={S.page}>
       <Topbar />
-      {/* Stock subbar */}
+
+      {/* Breadcrumb */}
       <div style={{ borderBottom: '1px solid var(--border)', padding: '6px 16px', display: 'flex', alignItems: 'center', gap: '12px', background: 'var(--bg-1)', fontSize: '11px' }}>
         <span style={{ color: 'var(--text-3)' }}>▸</span>
         <span style={{ color: 'var(--accent)', fontWeight: 700, letterSpacing: '2px' }}>{ticker}</span>
       </div>
       <OnboardingBanner />
-      {/* Mobile nav tabs */}
-      <div className="mobile-tabs" style={{ display: 'none', borderBottom: '1px solid var(--border)', background: 'var(--bg-1)', overflowX: 'auto', whiteSpace: 'nowrap' }}>
-        {NAV.map(n => (
-          <button key={n.key}
-            onClick={() => { setTab(n.key); window.scrollTo({ top: 0, behavior: 'smooth' }); }}
-            style={{ display: 'inline-block', padding: '10px 16px', fontSize: '12px', letterSpacing: '0.5px', background: 'none', border: 'none', color: tab === n.key ? 'var(--accent)' : 'var(--text-3)', borderBottom: tab === n.key ? '2px solid var(--accent)' : '2px solid transparent', fontFamily: 'Nunito, sans-serif', fontWeight: tab === n.key ? 700 : 500, cursor: 'pointer' }}>
-            {n.label}
-          </button>
-        ))}
-      </div>
 
-      <div style={{ display: 'flex' }}>
-        {/* Sidebar */}
-        <div style={S.sidebar} className="stock-sidebar">
-          <div style={{ padding: '0 16px', marginBottom: '12px', color: 'var(--text-3)', fontSize: '9px', letterSpacing: '2px' }}>ANALYSIS</div>
-          {NAV.map(n => (
-            <button key={n.key}
-              style={{ ...S.navItem(tab === n.key) }}
-              onClick={() => { setTab(n.key); window.scrollTo({ top: 0, behavior: 'smooth' }); }}>
-              {n.label}{n.pro && !isPro && !checkingPro ? ' 🔒' : ''}
-            </button>
-          ))}
-          {score !== null && (
-            <div style={{ margin: '24px 16px 0', borderTop: '1px solid var(--border)', paddingTop: '16px' }}>
-              <div style={{ color: 'var(--text-3)', fontSize: '9px', letterSpacing: '2px', marginBottom: '8px' }}>DD SCORE</div>
-              <ScoreBox score={score} size={56} />
-            </div>
-          )}
-        </div>
+      <div style={{ maxWidth: '960px', margin: '0 auto', padding: '20px 20px 80px' }}>
 
-        {/* Main content */}
-        <div style={S.content} className="stock-content">
+        {/* Finnhub fallback notice */}
+        {data.finnhubFallback && (
+          <div style={{ display: 'flex', alignItems: 'center', gap: '6px', background: 'var(--bg-1)', border: '1px solid var(--border)', borderRadius: '10px', padding: '8px 12px', marginBottom: '16px' }}>
+            <span style={{ color: 'var(--accent)', fontSize: '9px' }}>ℹ</span>
+            <span style={{ color: 'var(--text-3)', fontSize: '9px', letterSpacing: '0.5px' }}>Limited data — company reports outside SEC EDGAR. Showing Finnhub data only.</span>
+          </div>
+        )}
 
-          {/* Company header */}
-          <div className="stock-header-compact" style={{ display: 'flex', alignItems: 'center', gap: '16px', marginBottom: '20px', padding: '16px 20px', background: 'var(--bg-1)', border: '1px solid var(--border)', borderRadius: '16px' }}>
-            <div className="stock-logo" style={{ width: '56px', height: '56px', borderRadius: '14px', background: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, overflow: 'hidden' }}>
+        {/* HERO CARD */}
+        <div className="glass stock-hero" style={{ borderRadius: '20px', padding: '24px 28px', marginBottom: '20px' }}>
+          {/* Left: logo + info + price */}
+          <div className="stock-hero-left">
+            <div style={{ width: '60px', height: '60px', borderRadius: '16px', background: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, overflow: 'hidden' }}>
               <img
                 src={`https://img.logo.dev/ticker/${ticker}?token=pk_B4aaLZF6S4G1YbCgqZq2Ug`}
                 alt={data.name}
-                style={{ width: '40px', height: '40px', objectFit: 'contain' }}
-                onError={e => { e.target.style.display = 'none'; e.target.parentElement.innerHTML = `<span style="color:var(--accent);font-weight:700;font-size:16px">${ticker.slice(0,2)}</span>`; e.target.parentElement.style.background = 'var(--bg-2)'; }}
+                style={{ width: '44px', height: '44px', objectFit: 'contain' }}
+                onError={e => { e.target.style.display = 'none'; e.target.parentElement.innerHTML = `<span style="color:var(--accent);font-weight:700;font-size:18px">${ticker.slice(0,2)}</span>`; e.target.parentElement.style.background = 'var(--bg-2)'; }}
               />
             </div>
-            <div style={{ flex: 1, minWidth: 0 }}>
-              <div style={{ fontSize: '22px', fontWeight: 800, letterSpacing: '-0.5px', marginBottom: '4px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{data.name}</div>
-              <div style={{ color: 'var(--text-3)', fontSize: '12px', fontWeight: 500 }}>
-                {ticker} · {data.exchange || 'NASDAQ'} · {data.sector}
+            <div style={{ minWidth: 0 }}>
+              <h1 style={{ fontSize: '24px', fontWeight: 900, letterSpacing: '-0.5px', marginBottom: '4px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', lineHeight: 1.2 }}>{data.name}</h1>
+              <div style={{ color: 'var(--text-3)', fontSize: '13px', marginBottom: '10px', fontWeight: 500 }}>
+                {ticker} · {data.exchange || 'NASDAQ'}{data.sector ? ` · ${data.sector}` : ''}
               </div>
-            </div>
-            {price && (
-              <div style={{ textAlign: 'right', flexShrink: 0 }}>
-                <div style={{ fontSize: '28px', fontWeight: 900, letterSpacing: '-1px' }}>${price.toFixed(2)}</div>
-                <div style={{ fontSize: '13px', fontWeight: 700, color: change >= 0 ? 'var(--green)' : 'var(--red)', marginTop: '2px' }}>
-                  {change >= 0 ? '+' : ''}{changePct?.toFixed(2)}%
+              {price && (
+                <div style={{ display: 'flex', alignItems: 'baseline', gap: '10px' }}>
+                  <span style={{ fontSize: '30px', fontWeight: 900, letterSpacing: '-1px' }}>${price.toFixed(2)}</span>
+                  <span style={{ fontSize: '14px', fontWeight: 700, color: change >= 0 ? 'var(--green)' : 'var(--red)' }}>
+                    {change >= 0 ? '+' : ''}{changePct?.toFixed(2)}%
+                  </span>
                 </div>
-              </div>
-            )}
+              )}
+            </div>
           </div>
 
-          {data.finnhubFallback && (
-            <div style={{ display: 'flex', alignItems: 'center', gap: '6px', background: 'var(--bg-1)', border: '1px solid var(--border)', borderRadius: '10px', padding: '8px 12px', marginBottom: '16px' }}>
-              <span style={{ color: 'var(--accent)', fontSize: '9px' }}>ℹ</span>
-              <span style={{ color: 'var(--text-3)', fontSize: '9px', letterSpacing: '0.5px' }}>Limited data — company reports outside SEC EDGAR. Showing Finnhub data only.</span>
-            </div>
-          )}
-
-
-          {data.description && (() => {
-            const LIMIT = 320;
-            const short = data.description.slice(0, LIMIT);
-            const full = data.description;
-            return (
-              <div style={{ background: 'rgba(255,255,255,0.04)', backdropFilter: 'blur(20px)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '14px', padding: '16px 18px', marginBottom: '16px' }}>
-                <div style={{ fontSize: '10px', color: 'var(--accent)', letterSpacing: '1.5px', fontWeight: 700, marginBottom: '8px' }}>ABOUT</div>
-                <div style={{ color: 'var(--text-2)', fontSize: '13px', lineHeight: 1.75 }}>
-                  {expanded ? full : `${short}${data.description.length > LIMIT ? '…' : ''}`}
-                  {data.description.length > LIMIT && (
-                    <span onClick={() => setExpanded(!expanded)}
-                      style={{ color: 'var(--accent)', cursor: 'pointer', marginLeft: '6px', fontWeight: 700, fontSize: '12px' }}>
-                      {expanded ? 'Show less' : 'Read more'}
-                    </span>
-                  )}
-                </div>
+          {/* Right: score ring */}
+          <div className="stock-hero-score">
+            <div style={{ fontSize: '10px', letterSpacing: '2px', color: 'var(--text-3)', fontWeight: 700 }}>QUALITY SCORE</div>
+            <div style={{ position: 'relative', width: '90px', height: '90px' }}>
+              <svg width="90" height="90" viewBox="0 0 90 90" style={{ transform: 'rotate(-90deg)' }}>
+                <circle cx="45" cy="45" r="38" fill="none" stroke="var(--bg-3)" strokeWidth="8" />
+                <circle cx="45" cy="45" r="38" fill="none" stroke={easyMode.verdictColor} strokeWidth="8"
+                  strokeLinecap="round" strokeDasharray="238.76"
+                  strokeDashoffset={238.76 - (238.76 * easyMode.score100 / 100)} />
+              </svg>
+              <div style={{ position: 'absolute', inset: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
+                <div style={{ fontWeight: 900, fontSize: '26px', lineHeight: 1, color: easyMode.verdictColor }}>{easyMode.score100}</div>
+                <div style={{ fontSize: '9px', color: 'var(--text-3)', marginTop: '1px' }}>/ 100</div>
               </div>
-            );
-          })()}
+            </div>
+            <div style={{ fontSize: '13px', fontWeight: 800, color: easyMode.verdictColor, textAlign: 'center' }}>{easyMode.verdict}</div>
+            <div style={{ fontSize: '11px', color: 'var(--text-3)', textAlign: 'center', maxWidth: '180px', lineHeight: 1.5 }}>{easyMode.summary}</div>
+          </div>
+        </div>
 
-          {/* OVERVIEW TAB */}
-          {tab === 'overview' && (
-            <div>
+        {/* HORIZONTAL TAB NAV */}
+        <div style={{ display: 'flex', gap: '8px', marginBottom: '24px' }}>
+          {NAV.map(n => (
+            <button key={n.key} onClick={() => { setTab(n.key); window.scrollTo({ top: 0, behavior: 'smooth' }); }}
+              style={{ padding: '9px 22px', borderRadius: '12px', border: tab === n.key ? 'none' : '1px solid var(--border)', background: tab === n.key ? 'linear-gradient(135deg, #a78bfa, #60a5fa)' : 'rgba(255,255,255,0.04)', color: tab === n.key ? '#000' : 'var(--text-2)', fontFamily: 'Nunito, sans-serif', fontWeight: 700, fontSize: '13px', cursor: 'pointer', transition: 'all 0.15s' }}>
+              {n.label}{n.pro && !isPro && !checkingPro ? ' 🔒' : ''}
+            </button>
+          ))}
+        </div>
+
+        {/* OVERVIEW TAB — 2-column layout */}
+        {tab === 'overview' && (
+          <div className="stock-overview-grid">
+
+            {/* Left column: vote + numbers + chart */}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+
               {/* Community vote */}
-              <div style={{ background: 'rgba(255,255,255,0.04)', backdropFilter: 'blur(20px)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '20px', padding: '20px', marginBottom: '16px' }}>
-                <div style={{ fontFamily: 'Nunito, sans-serif', fontWeight: 700, fontSize: '13px', marginBottom: '8px', color: 'var(--text-3)' }}>Your vote</div>
+              <div style={{ background: 'rgba(255,255,255,0.04)', backdropFilter: 'blur(20px)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '20px', padding: '20px' }}>
+                <div style={{ fontWeight: 700, fontSize: '13px', marginBottom: '6px' }}>Your vote</div>
                 <div style={{ color: 'var(--text-3)', fontSize: '11px', marginBottom: '14px', opacity: 0.7 }}>
-                  {isSignedIn ? "Choose your call" : 'Sign in to vote'}
+                  {isSignedIn ? 'Choose your call' : 'Sign in to vote'}
                 </div>
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '8px', marginBottom: '16px' }}>
                   {['BUY', 'HOLD', 'SELL'].map(v => {
@@ -505,153 +450,58 @@ export default function StockPage({ params }) {
                       <button key={v} onClick={async () => {
                         if (!isSignedIn) { window.location.href = '/sign-in'; return; }
                         setUserVote(v);
-                        // Save to API
                         fetch('/api/votes', {
                           method: 'POST',
                           headers: { 'Content-Type': 'application/json' },
                           body: JSON.stringify({ ticker, vote: v }),
                         }).then(r => r.json()).then(async (voteData) => {
-                          // Refetch consensus to update percentages
                           fetch(`/api/votes?ticker=${ticker}`)
                             .then(r => r.json())
                             .then(d => setVoteConsensus({ ...d.percentages, total: d.total }))
                             .catch(() => {});
-
-                          // Check achievements using the vote data returned from POST
                           if (user?.id && voteData.voteCount) {
                             const voteCount = voteData.voteCount;
-
-                            // Achievement: First vote
                             if (voteData.isNewVote && voteCount === 1) unlockAchievement('first_vote');
-
-                            // Achievement: Serial voter (5+ total votes)
                             if (voteCount >= 5) unlockAchievement('serial_voter');
-
-                            // Achievement: Contrarian (opposite to consensus)
                             fetch(`/api/votes?ticker=${ticker}`)
                               .then(r => r.json())
                               .then(d => {
                                 const majorityVote = Object.keys(d.percentages).reduce((a, b) => d.percentages[a] > d.percentages[b] ? a : b);
                                 if (v !== majorityVote && d.percentages[v] < 25) unlockAchievement('contrarian');
-                              })
-                              .catch(() => {});
+                              }).catch(() => {});
                           }
                         }).catch(() => {});
                       }}
                         onMouseEnter={e => e.target.style.transform = 'scale(1.05)'}
                         onMouseLeave={e => e.target.style.transform = 'scale(1)'}
-                        style={{
-                          borderRadius: '14px', padding: '14px 8px', textAlign: 'center',
-                          border: `1.5px solid ${active ? activeColor : 'var(--border)'}`,
-                          background: active ? activeDim : 'var(--bg-2)',
-                          color: active ? activeColor : 'var(--text-2)',
-                          fontFamily: 'Nunito, sans-serif', fontWeight: 700, fontSize: '13px', letterSpacing: '0.5px',
-                          cursor: 'pointer',
-                          transition: 'transform 0.2s ease'
-                        }}>
+                        style={{ borderRadius: '14px', padding: '14px 8px', textAlign: 'center', border: `1.5px solid ${active ? activeColor : 'var(--border)'}`, background: active ? activeDim : 'var(--bg-2)', color: active ? activeColor : 'var(--text-2)', fontFamily: 'Nunito, sans-serif', fontWeight: 700, fontSize: '13px', cursor: 'pointer', transition: 'transform 0.2s ease' }}>
                         {v}
                       </button>
                     );
                   })}
                 </div>
-                <div>
-                  <div style={{ display: 'flex', height: '10px', borderRadius: '6px', overflow: 'hidden', marginBottom: '8px' }}>
-                    <div style={{ background: `linear-gradient(90deg, var(--green) 0%, rgba(52, 211, 153, 0.7) 100%)`, width: `${voteConsensus.BUY}%` }} />
-                    <div style={{ background: `linear-gradient(90deg, var(--amber) 0%, rgba(251, 191, 36, 0.7) 100%)`, width: `${voteConsensus.HOLD}%` }} />
-                    <div style={{ background: `linear-gradient(90deg, var(--red) 0%, rgba(248, 113, 113, 0.7) 100%)`, width: `${voteConsensus.SELL}%` }} />
-                  </div>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '8px', fontSize: '11px', color: 'var(--text-3)', fontFamily: 'Nunito, sans-serif', fontWeight: 600 }}>
-                    <span style={{ color: 'var(--green)' }}>● {voteConsensus.BUY}% Buy</span>
-                    <span style={{ color: 'var(--amber)' }}>● {voteConsensus.HOLD}% Hold</span>
-                    <span style={{ color: 'var(--red)' }}>● {voteConsensus.SELL}% Sell</span>
-                  </div>
+                <div style={{ display: 'flex', height: '10px', borderRadius: '6px', overflow: 'hidden', marginBottom: '8px' }}>
+                  <div style={{ background: 'linear-gradient(90deg, var(--green) 0%, rgba(52,211,153,0.7) 100%)', width: `${voteConsensus.BUY}%` }} />
+                  <div style={{ background: 'linear-gradient(90deg, var(--amber) 0%, rgba(251,191,36,0.7) 100%)', width: `${voteConsensus.HOLD}%` }} />
+                  <div style={{ background: 'linear-gradient(90deg, var(--red) 0%, rgba(248,113,113,0.7) 100%)', width: `${voteConsensus.SELL}%` }} />
+                </div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '11px', color: 'var(--text-3)', fontWeight: 600 }}>
+                  <span style={{ color: 'var(--green)' }}>● {voteConsensus.BUY}% Buy</span>
+                  <span style={{ color: 'var(--amber)' }}>● {voteConsensus.HOLD}% Hold</span>
+                  <span style={{ color: 'var(--red)' }}>● {voteConsensus.SELL}% Sell</span>
+                </div>
+                {voteConsensus.source !== 'none' && (
                   <div style={{ marginTop: '6px', fontSize: '10px', color: 'var(--text-3)', textAlign: 'center' }}>
                     {voteConsensus.source === 'analysts'
                       ? `Analyst consensus · ${voteConsensus.total} analysts`
-                      : voteConsensus.source === 'community'
-                      ? `${voteConsensus.total} ${voteConsensus.total === 1 ? 'person' : 'people'} voted`
-                      : null}
+                      : `${voteConsensus.total} ${voteConsensus.total === 1 ? 'person' : 'people'} voted`}
                   </div>
-                </div>
+                )}
               </div>
 
-              {/* Easy Mode health ring */}
-              <div style={{ background: 'rgba(255,255,255,0.04)', backdropFilter: 'blur(20px)', border: `1px solid ${easyMode.verdictColor}44`, borderRadius: '20px', padding: '28px 24px', display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center', gap: '16px', marginBottom: '16px', boxShadow: `0 0 40px ${easyMode.verdictColor}18` }}>
-                <div style={{ fontSize: '11px', letterSpacing: '2px', color: 'var(--text-3)', fontWeight: 700 }}>EASY MODE</div>
-                <div style={{ position: 'relative', width: '110px', height: '110px' }}>
-                  <svg width="110" height="110" viewBox="0 0 110 110" style={{ transform: 'rotate(-90deg)' }}>
-                    <circle cx="55" cy="55" r="48" fill="none" stroke="var(--bg-3)" strokeWidth="9" />
-                    <circle cx="55" cy="55" r="48" fill="none" stroke={easyMode.verdictColor} strokeWidth="9" strokeLinecap="round"
-                      strokeDasharray="301.6" strokeDashoffset={301.6 - (301.6 * easyMode.score100 / 100)} />
-                  </svg>
-                  <div style={{ position: 'absolute', inset: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
-                    <div style={{ fontWeight: 900, fontSize: '32px', lineHeight: 1 }}>{easyMode.score100}</div>
-                    <div style={{ fontSize: '10px', color: 'var(--text-3)', marginTop: '2px' }}>/ 100</div>
-                  </div>
-                </div>
-                <div>
-                  <div style={{ fontWeight: 800, fontSize: '18px', color: easyMode.verdictColor, marginBottom: '6px' }}>{easyMode.verdict}</div>
-                  <div style={{ fontSize: '13px', color: 'var(--text-2)', lineHeight: 1.6, maxWidth: '260px' }}>{easyMode.summary}</div>
-                </div>
-              </div>
-
-              {/* Fair value bar */}
-              {fairValue && (
-                <div style={{ background: 'rgba(255,255,255,0.04)', backdropFilter: 'blur(20px)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '20px', padding: '20px', marginBottom: '16px' }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: '14px' }}>
-                    <div style={{ fontFamily: 'Nunito, sans-serif', fontWeight: 700, fontSize: '15px' }}>Fair value</div>
-                    <div style={{ fontSize: '11px', fontWeight: 600, letterSpacing: '1px', color: fairValue.tagColor, padding: '4px 10px', borderRadius: '8px', backgroundColor: fairValue.tag === 'EXPENSIVE' ? 'var(--red-dim)' : fairValue.tag === 'SLIGHTLY EXPENSIVE' ? 'var(--amber-dim)' : 'var(--green-dim)' }}>{fairValue.tag}</div>
-                  </div>
-                  <div style={{ position: 'relative', height: '10px', borderRadius: '6px', background: 'linear-gradient(90deg, var(--green) 0%, var(--amber) 50%, var(--red) 100%)', opacity: 0.35 }}>
-                    <div style={{ position: 'absolute', top: '-5px', width: '4px', height: '20px', borderRadius: '2px', background: 'var(--text)', left: `${fairValue.pct}%` }} />
-                  </div>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '10px', fontFamily: 'JetBrains Mono, monospace', fontSize: '11px', color: 'var(--text-3)' }}>
-                    <span>Cheap</span><span>Fair</span><span>Expensive</span>
-                  </div>
-                  <div style={{ textAlign: 'center', marginTop: '14px', fontSize: '13px', color: 'var(--text-2)' }}>
-                    {fairValue.negative ? (
-                      <>This company has negative earnings, so our model can't estimate a positive fair value. Trading at <b style={{ color: 'var(--text)', fontFamily: 'JetBrains Mono, monospace' }}>${price?.toFixed(2)}</b>.</>
-                    ) : (
-                      <>Trading at <b style={{ color: 'var(--text)', fontFamily: 'JetBrains Mono, monospace' }}>${price?.toFixed(2)}</b> — our estimate is <b style={{ color: 'var(--text)', fontFamily: 'JetBrains Mono, monospace' }}>${fairValue.estimate.toFixed(2)}</b></>
-                    )}
-                  </div>
-                </div>
-              )}
-
-              {/* Stock of the Week - only if this is this week's pick */}
-              {sotw === ticker && (
-                <div style={{ background: 'linear-gradient(135deg, var(--accent-dim), transparent)', border: '1px solid var(--accent)', borderRadius: '18px', padding: '16px 18px', marginBottom: '16px', display: 'flex', alignItems: 'center', gap: '12px' }}>
-                  <div style={{ width: '40px', height: '40px', borderRadius: '12px', background: 'var(--accent-dim)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '18px', flexShrink: 0 }}>🔥</div>
-                  <div>
-                    <div style={{ fontFamily: 'Nunito, sans-serif', color: 'var(--accent)', fontWeight: 700, fontSize: '12px', letterSpacing: '0.5px' }}>STOCK OF THE WEEK</div>
-                    <div style={{ color: 'var(--text-2)', fontSize: '12px', marginTop: '2px' }}>{ticker} is this week's community pick.</div>
-                  </div>
-                </div>
-              )}
-
-              {/* Share Card - Generate beautiful stock image */}
-              <ShareCardComponent 
-                ticker={ticker}
-                name={data?.name || 'N/A'}
-                price={data?.currentPrice || 0}
-                priceChange={data?.priceChangePct || 0}
-                metrics={[
-                  { label: 'P/E', value: fmtN(data?.peRatio) },
-                  { label: 'Rev Growth', value: fmtP(data?.revenueGrowth) },
-                  { label: 'Op Margin', value: fmtP(data?.operatingMargin) },
-                  { label: 'FCF Yield', value: fmtP(data?.fcfYield) }
-                ]}
-                score={easyMode?.score100 ?? 50}
-                verdict={easyMode?.verdict ?? 'HOLD'}
-                fairValue={fairValue?.estimate ?? null}
-                fairValueNegative={fairValue?.negative ?? false}
-                consensus={voteConsensus}
-                userVote={userVote}
-              />
-
-              {/* The Numbers, Simplified - meter bars */}
-              <div style={{ marginBottom: '16px' }}>
-                <div style={{ color: 'var(--accent)', fontSize: '11px', letterSpacing: '2px', marginBottom: '10px', paddingLeft: '4px', fontWeight: 700 }}>THE NUMBERS, SIMPLIFIED</div>
+              {/* Numbers, Simplified */}
+              <div>
+                <div style={{ color: 'var(--accent)', fontSize: '11px', letterSpacing: '2px', marginBottom: '10px', fontWeight: 700 }}>THE NUMBERS, SIMPLIFIED</div>
                 <div style={{ background: 'rgba(255,255,255,0.04)', backdropFilter: 'blur(20px)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '20px', padding: '18px 20px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
                   {[
                     { label: 'Revenue is growing', value: data.revGrowth != null ? `${data.revGrowth > 0 ? '+' : ''}${data.revGrowth}% / yr` : 'N/A', pct: data.revGrowth != null ? Math.max(4, Math.min(100, 50 + data.revGrowth * 2)) : 0, color: data.revGrowth > 5 ? 'green' : data.revGrowth > 0 ? 'amber' : 'red' },
@@ -672,64 +522,145 @@ export default function StockPage({ params }) {
                 </div>
               </div>
 
-              {/* Price chart + actions - relocated from header */}
-              <div style={{ marginBottom: '16px' }}>
-                <div style={{ color: 'var(--accent)', fontSize: '11px', letterSpacing: '2px', marginBottom: '10px', paddingLeft: '4px', fontWeight: 700 }}>PRICE CHART</div>
+              {/* Price chart */}
+              <div>
+                <div style={{ color: 'var(--accent)', fontSize: '11px', letterSpacing: '2px', marginBottom: '10px', fontWeight: 700 }}>PRICE CHART</div>
                 <div style={{ background: 'rgba(255,255,255,0.04)', backdropFilter: 'blur(20px)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '20px', padding: '16px 16px 12px' }}>
-                  <div style={{ marginBottom: '6px' }}>
-                    <SparklineHeader ticker={ticker} />
-                  </div>
+                  <SparklineHeader ticker={ticker} />
                 </div>
               </div>
 
+            </div>
+
+            {/* Right column: about + fair value + share + actions + continue */}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+
+              {/* About */}
+              {data.description && (() => {
+                const LIMIT = 240;
+                const short = data.description.slice(0, LIMIT);
+                return (
+                  <div style={{ background: 'rgba(255,255,255,0.04)', backdropFilter: 'blur(20px)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '14px', padding: '16px 18px' }}>
+                    <div style={{ fontSize: '10px', color: 'var(--accent)', letterSpacing: '1.5px', fontWeight: 700, marginBottom: '8px' }}>ABOUT</div>
+                    <div style={{ color: 'var(--text-2)', fontSize: '12px', lineHeight: 1.75 }}>
+                      {expanded ? data.description : `${short}${data.description.length > LIMIT ? '…' : ''}`}
+                      {data.description.length > LIMIT && (
+                        <span onClick={() => setExpanded(!expanded)}
+                          style={{ color: 'var(--accent)', cursor: 'pointer', marginLeft: '6px', fontWeight: 700, fontSize: '11px' }}>
+                          {expanded ? 'Show less' : 'Read more'}
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                );
+              })()}
+
+              {/* Fair value */}
+              {fairValue && (
+                <div style={{ background: 'rgba(255,255,255,0.04)', backdropFilter: 'blur(20px)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '14px', padding: '16px 18px' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: '12px' }}>
+                    <div style={{ fontWeight: 700, fontSize: '13px' }}>Fair value</div>
+                    <div style={{ fontSize: '11px', fontWeight: 600, letterSpacing: '1px', color: fairValue.tagColor, padding: '3px 8px', borderRadius: '6px', backgroundColor: fairValue.tag === 'EXPENSIVE' ? 'var(--red-dim)' : fairValue.tag === 'SLIGHTLY EXPENSIVE' ? 'var(--amber-dim)' : 'var(--green-dim)' }}>{fairValue.tag}</div>
+                  </div>
+                  <div style={{ position: 'relative', height: '10px', borderRadius: '6px', background: 'linear-gradient(90deg, var(--green) 0%, var(--amber) 50%, var(--red) 100%)', opacity: 0.35 }}>
+                    <div style={{ position: 'absolute', top: '-5px', width: '4px', height: '20px', borderRadius: '2px', background: 'var(--text)', left: `${fairValue.pct}%` }} />
+                  </div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '8px', fontSize: '10px', color: 'var(--text-3)' }}>
+                    <span>Cheap</span><span>Fair</span><span>Expensive</span>
+                  </div>
+                  <div style={{ marginTop: '12px', fontSize: '12px', color: 'var(--text-2)', lineHeight: 1.6 }}>
+                    {fairValue.negative ? (
+                      <>Negative earnings — no positive estimate. Price: <b style={{ color: 'var(--text)', fontFamily: 'JetBrains Mono, monospace' }}>${price?.toFixed(2)}</b></>
+                    ) : (
+                      <>Price: <b style={{ color: 'var(--text)', fontFamily: 'JetBrains Mono, monospace' }}>${price?.toFixed(2)}</b> · Estimate: <b style={{ color: 'var(--text)', fontFamily: 'JetBrains Mono, monospace' }}>${fairValue.estimate.toFixed(2)}</b></>
+                    )}
+                  </div>
+                </div>
+              )}
+
+              {/* Stock of the week */}
+              {sotw === ticker && (
+                <div style={{ background: 'linear-gradient(135deg, var(--accent-dim), transparent)', border: '1px solid var(--accent)', borderRadius: '14px', padding: '14px 16px', display: 'flex', alignItems: 'center', gap: '10px' }}>
+                  <span style={{ fontSize: '18px' }}>🔥</span>
+                  <div>
+                    <div style={{ color: 'var(--accent)', fontWeight: 700, fontSize: '11px', letterSpacing: '0.5px' }}>STOCK OF THE WEEK</div>
+                    <div style={{ color: 'var(--text-2)', fontSize: '12px', marginTop: '2px' }}>{ticker} is this week's community pick.</div>
+                  </div>
+                </div>
+              )}
+
+              {/* Share */}
+              <div style={{ background: 'rgba(255,255,255,0.04)', backdropFilter: 'blur(20px)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '14px', padding: '16px 18px' }}>
+                <div style={{ fontSize: '10px', color: 'var(--accent)', letterSpacing: '1.5px', fontWeight: 700, marginBottom: '12px' }}>SHARE</div>
+                <ShareCardComponent
+                  ticker={ticker}
+                  name={data?.name || 'N/A'}
+                  price={data?.currentPrice || 0}
+                  priceChange={data?.priceChangePct || 0}
+                  metrics={[
+                    { label: 'P/E', value: fmtN(data?.peRatio) },
+                    { label: 'Rev Growth', value: fmtP(data?.revenueGrowth) },
+                    { label: 'Op Margin', value: fmtP(data?.operatingMargin) },
+                    { label: 'FCF Yield', value: fmtP(data?.fcfYield) }
+                  ]}
+                  score={easyMode?.score100 ?? 50}
+                  verdict={easyMode?.verdict ?? 'HOLD'}
+                  fairValue={fairValue?.estimate ?? null}
+                  fairValueNegative={fairValue?.negative ?? false}
+                  consensus={voteConsensus}
+                  userVote={userVote}
+                />
+              </div>
+
               {/* Actions */}
-              <div style={{ display: 'flex', gap: '8px', marginBottom: '16px', flexWrap: 'wrap' }}>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
                 <a href={data.cik ? `https://www.sec.gov/cgi-bin/browse-edgar?action=getcompany&CIK=${data.cik}&type=10-K` : `https://www.sec.gov/cgi-bin/browse-edgar?action=getcompany&company=${encodeURIComponent(data.name)}&type=10-K&dateb=&owner=include&count=10&search_text=&action=getcompany`}
                   target="_blank" rel="noopener noreferrer"
                   className="btn-secondary"
-                  style={{ flex: 1, textAlign: 'center', fontSize: '12px', padding: '10px 8px' }}>
+                  style={{ textAlign: 'center', fontSize: '12px', padding: '10px 8px' }}>
                   SEC Filings ↗
                 </a>
                 <button onClick={toggleWatchlist} className={inWatchlist ? 'btn-primary' : 'btn-secondary'}
-                  style={{ flex: 1, fontSize: '12px', padding: '10px 8px' }}>
-                  {inWatchlist ? '★ Watchlist' : '☆ Watchlist'}
+                  style={{ fontSize: '12px', padding: '10px 8px', width: '100%' }}>
+                  {inWatchlist ? '★ In Watchlist' : '☆ Add to Watchlist'}
                 </button>
                 <button onClick={() => { window.location.href = `/stock/${ticker}?refresh=true`; }}
                   className="btn-secondary"
-                  style={{ flex: 1, fontSize: '12px', padding: '10px 8px' }}
-                  title="Refresh data">
-                  ↻ Refresh
+                  style={{ fontSize: '12px', padding: '10px 8px', width: '100%' }}>
+                  ↻ Refresh data
                 </button>
               </div>
 
-              {/* Continue research */}
-              <div style={{ color: 'var(--accent)', fontSize: '11px', letterSpacing: '2px', marginBottom: '12px', fontWeight: 700 }}>CONTINUE RESEARCH</div>
-              <div className="grid-3" style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '10px', marginBottom: '24px' }}>
-                {[
-                  { key: 'quality', title: 'Quality Scorecard', desc: 'Is this a high-quality business?' },
-                  { key: 'financials', title: 'Financials', desc: 'Income, cash flow, balance sheet' },
-                  { key: 'dcf', title: 'DCF Valuation', desc: "What's it really worth?" },
-                ].map(s => (
-                  <button key={s.key} onClick={() => { setTab(s.key); window.scrollTo({ top: 0, behavior: 'smooth' }); }}
-                    className="card"
-                    style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '14px', padding: '16px', textAlign: 'left', cursor: 'pointer', fontFamily: 'Nunito, sans-serif' }}>
-                    <div style={{ color: 'var(--accent)', fontSize: '13px', fontWeight: 700, marginBottom: '4px' }}>{s.title}</div>
-                    <div style={{ color: 'var(--text-3)', fontSize: '12px' }}>{s.desc}</div>
-                  </button>
-                ))}
+              {/* Continue Research */}
+              <div>
+                <div style={{ color: 'var(--accent)', fontSize: '11px', letterSpacing: '2px', marginBottom: '10px', fontWeight: 700 }}>CONTINUE RESEARCH</div>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                  {[
+                    { key: 'quality', title: 'Quality Scorecard', desc: 'Is this a high-quality business?' },
+                    { key: 'financials', title: 'Financials', desc: 'Income, cash flow, balance sheet' },
+                    { key: 'dcf', title: 'DCF Valuation', desc: "What's it really worth?" },
+                  ].map(s => (
+                    <button key={s.key} onClick={() => { setTab(s.key); window.scrollTo({ top: 0, behavior: 'smooth' }); }}
+                      style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '12px', padding: '14px 16px', textAlign: 'left', cursor: 'pointer', fontFamily: 'Nunito, sans-serif', width: '100%' }}>
+                      <div style={{ color: 'var(--accent)', fontSize: '13px', fontWeight: 700, marginBottom: '2px' }}>{s.title}</div>
+                      <div style={{ color: 'var(--text-3)', fontSize: '12px' }}>{s.desc}</div>
+                    </button>
+                  ))}
+                </div>
               </div>
 
-              <div style={{ color: 'var(--text-3)', fontSize: '10px', letterSpacing: '1px' }}>
+              <div style={{ color: 'var(--text-3)', fontSize: '10px', letterSpacing: '1px', paddingTop: '4px' }}>
                 SOURCE: SEC EDGAR (XBRL) · ALPHA VANTAGE · FINNHUB · NOT INVESTMENT ADVICE
               </div>
-            </div>
-          )}
 
-          {/* QUALITY TAB */}
-          {tab === 'quality' && (
+            </div>
+          </div>
+        )}
+
+        {/* QUALITY TAB */}
+        {tab === 'quality' && (
   <div>
     {(() => {
-      // CORE BUSINESS SCORE (CBS) — calidad del negocio ajustada por sector
       const sector = (data.sector || '').toLowerCase();
       const isFinancial = sector.includes('bank') || sector.includes('insurance') || sector.includes('financial');
       const isTech = sector.includes('tech') || sector.includes('software') || sector.includes('semi');
@@ -737,7 +668,6 @@ export default function StockPage({ params }) {
       const isConsumer = sector.includes('retail') || sector.includes('consumer') || sector.includes('food') || sector.includes('beverage');
       const isEnergy = sector.includes('energy') || sector.includes('oil') || sector.includes('gas');
 
-      // ROIC score
       const roicThreshold = isTech ? 0.25 : isPharma ? 0.20 : isConsumer ? 0.20 : isEnergy ? 0.12 : 0.15;
       const roicScore = data.roic == null ? 2.5
         : data.roic / 100 >= roicThreshold * 2 ? 5
@@ -747,7 +677,6 @@ export default function StockPage({ params }) {
         : data.roic / 100 >= roicThreshold * 0.4 ? 2
         : 1;
 
-      // Gross margin score
       const gmThreshold = isTech ? 0.65 : isPharma ? 0.65 : isConsumer ? 0.45 : isFinancial ? 0.30 : isEnergy ? 0.25 : 0.35;
       const gmScore = data.grossMargin == null ? 2.5
         : data.grossMargin / 100 >= gmThreshold * 1.4 ? 5
@@ -757,7 +686,6 @@ export default function StockPage({ params }) {
         : data.grossMargin / 100 >= gmThreshold * 0.5 ? 2
         : 1;
 
-      // Op margin score
       const omThreshold = isTech ? 0.20 : isPharma ? 0.20 : isConsumer ? 0.15 : isFinancial ? 0.15 : isEnergy ? 0.12 : 0.15;
       const omScore = data.opMargin == null ? 2.5
         : data.opMargin / 100 >= omThreshold * 2 ? 5
@@ -767,7 +695,6 @@ export default function StockPage({ params }) {
         : data.opMargin / 100 > 0 ? 2
         : 1;
 
-      // D/E score
       const deScore = data.debtToEquity == null ? 2.5
         : data.debtToEquity < 0.3 ? 5
         : data.debtToEquity < 0.7 ? 4.5
@@ -778,7 +705,6 @@ export default function StockPage({ params }) {
 
       const cbs = +((roicScore * 0.4 + gmScore * 0.25 + omScore * 0.25 + deScore * 0.1)).toFixed(2);
 
-      // OPPO SCORE — oportunidad de entrada
       const pfcfScore = data.pfcf == null || data.pfcf <= 0 ? 1
         : data.pfcf < 12 ? 5
         : data.pfcf < 18 ? 4.5
@@ -797,7 +723,6 @@ export default function StockPage({ params }) {
 
       const oppo = +((pfcfScore * 0.55 + fcfYieldScore * 0.45)).toFixed(2);
 
-      // GROWTH QUALITY SCORE (GQS) — aproximado
       const revGrowthScore = data.revGrowth == null ? 2.5
         : data.revGrowth > 25 ? 5
         : data.revGrowth > 15 ? 4.5
@@ -817,7 +742,6 @@ export default function StockPage({ params }) {
       const trendBonus = (fcfTrend === 1 ? 0.5 : 0) + (marginTrend === 1 ? 0.5 : 0);
       const gqs = Math.min(5, +((revGrowthScore * 0.6 + (2.5 + trendBonus * 2) * 0.4)).toFixed(2));
 
-      // FINAL NOTE
       const finalNote = +((cbs * 0.45 + oppo * 0.30 + gqs * 0.25)).toFixed(2);
 
       const scoreColor = (s) => s >= 4 ? 'var(--green)' : s >= 3 ? 'var(--accent)' : 'var(--red)';
@@ -829,7 +753,6 @@ export default function StockPage({ params }) {
 
       return (
         <>
-          {/* Score header */}
           <div style={{ position: 'relative', marginBottom: '24px' }}>
   {!isSignedIn && (
     <a href="/sign-in" style={{ position: 'absolute', inset: 0, zIndex: 2, display: 'flex', alignItems: 'center', justifyContent: 'center', textDecoration: 'none', opacity: 0, transition: 'opacity 0.2s' }}
@@ -864,7 +787,6 @@ export default function StockPage({ params }) {
           </div>
         </div>
 
-          {/* CBS breakdown */}
           <div style={{ color: 'var(--accent)', fontSize: '10px', letterSpacing: '2px', borderBottom: '1px solid var(--border)', paddingBottom: '6px', marginBottom: '12px' }}>CORE BUSINESS BREAKDOWN</div>
           <div className="grid-4" style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '1px', background: 'var(--border)', marginBottom: '24px' }}>
             {[
@@ -884,7 +806,6 @@ export default function StockPage({ params }) {
             ))}
           </div>
 
-          {/* OPPO breakdown */}
           <div style={{ color: 'var(--accent)', fontSize: '10px', letterSpacing: '2px', borderBottom: '1px solid var(--border)', paddingBottom: '6px', marginBottom: '12px' }}>OPPORTUNITY BREAKDOWN</div>
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '1px', background: 'var(--border)', marginBottom: '24px' }}>
             {[
@@ -900,7 +821,6 @@ export default function StockPage({ params }) {
                 <div style={{ color: 'var(--text-3)', fontSize: '10px' }}>{m.desc}</div>
               </div>
             ))}
-            {/* 52W Range */}
             <div style={{ background: 'var(--bg-1)', padding: '16px' }}>
               <div style={{ color: 'var(--text-3)', fontSize: '10px', letterSpacing: '1px', marginBottom: '8px' }}>52W RANGE</div>
               {data.high52 && data.low52 && data.currentPrice ? (() => {
@@ -925,7 +845,6 @@ export default function StockPage({ params }) {
             </div>
           </div>
 
-          {/* GQS breakdown */}
           <div style={{ color: 'var(--accent)', fontSize: '10px', letterSpacing: '2px', borderBottom: '1px solid var(--border)', paddingBottom: '6px', marginBottom: '12px' }}>GROWTH QUALITY BREAKDOWN</div>
           <div className="grid-3" style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '1px', background: 'var(--border)', marginBottom: '24px' }}>
             {[
@@ -953,17 +872,16 @@ export default function StockPage({ params }) {
   </div>
 )}
 
-          {/* FINANCIALS TAB */}
-          {tab === 'financials' && !isPro && !checkingPro && (
-            <div style={{ textAlign: 'center', padding: '60px 24px', background: 'var(--bg-1)', border: '1px solid var(--border)', borderRadius: '20px' }}>
-              <div style={{ color: 'var(--accent)', fontSize: '13px', letterSpacing: '2px', marginBottom: '12px', fontWeight: 700 }}>🔒 SIGN IN REQUIRED</div>
-              <div style={{ color: 'var(--text-2)', fontSize: '13px', marginBottom: '24px' }}>Create a free account to access Financial Statements.</div>
-              <a href="/sign-in" className="btn-primary" style={{ textDecoration: 'none', display: 'inline-block' }}>Create free account →</a>
-            </div>
-          )}
-          {tab === 'financials' && isPro && (
+        {/* FINANCIALS TAB */}
+        {tab === 'financials' && !isPro && !checkingPro && (
+          <div style={{ textAlign: 'center', padding: '60px 24px', background: 'var(--bg-1)', border: '1px solid var(--border)', borderRadius: '20px' }}>
+            <div style={{ color: 'var(--accent)', fontSize: '13px', letterSpacing: '2px', marginBottom: '12px', fontWeight: 700 }}>🔒 SIGN IN REQUIRED</div>
+            <div style={{ color: 'var(--text-2)', fontSize: '13px', marginBottom: '24px' }}>Create a free account to access Financial Statements.</div>
+            <a href="/sign-in" className="btn-primary" style={{ textDecoration: 'none', display: 'inline-block' }}>Create free account →</a>
+          </div>
+        )}
+        {tab === 'financials' && isPro && (
   <div>
-    {/* Fin tabs */}
     <div style={{ display: 'flex', gap: '8px', marginBottom: '16px' }}>
       {[['snapshot', 'SNAPSHOT'], ['income', 'INCOME'], ['balance', 'BALANCE'], ['cashflow', 'CASH FLOW']].map(([key, label]) => (
         <button key={key} onClick={() => setFinTab(key)}
@@ -974,11 +892,9 @@ export default function StockPage({ params }) {
     </div>
 
     {finTab === 'snapshot' && <div>
-              {/* Metrics Table */}
-<div style={{ marginBottom: '16px' }}>
+              <div style={{ marginBottom: '16px' }}>
   <div className="grid-4" style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '10px' }}>
 
-    {/* VALUATION */}
     <div style={{ background: 'var(--bg-1)', border: '1px solid var(--border)', borderRadius: '14px', padding: '16px' }}>
       <div style={{ color: 'var(--accent)', fontSize: '10px', letterSpacing: '2px', marginBottom: '12px' }}>VALUATION</div>
       <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '11px' }}>
@@ -1001,7 +917,6 @@ export default function StockPage({ params }) {
       </table>
     </div>
 
-    {/* PROFITABILITY */}
     <div style={{ background: 'var(--bg-1)', border: '1px solid var(--border)', borderRadius: '14px', padding: '16px' }}>
       <div style={{ color: 'var(--accent)', fontSize: '10px', letterSpacing: '2px', marginBottom: '12px' }}>PROFITABILITY</div>
       <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '11px' }}>
@@ -1025,7 +940,6 @@ export default function StockPage({ params }) {
       </table>
     </div>
 
-    {/* BALANCE SHEET */}
     <div style={{ background: 'var(--bg-1)', border: '1px solid var(--border)', borderRadius: '14px', padding: '16px' }}>
       <div style={{ color: 'var(--accent)', fontSize: '10px', letterSpacing: '2px', marginBottom: '12px' }}>BALANCE SHEET</div>
       <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '11px' }}>
@@ -1049,17 +963,16 @@ export default function StockPage({ params }) {
       </table>
     </div>
 
-    {/* EFFICIENCY + PER SHARE */}
     <div style={{ background: 'var(--bg-1)', border: '1px solid var(--border)', borderRadius: '14px', padding: '16px' }}>
       <div style={{ color: 'var(--accent)', fontSize: '10px', letterSpacing: '2px', marginBottom: '12px' }}>EFFICIENCY</div>
       <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '11px' }}>
         <tbody>
           {[
             { label: 'Cash Conv. Cycle', val: data.ccc != null ? `${data.ccc}d` : 'N/A', color: data.ccc != null && data.ccc < 30 ? 'var(--green)' : data.ccc != null && data.ccc < 60 ? 'var(--accent)' : data.ccc != null ? 'var(--red)' : 'var(--text-3)' },
-{ label: 'Inventory Turnover', val: data.inventoryTurnover != null ? fmtN(data.inventoryTurnover) : 'N/A', color: data.inventoryTurnover > 8 ? 'var(--green)' : data.inventoryTurnover > 4 ? 'var(--accent)' : 'var(--text)' },
-{ label: 'DSO', val: data.dso != null ? `${data.dso}d` : 'N/A' },
-{ label: 'DIO', val: data.dio != null ? `${data.dio}d` : 'N/A' },
-{ label: 'DPO', val: data.dpo != null ? `${data.dpo}d` : 'N/A' },
+            { label: 'Inventory Turnover', val: data.inventoryTurnover != null ? fmtN(data.inventoryTurnover) : 'N/A', color: data.inventoryTurnover > 8 ? 'var(--green)' : data.inventoryTurnover > 4 ? 'var(--accent)' : 'var(--text)' },
+            { label: 'DSO', val: data.dso != null ? `${data.dso}d` : 'N/A' },
+            { label: 'DIO', val: data.dio != null ? `${data.dio}d` : 'N/A' },
+            { label: 'DPO', val: data.dpo != null ? `${data.dpo}d` : 'N/A' },
           ].map(r => (
             <tr key={r.label} style={{ borderBottom: '1px solid var(--border)' }}>
               <td style={{ padding: '4px 0', color: 'var(--text-3)', fontSize: '10px' }}>{r.label}</td>
@@ -1073,7 +986,6 @@ export default function StockPage({ params }) {
   </div>
 </div>
 
-{/* PER SHARE */}
 <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '10px', marginBottom: '16px' }}>
   <div style={{ background: 'var(--bg-1)', border: '1px solid var(--border)', borderRadius: '14px', padding: '16px' }}>
     <div style={{ color: 'var(--accent)', fontSize: '10px', letterSpacing: '2px', marginBottom: '12px' }}>PER SHARE & MARKET DATA</div>
@@ -1094,14 +1006,12 @@ export default function StockPage({ params }) {
   </div>
 </div>
 
-              {/* Chart + multiples */}
               <div style={{ display: 'flex', gap: '10px', marginBottom: '16px' }}>
                 <div style={{ flex: 1, background: 'var(--bg-1)' }}>
                   <StockChart ticker={ticker} />
                 </div>
               </div>
 
-              {/* Metrics grid */}
               <div style={{ color: 'var(--text-3)', fontSize: '10px', letterSpacing: '2px', borderBottom: '1px solid var(--border)', paddingBottom: '6px', marginBottom: '12px' }}>PROFITABILITY & RETURNS</div>
               <div className="grid-4" style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '10px', marginBottom: '16px' }}>
                 {[
@@ -1134,11 +1044,10 @@ export default function StockPage({ params }) {
                 ))}
               </div>
 
-              {/* Charts */}
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px', marginBottom: '16px' }}>
                 {[
                   { title: 'REVENUE', chart: revChart, color: 'var(--amber)', type: 'line' },
-{ title: 'FREE CASH FLOW', chart: fcfChart, color: '#8b5cf6', type: 'line' },
+                  { title: 'FREE CASH FLOW', chart: fcfChart, color: '#8b5cf6', type: 'line' },
                 ].map(({ title, chart, color, type }) => (
                   <div key={title} style={{ background: 'var(--bg-1)', border: '1px solid var(--border)', borderRadius: '14px', padding: '16px' }}>
                     <div style={{ color: 'var(--text-3)', fontSize: '10px', letterSpacing: '2px', marginBottom: '12px' }}>{title}</div>
@@ -1303,82 +1212,78 @@ export default function StockPage({ params }) {
   </div>
 )}
 
-          {/* DCF TAB */}
-          {tab === 'dcf' && !isPro && !checkingPro && (
-            <div style={{ textAlign: 'center', padding: '80px 24px' }}>
-              <div style={{ color: 'var(--accent)', fontSize: '13px', letterSpacing: '2px', marginBottom: '12px' }}>🔒 SIGN IN REQUIRED</div>
-              <div style={{ color: 'var(--text-2)', fontSize: '12px', marginBottom: '24px' }}>Create a free account to access DCF Valuation.</div>
-              <a href="/sign-in" className="btn-primary" style={{ textDecoration: 'none', display: 'inline-block' }}>Create free account →</a>
-            </div>
-          )}
-          {tab === 'dcf' && isPro && (
-            <div>
-              <div style={S.section}>GRAHAM INTRINSIC VALUE — V = EPS × (8.5 + 2g)</div>
+        {/* DCF TAB */}
+        {tab === 'dcf' && !isPro && !checkingPro && (
+          <div style={{ textAlign: 'center', padding: '80px 24px' }}>
+            <div style={{ color: 'var(--accent)', fontSize: '13px', letterSpacing: '2px', marginBottom: '12px' }}>🔒 SIGN IN REQUIRED</div>
+            <div style={{ color: 'var(--text-2)', fontSize: '12px', marginBottom: '24px' }}>Create a free account to access DCF Valuation.</div>
+            <a href="/sign-in" className="btn-primary" style={{ textDecoration: 'none', display: 'inline-block' }}>Create free account →</a>
+          </div>
+        )}
+        {tab === 'dcf' && isPro && (
+          <div>
+            <div style={S.section}>GRAHAM INTRINSIC VALUE — V = EPS × (8.5 + 2g)</div>
 
-              {data.eps ? (
-                <>
-                  <div style={{ background: 'var(--bg-1)', border: '1px solid var(--border)', padding: '16px', marginBottom: '24px', fontSize: '11px', color: 'var(--text-2)', lineHeight: 1.8 }}>
-                    <span style={{ color: 'var(--accent)' }}>V = EPS × (8.5 + 2g) × (4.4/5.5)</span> &nbsp;·&nbsp;
-                    EPS: <span style={{ color: 'var(--text)' }}>${data.eps}</span> &nbsp;·&nbsp;
-                    5Y EPS CAGR (g): <span style={{ color: 'var(--text)' }}>{data.epsCagr !== null ? `${data.epsCagr}%` : 'N/A'}</span> &nbsp;·&nbsp;
-                    <span style={{ color: 'var(--text-3)' }}>Benjamin Graham formula · Not investment advice</span>
-                  </div>
-
-                  <div className="grid-3" style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '1px', background: 'var(--border)', marginBottom: '24px' }}>
-                    {[
-                        { label: 'CONSERVATIVE', g: data.epsCagr !== null && !isNaN(data.epsCagr) ? Math.min(+(data.epsCagr * 0.5).toFixed(1), 15) : 3, desc: '50% of 5Y EPS CAGR (max 15%)' },
-                        { label: 'BASE', g: data.epsCagr !== null && !isNaN(data.epsCagr) ? Math.min(+Number(data.epsCagr).toFixed(1), 20) : 7, desc: '5Y EPS CAGR historical (max 20%)' },
-                        { label: 'OPTIMISTIC', g: data.epsCagr !== null && !isNaN(data.epsCagr) ? Math.min(+(data.epsCagr * 1.5).toFixed(1), 25) : 12, desc: '150% of 5Y EPS CAGR (max 25%)' },
-                    ].map(scenario => {
-                      const g = Math.max(0, Math.min(scenario.g, 25));
-                      const intrinsic = +(data.eps * (8.5 + 2 * g) * (4.4 / 5.5)).toFixed(2);
-                      const diff = price ? (((intrinsic - price) / price) * 100).toFixed(1) : null;
-                      const underval = price ? intrinsic > price : null;
-                      return (
-                        <div key={scenario.label} style={{ background: 'var(--bg-1)', padding: '20px' }}>
-                          <div style={{ color: 'var(--text-3)', fontSize: '10px', letterSpacing: '2px', marginBottom: '12px' }}>{scenario.label}</div>
-                          <div style={{ color: 'var(--text-3)', fontSize: '10px', marginBottom: '4px' }}>g = {g}%</div>
-                          <div style={{ fontSize: '32px', fontWeight: 600, color: underval ? 'var(--green)' : 'var(--red)', marginBottom: '4px', letterSpacing: '-1px' }}>
-                            ${intrinsic}
-                          </div>
-                          <div style={{ color: 'var(--text-3)', fontSize: '10px', marginBottom: '12px' }}>{scenario.desc}</div>
-                          {diff !== null && (
-                            <div style={{ borderTop: '1px solid var(--border)', paddingTop: '10px' }}>
-                              <div style={{ color: underval ? 'var(--green)' : 'var(--red)', fontSize: '13px', fontWeight: 600 }}>
-                                {underval ? '▲' : '▼'} {Math.abs(diff)}% {underval ? 'UPSIDE' : 'DOWNSIDE'}
-                              </div>
-                              <div style={{ color: 'var(--text-3)', fontSize: '10px', marginTop: '2px' }}>
-                                vs current price ${price?.toFixed(2)}
-                              </div>
-                            </div>
-                          )}
-                        </div>
-                      );
-                    })}
-                  </div>
-
-                  
-
-                  <div style={{ color: 'var(--text-3)', fontSize: '10px', letterSpacing: '1px' }}>
-                    GRAHAM FORMULA (1962) · EPS FROM SEC EDGAR & FINNHUB · GROWTH FROM SEC EDGAR · NOT INVESTMENT ADVICE
-                  </div>
-                </>
-              ) : (
-                <div style={{ background: 'var(--bg-1)', border: '1px solid var(--border)', padding: '40px', textAlign: 'center' }}>
-                  <div style={{ color: 'var(--accent)', fontSize: '24px', fontWeight: 600, letterSpacing: '4px', marginBottom: '8px' }}>N/A</div>
-                  <div style={{ color: 'var(--text-2)', fontSize: '12px', marginBottom: '4px' }}>EPS DATA NOT AVAILABLE</div>
-                  <div style={{ color: 'var(--text-3)', fontSize: '11px' }}>Graham formula requires EPS data from Alpha Vantage.</div>
+            {data.eps ? (
+              <>
+                <div style={{ background: 'var(--bg-1)', border: '1px solid var(--border)', padding: '16px', marginBottom: '24px', fontSize: '11px', color: 'var(--text-2)', lineHeight: 1.8 }}>
+                  <span style={{ color: 'var(--accent)' }}>V = EPS × (8.5 + 2g) × (4.4/5.5)</span> &nbsp;·&nbsp;
+                  EPS: <span style={{ color: 'var(--text)' }}>${data.eps}</span> &nbsp;·&nbsp;
+                  5Y EPS CAGR (g): <span style={{ color: 'var(--text)' }}>{data.epsCagr !== null ? `${data.epsCagr}%` : 'N/A'}</span> &nbsp;·&nbsp;
+                  <span style={{ color: 'var(--text-3)' }}>Benjamin Graham formula · Not investment advice</span>
                 </div>
-              )}
-            </div>
-          )}
 
-        </div>
+                <div className="grid-3" style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '1px', background: 'var(--border)', marginBottom: '24px' }}>
+                  {[
+                    { label: 'CONSERVATIVE', g: data.epsCagr !== null && !isNaN(data.epsCagr) ? Math.min(+(data.epsCagr * 0.5).toFixed(1), 15) : 3, desc: '50% of 5Y EPS CAGR (max 15%)' },
+                    { label: 'BASE', g: data.epsCagr !== null && !isNaN(data.epsCagr) ? Math.min(+Number(data.epsCagr).toFixed(1), 20) : 7, desc: '5Y EPS CAGR historical (max 20%)' },
+                    { label: 'OPTIMISTIC', g: data.epsCagr !== null && !isNaN(data.epsCagr) ? Math.min(+(data.epsCagr * 1.5).toFixed(1), 25) : 12, desc: '150% of 5Y EPS CAGR (max 25%)' },
+                  ].map(scenario => {
+                    const g = Math.max(0, Math.min(scenario.g, 25));
+                    const intrinsic = +(data.eps * (8.5 + 2 * g) * (4.4 / 5.5)).toFixed(2);
+                    const diff = price ? (((intrinsic - price) / price) * 100).toFixed(1) : null;
+                    const underval = price ? intrinsic > price : null;
+                    return (
+                      <div key={scenario.label} style={{ background: 'var(--bg-1)', padding: '20px' }}>
+                        <div style={{ color: 'var(--text-3)', fontSize: '10px', letterSpacing: '2px', marginBottom: '12px' }}>{scenario.label}</div>
+                        <div style={{ color: 'var(--text-3)', fontSize: '10px', marginBottom: '4px' }}>g = {g}%</div>
+                        <div style={{ fontSize: '32px', fontWeight: 600, color: underval ? 'var(--green)' : 'var(--red)', marginBottom: '4px', letterSpacing: '-1px' }}>
+                          ${intrinsic}
+                        </div>
+                        <div style={{ color: 'var(--text-3)', fontSize: '10px', marginBottom: '12px' }}>{scenario.desc}</div>
+                        {diff !== null && (
+                          <div style={{ borderTop: '1px solid var(--border)', paddingTop: '10px' }}>
+                            <div style={{ color: underval ? 'var(--green)' : 'var(--red)', fontSize: '13px', fontWeight: 600 }}>
+                              {underval ? '▲' : '▼'} {Math.abs(diff)}% {underval ? 'UPSIDE' : 'DOWNSIDE'}
+                            </div>
+                            <div style={{ color: 'var(--text-3)', fontSize: '10px', marginTop: '2px' }}>
+                              vs current price ${price?.toFixed(2)}
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+
+                <div style={{ color: 'var(--text-3)', fontSize: '10px', letterSpacing: '1px' }}>
+                  GRAHAM FORMULA (1962) · EPS FROM SEC EDGAR & FINNHUB · GROWTH FROM SEC EDGAR · NOT INVESTMENT ADVICE
+                </div>
+              </>
+            ) : (
+              <div style={{ background: 'var(--bg-1)', border: '1px solid var(--border)', padding: '40px', textAlign: 'center' }}>
+                <div style={{ color: 'var(--accent)', fontSize: '24px', fontWeight: 600, letterSpacing: '4px', marginBottom: '8px' }}>N/A</div>
+                <div style={{ color: 'var(--text-2)', fontSize: '12px', marginBottom: '4px' }}>EPS DATA NOT AVAILABLE</div>
+                <div style={{ color: 'var(--text-3)', fontSize: '11px' }}>Graham formula requires EPS data from Alpha Vantage.</div>
+              </div>
+            )}
+          </div>
+        )}
+
       </div>
 
-      {/* Achievement Toast */}
       {achievementToast && (
-        <AchievementToast 
+        <AchievementToast
           achievement={achievementToast}
           onClose={() => setAchievementToast(null)}
         />
