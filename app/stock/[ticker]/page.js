@@ -24,7 +24,7 @@ const fmtN = (v, d = 2) => v !== null && v !== undefined ? v.toFixed(d) : 'N/A';
 const S = {
   page: { background: 'var(--bg)', minHeight: '100vh', color: 'var(--text)', fontFamily: 'Nunito, sans-serif' },
   topbar: { borderBottom: '1px solid var(--border)', padding: '8px 16px', display: 'flex', alignItems: 'center', gap: '12px', position: 'sticky', top: 0, background: 'var(--bg)', zIndex: 10, fontSize: '11px' },
-  sidebar: { width: '160px', flexShrink: 0, borderRight: '1px solid var(--border)', minHeight: '100vh', padding: '16px 0', position: 'sticky', top: '33px', alignSelf: 'flex-start' },
+  sidebar: { width: '160px', flexShrink: 0, borderRight: '1px solid var(--border)', minHeight: '100vh', padding: '16px 0', position: 'sticky', top: '49px', alignSelf: 'flex-start' },
   navItem: (active) => ({ display: 'block', width: '100%', textAlign: 'left', padding: '8px 16px', fontSize: '12px', letterSpacing: '0.5px', background: 'none', border: 'none', cursor: 'pointer', color: active ? 'var(--accent)' : 'var(--text-3)', borderLeft: active ? '2px solid var(--accent)' : '2px solid transparent', fontFamily: 'Nunito, sans-serif', fontWeight: active ? 700 : 500 }),
   content: { flex: 1, padding: '24px', overflow: 'hidden' },
   card: { background: 'var(--bg-1)', border: '1px solid var(--border)', padding: '16px', marginBottom: '1px' },
@@ -433,26 +433,26 @@ export default function StockPage({ params }) {
         {/* Main content */}
         <div style={S.content} className="stock-content">
 
-          {/* Company header - compact */}
-          <div className="stock-header-compact" style={{ display: 'flex', alignItems: 'center', gap: '14px', marginBottom: '16px' }}>
-            <div className="stock-logo" style={{ width: '52px', height: '52px', borderRadius: '14px', background: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, overflow: 'hidden' }}>
+          {/* Company header */}
+          <div className="stock-header-compact" style={{ display: 'flex', alignItems: 'center', gap: '16px', marginBottom: '20px', padding: '16px 20px', background: 'var(--bg-1)', border: '1px solid var(--border)', borderRadius: '16px' }}>
+            <div className="stock-logo" style={{ width: '56px', height: '56px', borderRadius: '14px', background: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, overflow: 'hidden' }}>
               <img
                 src={`https://img.logo.dev/ticker/${ticker}?token=pk_B4aaLZF6S4G1YbCgqZq2Ug`}
                 alt={data.name}
-                style={{ width: '36px', height: '36px', objectFit: 'contain' }}
-                onError={e => { e.target.style.display = 'none'; e.target.parentElement.innerHTML = `<span style="color:var(--accent);font-weight:600;font-size:14px">${ticker.slice(0,2)}</span>`; e.target.parentElement.style.background = 'var(--bg-2)'; }}
+                style={{ width: '40px', height: '40px', objectFit: 'contain' }}
+                onError={e => { e.target.style.display = 'none'; e.target.parentElement.innerHTML = `<span style="color:var(--accent);font-weight:700;font-size:16px">${ticker.slice(0,2)}</span>`; e.target.parentElement.style.background = 'var(--bg-2)'; }}
               />
             </div>
             <div style={{ flex: 1, minWidth: 0 }}>
-              <div style={{ fontFamily: 'Nunito, sans-serif', fontSize: '17px', fontWeight: 800, letterSpacing: '-0.3px', marginBottom: '2px' }}>{data.name}</div>
-              <div style={{ color: 'var(--text-3)', fontSize: '11px' }}>
+              <div style={{ fontSize: '22px', fontWeight: 800, letterSpacing: '-0.5px', marginBottom: '4px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{data.name}</div>
+              <div style={{ color: 'var(--text-3)', fontSize: '12px', fontWeight: 500 }}>
                 {ticker} · {data.exchange || 'NASDAQ'} · {data.sector}
               </div>
             </div>
             {price && (
               <div style={{ textAlign: 'right', flexShrink: 0 }}>
-                <div style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: '20px', fontWeight: 700, letterSpacing: '-0.5px' }}>${price.toFixed(2)}</div>
-                <div style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: '11px', fontWeight: 600, color: change >= 0 ? 'var(--green)' : 'var(--red)', marginTop: '2px' }}>
+                <div style={{ fontSize: '28px', fontWeight: 900, letterSpacing: '-1px' }}>${price.toFixed(2)}</div>
+                <div style={{ fontSize: '13px', fontWeight: 700, color: change >= 0 ? 'var(--green)' : 'var(--red)', marginTop: '2px' }}>
                   {change >= 0 ? '+' : ''}{changePct?.toFixed(2)}%
                 </div>
               </div>
