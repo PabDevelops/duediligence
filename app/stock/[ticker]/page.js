@@ -6,6 +6,7 @@ import StockChart from '../../components/StockChart';
 import Sparkline from '../../components/Sparkline';
 import SparklineHeader from '../../components/SparklineHeader';
 import Topbar from '../../components/Topbar';
+import OnboardingBanner from '../../components/OnboardingBanner';
 import ShareCardComponent from '../../components/ShareCard';
 import AchievementToast from '../../components/AchievementToast';
 import { useUser } from '@clerk/nextjs';
@@ -398,6 +399,7 @@ export default function StockPage({ params }) {
         <span style={{ color: 'var(--text-3)' }}>▸</span>
         <span style={{ color: 'var(--accent)', fontWeight: 700, letterSpacing: '2px' }}>{ticker}</span>
       </div>
+      <OnboardingBanner />
       {/* Mobile nav tabs */}
       <div className="mobile-tabs" style={{ display: 'none', borderBottom: '1px solid var(--border)', background: 'var(--bg-1)', overflowX: 'auto', whiteSpace: 'nowrap' }}>
         {NAV.map(n => (
