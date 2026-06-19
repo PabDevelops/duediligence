@@ -80,9 +80,14 @@ Write 4-6 paragraphs/headings total. Keep paragraphs concise (2-3 sentences max)
 }
 
 export async function POST(req) {
-  const isAdmin = await checkIsAdmin();
-  if (!isAdmin) {
-    return Response.json({ error: 'Not authorized' }, { status: 403 });
+  const cronToken = req.headers.get('X-Cron-Secret');
+  const isCron = cronToken && process.env.CRON_SECRET && cronToken === process.env.CRON_SECRET;
+
+  if (!isCron) {
+    const isAdmin = await checkIsAdmin();
+    if (!isAdmin) {
+      return Response.json({ error: 'Not authorized' }, { status: 403 });
+    }
   }
 
   try {
