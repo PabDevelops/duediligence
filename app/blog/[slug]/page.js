@@ -86,12 +86,15 @@ export default function BlogPost({ params }) {
         <div className="blog-post-body">
           {post.content_html
             ? renderHtmlContent(post.content_html)
-            : post.content.map((block, i) => {
-                if (block.type === 'h2') {
-                  return <h2 key={i} style={{ fontSize: '21px', fontWeight: 800, marginTop: '36px', marginBottom: '14px', letterSpacing: '-0.3px' }}>{block.text}</h2>;
-                }
-                return <p key={i} style={{ color: 'var(--text-2)', fontSize: '16px', lineHeight: 1.9, marginBottom: '18px' }}>{block.text}</p>;
-              })}
+            : (() => {
+                const content = typeof post.content === 'string' ? JSON.parse(post.content) : post.content;
+                return content.map((block, i) => {
+                  if (block.type === 'h2') {
+                    return <h2 key={i} style={{ fontSize: '21px', fontWeight: 800, marginTop: '36px', marginBottom: '14px', letterSpacing: '-0.3px' }}>{block.text}</h2>;
+                  }
+                  return <p key={i} style={{ color: 'var(--text-2)', fontSize: '16px', lineHeight: 1.9, marginBottom: '18px' }}>{block.text}</p>;
+                });
+              })()}
         </div>
 
         <style>{`
