@@ -616,9 +616,12 @@ export default function Home() {
               <a href="/terms" style={{ color: 'var(--text-3)', textDecoration: 'none' }}>TERMS</a>
               <a href="/about" style={{ color: 'var(--text-3)', textDecoration: 'none' }}>ABOUT</a>
             </div>
-            <div style={{ marginBottom: '8px' }}>
+            <div style={{ marginBottom: '8px', display: 'flex', gap: '12px', justifyContent: 'center', alignItems: 'center' }}>
               <a href="https://launchllama.co?utm_source=badge&utm_medium=referral" target="_blank" rel="noopener">
                 <img src="https://speaktechenglish.com/wp-content/uploads/2026/04/Screenshot_2026-04-09_at_17.40.44-removebg-preview.png" alt="Featured on Launch Llama" width="100" height="25" style={{ opacity: 0.7, verticalAlign: 'middle' }} />
+              </a>
+              <a href="https://www.producthunt.com/products/traqcker?embed=true&utm_source=badge-featured&utm_medium=badge&utm_campaign=badge-traqcker" target="_blank" rel="noopener noreferrer">
+                <img alt="Traqcker - Know if a stock is worth it. In seconds. | Product Hunt" width="115" height="25" src="https://api.producthunt.com/widgets/embed-image/v1/featured.svg?post_id=1176027&theme=dark&t=1781871112852" style={{ verticalAlign: 'middle' }} />
               </a>
             </div>
             NOT INVESTMENT ADVICE · © 2026 TRAQCKER
@@ -1162,6 +1165,9 @@ export default function Home() {
             <a href="/pricing" style={{ color: 'var(--text-3)', textDecoration: 'none', letterSpacing: '1px' }}>PRICING</a>
             <a href="https://launchllama.co?utm_source=badge&utm_medium=referral" target="_blank" rel="noopener">
               <img src="https://speaktechenglish.com/wp-content/uploads/2026/04/Screenshot_2026-04-09_at_17.40.44-removebg-preview.png" alt="Featured on Launch Llama" width="100" height="25" style={{ opacity: 0.7, verticalAlign: 'middle' }} />
+            </a>
+            <a href="https://www.producthunt.com/products/traqcker?embed=true&utm_source=badge-featured&utm_medium=badge&utm_campaign=badge-traqcker" target="_blank" rel="noopener noreferrer">
+              <img alt="Traqcker - Know if a stock is worth it. In seconds. | Product Hunt" width="125" height="27" src="https://api.producthunt.com/widgets/embed-image/v1/featured.svg?post_id=1176027&theme=dark&t=1781871112852" style={{ verticalAlign: 'middle' }} />
             </a>
           </div>
           <div style={{ letterSpacing: '1px' }}>DATA: SEC EDGAR · FINNHUB · YAHOO FINANCE · NOT INVESTMENT ADVICE · © 2026 TRAQCKER</div>
