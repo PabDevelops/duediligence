@@ -1,21 +1,54 @@
 'use client';
-import { useRef } from 'react';
+import { useRef, useState } from 'react';
 import html2canvas from 'html2canvas';
 
-export default function ShareCard({ ticker, name, price, priceChange, metrics, score, verdict, fairValue, fairValueNegative, consensus, userVote }) {
+export default function ShareCard({ ticker, name, price, priceChange, score, verdict, fairValue, fairValueNegative, consensus, userVote }) {
   const cardRef = useRef(null);
+  const [copied, setCopied] = useState(false);
+  const [imgLoading, setImgLoading] = useState(false);
 
-  const handleShare = async () => {
+  const stockUrl = `https://traqcker.com/stock/${ticker}`;
+
+  const verdictColor = verdict === 'BUY' ? '#34d399' : verdict === 'SELL' ? '#f87171' : '#fbbf24';
+  const scoreNum = Math.max(0, Math.min(100, Math.round(score ?? 50)));
+  const scoreColor = scoreNum >= 70 ? '#34d399' : scoreNum >= 50 ? '#a78bfa' : '#f87171';
+  const circumference = 502.65;
+  const dashOffset = circumference - (circumference * scoreNum / 100);
+
+  const handleCopyLink = async () => {
+    try {
+      await navigator.clipboard.writeText(stockUrl);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } catch {
+      // fallback
+      const el = document.createElement('input');
+      el.value = stockUrl;
+      document.body.appendChild(el);
+      el.select();
+      document.execCommand('copy');
+      document.body.removeChild(el);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    }
+  };
+
+  const handleShareX = () => {
+    const scoreLabel = scoreNum >= 70 ? '🟢' : scoreNum >= 50 ? '🟡' : '🔴';
+    const text = `${scoreLabel} ${name} (${ticker}) — Quality Score: ${scoreNum}/100\n\nAnalysis via @traqcker`;
+    window.open(`https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}&url=${encodeURIComponent(stockUrl)}`, '_blank');
+  };
+
+  const handleDownloadImage = async () => {
     if (!cardRef.current) return;
-    
+    setImgLoading(true);
     try {
       const canvas = await html2canvas(cardRef.current, {
-        backgroundColor: '#0B0E14',
+        backgroundColor: '#08090f',
         scale: 2,
         logging: false,
-        useCORS: true
+        useCORS: true,
       });
-      
       canvas.toBlob(blob => {
         const url = URL.createObjectURL(blob);
         const a = document.createElement('a');
@@ -24,201 +57,119 @@ export default function ShareCard({ ticker, name, price, priceChange, metrics, s
         a.click();
         URL.revokeObjectURL(url);
       });
-    } catch (e) {
-      console.error('Share failed:', e);
+    } catch {
       alert('Failed to generate image');
+    } finally {
+      setImgLoading(false);
     }
   };
 
-  const verdictColor = verdict === 'BUY' ? '#22c55e' : verdict === 'SELL' ? '#ef4444' : '#eab308';
-  const scoreNum = Math.max(0, Math.min(100, Math.round(score ?? 50)));
-  const scoreColor = scoreNum >= 70 ? '#22c55e' : scoreNum >= 50 ? '#a78bfa' : '#ef4444';
-
-  // SVG circle: r=80, circumference = 2*pi*80 = 502.65
-  const circumference = 502.65;
-  const dashOffset = circumference - (circumference * scoreNum / 100);
-
   return (
     <>
-      {/* Hidden card for rendering to image */}
+      {/* Hidden card rendered off-screen for html2canvas */}
       <div ref={cardRef} style={{
-        position: 'fixed',
-        left: '-9999px',
-        width: '800px',
-        background: '#0B0E14',
-        padding: '60px',
-        borderRadius: '24px',
-        border: '3px solid #a78bfa',
-        fontFamily: 'JetBrains Mono, monospace',
-        color: '#e0e7ff',
-        boxSizing: 'border-box'
+        position: 'fixed', left: '-9999px',
+        width: '800px', background: '#08090f',
+        padding: '56px', borderRadius: '24px',
+        border: '1px solid rgba(167,139,250,0.3)',
+        fontFamily: 'Nunito, sans-serif', color: '#f0f1f5',
+        boxSizing: 'border-box',
+        boxShadow: '0 0 80px rgba(167,139,250,0.15)',
       }}>
-        {/* Top Section - Logo + Ticker + Name */}
-        <div style={{ textAlign: 'center', width: '100%', marginBottom: '36px' }}>
-          <div style={{ fontSize: '48px', fontWeight: 700, color: '#a78bfa', marginBottom: '24px', fontFamily: 'Space Grotesk, sans-serif', letterSpacing: '2px' }}>
-            Traq●cker
-          </div>
-          <div style={{ fontSize: '64px', fontWeight: 700, color: '#ffffff', marginBottom: '12px', fontFamily: 'Space Grotesk, sans-serif', letterSpacing: '1px' }}>
-            {ticker}
-          </div>
-          <div style={{ fontSize: '24px', color: '#cbd5e1' }}>
-            {name}
+        {/* Logo */}
+        <div style={{ textAlign: 'center', marginBottom: '40px' }}>
+          <div style={{ fontSize: '22px', fontWeight: 900, color: '#f0f1f5', letterSpacing: '-0.5px' }}>
+            Traq<span style={{ color: '#a78bfa' }}>●</span>cker
           </div>
         </div>
 
-        {/* Price Section */}
-        <div style={{ textAlign: 'center', width: '100%', marginBottom: '36px', borderTop: '2px solid #a78bfa', borderBottom: '2px solid #a78bfa', paddingTop: '32px', paddingBottom: '32px' }}>
-          <table style={{ width: '100%', borderCollapse: 'collapse' }}>
-            <tr>
-              <td style={{ textAlign: 'center', padding: 0 }}>
-                <span style={{ fontSize: '56px', fontWeight: 700, color: '#ffffff' }}>
-                  ${price?.toFixed(2) || '—'}
-                </span>
-                {priceChange !== undefined && (
-                  <span style={{ fontSize: '28px', color: priceChange >= 0 ? '#22c55e' : '#ef4444', fontWeight: 700, marginLeft: '16px' }}>
-                    {priceChange >= 0 ? '↑' : '↓'} {Math.abs(priceChange).toFixed(2)}%
-                  </span>
-                )}
-              </td>
-            </tr>
-          </table>
+        {/* Ticker + Name */}
+        <div style={{ textAlign: 'center', marginBottom: '40px' }}>
+          <div style={{ fontSize: '60px', fontWeight: 900, color: '#ffffff', letterSpacing: '-2px', lineHeight: 1 }}>{ticker}</div>
+          <div style={{ fontSize: '22px', color: '#b0b7c9', marginTop: '10px', fontWeight: 600 }}>{name}</div>
+        </div>
 
-          {fairValue !== null && fairValue !== undefined && (
-            <div style={{ fontSize: '20px', color: '#94a3b8', marginTop: '18px', textAlign: 'center' }}>
-              Traqcker Fair Value: {fairValueNegative ? (
-                <span style={{ color: '#ef4444', fontWeight: 700 }}>N/A (negative earnings)</span>
-              ) : (
-                <span style={{ color: '#a78bfa', fontWeight: 700 }}>${fairValue.toFixed(2)}</span>
-              )}
+        {/* Price */}
+        <div style={{ textAlign: 'center', borderTop: '1px solid rgba(255,255,255,0.08)', borderBottom: '1px solid rgba(255,255,255,0.08)', padding: '28px 0', marginBottom: '40px' }}>
+          <span style={{ fontSize: '52px', fontWeight: 900, color: '#ffffff' }}>${price?.toFixed(2) || '—'}</span>
+          {priceChange !== undefined && (
+            <span style={{ fontSize: '24px', fontWeight: 700, color: priceChange >= 0 ? '#34d399' : '#f87171', marginLeft: '14px' }}>
+              {priceChange >= 0 ? '↑' : '↓'}{Math.abs(priceChange).toFixed(2)}%
+            </span>
+          )}
+          {fairValue != null && !fairValueNegative && (
+            <div style={{ fontSize: '16px', color: '#6b7491', marginTop: '10px' }}>
+              Fair Value: <span style={{ color: '#a78bfa', fontWeight: 700 }}>${fairValue.toFixed(2)}</span>
             </div>
           )}
         </div>
 
-        {/* Score Ring - SVG with stroke-dasharray (no rotate transform needed) */}
-        <div style={{ textAlign: 'center', width: '100%', marginBottom: '36px' }}>
-          <div style={{ fontSize: '14px', color: '#94a3b8', letterSpacing: '2px', marginBottom: '24px' }}>
-            EASY MODE SCORE
-          </div>
-          
-          <div style={{ width: '200px', margin: '0 auto' }}>
-            <svg width="200" height="200" viewBox="0 0 200 200">
-              {/* Background track */}
-              <circle cx="100" cy="100" r="80" fill="none" stroke="#1e293b" strokeWidth="16" />
-              {/* Progress arc - starts at top (12 o'clock), goes clockwise */}
-              <circle 
-                cx="100" cy="100" r="80" 
-                fill="none" 
-                stroke={scoreColor} 
-                strokeWidth="16" 
-                strokeLinecap="round"
-                strokeDasharray={circumference}
-                strokeDashoffset={dashOffset}
-                transform="rotate(-90 100 100)"
-              />
-              {/* Centered number - directly in SVG */}
-              <text 
-                x="100" 
-                y="100" 
-                textAnchor="middle" 
-                dominantBaseline="central"
-                fontSize="56" 
-                fontWeight="700" 
-                fill={scoreColor}
-                fontFamily="JetBrains Mono, monospace"
-              >
+        {/* Score + Verdict */}
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '60px', marginBottom: '40px' }}>
+          <div style={{ textAlign: 'center' }}>
+            <div style={{ fontSize: '12px', color: '#6b7491', letterSpacing: '2px', marginBottom: '16px' }}>QUALITY SCORE</div>
+            <svg width="160" height="160" viewBox="0 0 200 200">
+              <circle cx="100" cy="100" r="80" fill="none" stroke="rgba(255,255,255,0.06)" strokeWidth="14" />
+              <circle cx="100" cy="100" r="80" fill="none" stroke={scoreColor} strokeWidth="14"
+                strokeLinecap="round" strokeDasharray={circumference} strokeDashoffset={dashOffset}
+                transform="rotate(-90 100 100)" />
+              <text x="100" y="100" textAnchor="middle" dominantBaseline="central"
+                fontSize="52" fontWeight="900" fill={scoreColor} fontFamily="Nunito, sans-serif">
                 {scoreNum}
               </text>
             </svg>
           </div>
-        </div>
-
-        {/* Verdict */}
-        <div style={{ textAlign: 'center', width: '100%', marginBottom: '36px' }}>
-          <div style={{ fontSize: '14px', color: '#94a3b8', letterSpacing: '2px', marginBottom: '18px' }}>
-            VERDICT
-          </div>
-          <div style={{ fontSize: '44px', fontWeight: 700, color: verdictColor }}>
-            {verdict}
+          <div style={{ textAlign: 'center' }}>
+            <div style={{ fontSize: '12px', color: '#6b7491', letterSpacing: '2px', marginBottom: '16px' }}>VERDICT</div>
+            <div style={{ fontSize: '48px', fontWeight: 900, color: verdictColor, letterSpacing: '-1px' }}>{verdict}</div>
           </div>
         </div>
 
-        {/* User's Own Vote */}
-        {userVote && (
-          <div style={{ textAlign: 'center', width: '100%', marginBottom: '36px' }}>
-            <div style={{ 
-              display: 'inline-block',
-              padding: '12px 28px',
-              borderRadius: '12px',
-              border: `2px solid ${userVote === 'BUY' ? '#22c55e' : userVote === 'SELL' ? '#ef4444' : '#eab308'}`,
-              background: userVote === 'BUY' ? 'rgba(34,197,94,0.1)' : userVote === 'SELL' ? 'rgba(239,68,68,0.1)' : 'rgba(234,179,8,0.1)',
-              textAlign: 'center',
-              lineHeight: '1.6'
-            }}>
-              <span style={{ fontSize: '18px', color: '#94a3b8', verticalAlign: 'middle' }}>This week I voted: </span>
-              <span style={{ 
-                fontSize: '22px', 
-                fontWeight: 700, 
-                color: userVote === 'BUY' ? '#22c55e' : userVote === 'SELL' ? '#ef4444' : '#eab308',
-                verticalAlign: 'middle'
-              }}>{userVote}</span>
-            </div>
-          </div>
-        )}
-
-        {/* Community Sentiment */}
+        {/* Community votes */}
         {consensus && consensus.total > 0 && (
-          <div style={{ textAlign: 'center', width: '100%', marginBottom: '36px' }}>
-            <div style={{ fontSize: '14px', color: '#94a3b8', letterSpacing: '2px', marginBottom: '20px' }}>
-              COMMUNITY SENTIMENT ({consensus.total} {consensus.total === 1 ? 'vote' : 'votes'})
+          <div style={{ marginBottom: '32px' }}>
+            <div style={{ fontSize: '11px', color: '#6b7491', letterSpacing: '2px', marginBottom: '12px', textAlign: 'center' }}>
+              COMMUNITY · {consensus.total} {consensus.total === 1 ? 'VOTE' : 'VOTES'}
             </div>
-            <div style={{ display: 'flex', height: '20px', borderRadius: '10px', overflow: 'hidden', marginBottom: '18px' }}>
-              <div style={{ width: `${consensus.BUY}%`, background: '#22c55e' }} />
-              <div style={{ width: `${consensus.HOLD}%`, background: '#eab308' }} />
-              <div style={{ width: `${consensus.SELL}%`, background: '#ef4444' }} />
+            <div style={{ display: 'flex', height: '10px', borderRadius: '999px', overflow: 'hidden' }}>
+              <div style={{ width: `${consensus.BUY}%`, background: '#34d399' }} />
+              <div style={{ width: `${consensus.HOLD}%`, background: '#fbbf24' }} />
+              <div style={{ width: `${consensus.SELL}%`, background: '#f87171' }} />
             </div>
-            <table style={{ width: '100%', borderCollapse: 'collapse' }}>
-              <tr>
-                <td style={{ textAlign: 'left', color: '#22c55e', fontSize: '16px' }}>● {consensus.BUY}% Buy</td>
-                <td style={{ textAlign: 'center', color: '#eab308', fontSize: '16px' }}>● {consensus.HOLD}% Hold</td>
-                <td style={{ textAlign: 'right', color: '#ef4444', fontSize: '16px' }}>● {consensus.SELL}% Sell</td>
-              </tr>
-            </table>
+            <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '8px', fontSize: '13px' }}>
+              <span style={{ color: '#34d399' }}>{consensus.BUY}% Buy</span>
+              <span style={{ color: '#fbbf24' }}>{consensus.HOLD}% Hold</span>
+              <span style={{ color: '#f87171' }}>{consensus.SELL}% Sell</span>
+            </div>
           </div>
         )}
 
         {/* Footer */}
-        <div style={{ fontSize: '13px', color: '#64748b', letterSpacing: '0.5px', textAlign: 'center', width: '100%', marginTop: '24px' }}>
+        <div style={{ textAlign: 'center', fontSize: '13px', color: '#6b7491', borderTop: '1px solid rgba(255,255,255,0.06)', paddingTop: '20px' }}>
           traqcker.com — Fundamental analysis without noise
         </div>
       </div>
 
-      {/* Visible Share Button - Downloads PNG */}
-      <button onClick={handleShare}
-        style={{
-          width: '100%',
-          padding: '16px',
-          marginBottom: '16px',
-          borderRadius: '12px',
-          border: '1px solid var(--accent)',
-          background: 'var(--accent-dim)',
-          color: 'var(--accent)',
-          cursor: 'pointer',
-          fontSize: '14px',
-          fontFamily: 'Space Grotesk, sans-serif',
-          fontWeight: 700,
-          transition: 'all 0.2s',
-          letterSpacing: '0.5px'
-        }}
-        onMouseEnter={e => {
-          e.target.style.background = 'var(--accent)';
-          e.target.style.color = '#0B0E14';
-        }}
-        onMouseLeave={e => {
-          e.target.style.background = 'var(--accent-dim)';
-          e.target.style.color = 'var(--accent)';
-        }}>
-        📸 Share as Image
-      </button>
+      {/* Share buttons */}
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+        {/* Copy link + Share on X */}
+        <div style={{ display: 'flex', gap: '8px' }}>
+          <button className="btn-secondary" onClick={handleCopyLink}
+            style={{ flex: 1, padding: '11px 16px', fontSize: '13px', textAlign: 'center' }}>
+            {copied ? '✓ Copied!' : '🔗 Copy link'}
+          </button>
+          <button className="btn-secondary" onClick={handleShareX}
+            style={{ flex: 1, padding: '11px 16px', fontSize: '13px', textAlign: 'center' }}>
+            𝕏 Share on X
+          </button>
+        </div>
+
+        {/* Download image */}
+        <button className="btn-secondary" onClick={handleDownloadImage} disabled={imgLoading}
+          style={{ width: '100%', padding: '11px 16px', fontSize: '13px', opacity: imgLoading ? 0.6 : 1 }}>
+          {imgLoading ? 'Generating…' : '📸 Download image'}
+        </button>
+      </div>
     </>
   );
 }
