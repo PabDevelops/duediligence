@@ -576,22 +576,22 @@ export default function StockPage({ params }) {
               </div>
 
               {/* Easy Mode health ring */}
-              <div style={{ background: 'var(--bg-1)', border: '1px solid var(--border)', borderRadius: '20px', padding: '24px 20px', display: 'flex', alignItems: 'center', gap: '20px', marginBottom: '16px' }}>
-                <div style={{ position: 'relative', width: '92px', height: '92px', flexShrink: 0 }}>
-                  <svg width="92" height="92" viewBox="0 0 92 92" style={{ transform: 'rotate(-90deg)' }}>
-                    <circle cx="46" cy="46" r="40" fill="none" stroke="var(--bg-3)" strokeWidth="8" />
-                    <circle cx="46" cy="46" r="40" fill="none" stroke={easyMode.verdictColor} strokeWidth="8" strokeLinecap="round"
-                      strokeDasharray="251.2" strokeDashoffset={251.2 - (251.2 * easyMode.score100 / 100)} />
+              <div style={{ background: 'var(--bg-1)', border: '1px solid var(--border)', borderRadius: '20px', padding: '28px 24px', display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center', gap: '16px', marginBottom: '16px' }}>
+                <div style={{ fontSize: '11px', letterSpacing: '2px', color: 'var(--text-3)', fontWeight: 700 }}>EASY MODE</div>
+                <div style={{ position: 'relative', width: '110px', height: '110px' }}>
+                  <svg width="110" height="110" viewBox="0 0 110 110" style={{ transform: 'rotate(-90deg)' }}>
+                    <circle cx="55" cy="55" r="48" fill="none" stroke="var(--bg-3)" strokeWidth="9" />
+                    <circle cx="55" cy="55" r="48" fill="none" stroke={easyMode.verdictColor} strokeWidth="9" strokeLinecap="round"
+                      strokeDasharray="301.6" strokeDashoffset={301.6 - (301.6 * easyMode.score100 / 100)} />
                   </svg>
                   <div style={{ position: 'absolute', inset: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
-                    <div style={{ fontFamily: 'Nunito, sans-serif', fontWeight: 800, fontSize: '26px', lineHeight: 1 }}>{easyMode.score100}</div>
-                    <div style={{ fontSize: '9px', color: 'var(--text-3)', letterSpacing: '1px', marginTop: '2px' }}>/ 100</div>
+                    <div style={{ fontWeight: 900, fontSize: '32px', lineHeight: 1 }}>{easyMode.score100}</div>
+                    <div style={{ fontSize: '10px', color: 'var(--text-3)', marginTop: '2px' }}>/ 100</div>
                   </div>
                 </div>
                 <div>
-                  <div style={{ fontSize: '11px', letterSpacing: '2px', color: 'var(--text-3)', marginBottom: '6px', fontFamily: 'Nunito, sans-serif', fontWeight: 700 }}>EASY MODE</div>
-                  <div style={{ fontFamily: 'Nunito, sans-serif', fontWeight: 700, fontSize: '17px', color: easyMode.verdictColor, marginBottom: '6px' }}>{easyMode.verdict}</div>
-                  <div style={{ fontSize: '13px', color: 'var(--text-2)', lineHeight: 1.4 }}>{easyMode.summary}</div>
+                  <div style={{ fontWeight: 800, fontSize: '18px', color: easyMode.verdictColor, marginBottom: '6px' }}>{easyMode.verdict}</div>
+                  <div style={{ fontSize: '13px', color: 'var(--text-2)', lineHeight: 1.6, maxWidth: '260px' }}>{easyMode.summary}</div>
                 </div>
               </div>
 
