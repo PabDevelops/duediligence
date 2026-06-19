@@ -360,18 +360,22 @@ export default function StockPage({ params }) {
       </div>
       <OnboardingBanner />
 
-      <div style={{ maxWidth: '1200px', margin: '0 auto', padding: '20px 20px 80px' }}>
-
+      {/* FULL-WIDTH HERO */}
+      <div style={{
+        background: `linear-gradient(135deg, rgba(167,139,250,0.10) 0%, rgba(96,165,250,0.06) 45%, transparent 75%)`,
+        borderBottom: '1px solid rgba(255,255,255,0.06)',
+      }}>
+        <div style={{ maxWidth: '1200px', margin: '0 auto', padding: '28px 24px' }}>
         {/* Finnhub fallback notice */}
         {data.finnhubFallback && (
-          <div style={{ display: 'flex', alignItems: 'center', gap: '6px', background: 'var(--bg-1)', border: '1px solid var(--border)', borderRadius: '10px', padding: '8px 12px', marginBottom: '16px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '6px', background: 'rgba(255,255,255,0.04)', border: '1px solid var(--border)', borderRadius: '10px', padding: '8px 12px', marginBottom: '16px' }}>
             <span style={{ color: 'var(--accent)', fontSize: '9px' }}>ℹ</span>
             <span style={{ color: 'var(--text-3)', fontSize: '9px', letterSpacing: '0.5px' }}>Limited data — company reports outside SEC EDGAR. Showing Finnhub data only.</span>
           </div>
         )}
 
-        {/* HERO CARD */}
-        <div className="glass stock-hero" style={{ borderRadius: '20px', padding: '24px 28px', marginBottom: '20px' }}>
+        {/* HERO */}
+        <div className="stock-hero" style={{ padding: '0' }}>
           {/* Left: logo + info + price */}
           <div className="stock-hero-left">
             <div style={{ width: '60px', height: '60px', borderRadius: '16px', background: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, overflow: 'hidden' }}>
@@ -417,6 +421,10 @@ export default function StockPage({ params }) {
             <div style={{ fontSize: '11px', color: 'var(--text-3)', textAlign: 'center', maxWidth: '180px', lineHeight: 1.5 }}>{easyMode.summary}</div>
           </div>
         </div>
+        </div>{/* end hero inner */}
+      </div>{/* end full-width hero */}
+
+      <div style={{ maxWidth: '1200px', margin: '0 auto', padding: '20px 24px 80px' }}>
 
         {/* HORIZONTAL TAB NAV */}
         <div style={{ display: 'flex', gap: '8px', marginBottom: '24px' }}>
