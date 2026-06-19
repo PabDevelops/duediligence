@@ -1,6 +1,11 @@
 import { supabase } from '../../../lib/supabase';
+import { rateLimit, getClientIp } from '../../../lib/rateLimit';
 
 export async function GET(request) {
+  const ip = getClientIp(request);
+  const { ok } = rateLimit(`search:${ip}`, { limit: 60, windowMs: 60_000 });
+  if (!ok) return Response.json({ results: [] }, { status: 429 });
+
   const { searchParams } = new URL(request.url);
   const q = searchParams.get('q')?.trim();
 
