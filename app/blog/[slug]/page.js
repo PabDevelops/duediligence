@@ -3,6 +3,7 @@ import { useRouter } from 'next/navigation';
 import { use, useState, useEffect } from 'react';
 import Topbar from '../../components/Topbar';
 import TradingViewChart from '../../components/TradingViewChart';
+import NewsletterForm from '../../components/NewsletterForm';
 
 const CHART_PATTERN = /<p>\s*\[chart:([A-Za-z0-9.\-]+)\]\s*<\/p>/gi;
 
@@ -111,6 +112,10 @@ export default function BlogPost({ params }) {
           <div style={{ fontSize: '16px', fontWeight: 800, marginBottom: '6px' }}>Want to see the numbers, not just the theory?</div>
           <div style={{ color: 'var(--text-3)', fontSize: '14px', marginBottom: '16px' }}>Search any of 8,000+ US stocks and get the quality score, fair value, and financials free.</div>
           <a href="/" className="btn-primary">Try Traqcker free →</a>
+        </div>
+
+        <div style={{ marginTop: '20px' }}>
+          <NewsletterForm source="blog-post" />
         </div>
 
       </div>

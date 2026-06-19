@@ -4,6 +4,7 @@ import { useRouter } from 'next/navigation';
 import { useUser } from '@clerk/nextjs';
 import MarketBar from './components/MarketBar';
 import Topbar from './components/Topbar';
+import NewsletterForm from './components/NewsletterForm';
 
 const fmt = (val) => {
   if (val === null || val === undefined) return '—';
@@ -1146,6 +1147,11 @@ export default function Home() {
             </div>
           );
         })()}
+
+        {/* NEWSLETTER */}
+        <div style={{ marginBottom: '48px' }}>
+          <NewsletterForm source="landing" />
+        </div>
 
         {/* FOOTER */}
         <div style={{ borderTop: '1px solid var(--border)', paddingTop: '20px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', color: 'var(--text-3)', fontSize: '10px', flexWrap: 'wrap', gap: '12px' }}>
