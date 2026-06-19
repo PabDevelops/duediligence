@@ -39,13 +39,31 @@ export default function BlogPost({ params }) {
           ← Back to blog
         </button>
 
+        <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify({
+          '@context': 'https://schema.org',
+          '@type': 'Article',
+          headline: post.title,
+          description: post.description,
+          datePublished: post.date,
+          author: { '@type': (!post.author || post.author === 'Traqcker Team') ? 'Organization' : 'Person', name: post.author || 'Traqcker Team' },
+          publisher: { '@type': 'Organization', name: 'Traqcker', logo: { '@type': 'ImageObject', url: 'https://traqcker.com/favicon.png' } },
+          mainEntityOfPage: { '@type': 'WebPage', '@id': `https://traqcker.com/blog/${post.slug}` },
+        }) }} />
+
         <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '16px' }}>
           <span style={{ color: 'var(--accent)', fontSize: '10px', fontWeight: 700, letterSpacing: '1.5px', background: 'var(--accent-dim)', padding: '3px 10px', borderRadius: '20px' }}>{post.tag.toUpperCase()}</span>
           <span style={{ color: 'var(--text-3)', fontSize: '12px' }}>{post.read_time}</span>
           <span style={{ color: 'var(--text-3)', fontSize: '12px' }}>· {new Date(post.date).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}</span>
         </div>
 
-        <h1 style={{ fontSize: '34px', fontWeight: 900, letterSpacing: '-1px', lineHeight: 1.15, marginBottom: '32px' }}>{post.title}</h1>
+        <h1 style={{ fontSize: '34px', fontWeight: 900, letterSpacing: '-1px', lineHeight: 1.15, marginBottom: '16px' }}>{post.title}</h1>
+
+        <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '32px' }}>
+          <div style={{ width: 28, height: 28, borderRadius: '50%', background: 'linear-gradient(135deg, #a78bfa, #60a5fa)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '12px', fontWeight: 800, color: '#000', flexShrink: 0 }}>
+            {(post.author || 'T').charAt(0).toUpperCase()}
+          </div>
+          <span style={{ color: 'var(--text-2)', fontSize: '13px', fontWeight: 700 }}>{post.author || 'Traqcker Team'}</span>
+        </div>
 
         <div>
           {post.content.map((block, i) => {

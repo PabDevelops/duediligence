@@ -43,7 +43,8 @@ export default function BlogIndex() {
                   <span style={{ color: 'var(--text-3)', fontSize: '12px' }}>{post.read_time}</span>
                 </div>
                 <h2 style={{ fontSize: '20px', fontWeight: 800, marginBottom: '8px', letterSpacing: '-0.3px' }}>{post.title}</h2>
-                <p style={{ color: 'var(--text-3)', fontSize: '14px', lineHeight: 1.7, marginBottom: '0' }}>{post.description}</p>
+                <p style={{ color: 'var(--text-3)', fontSize: '14px', lineHeight: 1.7, marginBottom: '10px' }}>{post.description}</p>
+                <div style={{ color: 'var(--text-3)', fontSize: '12px', fontWeight: 600 }}>By {post.author || 'Traqcker Team'}</div>
               </div>
             ))}
             {posts.length === 0 && <div style={{ color: 'var(--text-3)', fontSize: '14px' }}>No posts yet — check back soon.</div>}

@@ -8,6 +8,7 @@ create table if not exists blog_posts (
   tag text not null default 'Fundamentals',
   tickers text[] not null default '{}',
   sentiment text not null default 'neutral',
+  author text not null default 'Traqcker Team',
   content jsonb not null default '[]',
   published boolean not null default true,
   created_at timestamptz not null default now()

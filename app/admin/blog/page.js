@@ -44,7 +44,7 @@ export default function AdminBlogPage() {
   };
 
   const startNew = () => {
-    setEditing({ slug: '', title: '', description: '', date: new Date().toISOString().slice(0, 10), readTime: '4 min read', tag: 'Fundamentals', sentiment: 'neutral', published: true });
+    setEditing({ slug: '', title: '', description: '', date: new Date().toISOString().slice(0, 10), readTime: '4 min read', tag: 'Fundamentals', sentiment: 'neutral', author: 'Traqcker Team', published: true });
     setBody('');
     setTickersInput('');
     setError('');
@@ -67,7 +67,7 @@ export default function AdminBlogPage() {
 
     const payload = {
       slug, title: editing.title, description: editing.description, date: editing.date,
-      readTime: editing.readTime, tag: editing.tag, tickers, sentiment: editing.sentiment || 'neutral', content, published: editing.published,
+      readTime: editing.readTime, tag: editing.tag, tickers, sentiment: editing.sentiment || 'neutral', author: editing.author || 'Traqcker Team', content, published: editing.published,
     };
 
     const res = await fetch(isNew ? '/api/blog' : `/api/blog/${slug}`, {
@@ -159,7 +159,7 @@ export default function AdminBlogPage() {
                 <textarea style={{ ...inputStyle, minHeight: '60px', resize: 'vertical' }} value={editing.description} onChange={e => setEditing({ ...editing, description: e.target.value })} />
               </div>
 
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '12px' }}>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr 1fr', gap: '12px' }}>
                 <div>
                   <label style={labelStyle}>DATE</label>
                   <input type="date" style={inputStyle} value={editing.date} onChange={e => setEditing({ ...editing, date: e.target.value })} />
@@ -171,6 +171,10 @@ export default function AdminBlogPage() {
                 <div>
                   <label style={labelStyle}>TAG</label>
                   <input style={inputStyle} value={editing.tag} onChange={e => setEditing({ ...editing, tag: e.target.value })} placeholder="Fundamentals" />
+                </div>
+                <div>
+                  <label style={labelStyle}>AUTHOR</label>
+                  <input style={inputStyle} value={editing.author || ''} onChange={e => setEditing({ ...editing, author: e.target.value })} placeholder="Traqcker Team" />
                 </div>
               </div>
 
