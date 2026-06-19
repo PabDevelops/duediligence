@@ -38,7 +38,7 @@ Keep paragraphs concise (2-3 sentences max). Make it actionable and informative.
 
   try {
     const message = await anthropic.messages.create({
-      model: 'claude-opus-4-8',
+      model: 'claude-haiku-4-5-20251001',
       max_tokens: 1024,
       messages: [
         {
