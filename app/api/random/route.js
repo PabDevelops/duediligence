@@ -65,7 +65,7 @@ export async function GET(request) {
         .eq('user_id', userId)
         .single();
 
-      if (sub?.status === 'active') {
+      if (sub?.status === 'active' || sub?.status === 'trialing') {
         const ticker = await getRandomTicker();
         return Response.json({ ticker, remaining: 'unlimited' });
       }

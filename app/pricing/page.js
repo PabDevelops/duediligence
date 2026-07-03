@@ -33,10 +33,10 @@ export default function Pricing() {
         <div style={{ textAlign: 'center', marginBottom: '40px' }}>
           <div style={{ color: 'var(--accent)', fontSize: '11px', letterSpacing: '2px', marginBottom: '12px', fontWeight: 700 }}>PLANS & PRICING</div>
           <h1 style={{ fontSize: '40px', fontWeight: 800, letterSpacing: '-1px', marginBottom: '12px', lineHeight: 1.1 }}>
-            Easy Mode is free.<br /><span style={{ color: 'var(--accent)' }}>Go Pro for more.</span>
+            Try Pro free for 14 days.<br /><span style={{ color: 'var(--accent)' }}>Cancel anytime.</span>
           </h1>
           <p style={{ color: 'var(--text-2)', fontSize: '15px', lineHeight: 1.7 }}>
-            Scores, fair value, and community votes are free for everyone — forever.
+            Full financials, screener, and compare tools — card required, no charge until your trial ends.
           </p>
         </div>
 
@@ -49,7 +49,7 @@ export default function Pricing() {
             </button>
             <button onClick={() => setAnnual(true)}
               style={{ padding: '10px 24px', borderRadius: '10px', background: annual ? 'linear-gradient(135deg, #a78bfa, #60a5fa)' : 'transparent', color: annual ? '#000' : 'var(--text-2)', border: 'none', fontFamily: 'Nunito, sans-serif', fontSize: '14px', fontWeight: 700, cursor: 'pointer', transition: 'all 0.2s' }}>
-              Annual · Save 27%
+              Annual · Save 33%
             </button>
           </div>
         </div>
@@ -87,10 +87,10 @@ export default function Pricing() {
             </div>
             <div style={{ color: 'var(--accent)', fontSize: '11px', letterSpacing: '2px', marginBottom: '12px', fontWeight: 700 }}>PRO</div>
             <div style={{ fontSize: '40px', fontWeight: 900, marginBottom: '4px', letterSpacing: '-1px' }}>
-              {annual ? '$2.92' : '$3.99'}
+              {annual ? '$9.99' : '$14.99'}
             </div>
             <div style={{ color: 'var(--text-3)', fontSize: '13px', marginBottom: '24px' }}>
-              {annual ? '/month · billed $34.99/year' : '/month'}
+              {annual ? '/month · billed $119.88/year after trial' : '/month after trial'}
             </div>
             <div style={{ borderTop: '1px solid var(--border)', paddingTop: '20px', marginBottom: '24px', display: 'flex', flexDirection: 'column', gap: '12px' }}>
               {[
@@ -112,7 +112,7 @@ export default function Pricing() {
               disabled={loading !== null}
               className="btn-primary"
               style={{ width: '100%', padding: '13px', borderRadius: '12px', fontSize: '15px' }}>
-              {loading ? 'Loading...' : `Go Pro ${annual ? '— Save 27%' : ''} →`}
+              {loading ? 'Loading...' : `Start free trial ${annual ? '— Save 33%' : ''} →`}
             </button>
           </div>
         </div>

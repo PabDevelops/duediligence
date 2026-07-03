@@ -30,11 +30,15 @@ export async function POST(request) {
     const userId = session.metadata.userId;
     const subscriptionId = session.subscription;
 
+    const stripeClient = getStripe();
+    const subscription = await stripeClient.subscriptions.retrieve(subscriptionId);
+
     await supabase.from('subscriptions').upsert({
       user_id: userId,
       stripe_subscription_id: subscriptionId,
       stripe_customer_id: session.customer,
-      status: 'active',
+      status: subscription.status,
+      trial_end: subscription.trial_end ? new Date(subscription.trial_end * 1000).toISOString() : null,
       updated_at: new Date().toISOString(),
     });
 
@@ -50,6 +54,15 @@ export async function POST(request) {
         await supabase.from('user_achievements').insert([{ user_id: userId, achievement_type: 'pro_subscriber' }]);
       }
     } catch (_) {}
+  }
+
+  if (event.type === 'customer.subscription.updated') {
+    const subscription = event.data.object;
+    await supabase.from('subscriptions').update({
+      status: subscription.status,
+      trial_end: subscription.trial_end ? new Date(subscription.trial_end * 1000).toISOString() : null,
+      updated_at: new Date().toISOString(),
+    }).eq('stripe_subscription_id', subscription.id);
   }
 
   if (event.type === 'customer.subscription.deleted') {

@@ -4,6 +4,7 @@ import { ClerkProvider } from '@clerk/nextjs';
 import CookieBanner from './components/CookieBanner';
 import WatchlistWidget from './components/WatchlistWidget';
 import BottomNav from './components/BottomNav';
+import TrialGate from './components/TrialGate';
 import { Analytics } from '@vercel/analytics/react';
 
 export const metadata = {
@@ -47,6 +48,7 @@ export default function RootLayout({ children }) {
     <ClerkProvider publishableKey={process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY}>
       <html lang="en">
         <body suppressHydrationWarning>
+          <TrialGate />
           {children}
           <BottomNav />
           <WatchlistWidget />

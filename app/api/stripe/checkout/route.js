@@ -1,5 +1,7 @@
 import Stripe from 'stripe';
 import { auth } from '@clerk/nextjs/server';
+import { supabase } from '../../../../lib/supabase';
+import { TRIAL_DAYS } from '../../../../lib/trialConfig';
 
 let stripe;
 
@@ -25,6 +27,12 @@ export async function POST(request) {
   }
 
   try {
+    const { data: existingSub } = await supabase
+      .from('subscriptions')
+      .select('user_id')
+      .eq('user_id', userId)
+      .single();
+
     const stripeClient = getStripe();
     const session = await stripeClient.checkout.sessions.create({
       mode: 'subscription',
@@ -35,6 +43,7 @@ export async function POST(request) {
       cancel_url: `${process.env.NEXT_PUBLIC_APP_URL}/pricing`,
       metadata: { userId },
       client_reference_id: userId,
+      ...(existingSub ? {} : { subscription_data: { trial_period_days: TRIAL_DAYS } }),
     });
 
     return Response.json({ url: session.url });
