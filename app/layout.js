@@ -1,4 +1,5 @@
 import "./globals.css";
+import Script from 'next/script';
 import { ClerkProvider } from '@clerk/nextjs';
 import CookieBanner from './components/CookieBanner';
 import WatchlistWidget from './components/WatchlistWidget';
@@ -51,6 +52,12 @@ export default function RootLayout({ children }) {
           <WatchlistWidget />
           <CookieBanner />
           <Analytics />
+          <Script
+            src="https://datafa.st/js/script.js"
+            data-website-id="dfid_WAIi12RsesdbDTvKjxaVj"
+            data-domain="traqcker.com"
+            strategy="afterInteractive"
+          />
           <script dangerouslySetInnerHTML={{ __html: `
             (function() {
               const obs = new IntersectionObserver((entries) => {
