@@ -1,10 +1,11 @@
 import { supabase } from '../../../lib/supabase';
 
 const FH_KEY = process.env.FINNHUB_API_KEY;
-const AV_KEY = 'HQ3HYMDJQK4QBM4I';
+const AV_KEY = process.env.ALPHA_VANTAGE_API_KEY;
 const CACHE_HOURS = 24;
 
 async function fetchDescription(ticker) {
+  if (!AV_KEY) return null;
   try {
     const res = await fetch(
       `https://www.alphavantage.co/query?function=OVERVIEW&symbol=${ticker}&apikey=${AV_KEY}`,

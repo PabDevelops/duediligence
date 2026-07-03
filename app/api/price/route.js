@@ -1,10 +1,11 @@
-const AV_KEY = 'HQ3HYMDJQK4QBM4I';
+const AV_KEY = process.env.ALPHA_VANTAGE_API_KEY;
 
 export async function GET(request) {
   const { searchParams } = new URL(request.url);
   const ticker = searchParams.get('ticker')?.toUpperCase();
 
   if (!ticker) return Response.json({ error: 'Ticker requerido' }, { status: 400 });
+  if (!AV_KEY) return Response.json({ error: 'ALPHA_VANTAGE_API_KEY no está configurada' }, { status: 500 });
 
   try {
     const res = await fetch(
