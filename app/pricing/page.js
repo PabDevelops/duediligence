@@ -1,6 +1,6 @@
 'use client';
 import { useState } from 'react';
-import { useUser } from '@clerk/nextjs';
+import { useUser } from '../components/AuthProvider';
 import Topbar from '../components/Topbar';
 
 export default function Pricing() {

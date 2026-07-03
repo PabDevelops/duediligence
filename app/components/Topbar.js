@@ -1,7 +1,43 @@
 'use client';
 import { usePathname, useRouter } from 'next/navigation';
 import { useState, useEffect } from 'react';
-import { SignInButton, UserButton, useUser } from '@clerk/nextjs';
+import { useUser } from './AuthProvider';
+import { createClient } from '../../lib/supabase/client';
+
+function UserMenu() {
+  const { user } = useUser();
+  const router = useRouter();
+  const [open, setOpen] = useState(false);
+
+  const signOut = async () => {
+    const supabase = createClient();
+    await supabase.auth.signOut();
+    setOpen(false);
+    router.push('/');
+    router.refresh();
+  };
+
+  return (
+    <div style={{ position: 'relative' }}>
+      <button onClick={() => setOpen(!open)}
+        style={{ width: '30px', height: '30px', borderRadius: '50%', border: 'none', background: 'linear-gradient(135deg, #a78bfa, #60a5fa)', color: '#000', fontWeight: 800, fontSize: '13px', cursor: 'pointer' }}>
+        {user?.email?.[0]?.toUpperCase() || '?'}
+      </button>
+      {open && (
+        <div className="glass" style={{ position: 'absolute', top: '38px', right: 0, minWidth: '160px', padding: '6px', zIndex: 100 }}>
+          <a href="/profile" onClick={() => setOpen(false)}
+            style={{ display: 'block', padding: '8px 12px', borderRadius: '8px', color: 'var(--text)', fontSize: '13px', textDecoration: 'none' }}>
+            Profile
+          </a>
+          <button onClick={signOut}
+            style={{ display: 'block', width: '100%', textAlign: 'left', padding: '8px 12px', borderRadius: '8px', color: 'var(--red)', fontSize: '13px', background: 'none', border: 'none', cursor: 'pointer' }}>
+            Sign out
+          </button>
+        </div>
+      )}
+    </div>
+  );
+}
 
 function ProBadge() {
   const [isPro, setIsPro] = useState(false);
@@ -106,16 +142,14 @@ export default function Topbar() {
           {isSignedIn ? (
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
               <ProBadge />
-              <UserButton afterSignOutUrl="/" />
+              <UserMenu />
             </div>
           ) : (
             <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
               <span style={{ color: 'var(--text-3)', fontSize: '12px', borderRight: '1px solid var(--border)', paddingRight: '12px' }}>
                 🔒 Sign in for full data
               </span>
-              <SignInButton mode="modal">
-                <button className="btn-primary" style={{ padding: '6px 16px', fontSize: '13px' }}>Sign in</button>
-              </SignInButton>
+              <a href="/sign-in" className="btn-primary" style={{ padding: '6px 16px', fontSize: '13px' }}>Sign in</a>
             </div>
           )}
         </div>
@@ -139,9 +173,7 @@ export default function Topbar() {
           ))}
           {!isSignedIn && (
             <div style={{ padding: '12px 16px' }}>
-              <SignInButton mode="modal">
-                <button className="btn-primary" style={{ width: '100%', padding: '10px' }}>Sign in</button>
-              </SignInButton>
+              <a href="/sign-in" className="btn-primary" style={{ display: 'block', width: '100%', padding: '10px', textAlign: 'center', boxSizing: 'border-box' }}>Sign in</a>
             </div>
           )}
         </div>

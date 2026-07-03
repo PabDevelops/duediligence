@@ -1,6 +1,6 @@
 'use client';
 import { useState, useEffect } from 'react';
-import { useUser } from '@clerk/nextjs';
+import { useUser } from './AuthProvider';
 import { useRouter } from 'next/navigation';
 import Sparkline from './Sparkline';
 

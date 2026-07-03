@@ -1,6 +1,6 @@
 'use client';
 import { useRouter } from 'next/navigation';
-import { useUser } from '@clerk/nextjs';
+import { useUser } from './AuthProvider';
 
 export default function Header() {
   const router = useRouter();
@@ -44,7 +44,7 @@ export default function Header() {
         {user ? (
           <>
             <span style={{ color: 'var(--text-2)', fontSize: '13px' }}>
-              {user.firstName || user.emailAddresses?.[0]?.emailAddress || 'Account'}
+              {user.email || 'Account'}
             </span>
             <button onClick={() => router.push('/profile')}
               style={{

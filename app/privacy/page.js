@@ -19,7 +19,7 @@ export default function Privacy() {
             title: '2. What Data We Collect',
             content: `We collect the following categories of personal data:
 
-- Account data: email address, name, and authentication credentials when you register via Clerk.
+- Account data: email address, name, and authentication credentials when you register via Supabase Auth.
 - Payment data: subscription status and billing history. Payment card details are processed directly by Stripe and never stored on our servers.
 - Usage data: pages visited, features used, and stock tickers searched, used to improve the service.
 - Technical data: IP address, browser type, device type, and cookies necessary for the service to function.
@@ -52,9 +52,8 @@ We do not sell, rent, or share your personal data with third parties for marketi
             title: '5. Third Party Services and International Transfers',
             content: `We use the following third-party services to operate Traqcker:
 
-- Clerk (clerk.com) — authentication and user management. Data may be processed in the USA. Clerk is certified under the EU-US Data Privacy Framework.
 - Stripe (stripe.com) — payment processing. Data processed in the USA and EU. Stripe is PCI DSS compliant.
-- Supabase (supabase.com) — database and data storage. Data stored in EU regions where available.
+- Supabase (supabase.com) — database, data storage, and authentication/user management. Data stored in EU regions where available.
 - Vercel (vercel.com) — website hosting and deployment. Data may be processed in the USA and EU.
 - Finnhub (finnhub.io) — financial market data API.
 - SEC EDGAR — public financial filing data from the US Securities and Exchange Commission.

@@ -9,7 +9,7 @@ import Topbar from '../../components/Topbar';
 import OnboardingBanner from '../../components/OnboardingBanner';
 import ShareCardComponent from '../../components/ShareCard';
 import AchievementToast from '../../components/AchievementToast';
-import { useUser } from '@clerk/nextjs';
+import { useUser } from '../../components/AuthProvider';
 
 const fmt = (val) => {
   if (val === null || val === undefined) return 'N/A';

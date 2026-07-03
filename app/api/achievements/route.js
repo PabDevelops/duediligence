@@ -1,5 +1,4 @@
 import { createClient } from '@supabase/supabase-js';
-import { auth } from '@clerk/nextjs/server';
 
 const ACHIEVEMENTS = {
   first_vote:        { title: 'First Vote',        description: 'Cast your first community vote',          icon: '🗳️', rarity: 'common' },

@@ -1,8 +1,8 @@
-import { auth } from '@clerk/nextjs/server';
+import { getUserId } from '../../../lib/auth';
 import { supabase } from '../../../lib/supabase';
 
 export async function GET() {
-  const { userId } = await auth();
+  const userId = await getUserId();
   if (!userId) return Response.json({ error: 'Not authenticated' }, { status: 401 });
 
   try {

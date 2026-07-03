@@ -1,9 +1,9 @@
 import Stripe from 'stripe';
-import { auth } from '@clerk/nextjs/server';
+import { getUserId } from '../../../../lib/auth';
 import { supabase } from '../../../../lib/supabase';
 
 export async function POST() {
-  const { userId } = await auth();
+  const userId = await getUserId();
   if (!userId) return Response.json({ error: 'Not authenticated' }, { status: 401 });
 
   const { data, error } = await supabase

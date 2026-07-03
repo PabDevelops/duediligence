@@ -1,27 +1,22 @@
-import { auth, clerkClient } from '@clerk/nextjs/server';
-import { supabase } from '../../../lib/supabase';
+import { createClient } from '../../../lib/supabase/server';
+import { supabase as adminSupabase } from '../../../lib/supabase';
 import { TRIAL_LAUNCH_DATE } from '../../../lib/trialConfig';
 
 const PRO_STATUSES = ['trialing', 'active'];
 
 export async function GET() {
-  const { userId } = await auth();
-  if (!userId) return Response.json({ isPro: false, needsTrial: false });
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return Response.json({ isPro: false, needsTrial: false });
 
-  const { data } = await supabase
+  const { data } = await adminSupabase
     .from('subscriptions')
     .select('status')
-    .eq('user_id', userId)
+    .eq('user_id', user.id)
     .single();
 
   const isPro = PRO_STATUSES.includes(data?.status);
-
-  let needsTrial = false;
-  if (!data) {
-    const client = await clerkClient();
-    const user = await client.users.getUser(userId);
-    needsTrial = new Date(user.createdAt) >= TRIAL_LAUNCH_DATE;
-  }
+  const needsTrial = !data && new Date(user.created_at) >= TRIAL_LAUNCH_DATE;
 
   return Response.json({ isPro, needsTrial });
 }

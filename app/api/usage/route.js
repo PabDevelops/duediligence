@@ -1,10 +1,10 @@
-import { auth } from '@clerk/nextjs/server';
+import { getUserId } from '../../../lib/auth';
 import { supabase } from '../../../lib/supabase';
 
 const FREE_LIMIT = 5;
 
 export async function GET() {
-  const { userId } = await auth();
+  const userId = await getUserId();
   if (!userId) return Response.json({ allowed: false, reason: 'not_authenticated' });
 
   const today = new Date().toISOString().slice(0, 10);
@@ -21,7 +21,7 @@ export async function GET() {
 }
 
 export async function POST() {
-  const { userId } = await auth();
+  const userId = await getUserId();
   if (!userId) return Response.json({ error: 'not_authenticated' }, { status: 401 });
 
   const today = new Date().toISOString().slice(0, 10);

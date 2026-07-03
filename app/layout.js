@@ -1,6 +1,6 @@
 import "./globals.css";
 import Script from 'next/script';
-import { ClerkProvider } from '@clerk/nextjs';
+import { AuthProvider } from './components/AuthProvider';
 import CookieBanner from './components/CookieBanner';
 import WatchlistWidget from './components/WatchlistWidget';
 import BottomNav from './components/BottomNav';
@@ -45,7 +45,7 @@ export const viewport = {
 
 export default function RootLayout({ children }) {
   return (
-    <ClerkProvider publishableKey={process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY}>
+    <AuthProvider>
       <html lang="en">
         <body suppressHydrationWarning>
           <TrialGate />
@@ -74,6 +74,6 @@ export default function RootLayout({ children }) {
           ` }} />
         </body>
       </html>
-    </ClerkProvider>
+    </AuthProvider>
   );
 }

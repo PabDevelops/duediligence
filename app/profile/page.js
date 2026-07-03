@@ -1,7 +1,8 @@
 'use client';
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { useUser, SignOutButton } from '@clerk/nextjs';
+import { useUser } from '../components/AuthProvider';
+import { createClient } from '../../lib/supabase/client';
 import Topbar from '../components/Topbar';
 
 export default function ProfilePage() {
@@ -34,6 +35,13 @@ export default function ProfilePage() {
     } catch (e) { console.error(e); } finally { setLoading(false); }
   };
 
+  const signOut = async () => {
+    const supabase = createClient();
+    await supabase.auth.signOut();
+    router.push('/');
+    router.refresh();
+  };
+
   const goToPortal = async () => {
     setPortalLoading(true);
     try {
@@ -59,20 +67,19 @@ export default function ProfilePage() {
           <div>
             <div style={{ fontSize: '11px', color: 'var(--accent)', letterSpacing: '2px', marginBottom: '8px', fontWeight: 700 }}>YOUR PROFILE</div>
             <h1 style={{ fontSize: '32px', fontWeight: 800, letterSpacing: '-0.5px', marginBottom: '6px' }}>
-              {user?.firstName || user?.emailAddresses?.[0]?.emailAddress || 'User'}
+              {user?.email || 'User'}
             </h1>
             <p style={{ color: 'var(--text-3)', fontSize: '13px' }}>
-              Member since {user?.createdAt ? new Date(user.createdAt).toLocaleDateString() : '—'}
+              Member since {user?.created_at ? new Date(user.created_at).toLocaleDateString() : '—'}
             </p>
           </div>
           {isSignedIn && (
-            <SignOutButton redirectUrl="/">
-              <button style={{ padding: '10px 18px', borderRadius: '10px', border: '1px solid rgba(248,113,113,0.4)', background: 'transparent', color: 'var(--red)', cursor: 'pointer', fontSize: '13px', fontWeight: 600, fontFamily: 'Nunito, sans-serif', transition: 'all 0.2s', flexShrink: 0 }}
-                onMouseEnter={e => e.currentTarget.style.background = 'var(--red-dim)'}
-                onMouseLeave={e => e.currentTarget.style.background = 'transparent'}>
-                Sign out
-              </button>
-            </SignOutButton>
+            <button onClick={signOut}
+              style={{ padding: '10px 18px', borderRadius: '10px', border: '1px solid rgba(248,113,113,0.4)', background: 'transparent', color: 'var(--red)', cursor: 'pointer', fontSize: '13px', fontWeight: 600, fontFamily: 'Nunito, sans-serif', transition: 'all 0.2s', flexShrink: 0 }}
+              onMouseEnter={e => e.currentTarget.style.background = 'var(--red-dim)'}
+              onMouseLeave={e => e.currentTarget.style.background = 'transparent'}>
+              Sign out
+            </button>
           )}
         </div>
 

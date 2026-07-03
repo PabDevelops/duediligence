@@ -1,7 +1,7 @@
 'use client';
 import { useEffect } from 'react';
 import { usePathname, useRouter } from 'next/navigation';
-import { useUser } from '@clerk/nextjs';
+import { useUser } from './AuthProvider';
 
 const ALLOWED_PATHS = ['/start-trial', '/sign-in', '/sign-up', '/pricing', '/success', '/terms', '/privacy'];
 

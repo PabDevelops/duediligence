@@ -1,4 +1,4 @@
-import { auth } from '@clerk/nextjs/server';
+import { getUserId } from '../../../lib/auth';
 import { supabase } from '../../../lib/supabase';
 
 const LIMITS = { anon: 1, free: 3 };
@@ -54,7 +54,7 @@ async function getRandomTicker() {
 
 export async function GET(request) {
   try {
-    const { userId } = await auth();
+    const userId = await getUserId();
     const today = new Date().toISOString().slice(0, 10);
 
     // Pro: ilimitado

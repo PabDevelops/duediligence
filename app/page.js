@@ -1,7 +1,7 @@
 'use client';
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { useUser } from '@clerk/nextjs';
+import { useUser } from './components/AuthProvider';
 import MarketBar from './components/MarketBar';
 import Topbar from './components/Topbar';
 import NewsletterForm from './components/NewsletterForm';

@@ -2,7 +2,7 @@
 import { useState, useEffect, useRef } from 'react';
 import Sparkline from '../components/Sparkline';
 import { useRouter } from 'next/navigation';
-import { useUser } from '@clerk/nextjs';
+import { useUser } from '../components/AuthProvider';
 import Topbar from '../components/Topbar';
 
 const fmt = (val) => {

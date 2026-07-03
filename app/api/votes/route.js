@@ -1,12 +1,12 @@
 import { supabase } from '../../../lib/supabase';
-import { auth } from '@clerk/nextjs/server';
+import { getUserId } from '../../../lib/auth';
 
 export async function GET(req) {
   try {
     const { searchParams } = new URL(req.url);
     const ticker = searchParams.get('ticker')?.toUpperCase();
 
-    const { userId } = await auth();
+    const userId = await getUserId();
 
     // If no ticker, return all votes for the authenticated user (for profile page)
     if (!ticker) {
@@ -90,7 +90,7 @@ export async function GET(req) {
 
 export async function POST(req) {
   try {
-    const { userId } = await auth();
+    const userId = await getUserId();
     if (!userId) {
       return Response.json({ error: 'Not signed in' }, { status: 401 });
     }

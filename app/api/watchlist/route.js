@@ -1,8 +1,8 @@
-import { auth } from '@clerk/nextjs/server';
+import { getUserId } from '../../../lib/auth';
 import { supabase } from '../../../lib/supabase';
 
 export async function GET() {
-  const { userId } = await auth();
+  const userId = await getUserId();
   if (!userId) return Response.json({ tickers: [] });
 
   const { data } = await supabase
@@ -15,7 +15,7 @@ export async function GET() {
 }
 
 export async function POST(request) {
-  const { userId } = await auth();
+  const userId = await getUserId();
   if (!userId) return Response.json({ error: 'Not authenticated' }, { status: 401 });
 
   const { ticker } = await request.json();
@@ -32,7 +32,7 @@ export async function POST(request) {
 }
 
 export async function DELETE(request) {
-  const { userId } = await auth();
+  const userId = await getUserId();
   if (!userId) return Response.json({ error: 'Not authenticated' }, { status: 401 });
 
   const { ticker } = await request.json();

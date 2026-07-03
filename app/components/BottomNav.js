@@ -1,7 +1,7 @@
 'use client';
 import { usePathname } from 'next/navigation';
-import { useUser, SignInButton, UserButton } from '@clerk/nextjs';
-import { useState, useEffect, useRef } from 'react';
+import { useUser } from './AuthProvider';
+import { useState, useEffect } from 'react';
 
 const ICONS = {
   home: (active) => (
@@ -72,15 +72,6 @@ export default function BottomNav() {
   const isSearch = path === '/screener' || path === '/compare';
   const isWatchlist = path.startsWith('/watchlist');
   const isProfile = path.startsWith('/profile');
-
-  const userButtonRef = useRef(null);
-
-  const openUserProfile = () => {
-    // UserButton renders its own trigger button; forward our click to it
-    // so we can show our own icon/label while still using Clerk's profile UI.
-    const btn = userButtonRef.current?.querySelector('button');
-    if (btn) btn.click();
-  };
 
   return (
     <nav className="bottom-nav" style={{
