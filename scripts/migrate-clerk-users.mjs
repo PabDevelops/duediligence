@@ -26,10 +26,15 @@ const LIFETIME_PRO_EMAILS = ['prodriguezrial@gmail.com', 'media@traqcker.com'];
 
 const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
-const APP_URL = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
+// No localhost fallback on purpose — the "set your password" emails this
+// script sends go to real users, so this must always be the production URL.
+const APP_URL = process.env.MIGRATION_APP_URL;
 
 if (!SUPABASE_URL || !SERVICE_ROLE_KEY) {
   throw new Error('NEXT_PUBLIC_SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY must be set');
+}
+if (!APP_URL) {
+  throw new Error('MIGRATION_APP_URL must be set explicitly, e.g. MIGRATION_APP_URL=https://traqcker.com node scripts/migrate-clerk-users.mjs');
 }
 
 const supabase = createClient(SUPABASE_URL, SERVICE_ROLE_KEY);
