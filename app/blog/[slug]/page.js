@@ -4,6 +4,7 @@ import { use, useState, useEffect } from 'react';
 import Topbar from '../../components/Topbar';
 import TradingViewChart from '../../components/TradingViewChart';
 import NewsletterForm from '../../components/NewsletterForm';
+import { useUser } from '../../components/AuthProvider';
 
 const CHART_PATTERN = /<p>\s*\[chart:([A-Za-z0-9.\-]+)\]\s*<\/p>/gi;
 
@@ -24,20 +25,33 @@ function renderHtmlContent(html) {
 export default function BlogPost({ params }) {
   const { slug } = use(params);
   const router = useRouter();
+  const { isSignedIn } = useUser();
   const [post, setPost] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [saved, setSaved] = useState(false);
 
   useEffect(() => {
     fetch(`/api/blog/${slug}`).then(r => r.json()).then(d => setPost(d.post || null)).finally(() => setLoading(false));
   }, [slug]);
 
+  useEffect(() => {
+    if (!isSignedIn) return;
+    fetch('/api/saved').then(r => r.json()).then(d => setSaved((d.posts || []).some(p => p.slug === slug)));
+  }, [isSignedIn, slug]);
+
+  const toggleSave = async () => {
+    if (!isSignedIn) { router.push('/sign-in'); return; }
+    await fetch('/api/saved', { method: saved ? 'DELETE' : 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ slug }) });
+    setSaved(!saved);
+  };
+
   if (loading) {
-    return <div style={{ background: 'var(--bg)', minHeight: '100vh', color: 'var(--text-3)', fontFamily: 'Nunito, sans-serif', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>Loading...</div>;
+    return <div style={{ background: 'var(--bg)', minHeight: '100vh', color: 'var(--text-3)', fontFamily: 'Inter, sans-serif', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>Loading...</div>;
   }
 
   if (!post) {
     return (
-      <div style={{ background: 'var(--bg)', minHeight: '100vh', color: 'var(--text)', fontFamily: 'Nunito, sans-serif' }}>
+      <div style={{ background: 'var(--bg)', minHeight: '100vh', color: 'var(--text)', fontFamily: 'Inter, sans-serif' }}>
         <Topbar />
         <div style={{ maxWidth: '600px', margin: '0 auto', padding: '100px 24px', textAlign: 'center' }}>
           <h1 style={{ fontSize: '24px', fontWeight: 800, marginBottom: '12px' }}>Post not found</h1>
@@ -48,14 +62,20 @@ export default function BlogPost({ params }) {
   }
 
   return (
-    <div style={{ background: 'var(--bg)', minHeight: '100vh', color: 'var(--text)', fontFamily: 'Nunito, sans-serif' }}>
+    <div style={{ background: 'var(--bg)', minHeight: '100vh', color: 'var(--text)', fontFamily: 'Inter, sans-serif' }}>
       <Topbar />
       <div style={{ maxWidth: '720px', margin: '0 auto', padding: '60px 24px 100px' }}>
 
-        <button onClick={() => router.push('/blog')}
-          style={{ background: 'none', border: 'none', color: 'var(--text-3)', fontSize: '13px', fontWeight: 600, cursor: 'pointer', marginBottom: '28px', fontFamily: 'Nunito, sans-serif', padding: 0 }}>
-          ← Back to blog
-        </button>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '28px' }}>
+          <button onClick={() => router.push('/blog')}
+            style={{ background: 'none', border: 'none', color: 'var(--text-3)', fontSize: '13px', fontWeight: 600, cursor: 'pointer', fontFamily: 'Inter, sans-serif', padding: 0 }}>
+            ← Back to blog
+          </button>
+          <button onClick={toggleSave}
+            style={{ background: 'none', border: '1px solid var(--border)', borderRadius: '8px', color: saved ? 'var(--accent)' : 'var(--text-3)', fontSize: '12px', fontWeight: 600, cursor: 'pointer', fontFamily: 'Inter, sans-serif', padding: '6px 12px' }}>
+            {saved ? 'Saved' : 'Save'}
+          </button>
+        </div>
 
         <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify({
           '@context': 'https://schema.org',
@@ -77,7 +97,7 @@ export default function BlogPost({ params }) {
         <h1 style={{ fontSize: '34px', fontWeight: 900, letterSpacing: '-1px', lineHeight: 1.15, marginBottom: '16px' }}>{post.title}</h1>
 
         <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '32px' }}>
-          <div style={{ width: 28, height: 28, borderRadius: '50%', background: 'linear-gradient(135deg, #a78bfa, #60a5fa)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '12px', fontWeight: 800, color: '#000', flexShrink: 0 }}>
+          <div style={{ width: 28, height: 28, borderRadius: '50%', background: 'linear-gradient(135deg, #0f766e, #2563eb)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '12px', fontWeight: 800, color: '#fff', flexShrink: 0 }}>
             {(post.author || 'T').charAt(0).toUpperCase()}
           </div>
           <span style={{ color: 'var(--text-2)', fontSize: '13px', fontWeight: 700 }}>{post.author || 'Traqcker Team'}</span>

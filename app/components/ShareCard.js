@@ -72,7 +72,7 @@ export default function ShareCard({ ticker, name, price, priceChange, score, ver
         width: '800px', background: '#08090f',
         padding: '56px', borderRadius: '24px',
         border: '1px solid rgba(167,139,250,0.3)',
-        fontFamily: 'Nunito, sans-serif', color: '#f0f1f5',
+        fontFamily: 'Inter, sans-serif', color: '#f0f1f5',
         boxSizing: 'border-box',
         boxShadow: '0 0 80px rgba(167,139,250,0.15)',
       }}>
@@ -114,7 +114,7 @@ export default function ShareCard({ ticker, name, price, priceChange, score, ver
                 strokeLinecap="round" strokeDasharray={circumference} strokeDashoffset={dashOffset}
                 transform="rotate(-90 100 100)" />
               <text x="100" y="100" textAnchor="middle" dominantBaseline="central"
-                fontSize="52" fontWeight="900" fill={scoreColor} fontFamily="Nunito, sans-serif">
+                fontSize="52" fontWeight="900" fill={scoreColor} fontFamily="Inter, sans-serif">
                 {scoreNum}
               </text>
             </svg>

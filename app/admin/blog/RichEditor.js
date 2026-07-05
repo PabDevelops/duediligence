@@ -10,7 +10,7 @@ const btnStyle = (active) => ({
   width: '32px', height: '32px', borderRadius: '8px', border: '1px solid var(--border)',
   background: active ? 'var(--accent-dim)' : 'var(--bg-1)', color: active ? 'var(--accent)' : 'var(--text-2)',
   cursor: 'pointer', fontSize: '13px', fontWeight: 700, display: 'flex', alignItems: 'center', justifyContent: 'center',
-  fontFamily: 'Nunito, sans-serif',
+  fontFamily: 'Inter, sans-serif',
 });
 
 function ToolbarButton({ onClick, active, title, children }) {
@@ -91,7 +91,7 @@ export default function RichEditor({ html, onChange }) {
       </div>
 
       <style>{`
-        .rich-editor-content .ProseMirror { outline: none; color: var(--text); font-family: Nunito, sans-serif; font-size: 15px; line-height: 1.7; min-height: 290px; }
+        .rich-editor-content .ProseMirror { outline: none; color: var(--text); font-family: Inter, sans-serif; font-size: 15px; line-height: 1.7; min-height: 290px; }
         .rich-editor-content .ProseMirror p.is-editor-empty:first-child::before { content: attr(data-placeholder); color: var(--text-3); float: left; pointer-events: none; height: 0; }
         .rich-editor-content .ProseMirror h2 { font-size: 21px; font-weight: 800; margin: 20px 0 10px; }
         .rich-editor-content .ProseMirror h3 { font-size: 17px; font-weight: 800; margin: 16px 0 8px; }

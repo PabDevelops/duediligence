@@ -13,7 +13,7 @@ export default function BlogIndex() {
   }, []);
 
   return (
-    <div style={{ background: 'var(--bg)', minHeight: '100vh', color: 'var(--text)', fontFamily: 'Nunito, sans-serif' }}>
+    <div style={{ background: 'var(--bg)', minHeight: '100vh', color: 'var(--text)', fontFamily: 'Inter, sans-serif' }}>
       <Topbar />
       <div style={{ maxWidth: '820px', margin: '0 auto', padding: '60px 24px 100px' }}>
 

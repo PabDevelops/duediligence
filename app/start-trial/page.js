@@ -20,7 +20,7 @@ export default function StartTrial() {
   const ANNUAL_ID = process.env.NEXT_PUBLIC_STRIPE_PRICE_ANNUAL;
 
   return (
-    <div style={{ background: 'var(--bg)', minHeight: '100vh', color: 'var(--text)', fontFamily: 'Nunito, sans-serif', position: 'relative', overflow: 'hidden' }}>
+    <div style={{ background: 'var(--bg)', minHeight: '100vh', color: 'var(--text)', fontFamily: 'Inter, sans-serif', position: 'relative', overflow: 'hidden' }}>
       <div style={{ position: 'absolute', top: '80px', left: '20%', width: '600px', height: '400px', background: 'radial-gradient(ellipse, rgba(167,139,250,0.1) 0%, transparent 70%)', pointerEvents: 'none', zIndex: 0 }} />
       <Topbar />
 
@@ -39,11 +39,11 @@ export default function StartTrial() {
         <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '28px' }}>
           <div className="glass" style={{ display: 'flex', gap: '4px', padding: '4px', borderRadius: '14px' }}>
             <button onClick={() => setAnnual(false)}
-              style={{ padding: '10px 24px', borderRadius: '10px', background: !annual ? 'linear-gradient(135deg, #a78bfa, #60a5fa)' : 'transparent', color: !annual ? '#000' : 'var(--text-2)', border: 'none', fontFamily: 'Nunito, sans-serif', fontSize: '14px', fontWeight: 700, cursor: 'pointer', transition: 'all 0.2s' }}>
+              style={{ padding: '10px 24px', borderRadius: '10px', background: !annual ? 'linear-gradient(135deg, #a78bfa, #60a5fa)' : 'transparent', color: !annual ? '#000' : 'var(--text-2)', border: 'none', fontFamily: 'Inter, sans-serif', fontSize: '14px', fontWeight: 700, cursor: 'pointer', transition: 'all 0.2s' }}>
               Monthly
             </button>
             <button onClick={() => setAnnual(true)}
-              style={{ padding: '10px 24px', borderRadius: '10px', background: annual ? 'linear-gradient(135deg, #a78bfa, #60a5fa)' : 'transparent', color: annual ? '#000' : 'var(--text-2)', border: 'none', fontFamily: 'Nunito, sans-serif', fontSize: '14px', fontWeight: 700, cursor: 'pointer', transition: 'all 0.2s' }}>
+              style={{ padding: '10px 24px', borderRadius: '10px', background: annual ? 'linear-gradient(135deg, #a78bfa, #60a5fa)' : 'transparent', color: annual ? '#000' : 'var(--text-2)', border: 'none', fontFamily: 'Inter, sans-serif', fontSize: '14px', fontWeight: 700, cursor: 'pointer', transition: 'all 0.2s' }}>
               Annual · Save 33%
             </button>
           </div>

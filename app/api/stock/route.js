@@ -4,6 +4,44 @@ const FH_KEY = process.env.FINNHUB_API_KEY;
 const AV_KEY = process.env.ALPHA_VANTAGE_API_KEY;
 const CACHE_HOURS = 24;
 
+// Unofficial endpoint (no key, no official support) — used only as a fallback for tickers
+// with an exchange suffix (e.g. LLOY.L) that Finnhub's free plan doesn't cover.
+async function fetchYahooQuote(ticker) {
+  const res = await fetch(`https://query1.finance.yahoo.com/v8/finance/chart/${ticker}`, {
+    headers: { 'User-Agent': 'Mozilla/5.0' },
+  });
+  const data = await res.json();
+  const meta = data?.chart?.result?.[0]?.meta;
+  if (!meta || meta.regularMarketPrice == null) return null;
+
+  let currency = meta.currency || null;
+  let price = meta.regularMarketPrice;
+  let prevClose = meta.previousClose ?? meta.chartPreviousClose ?? null;
+  let high52 = meta.fiftyTwoWeekHigh ?? null;
+  let low52 = meta.fiftyTwoWeekLow ?? null;
+
+  // GBp = pence sterling, not pounds — normalize to GBP so it matches our currency selector.
+  if (currency === 'GBp') {
+    currency = 'GBP';
+    price /= 100;
+    if (prevClose != null) prevClose /= 100;
+    if (high52 != null) high52 /= 100;
+    if (low52 != null) low52 /= 100;
+  }
+
+  return {
+    name: meta.longName || meta.shortName || ticker,
+    exchange: meta.fullExchangeName || meta.exchangeName || null,
+    currency,
+    currentPrice: price,
+    prevClose,
+    priceChange: prevClose != null ? +(price - prevClose).toFixed(4) : null,
+    priceChangePct: prevClose ? +(((price - prevClose) / prevClose) * 100).toFixed(2) : null,
+    high52,
+    low52,
+  };
+}
+
 async function fetchDescription(ticker) {
   if (!AV_KEY) return null;
   try {
@@ -48,6 +86,58 @@ export async function GET(request) {
     const tickerData = await tickerRes.json();
     const company = Object.values(tickerData).find(c => c.ticker.toUpperCase() === ticker);
     
+    if (!company && ticker.includes('.')) {
+      // International ticker with an exchange suffix (e.g. LLOY.L) — our Finnhub plan
+      // doesn't cover non-US exchanges, so fall back to Yahoo Finance for price only.
+      const yh = await fetchYahooQuote(ticker).catch(() => null);
+      if (!yh) return Response.json({ error: 'Ticker no encontrado' }, { status: 404 });
+
+      const result = {
+        name: yh.name,
+        ticker,
+        cik: null,
+        sector: null,
+        industry: null,
+        exchange: yh.exchange,
+        description: null,
+        currentPrice: yh.currentPrice,
+        priceChange: yh.priceChange,
+        priceChangePct: yh.priceChangePct,
+        prevClose: yh.prevClose,
+        marketCap: null,
+        eps: null,
+        pe: null,
+        forwardPE: null,
+        high52: yh.high52,
+        low52: yh.low52,
+        beta: null,
+        sharesOutstanding: null,
+        dividendYield: null,
+        grossMargin: null, opMargin: null, netMargin: null,
+        roe: null, roa: null, roic: null,
+        revGrowth: null, debtToEquity: null,
+        revVal: null, niVal: null, oiVal: null, fcfVal: null,
+        assetsVal: null, equityVal: null, debtVal: null, cashVal: null,
+        netDebt: null, pfcf: null, fcfYield: null,
+        revHistory: [], niHistory: [], fcfHistory: [], oiHistory: [],
+        marginHistory: [], sharesHistory: [], gpHistory: [],
+        cogsHistory: [], sgaHistory: [], rdHistory: [], ebtHistory: [],
+        taxHistory: [], sharesBasicHistory: [], sharesDilutedHistory: [],
+        capexHistory: [], operatingCFHistory: [], investingCFHistory: [], financingCFHistory: [],
+        epsCagr: null, epsHistory: [],
+        analystTarget: null,
+        currency: yh.currency,
+        finnhubFallback: true,
+        internationalSource: 'yahoo',
+      };
+
+      try {
+        await supabase.from('stock_cache').upsert({ ticker, data: result, updated_at: new Date().toISOString() });
+      } catch (e) {}
+
+      return Response.json(result);
+    }
+
     if (!company) {
       // Fallback a Finnhub para stocks no en SEC EDGAR
       const [fhRes, fhBasicRes, fhProfileRes] = await Promise.all([
@@ -60,7 +150,37 @@ export async function GET(request) {
       const fhBasic = await fhBasicRes.json();
       const fhProfile = await fhProfileRes.json();
 
-      if (!fhProfile.name) return Response.json({ error: 'Ticker no encontrado' }, { status: 404 });
+      if (!fhProfile.name) {
+        // Finnhub's profile2 is company-oriented and often comes back empty for ETFs/funds —
+        // Yahoo's chart endpoint covers those fine, so try it before giving up.
+        const yh = await fetchYahooQuote(ticker).catch(() => null);
+        if (!yh) return Response.json({ error: 'Ticker no encontrado' }, { status: 404 });
+
+        const yhResult = {
+          name: yh.name, ticker, cik: null, sector: null, industry: null, exchange: yh.exchange,
+          description: null, currentPrice: yh.currentPrice, priceChange: yh.priceChange, priceChangePct: yh.priceChangePct,
+          prevClose: yh.prevClose, marketCap: null, eps: null, pe: null, forwardPE: null,
+          high52: yh.high52, low52: yh.low52, beta: null, sharesOutstanding: null, dividendYield: null,
+          grossMargin: null, opMargin: null, netMargin: null, roe: null, roa: null, roic: null,
+          revGrowth: null, debtToEquity: null,
+          revVal: null, niVal: null, oiVal: null, fcfVal: null,
+          assetsVal: null, equityVal: null, debtVal: null, cashVal: null,
+          netDebt: null, pfcf: null, fcfYield: null,
+          revHistory: [], niHistory: [], fcfHistory: [], oiHistory: [],
+          marginHistory: [], sharesHistory: [], gpHistory: [],
+          cogsHistory: [], sgaHistory: [], rdHistory: [], ebtHistory: [],
+          taxHistory: [], sharesBasicHistory: [], sharesDilutedHistory: [],
+          capexHistory: [], operatingCFHistory: [], investingCFHistory: [], financingCFHistory: [],
+          epsCagr: null, epsHistory: [], analystTarget: null,
+          currency: yh.currency, finnhubFallback: true, internationalSource: 'yahoo',
+        };
+
+        try {
+          await supabase.from('stock_cache').upsert({ ticker, data: yhResult, updated_at: new Date().toISOString() });
+        } catch (e) {}
+
+        return Response.json(yhResult);
+      }
 
       const m = fhBasic?.metric || {};
       const currentPrice = fh.c || null;
@@ -107,8 +227,7 @@ export async function GET(request) {
         taxHistory: [], sharesBasicHistory: [], sharesDilutedHistory: [],
         capexHistory: [], operatingCFHistory: [], investingCFHistory: [], financingCFHistory: [],
         epsCagr: null, epsHistory: [],
-        netDebt,
-      analystTarget: null,
+        analystTarget: null,
         finnhubFallback: true,
       };
 

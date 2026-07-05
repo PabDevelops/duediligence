@@ -47,7 +47,7 @@ export default function NewsletterForm({ source = 'landing', title = 'Get one st
           value={email}
           onChange={e => setEmail(e.target.value)}
           placeholder="you@email.com"
-          style={{ flex: '1 1 200px', padding: '11px 14px', borderRadius: '10px', border: '1px solid var(--border)', background: 'var(--bg-1)', color: 'var(--text)', fontSize: '14px', fontFamily: 'Nunito, sans-serif' }}
+          style={{ flex: '1 1 200px', padding: '11px 14px', borderRadius: '10px', border: '1px solid var(--border)', background: 'var(--bg-1)', color: 'var(--text)', fontSize: '14px', fontFamily: 'Inter, sans-serif' }}
         />
         <button type="submit" disabled={status === 'loading'} className="btn-primary" style={{ opacity: status === 'loading' ? 0.6 : 1, flexShrink: 0 }}>
           {status === 'loading' ? 'Joining...' : 'Subscribe'}

@@ -83,12 +83,12 @@ export default function AdminBlogPage() {
   };
 
   if (!isLoaded || isAdmin === null) {
-    return <div style={{ background: 'var(--bg)', minHeight: '100vh', color: 'var(--text-3)', fontFamily: 'Nunito, sans-serif', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>Loading...</div>;
+    return <div style={{ background: 'var(--bg)', minHeight: '100vh', color: 'var(--text-3)', fontFamily: 'Inter, sans-serif', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>Loading...</div>;
   }
 
   if (!isSignedIn || !isAdmin) {
     return (
-      <div style={{ background: 'var(--bg)', minHeight: '100vh', color: 'var(--text)', fontFamily: 'Nunito, sans-serif' }}>
+      <div style={{ background: 'var(--bg)', minHeight: '100vh', color: 'var(--text)', fontFamily: 'Inter, sans-serif' }}>
         <Topbar />
         <div style={{ maxWidth: '480px', margin: '0 auto', padding: '100px 24px', textAlign: 'center' }}>
           <div style={{ fontSize: '20px', fontWeight: 800, marginBottom: '8px' }}>Not authorized</div>
@@ -98,11 +98,11 @@ export default function AdminBlogPage() {
     );
   }
 
-  const inputStyle = { width: '100%', padding: '10px 14px', borderRadius: '10px', border: '1px solid var(--border)', background: 'var(--bg-1)', color: 'var(--text)', fontSize: '14px', fontFamily: 'Nunito, sans-serif' };
+  const inputStyle = { width: '100%', padding: '10px 14px', borderRadius: '10px', border: '1px solid var(--border)', background: 'var(--bg-1)', color: 'var(--text)', fontSize: '14px', fontFamily: 'Inter, sans-serif' };
   const labelStyle = { fontSize: '11px', color: 'var(--text-3)', fontWeight: 700, letterSpacing: '1px', marginBottom: '6px', display: 'block' };
 
   return (
-    <div style={{ background: 'var(--bg)', minHeight: '100vh', color: 'var(--text)', fontFamily: 'Nunito, sans-serif' }}>
+    <div style={{ background: 'var(--bg)', minHeight: '100vh', color: 'var(--text)', fontFamily: 'Inter, sans-serif' }}>
       <Topbar />
       <div style={{ maxWidth: '760px', margin: '0 auto', padding: '40px 24px 100px' }}>
 
@@ -124,7 +124,7 @@ export default function AdminBlogPage() {
                   </div>
                   <div style={{ display: 'flex', gap: '8px', flexShrink: 0 }}>
                     <button onClick={() => startEdit(post)} className="btn-secondary" style={{ padding: '6px 12px', fontSize: '12px' }}>Edit</button>
-                    <button onClick={() => remove(post.slug)} style={{ padding: '6px 12px', fontSize: '12px', borderRadius: '8px', border: '1px solid rgba(248,113,113,0.4)', background: 'transparent', color: 'var(--red)', cursor: 'pointer', fontFamily: 'Nunito, sans-serif' }}>Delete</button>
+                    <button onClick={() => remove(post.slug)} style={{ padding: '6px 12px', fontSize: '12px', borderRadius: '8px', border: '1px solid rgba(248,113,113,0.4)', background: 'transparent', color: 'var(--red)', cursor: 'pointer', fontFamily: 'Inter, sans-serif' }}>Delete</button>
                   </div>
                 </div>
               ))}
@@ -133,7 +133,7 @@ export default function AdminBlogPage() {
           </>
         ) : (
           <>
-            <button onClick={() => setEditing(null)} style={{ background: 'none', border: 'none', color: 'var(--text-3)', fontSize: '13px', fontWeight: 600, cursor: 'pointer', marginBottom: '20px', fontFamily: 'Nunito, sans-serif', padding: 0 }}>← Back</button>
+            <button onClick={() => setEditing(null)} style={{ background: 'none', border: 'none', color: 'var(--text-3)', fontSize: '13px', fontWeight: 600, cursor: 'pointer', marginBottom: '20px', fontFamily: 'Inter, sans-serif', padding: 0 }}>← Back</button>
 
             <h1 style={{ fontSize: '22px', fontWeight: 800, marginBottom: '24px' }}>{editing.slug ? 'Edit post' : 'New post'}</h1>
 

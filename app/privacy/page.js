@@ -3,7 +3,7 @@ import Topbar from '../components/Topbar';
 
 export default function Privacy() {
   return (
-    <div style={{ background: 'var(--bg)', minHeight: '100vh', color: 'var(--text)', fontFamily: 'Nunito, sans-serif' }}>
+    <div style={{ background: 'var(--bg)', minHeight: '100vh', color: 'var(--text)', fontFamily: 'Inter, sans-serif' }}>
       <Topbar />
       <div style={{ maxWidth: '800px', margin: '0 auto', padding: '60px 24px' }}>
         <div style={{ color: 'var(--accent)', fontSize: '11px', letterSpacing: '2px', marginBottom: '12px', fontWeight: 700 }}>LEGAL</div>

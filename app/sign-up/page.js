@@ -35,7 +35,7 @@ export default function SignUpPage() {
   };
 
   return (
-    <div style={{ minHeight: '100vh', background: 'var(--bg)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: 'Nunito, sans-serif', position: 'relative', overflow: 'hidden' }}>
+    <div style={{ minHeight: '100vh', background: 'var(--bg)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: 'Inter, sans-serif', position: 'relative', overflow: 'hidden' }}>
       <div style={{ position: 'absolute', top: '20%', left: '30%', width: '500px', height: '400px', background: 'radial-gradient(ellipse, rgba(167,139,250,0.12) 0%, transparent 70%)', pointerEvents: 'none' }} />
       <div style={{ position: 'absolute', bottom: '20%', right: '25%', width: '350px', height: '300px', background: 'radial-gradient(ellipse, rgba(96,165,250,0.08) 0%, transparent 70%)', pointerEvents: 'none' }} />
 
@@ -49,7 +49,7 @@ export default function SignUpPage() {
         ) : (
           <>
             <button onClick={signUpWithGoogle} type="button"
-              style={{ width: '100%', padding: '11px', borderRadius: '10px', border: '1px solid var(--border)', background: 'transparent', color: 'var(--text)', fontFamily: 'Nunito, sans-serif', fontSize: '14px', fontWeight: 600, cursor: 'pointer', marginBottom: '16px' }}>
+              style={{ width: '100%', padding: '11px', borderRadius: '10px', border: '1px solid var(--border)', background: 'transparent', color: 'var(--text)', fontFamily: 'Inter, sans-serif', fontSize: '14px', fontWeight: 600, cursor: 'pointer', marginBottom: '16px' }}>
               Continue with Google
             </button>
 
@@ -61,9 +61,9 @@ export default function SignUpPage() {
 
             <form onSubmit={signUp} style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
               <input type="email" required placeholder="Email" value={email} onChange={e => setEmail(e.target.value)}
-                style={{ padding: '11px 14px', borderRadius: '10px', border: '1px solid var(--border)', background: 'var(--bg-2)', color: 'var(--text)', fontFamily: 'Nunito, sans-serif', fontSize: '14px' }} />
+                style={{ padding: '11px 14px', borderRadius: '10px', border: '1px solid var(--border)', background: 'var(--bg-2)', color: 'var(--text)', fontFamily: 'Inter, sans-serif', fontSize: '14px' }} />
               <input type="password" required minLength={6} placeholder="Password" value={password} onChange={e => setPassword(e.target.value)}
-                style={{ padding: '11px 14px', borderRadius: '10px', border: '1px solid var(--border)', background: 'var(--bg-2)', color: 'var(--text)', fontFamily: 'Nunito, sans-serif', fontSize: '14px' }} />
+                style={{ padding: '11px 14px', borderRadius: '10px', border: '1px solid var(--border)', background: 'var(--bg-2)', color: 'var(--text)', fontFamily: 'Inter, sans-serif', fontSize: '14px' }} />
 
               {error && <div style={{ color: 'var(--red)', fontSize: '13px' }}>{error}</div>}
 

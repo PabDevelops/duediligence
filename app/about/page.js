@@ -12,9 +12,40 @@ const SCORE_CRITERIA = [
 ];
 
 const SOURCES = [
-  { name: 'SEC EDGAR',      desc: 'Official US regulator. Every public company must file here. Income statements, balance sheets, cash flows — straight from the source.', icon: '🏛️' },
-  { name: 'Alpha Vantage',  desc: 'Company descriptions, sector data, and supplementary fundamental metrics.',                                                              icon: '📡' },
-  { name: 'Finnhub',        desc: 'Live stock prices and real-time market data.',                                                                                          icon: '⚡' },
+  { 
+    name: 'SEC EDGAR',      
+    desc: 'Official US regulator. Every public company must file here. Income statements, balance sheets, cash flows — straight from the source.', 
+    icon: (
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <rect x="3" y="22" width="18" height="2" />
+        <line x1="6" y1="18" x2="6" y2="6" />
+        <line x1="10" y1="18" x2="10" y2="6" />
+        <line x1="14" y1="18" x2="14" y2="6" />
+        <line x1="18" y1="18" x2="18" y2="6" />
+        <polygon points="12 2 3 6 21 6 12 2" />
+      </svg>
+    )
+  },
+  { 
+    name: 'Alpha Vantage',  
+    desc: 'Company descriptions, sector data, and supplementary fundamental metrics.',                                                              
+    icon: (
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <circle cx="12" cy="12" r="10" />
+        <line x1="12" y1="16" x2="12" y2="12" />
+        <line x1="12" y1="8" x2="12.01" y2="8" />
+      </svg>
+    )
+  },
+  { 
+    name: 'Finnhub',        
+    desc: 'Live stock prices and real-time market data.',                                                                                          
+    icon: (
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2" />
+      </svg>
+    )
+  },
 ];
 
 const STEPS = [
@@ -27,7 +58,7 @@ export default function About() {
   const router = useRouter();
 
   return (
-    <div style={{ background: 'var(--bg)', minHeight: '100vh', color: 'var(--text)', fontFamily: 'Nunito, sans-serif' }}>
+    <div style={{ background: 'var(--bg)', minHeight: '100vh', color: 'var(--text)', fontFamily: 'Inter, sans-serif' }}>
       <Topbar />
       <div style={{ maxWidth: '820px', margin: '0 auto', padding: '60px 24px 100px' }}>
 
@@ -55,7 +86,7 @@ export default function About() {
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '16px' }} className="grid-3">
             {STEPS.map(s => (
               <div key={s.n} className="glass" style={{ padding: '28px 24px' }}>
-                <div style={{ fontSize: '32px', fontWeight: 900, color: 'var(--border-2)', letterSpacing: '-2px', marginBottom: '12px', fontFamily: 'Nunito, sans-serif' }}>{s.n}</div>
+                <div style={{ fontSize: '32px', fontWeight: 900, color: 'var(--border-2)', letterSpacing: '-2px', marginBottom: '12px', fontFamily: 'Inter, sans-serif' }}>{s.n}</div>
                 <div style={{ fontSize: '15px', fontWeight: 700, marginBottom: '8px' }}>{s.title}</div>
                 <div style={{ color: 'var(--text-3)', fontSize: '13px', lineHeight: 1.7 }}>{s.desc}</div>
               </div>
@@ -103,7 +134,7 @@ export default function About() {
           <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
             {SOURCES.map(s => (
               <div key={s.name} className="glass" style={{ padding: '24px', display: 'flex', gap: '20px', alignItems: 'flex-start' }}>
-                <div style={{ fontSize: '28px', flexShrink: 0 }}>{s.icon}</div>
+                <div style={{ color: 'var(--accent)', flexShrink: 0, marginTop: '2px' }}>{s.icon}</div>
                 <div>
                   <div style={{ fontSize: '15px', fontWeight: 700, marginBottom: '6px' }}>{s.name}</div>
                   <div style={{ color: 'var(--text-3)', fontSize: '13px', lineHeight: 1.7 }}>{s.desc}</div>

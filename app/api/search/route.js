@@ -11,20 +11,22 @@ export async function GET(request) {
 
   if (!q || q.length < 1) return Response.json({ results: [] });
 
+  const limit = Math.min(Number(searchParams.get('limit')) || 8, 24);
+
   try {
     // First try to search by ticker (exact or prefix match)
     const tickerQuery = supabase
       .from('stock_cache')
       .select('ticker, data')
       .ilike('ticker', `${q}%`)
-      .limit(8);
+      .limit(limit);
 
     // Then search by company name
     const nameQuery = supabase
       .from('stock_cache')
       .select('ticker, data')
       .ilike('data->>name', `%${q}%`)
-      .limit(8);
+      .limit(limit);
 
     const [tickerResult, nameResult] = await Promise.all([
       tickerQuery,
@@ -44,9 +46,11 @@ export async function GET(request) {
           name: r.data?.name || 'N/A',
           sector: r.data?.sector,
           exchange: r.data?.exchange || 'US',
+          currentPrice: r.data?.currentPrice ?? null,
+          priceChangePct: r.data?.priceChangePct ?? null,
         });
       }
-      if (results.length >= 8) break;
+      if (results.length >= limit) break;
     }
 
     return Response.json({ results });

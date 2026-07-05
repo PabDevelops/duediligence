@@ -36,7 +36,7 @@ function NavLink({ href, icon, label, active }) {
     }}>
       {ICONS[icon](active)}
       <span style={{
-        fontFamily: 'Nunito, sans-serif', fontSize: '11px',
+        fontFamily: 'Inter, sans-serif', fontSize: '11px',
         color: active ? 'var(--accent)' : 'var(--text-3)',
         fontWeight: active ? 600 : 400,
       }}>

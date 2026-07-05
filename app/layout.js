@@ -2,7 +2,6 @@ import "./globals.css";
 import Script from 'next/script';
 import { AuthProvider } from './components/AuthProvider';
 import CookieBanner from './components/CookieBanner';
-import WatchlistWidget from './components/WatchlistWidget';
 import BottomNav from './components/BottomNav';
 import TrialGate from './components/TrialGate';
 import { Analytics } from '@vercel/analytics/react';
@@ -46,12 +45,14 @@ export const viewport = {
 export default function RootLayout({ children }) {
   return (
     <AuthProvider>
-      <html lang="en">
+      <html lang="en" suppressHydrationWarning>
+        <head>
+          <script dangerouslySetInnerHTML={{ __html: `(function(){try{var t=localStorage.getItem('ws_theme')||(window.matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light');document.documentElement.setAttribute('data-ws-theme',t)}catch(e){}})()` }} />
+        </head>
         <body suppressHydrationWarning>
           <TrialGate />
           {children}
           <BottomNav />
-          <WatchlistWidget />
           <CookieBanner />
           <Analytics />
           <Script

@@ -4,6 +4,7 @@ export async function GET() {
     { symbol: '^IXIC', label: 'NASDAQ' },
     { symbol: '^DJI', label: 'DOW JONES' },
     { symbol: '^RUT', label: 'RUSSELL 2000' },
+    { symbol: '^VIX', label: 'VIX' },
   ];
 
   try {

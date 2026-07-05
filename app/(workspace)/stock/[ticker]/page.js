@@ -2,14 +2,13 @@
 import { useState, useEffect, use } from 'react';
 import { BarChart, Bar, LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell } from 'recharts';
 import PriceChart from './chart';
-import StockChart from '../../components/StockChart';
-import Sparkline from '../../components/Sparkline';
-import SparklineHeader from '../../components/SparklineHeader';
-import Topbar from '../../components/Topbar';
-import OnboardingBanner from '../../components/OnboardingBanner';
-import ShareCardComponent from '../../components/ShareCard';
-import AchievementToast from '../../components/AchievementToast';
-import { useUser } from '../../components/AuthProvider';
+import StockChart from '../../../components/StockChart';
+import Sparkline from '../../../components/Sparkline';
+import SparklineHeader from '../../../components/SparklineHeader';
+import OnboardingBanner from '../../../components/OnboardingBanner';
+import ShareCardComponent from '../../../components/ShareCard';
+import AchievementToast from '../../../components/AchievementToast';
+import { useUser } from '../../../components/AuthProvider';
 
 const fmt = (val) => {
   if (val === null || val === undefined) return 'N/A';
@@ -22,26 +21,21 @@ const fmtP = (v) => v !== null && v !== undefined ? `${v}%` : 'N/A';
 const fmtN = (v, d = 2) => v !== null && v !== undefined ? v.toFixed(d) : 'N/A';
 
 const S = {
-  page: { background: 'var(--bg)', minHeight: '100vh', color: 'var(--text)', fontFamily: 'Nunito, sans-serif' },
-  card: { background: 'var(--bg-1)', border: '1px solid var(--border)', padding: '16px', marginBottom: '1px' },
-  label: { color: 'var(--text-3)', fontSize: '10px', letterSpacing: '2px', marginBottom: '4px' },
+  card: { background: 'var(--ws-bg-1)', border: '1px solid var(--ws-border)', padding: '16px', marginBottom: '1px' },
+  label: { color: 'var(--ws-text-3)', fontSize: '10px', letterSpacing: '2px', marginBottom: '4px' },
   val: { fontSize: '22px', fontWeight: 600, marginBottom: '2px' },
-  section: { color: 'var(--text-3)', fontSize: '10px', letterSpacing: '2px', borderBottom: '1px solid var(--border)', paddingBottom: '6px', marginBottom: '12px', marginTop: '24px' },
+  section: { color: 'var(--ws-text-3)', fontSize: '10px', letterSpacing: '2px', borderBottom: '1px solid var(--ws-border)', paddingBottom: '6px', marginBottom: '12px', marginTop: '24px' },
   table: { width: '100%', borderCollapse: 'collapse', fontSize: '12px' },
-  tr: { borderBottom: '1px solid var(--border)' },
-  td: { padding: '6px 0', color: 'var(--text-3)' },
-  tdVal: { padding: '6px 0', textAlign: 'right', color: 'var(--text)' },
+  tr: { borderBottom: '1px solid var(--ws-border)' },
+  td: { padding: '6px 0', color: 'var(--ws-text-3)' },
+  tdVal: { padding: '6px 0', textAlign: 'right', color: 'var(--ws-text)' },
 };
 
 const NAV = [
     { key: 'overview', label: 'OVERVIEW' },
-    // QUALITY tab hidden from nav (health ring in Overview now summarizes the FINAL NOTE
-    // in plain language). Code kept for potential future use - just not shown.
-    // { key: 'quality', label: 'QUALITY' },
-    { key: 'financials', label: 'FINANCIALS', pro: true },
-    // DCF tab hidden from nav (Graham formula now powers the Fair Value bar in Overview).
-    // Code kept for potential future use - just not shown.
-    // { key: 'dcf', label: 'DCF', pro: true },
+    { key: 'quality', label: 'QUALITY' },
+    { key: 'financials', label: 'FINANCIALS' },
+    { key: 'dcf', label: 'DCF' },
   ];
 
 const QUESTIONS = [
@@ -63,16 +57,16 @@ const QUESTIONS = [
 ];
 const DIMS = ['Management', 'Concentration', 'Op. Trend', 'Earn. Quality', 'Transparency'];
 
-const MiniBar = ({ data, color = '#F59E0B' }) => {
+const MiniBar = ({ data, color = 'var(--ws-text-2)' }) => {
   const max = Math.max(...data.map(d => Math.abs(d.value)));
   return (
     <ResponsiveContainer width="100%" height={80}>
       <BarChart data={data} barSize={18} margin={{ top: 4, right: 0, bottom: 0, left: 0 }}>
-        <XAxis dataKey="year" tick={{ fill: '#555', fontSize: 9 }} axisLine={false} tickLine={false} />
+        <XAxis dataKey="year" tick={{ fill: 'var(--ws-text-3)', fontSize: 9 }} axisLine={false} tickLine={false} />
         <YAxis hide domain={[0, max * 1.15]} />
         <Tooltip
           formatter={v => [`$${Math.abs(v).toFixed(1)}B`]}
-          contentStyle={{ background: 'var(--bg-2)', border: '1px solid var(--border)', fontSize: 10, fontFamily: 'JetBrains Mono' }}
+          contentStyle={{ background: 'var(--ws-bg-1)', border: '1px solid var(--ws-border)', fontSize: 10 }}
         />
         <Bar dataKey="value" radius={[2, 2, 0, 0]}>
           {data.map((_, i) => <Cell key={i} fill={i === data.length - 1 ? color : color + '55'} />)}
@@ -82,18 +76,18 @@ const MiniBar = ({ data, color = '#F59E0B' }) => {
   );
 };
 
-const MiniLine = ({ data, color = 'var(--accent)' }) => (
+const MiniLine = ({ data, color = 'var(--ws-accent)' }) => (
   <ResponsiveContainer width="100%" height={60}>
     <LineChart data={data}>
-      <XAxis dataKey="year" tick={{ fill: '#555', fontSize: 9 }} axisLine={false} tickLine={false} />
-      <Tooltip contentStyle={{ background: 'var(--bg-2)', border: '1px solid var(--border)', fontSize: 10, fontFamily: 'JetBrains Mono' }} />
+      <XAxis dataKey="year" tick={{ fill: 'var(--ws-text-3)', fontSize: 9 }} axisLine={false} tickLine={false} />
+      <Tooltip contentStyle={{ background: 'var(--ws-bg-1)', border: '1px solid var(--ws-border)', fontSize: 10 }} />
       <Line type="monotone" dataKey="value" stroke={color} strokeWidth={1.5} dot={{ fill: color, r: 2 }} />
     </LineChart>
   </ResponsiveContainer>
 );
 
 const ScoreBox = ({ score, size = 48 }) => {
-  const c = score === null ? 'var(--text-3)' : score >= 70 ? 'var(--green)' : score >= 40 ? 'var(--accent)' : 'var(--red)';
+  const c = score === null ? 'var(--ws-text-3)' : score >= 70 ? 'var(--ws-accent)' : score >= 40 ? 'var(--ws-text)' : 'var(--ws-red)';
   return (
     <div style={{ width: size, height: size, border: `1px solid ${c}`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: size > 40 ? '16px' : '12px', fontWeight: 600, color: c }}>
       {score ?? '—'}
@@ -227,53 +221,51 @@ export default function StockPage({ params }) {
   };
 
   if (loading) return (
-    <div style={{ ...S.page }}>
-      <Topbar />
-      <div style={{ maxWidth: '1200px', margin: '40px auto', padding: '0 20px' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '32px' }}>
-          <div style={{ width: 56, height: 56, borderRadius: '14px', background: 'var(--bg-1)', border: '1px solid var(--border)' }} />
-          <div>
-            <div style={{ width: 160, height: 22, background: 'var(--bg-1)', marginBottom: 8, borderRadius: '6px' }} />
-            <div style={{ width: 100, height: 14, background: 'var(--bg-1)', borderRadius: '6px' }} />
-          </div>
+    <div style={{ padding: '24px', fontFamily: "'JetBrains Mono', monospace" }}>
+      <div style={{ border: '1px solid var(--ws-border)', background: 'var(--ws-bg-1)', overflow: 'hidden', marginBottom: '16px' }}>
+        <div style={{ background: 'var(--ws-bg-2)', borderBottom: '1px solid var(--ws-border)', padding: '7px 16px' }}>
+          <span style={{ fontSize: '10px', color: 'var(--ws-accent)', letterSpacing: '1px' }}>$ traq {ticker}</span>
         </div>
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '1px', background: 'var(--border)', marginBottom: '24px' }}>
-          {[...Array(4)].map((_, i) => (
-            <div key={i} style={{ background: 'var(--bg-1)', padding: '16px' }}>
-              <div style={{ width: '60%', height: 10, background: 'var(--bg-2)', marginBottom: 10 }} />
-              <div style={{ width: '80%', height: 22, background: 'var(--bg-2)' }} />
+        <div style={{ padding: '24px' }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+            {['CONNECTING TO SEC EDGAR...', 'FETCHING FINANCIALS...', 'COMPUTING QUALITY SCORE...'].map((line, i) => (
+              <div key={i} style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                <span style={{ color: 'var(--ws-accent)', fontSize: '11px' }}>▶</span>
+                <span style={{ color: 'var(--ws-text-3)', fontSize: '11px', letterSpacing: '1px' }}>{line}</span>
+              </div>
+            ))}
+            <div style={{ marginTop: '8px', display: 'flex', alignItems: 'center', gap: '10px' }}>
+              <span style={{ color: 'var(--ws-text-3)', fontSize: '11px' }}>█░░░░░░░░░</span>
+              <span style={{ color: 'var(--ws-text-3)', fontSize: '10px', letterSpacing: '1px' }}>LOADING {ticker}...</span>
             </div>
-          ))}
-        </div>
-        {[...Array(3)].map((_, i) => (
-          <div key={i} style={{ height: 60, background: 'var(--bg-1)', border: '1px solid var(--border)', marginBottom: '1px', borderRadius: '8px' }} />
-        ))}
-        <div style={{ marginTop: '20px', color: 'var(--text-3)', fontSize: '10px', letterSpacing: '2px', textAlign: 'center' }}>
-          FETCHING {ticker} FROM SEC EDGAR...
+          </div>
         </div>
       </div>
     </div>
   );
 
   if (error) return (
-    <div style={{ ...S.page }}>
-      <Topbar />
-      <div style={{ maxWidth: '480px', margin: '80px auto', padding: '0 24px', textAlign: 'center' }}>
-        <div style={{ fontSize: '32px', marginBottom: '16px' }}>🔍</div>
-        <div style={{ fontFamily: 'Nunito, sans-serif', fontSize: '20px', fontWeight: 800, marginBottom: '8px' }}>
-          Ticker not found
+    <div style={{ padding: '24px', fontFamily: "'JetBrains Mono', monospace" }}>
+      <div style={{ border: '1px solid var(--ws-border)', background: 'var(--ws-bg-1)', overflow: 'hidden', maxWidth: '560px' }}>
+        <div style={{ background: 'var(--ws-bg-2)', borderBottom: '1px solid var(--ws-border)', padding: '7px 16px' }}>
+          <span style={{ fontSize: '10px', color: 'var(--ws-red)', letterSpacing: '1px' }}>$ traq {ticker} — ERROR</span>
         </div>
-        <div style={{ color: 'var(--text-3)', fontSize: '13px', marginBottom: '32px', lineHeight: 1.6 }}>
-          <strong style={{ color: 'var(--accent)' }}>{ticker}</strong> wasn't found in SEC EDGAR or Finnhub.
-          Try checking the ticker symbol or search for a different stock.
-        </div>
-        <div style={{ display: 'flex', gap: '12px', justifyContent: 'center' }}>
-          <a href="/" className="btn-primary" style={{ textDecoration: 'none', fontSize: '13px' }}>
-            ← Search again
-          </a>
-          <a href="/screener" className="btn-secondary" style={{ textDecoration: 'none', fontSize: '13px' }}>
-            Screener →
-          </a>
+        <div style={{ padding: '24px', display: 'flex', flexDirection: 'column', gap: '12px' }}>
+          <div style={{ display: 'flex', gap: '8px', alignItems: 'flex-start' }}>
+            <span style={{ color: 'var(--ws-red)', fontSize: '11px', marginTop: '1px' }}>✗</span>
+            <span style={{ color: 'var(--ws-text-3)', fontSize: '11px', letterSpacing: '0.5px', lineHeight: 1.7 }}>
+              TICKER <strong style={{ color: 'var(--ws-text)' }}>{ticker}</strong> NOT FOUND IN SEC EDGAR OR FINNHUB.{'\n'}
+              CHECK THE SYMBOL AND TRY AGAIN.
+            </span>
+          </div>
+          <div style={{ borderTop: '1px solid var(--ws-border)', paddingTop: '16px', display: 'flex', gap: '8px' }}>
+            <a href="/" style={{ textDecoration: 'none', fontSize: '11px', letterSpacing: '1px', background: 'var(--ws-text)', color: 'var(--ws-bg)', border: 'none', fontWeight: 700, padding: '8px 16px' }}>
+              NEW SEARCH
+            </a>
+            <a href="/screener" style={{ textDecoration: 'none', fontSize: '11px', letterSpacing: '1px', background: 'transparent', border: '1px solid var(--ws-border)', color: 'var(--ws-text-2)', padding: '8px 16px' }}>
+              SCREENER
+            </a>
+          </div>
         </div>
       </div>
     </div>
@@ -313,9 +305,9 @@ export default function StockPage({ params }) {
     const score100 = Math.round((finalNote / 5) * 100);
 
     let verdict, verdictColor;
-    if (score100 >= 70) { verdict = 'Solid & steady'; verdictColor = 'var(--green)'; }
-    else if (score100 >= 40) { verdict = 'Mixed signals'; verdictColor = 'var(--amber)'; }
-    else { verdict = 'Needs caution'; verdictColor = 'var(--red)'; }
+    if (score100 >= 70) { verdict = 'Solid & steady'; verdictColor = 'var(--ws-accent)'; }
+    else if (score100 >= 40) { verdict = 'Mixed signals'; verdictColor = 'var(--ws-text-2)'; }
+    else { verdict = 'Needs caution'; verdictColor = 'var(--ws-red)'; }
 
     let summary;
     if (data.revGrowth != null && data.fcfVal != null && data.debtToEquity != null) {
@@ -340,7 +332,7 @@ export default function StockPage({ params }) {
   const fairValue = (() => {
     if (!grahamValue || !price) return null;
     if (grahamValue <= 0) {
-      return { pct: 98, tag: 'EXPENSIVE', tagColor: 'var(--red)', estimate: grahamValue, negative: true };
+      return { pct: 98, tag: 'EXPENSIVE', tagColor: 'var(--ws-red)', estimate: grahamValue, negative: true };
     }
     const ratio = price / grahamValue;
     const pct = Math.max(2, Math.min(98, ((ratio - 0.5) / 1.0) * 100));
@@ -349,93 +341,101 @@ export default function StockPage({ params }) {
     else if (ratio < 1.05) tag = 'FAIR VALUE';
     else if (ratio < 1.3) tag = 'SLIGHTLY EXPENSIVE';
     else tag = 'EXPENSIVE';
-    const tagColor = ratio < 0.85 ? 'var(--green)' : ratio < 1.05 ? 'var(--green)' : ratio < 1.3 ? 'var(--amber)' : 'var(--red)';
+    const tagColor = ratio < 0.85 ? 'var(--ws-accent)' : ratio < 1.05 ? 'var(--ws-accent)' : ratio < 1.3 ? 'var(--ws-text-2)' : 'var(--ws-red)';
     return { pct, tag, tagColor, estimate: grahamValue, negative: false };
   })();
 
   return (
-    <div style={S.page}>
-      <Topbar />
+    <div style={{ padding: '24px' }}>
 
-      {/* Breadcrumb */}
-      <div style={{ borderBottom: '1px solid var(--border)', padding: '6px 16px', display: 'flex', alignItems: 'center', gap: '12px', background: 'var(--bg-1)', fontSize: '11px' }}>
-        <span style={{ color: 'var(--text-3)' }}>▸</span>
-        <span style={{ color: 'var(--accent)', fontWeight: 700, letterSpacing: '2px' }}>{ticker}</span>
-      </div>
       <OnboardingBanner />
 
-      {/* FULL-WIDTH HERO */}
-      <div style={{
-        background: `linear-gradient(135deg, rgba(167,139,250,0.10) 0%, rgba(96,165,250,0.06) 45%, transparent 75%)`,
-        borderBottom: '1px solid rgba(255,255,255,0.06)',
-      }}>
-        <div style={{ maxWidth: '1200px', margin: '0 auto', padding: '28px 24px' }}>
-        {/* Finnhub fallback notice */}
-        {data.finnhubFallback && (
-          <div style={{ display: 'flex', alignItems: 'center', gap: '6px', background: 'rgba(255,255,255,0.04)', border: '1px solid var(--border)', borderRadius: '10px', padding: '8px 12px', marginBottom: '16px' }}>
-            <span style={{ color: 'var(--accent)', fontSize: '9px' }}>ℹ</span>
-            <span style={{ color: 'var(--text-3)', fontSize: '9px', letterSpacing: '0.5px' }}>Limited data — company reports outside SEC EDGAR. Showing Finnhub data only.</span>
-          </div>
-        )}
+      {/* TERMINAL HERO */}
+      <div style={{ border: '1px solid var(--ws-border)', background: 'var(--ws-bg-1)', marginBottom: '20px', overflow: 'hidden' }}>
+        {/* Terminal title bar */}
+        <div style={{ background: 'var(--ws-bg-2)', borderBottom: '1px solid var(--ws-border)', padding: '7px 16px', display: 'flex', alignItems: 'center', gap: '12px' }}>
+          <span style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: '11px', color: 'var(--ws-accent)', fontWeight: 700, letterSpacing: '1px' }}>
+            $ traq {ticker}
+          </span>
+          {data.finnhubFallback && (
+            <span style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: '9px', color: 'var(--ws-text-3)', letterSpacing: '1px' }}>
+              [LIMITED — FINNHUB ONLY]
+            </span>
+          )}
+        </div>
 
-        {/* HERO */}
-        <div className="stock-hero" style={{ padding: '0' }}>
-          {/* Left: logo + info + price */}
-          <div className="stock-hero-left">
-            <div style={{ width: '60px', height: '60px', borderRadius: '16px', background: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, overflow: 'hidden' }}>
-              <img
-                src={`https://img.logo.dev/ticker/${ticker}?token=pk_B4aaLZF6S4G1YbCgqZq2Ug`}
-                alt={data.name}
-                style={{ width: '44px', height: '44px', objectFit: 'contain' }}
-                onError={e => { e.target.style.display = 'none'; e.target.parentElement.innerHTML = `<span style="color:var(--accent);font-weight:700;font-size:18px">${ticker.slice(0,2)}</span>`; e.target.parentElement.style.background = 'var(--bg-2)'; }}
-              />
-            </div>
-            <div style={{ minWidth: 0 }}>
-              <h1 style={{ fontSize: '24px', fontWeight: 900, letterSpacing: '-0.5px', marginBottom: '4px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', lineHeight: 1.2 }}>{data.name}</h1>
-              <div style={{ color: 'var(--text-3)', fontSize: '13px', marginBottom: '10px', fontWeight: 500 }}>
-                {ticker} · {data.exchange || 'NASDAQ'}{data.sector ? ` · ${data.sector}` : ''}
+        {/* Terminal output body */}
+        <div style={{ padding: '20px 24px' }}>
+          <div className="stock-hero" style={{ padding: 0 }}>
+            {/* Left: identity + price */}
+            <div className="stock-hero-left" style={{ gap: '16px' }}>
+              <div style={{ width: '52px', height: '52px', background: 'white', border: '1px solid var(--ws-border)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, overflow: 'hidden' }}>
+                <img
+                  src={`https://img.logo.dev/ticker/${ticker}?token=pk_B4aaLZF6S4G1YbCgqZq2Ug`}
+                  alt={data.name}
+                  style={{ width: '38px', height: '38px', objectFit: 'contain' }}
+                  onError={e => { e.target.style.display = 'none'; e.target.parentElement.innerHTML = `<span style="color:var(--ws-accent);font-weight:700;font-size:16px;font-family:'JetBrains Mono',monospace">${ticker.slice(0,2)}</span>`; e.target.parentElement.style.background = 'var(--ws-bg-2)'; }}
+                />
               </div>
-              {price && (
-                <div style={{ display: 'flex', alignItems: 'baseline', gap: '10px' }}>
-                  <span style={{ fontSize: '30px', fontWeight: 900, letterSpacing: '-1px' }}>${price.toFixed(2)}</span>
-                  <span style={{ fontSize: '14px', fontWeight: 700, color: change >= 0 ? 'var(--green)' : 'var(--red)' }}>
-                    {change >= 0 ? '+' : ''}{changePct?.toFixed(2)}%
-                  </span>
+              <div style={{ minWidth: 0 }}>
+                <div style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: '10px', color: 'var(--ws-text-3)', letterSpacing: '1.5px', marginBottom: '5px' }}>
+                  {ticker} · {data.exchange || 'NASDAQ'}{data.sector ? ` · ${data.sector.toUpperCase()}` : ''}
                 </div>
-              )}
-            </div>
-          </div>
-
-          {/* Right: score ring */}
-          <div className="stock-hero-score">
-            <div style={{ fontSize: '10px', letterSpacing: '2px', color: 'var(--text-3)', fontWeight: 700 }}>QUALITY SCORE</div>
-            <div style={{ position: 'relative', width: '90px', height: '90px' }}>
-              <svg width="90" height="90" viewBox="0 0 90 90" style={{ transform: 'rotate(-90deg)' }}>
-                <circle cx="45" cy="45" r="38" fill="none" stroke="var(--bg-3)" strokeWidth="8" />
-                <circle cx="45" cy="45" r="38" fill="none" stroke={easyMode.verdictColor} strokeWidth="8"
-                  strokeLinecap="round" strokeDasharray="238.76"
-                  strokeDashoffset={238.76 - (238.76 * easyMode.score100 / 100)} />
-              </svg>
-              <div style={{ position: 'absolute', inset: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
-                <div style={{ fontWeight: 900, fontSize: '26px', lineHeight: 1, color: easyMode.verdictColor }}>{easyMode.score100}</div>
-                <div style={{ fontSize: '9px', color: 'var(--text-3)', marginTop: '1px' }}>/ 100</div>
+                <h1 style={{ fontSize: '22px', fontWeight: 800, letterSpacing: '-0.5px', marginBottom: '10px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', lineHeight: 1.2, color: 'var(--ws-text)' }}>{data.name}</h1>
+                {price && (
+                  <div style={{ display: 'flex', alignItems: 'baseline', gap: '12px' }}>
+                    <span style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: '28px', fontWeight: 700, letterSpacing: '-1px', color: 'var(--ws-text)' }}>${price.toFixed(2)}</span>
+                    <span style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: '13px', fontWeight: 700, color: change >= 0 ? 'var(--ws-accent)' : 'var(--ws-red)' }}>
+                      {change >= 0 ? '+' : ''}{changePct?.toFixed(2)}%
+                    </span>
+                  </div>
+                )}
               </div>
             </div>
-            <div style={{ fontSize: '13px', fontWeight: 800, color: easyMode.verdictColor, textAlign: 'center' }}>{easyMode.verdict}</div>
-            <div style={{ fontSize: '11px', color: 'var(--text-3)', textAlign: 'center', maxWidth: '180px', lineHeight: 1.5 }}>{easyMode.summary}</div>
+
+            {/* Right: terminal score block */}
+            <div className="stock-hero-score" style={{ alignItems: 'flex-start', gap: '10px' }}>
+              <div style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: '9px', letterSpacing: '2px', color: 'var(--ws-text-3)', fontWeight: 700 }}>QUALITY SCORE</div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                <span style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: '16px', color: easyMode.verdictColor, letterSpacing: '2px', lineHeight: 1 }}>
+                  {'█'.repeat(Math.round(easyMode.score100 / 10))}{'░'.repeat(10 - Math.round(easyMode.score100 / 10))}
+                </span>
+                <span style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: '28px', fontWeight: 700, color: easyMode.verdictColor, lineHeight: 1 }}>
+                  {easyMode.score100}
+                </span>
+              </div>
+              <div style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: '11px', fontWeight: 700, color: easyMode.verdictColor, letterSpacing: '1px' }}>
+                {easyMode.verdict.toUpperCase()}
+              </div>
+              <div style={{ fontSize: '11px', color: 'var(--ws-text-3)', maxWidth: '200px', lineHeight: 1.6, borderLeft: '2px solid var(--ws-border)', paddingLeft: '10px', marginTop: '2px' }}>
+                {easyMode.summary}
+              </div>
+            </div>
           </div>
         </div>
-        </div>{/* end hero inner */}
-      </div>{/* end full-width hero */}
+      </div>{/* end terminal hero */}
 
-      <div style={{ maxWidth: '1200px', margin: '0 auto', padding: '20px 24px 80px' }}>
+      <div style={{ padding: '0 0 40px' }}>
 
-        {/* HORIZONTAL TAB NAV */}
-        <div style={{ display: 'flex', gap: '8px', marginBottom: '24px' }}>
+        {/* TERMINAL TAB NAV */}
+        <div style={{ display: 'flex', borderBottom: '1px solid var(--ws-border)', marginBottom: '24px' }}>
           {NAV.map(n => (
             <button key={n.key} onClick={() => { setTab(n.key); window.scrollTo({ top: 0, behavior: 'smooth' }); }}
-              style={{ padding: '9px 22px', borderRadius: '12px', border: tab === n.key ? 'none' : '1px solid var(--border)', background: tab === n.key ? 'linear-gradient(135deg, #a78bfa, #60a5fa)' : 'rgba(255,255,255,0.04)', color: tab === n.key ? '#000' : 'var(--text-2)', fontFamily: 'Nunito, sans-serif', fontWeight: 700, fontSize: '13px', cursor: 'pointer', transition: 'all 0.15s' }}>
-              {n.label}{n.pro && !isPro && !checkingPro ? ' 🔒' : ''}
+              style={{
+                padding: '8px 20px',
+                border: 'none',
+                borderBottom: tab === n.key ? '2px solid var(--ws-accent)' : '2px solid transparent',
+                background: 'transparent',
+                color: tab === n.key ? 'var(--ws-text)' : 'var(--ws-text-3)',
+                fontFamily: "'JetBrains Mono', monospace",
+                fontWeight: tab === n.key ? 700 : 500,
+                fontSize: '11px',
+                letterSpacing: '1.5px',
+                cursor: 'pointer',
+                transition: 'all 0.15s',
+                marginBottom: '-1px',
+              }}>
+              {n.label}{n.pro && !isPro && !checkingPro ? ' [PRO]' : ''}
             </button>
           ))}
         </div>
@@ -448,16 +448,16 @@ export default function StockPage({ params }) {
             <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
 
               {/* Community vote */}
-              <div style={{ background: 'rgba(255,255,255,0.04)', backdropFilter: 'blur(20px)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '20px', padding: '20px' }}>
-                <div style={{ fontWeight: 700, fontSize: '13px', marginBottom: '6px' }}>Your vote</div>
-                <div style={{ color: 'var(--text-3)', fontSize: '11px', marginBottom: '14px', opacity: 0.7 }}>
+              <div style={{ background: 'var(--ws-bg-1)', border: '1px solid var(--ws-border)', padding: '20px' }}>
+                <div style={{ fontWeight: 700, fontSize: '13px', marginBottom: '6px', color: 'var(--ws-text)' }}>Your vote</div>
+                <div style={{ color: 'var(--ws-text-3)', fontSize: '11px', marginBottom: '14px' }}>
                   {isSignedIn ? 'Choose your call' : 'Sign in to vote'}
                 </div>
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '8px', marginBottom: '16px' }}>
                   {['BUY', 'HOLD', 'SELL'].map(v => {
                     const active = userVote === v;
-                    const activeColor = v === 'BUY' ? 'var(--green)' : v === 'SELL' ? 'var(--red)' : 'var(--amber)';
-                    const activeDim = v === 'BUY' ? 'var(--green-dim)' : v === 'SELL' ? 'var(--red-dim)' : 'var(--amber-dim)';
+                    const activeColor = v === 'BUY' ? 'var(--ws-accent)' : v === 'SELL' ? 'var(--ws-red)' : 'var(--ws-text-2)';
+                    const activeDim = v === 'BUY' ? 'var(--ws-accent-dim)' : v === 'SELL' ? 'var(--ws-bg-2)' : 'var(--ws-bg-2)';
                     return (
                       <button key={v} onClick={async () => {
                         if (!isSignedIn) { window.location.href = '/sign-in'; return; }
@@ -484,26 +484,24 @@ export default function StockPage({ params }) {
                           }
                         }).catch(() => {});
                       }}
-                        onMouseEnter={e => e.target.style.transform = 'scale(1.05)'}
-                        onMouseLeave={e => e.target.style.transform = 'scale(1)'}
-                        style={{ borderRadius: '14px', padding: '14px 8px', textAlign: 'center', border: `1.5px solid ${active ? activeColor : 'var(--border)'}`, background: active ? activeDim : 'var(--bg-2)', color: active ? activeColor : 'var(--text-2)', fontFamily: 'Nunito, sans-serif', fontWeight: 700, fontSize: '13px', cursor: 'pointer', transition: 'transform 0.2s ease' }}>
+                        style={{ padding: '14px 8px', textAlign: 'center', border: `1px solid ${active ? activeColor : 'var(--ws-border)'}`, background: active ? activeDim : 'var(--ws-bg-2)', color: active ? activeColor : 'var(--ws-text-2)', fontWeight: 700, fontSize: '13px', cursor: 'pointer' }}>
                         {v}
                       </button>
                     );
                   })}
                 </div>
-                <div style={{ display: 'flex', height: '10px', borderRadius: '6px', overflow: 'hidden', marginBottom: '8px' }}>
-                  <div style={{ background: 'linear-gradient(90deg, var(--green) 0%, rgba(52,211,153,0.7) 100%)', width: `${voteConsensus.BUY}%` }} />
-                  <div style={{ background: 'linear-gradient(90deg, var(--amber) 0%, rgba(251,191,36,0.7) 100%)', width: `${voteConsensus.HOLD}%` }} />
-                  <div style={{ background: 'linear-gradient(90deg, var(--red) 0%, rgba(248,113,113,0.7) 100%)', width: `${voteConsensus.SELL}%` }} />
+                <div style={{ display: 'flex', height: '10px', overflow: 'hidden', marginBottom: '8px' }}>
+                  <div style={{ background: 'var(--ws-accent)', width: `${voteConsensus.BUY}%` }} />
+                  <div style={{ background: 'var(--ws-text-3)', width: `${voteConsensus.HOLD}%` }} />
+                  <div style={{ background: 'var(--ws-red)', width: `${voteConsensus.SELL}%` }} />
                 </div>
-                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '11px', color: 'var(--text-3)', fontWeight: 600 }}>
-                  <span style={{ color: 'var(--green)' }}>● {voteConsensus.BUY}% Buy</span>
-                  <span style={{ color: 'var(--amber)' }}>● {voteConsensus.HOLD}% Hold</span>
-                  <span style={{ color: 'var(--red)' }}>● {voteConsensus.SELL}% Sell</span>
+                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '11px', color: 'var(--ws-text-3)', fontWeight: 600 }}>
+                  <span style={{ color: 'var(--ws-accent)' }}>● {voteConsensus.BUY}% Buy</span>
+                  <span style={{ color: 'var(--ws-text-2)' }}>● {voteConsensus.HOLD}% Hold</span>
+                  <span style={{ color: 'var(--ws-red)' }}>● {voteConsensus.SELL}% Sell</span>
                 </div>
                 {voteConsensus.source !== 'none' && (
-                  <div style={{ marginTop: '6px', fontSize: '10px', color: 'var(--text-3)', textAlign: 'center' }}>
+                  <div style={{ marginTop: '6px', fontSize: '10px', color: 'var(--ws-text-3)', textAlign: 'center' }}>
                     {voteConsensus.source === 'analysts'
                       ? `Analyst consensus · ${voteConsensus.total} analysts`
                       : `${voteConsensus.total} ${voteConsensus.total === 1 ? 'person' : 'people'} voted`}
@@ -513,21 +511,21 @@ export default function StockPage({ params }) {
 
               {/* Numbers, Simplified */}
               <div>
-                <div style={{ color: 'var(--accent)', fontSize: '11px', letterSpacing: '2px', marginBottom: '10px', fontWeight: 700 }}>THE NUMBERS, SIMPLIFIED</div>
-                <div style={{ background: 'rgba(255,255,255,0.04)', backdropFilter: 'blur(20px)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '20px', padding: '18px 20px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                <div style={{ color: 'var(--ws-text-3)', fontSize: '10px', fontFamily: "'JetBrains Mono', monospace", letterSpacing: '1.5px', marginBottom: '10px', fontWeight: 700 }}>THE NUMBERS, SIMPLIFIED</div>
+                <div style={{ background: 'var(--ws-bg-1)', border: '1px solid var(--ws-border)', padding: '18px 20px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
                   {[
-                    { label: 'Revenue is growing', value: data.revGrowth != null ? `${data.revGrowth > 0 ? '+' : ''}${data.revGrowth}% / yr` : 'N/A', pct: data.revGrowth != null ? Math.max(4, Math.min(100, 50 + data.revGrowth * 2)) : 0, color: data.revGrowth > 5 ? 'green' : data.revGrowth > 0 ? 'amber' : 'red' },
-                    { label: 'Keeps a healthy slice of profit', value: data.opMargin != null ? `${data.opMargin}% margin` : 'N/A', pct: data.opMargin != null ? Math.max(4, Math.min(100, data.opMargin * 2.5)) : 0, color: data.opMargin > 15 ? 'green' : data.opMargin > 5 ? 'amber' : 'red' },
-                    { label: 'Generates real cash, not just paper profit', value: data.fcfVal > 0 ? 'Strong' : data.fcfVal < 0 ? 'Negative' : 'N/A', pct: data.fcfVal > 0 ? 85 : data.fcfVal < 0 ? 15 : 0, color: data.fcfVal > 0 ? 'green' : 'red' },
-                    { label: data.debtToEquity > 1.5 ? 'Carries notable debt — worth watching' : 'Debt levels look manageable', value: data.debtToEquity != null ? `${data.debtToEquity.toFixed(2)}x equity` : 'N/A', pct: data.debtToEquity != null ? Math.max(4, Math.min(100, 100 - data.debtToEquity * 30)) : 0, color: data.debtToEquity < 1 ? 'green' : data.debtToEquity < 2 ? 'amber' : 'red' },
+                    { label: 'Revenue is growing', value: data.revGrowth != null ? `${data.revGrowth > 0 ? '+' : ''}${data.revGrowth}% / yr` : 'N/A', pct: data.revGrowth != null ? Math.max(4, Math.min(100, 50 + data.revGrowth * 2)) : 0, color: data.revGrowth > 5 ? 'var(--ws-accent)' : data.revGrowth > 0 ? 'var(--ws-text-2)' : 'var(--ws-red)' },
+                    { label: 'Keeps a healthy slice of profit', value: data.opMargin != null ? `${data.opMargin}% margin` : 'N/A', pct: data.opMargin != null ? Math.max(4, Math.min(100, data.opMargin * 2.5)) : 0, color: data.opMargin > 15 ? 'var(--ws-accent)' : data.opMargin > 5 ? 'var(--ws-text-2)' : 'var(--ws-red)' },
+                    { label: 'Generates real cash, not just paper profit', value: data.fcfVal > 0 ? 'Strong' : data.fcfVal < 0 ? 'Negative' : 'N/A', pct: data.fcfVal > 0 ? 85 : data.fcfVal < 0 ? 15 : 0, color: data.fcfVal > 0 ? 'var(--ws-accent)' : 'var(--ws-red)' },
+                    { label: data.debtToEquity > 1.5 ? 'Carries notable debt — worth watching' : 'Debt levels look manageable', value: data.debtToEquity != null ? `${data.debtToEquity.toFixed(2)}x equity` : 'N/A', pct: data.debtToEquity != null ? Math.max(4, Math.min(100, 100 - data.debtToEquity * 30)) : 0, color: data.debtToEquity < 1 ? 'var(--ws-accent)' : data.debtToEquity < 2 ? 'var(--ws-text-2)' : 'var(--ws-red)' },
                   ].map((m, i) => (
                     <div key={i} style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
                       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', gap: '8px' }}>
-                        <span style={{ fontSize: '13px', color: 'var(--text-2)', lineHeight: 1.3 }}>{m.label}</span>
-                        <span style={{ fontSize: '12px', fontWeight: 700, flexShrink: 0, color: `var(--${m.color})`, fontFamily: 'JetBrains Mono, monospace' }}>{m.value}</span>
+                        <span style={{ fontSize: '13px', color: 'var(--ws-text-2)', lineHeight: 1.3 }}>{m.label}</span>
+                        <span style={{ fontSize: '12px', fontWeight: 700, flexShrink: 0, color: m.color }}>{m.value}</span>
                       </div>
-                      <div style={{ height: '6px', borderRadius: '4px', background: 'var(--bg-3)', overflow: 'hidden' }}>
-                        <div style={{ height: '100%', borderRadius: '4px', width: `${m.pct}%`, background: `var(--${m.color})` }} />
+                      <div style={{ height: '6px', background: 'var(--ws-bg-2)', overflow: 'hidden' }}>
+                        <div style={{ height: '100%', width: `${m.pct}%`, background: m.color }} />
                       </div>
                     </div>
                   ))}
@@ -536,8 +534,8 @@ export default function StockPage({ params }) {
 
               {/* Price chart */}
               <div>
-                <div style={{ color: 'var(--accent)', fontSize: '11px', letterSpacing: '2px', marginBottom: '10px', fontWeight: 700 }}>PRICE CHART</div>
-                <div style={{ background: 'rgba(255,255,255,0.04)', backdropFilter: 'blur(20px)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '20px', padding: '16px 16px 12px' }}>
+                <div style={{ color: 'var(--ws-text-3)', fontSize: '10px', fontFamily: "'JetBrains Mono', monospace", letterSpacing: '1.5px', marginBottom: '10px', fontWeight: 700 }}>PRICE CHART</div>
+                <div style={{ background: 'var(--ws-bg-1)', border: '1px solid var(--ws-border)', padding: '16px 16px 12px' }}>
                   <SparklineHeader ticker={ticker} />
                 </div>
               </div>
@@ -545,13 +543,13 @@ export default function StockPage({ params }) {
               {/* Related reading */}
               {relatedPosts.length > 0 && (
                 <div>
-                  <div style={{ color: 'var(--accent)', fontSize: '11px', letterSpacing: '2px', marginBottom: '10px', fontWeight: 700 }}>RELATED READING</div>
-                  <div style={{ background: 'rgba(255,255,255,0.04)', backdropFilter: 'blur(20px)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '20px', padding: '16px 18px', display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                  <div style={{ color: 'var(--ws-text-3)', fontSize: '10px', fontFamily: "'JetBrains Mono', monospace", letterSpacing: '1.5px', marginBottom: '10px', fontWeight: 700 }}>RELATED READING</div>
+                  <div style={{ background: 'var(--ws-bg-1)', border: '1px solid var(--ws-border)', padding: '16px 18px', display: 'flex', flexDirection: 'column', gap: '10px' }}>
                     {relatedPosts.map(post => {
-                      const dotColor = post.sentiment === 'positive' ? 'var(--green)' : post.sentiment === 'negative' ? 'var(--red)' : 'var(--amber)';
+                      const dotColor = post.sentiment === 'positive' ? 'var(--ws-accent)' : post.sentiment === 'negative' ? 'var(--ws-red)' : 'var(--ws-text-2)';
                       return (
                         <a key={post.slug} href={`/blog/${post.slug}`}
-                          style={{ display: 'flex', alignItems: 'flex-start', gap: '8px', color: 'var(--text-2)', fontSize: '12px', fontWeight: 600, lineHeight: 1.5, textDecoration: 'none' }}>
+                          style={{ display: 'flex', alignItems: 'flex-start', gap: '8px', color: 'var(--ws-text-2)', fontSize: '12px', fontWeight: 600, lineHeight: 1.5, textDecoration: 'none' }}>
                           <span style={{ width: 7, height: 7, borderRadius: '50%', background: dotColor, flexShrink: 0, marginTop: '4px' }} />
                           {post.title}
                         </a>
@@ -571,13 +569,13 @@ export default function StockPage({ params }) {
                 const LIMIT = 240;
                 const short = data.description.slice(0, LIMIT);
                 return (
-                  <div style={{ background: 'rgba(255,255,255,0.04)', backdropFilter: 'blur(20px)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '14px', padding: '16px 18px' }}>
-                    <div style={{ fontSize: '10px', color: 'var(--accent)', letterSpacing: '1.5px', fontWeight: 700, marginBottom: '8px' }}>ABOUT</div>
-                    <div style={{ color: 'var(--text-2)', fontSize: '12px', lineHeight: 1.75 }}>
+                  <div style={{ background: 'var(--ws-bg-1)', border: '1px solid var(--ws-border)', padding: '16px 18px' }}>
+                    <div style={{ fontSize: '10px', color: 'var(--ws-text-3)', fontFamily: "'JetBrains Mono', monospace", letterSpacing: '1.5px', fontWeight: 700, marginBottom: '8px' }}>ABOUT</div>
+                    <div style={{ color: 'var(--ws-text-2)', fontSize: '12px', lineHeight: 1.75 }}>
                       {expanded ? data.description : `${short}${data.description.length > LIMIT ? '…' : ''}`}
                       {data.description.length > LIMIT && (
                         <span onClick={() => setExpanded(!expanded)}
-                          style={{ color: 'var(--accent)', cursor: 'pointer', marginLeft: '6px', fontWeight: 700, fontSize: '11px' }}>
+                          style={{ color: 'var(--ws-accent)', cursor: 'pointer', marginLeft: '6px', fontWeight: 700, fontSize: '11px' }}>
                           {expanded ? 'Show less' : 'Read more'}
                         </span>
                       )}
@@ -588,22 +586,22 @@ export default function StockPage({ params }) {
 
               {/* Fair value */}
               {fairValue && (
-                <div style={{ background: 'rgba(255,255,255,0.04)', backdropFilter: 'blur(20px)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '14px', padding: '16px 18px' }}>
+                <div style={{ background: 'var(--ws-bg-1)', border: '1px solid var(--ws-border)', padding: '16px 18px' }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: '12px' }}>
-                    <div style={{ fontWeight: 700, fontSize: '13px' }}>Fair value</div>
-                    <div style={{ fontSize: '11px', fontWeight: 600, letterSpacing: '1px', color: fairValue.tagColor, padding: '3px 8px', borderRadius: '6px', backgroundColor: fairValue.tag === 'EXPENSIVE' ? 'var(--red-dim)' : fairValue.tag === 'SLIGHTLY EXPENSIVE' ? 'var(--amber-dim)' : 'var(--green-dim)' }}>{fairValue.tag}</div>
+                    <div style={{ fontWeight: 700, fontSize: '13px', color: 'var(--ws-text)' }}>Fair value</div>
+                    <div style={{ fontSize: '11px', fontWeight: 600, letterSpacing: '1px', color: fairValue.tagColor, padding: '3px 8px', backgroundColor: 'var(--ws-bg-2)' }}>{fairValue.tag}</div>
                   </div>
-                  <div style={{ position: 'relative', height: '10px', borderRadius: '6px', background: 'linear-gradient(90deg, var(--green) 0%, var(--amber) 50%, var(--red) 100%)', opacity: 0.35 }}>
-                    <div style={{ position: 'absolute', top: '-5px', width: '4px', height: '20px', borderRadius: '2px', background: 'var(--text)', left: `${fairValue.pct}%` }} />
+                  <div style={{ position: 'relative', height: '10px', background: 'var(--ws-bg-2)' }}>
+                    <div style={{ position: 'absolute', top: '-5px', width: '4px', height: '20px', borderRadius: '2px', background: 'var(--ws-text)', left: `${fairValue.pct}%` }} />
                   </div>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '8px', fontSize: '10px', color: 'var(--text-3)' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '8px', fontSize: '10px', color: 'var(--ws-text-3)' }}>
                     <span>Cheap</span><span>Fair</span><span>Expensive</span>
                   </div>
-                  <div style={{ marginTop: '12px', fontSize: '12px', color: 'var(--text-2)', lineHeight: 1.6 }}>
+                  <div style={{ marginTop: '12px', fontSize: '12px', color: 'var(--ws-text-2)', lineHeight: 1.6 }}>
                     {fairValue.negative ? (
-                      <>Negative earnings — no positive estimate. Price: <b style={{ color: 'var(--text)', fontFamily: 'JetBrains Mono, monospace' }}>${price?.toFixed(2)}</b></>
+                      <>Negative earnings — no positive estimate. Price: <b style={{ color: 'var(--ws-text)' }}>${price?.toFixed(2)}</b></>
                     ) : (
-                      <>Price: <b style={{ color: 'var(--text)', fontFamily: 'JetBrains Mono, monospace' }}>${price?.toFixed(2)}</b> · Estimate: <b style={{ color: 'var(--text)', fontFamily: 'JetBrains Mono, monospace' }}>${fairValue.estimate.toFixed(2)}</b></>
+                      <>Price: <b style={{ color: 'var(--ws-text)' }}>${price?.toFixed(2)}</b> · Estimate: <b style={{ color: 'var(--ws-text)' }}>${fairValue.estimate.toFixed(2)}</b></>
                     )}
                   </div>
                 </div>
@@ -611,18 +609,17 @@ export default function StockPage({ params }) {
 
               {/* Stock of the week */}
               {sotw === ticker && (
-                <div style={{ background: 'linear-gradient(135deg, var(--accent-dim), transparent)', border: '1px solid var(--accent)', borderRadius: '14px', padding: '14px 16px', display: 'flex', alignItems: 'center', gap: '10px' }}>
-                  <span style={{ fontSize: '18px' }}>🔥</span>
+                <div style={{ background: 'var(--ws-accent-dim)', border: '1px solid var(--ws-accent)', padding: '14px 16px', display: 'flex', alignItems: 'center', gap: '10px' }}>
                   <div>
-                    <div style={{ color: 'var(--accent)', fontWeight: 700, fontSize: '11px', letterSpacing: '0.5px' }}>STOCK OF THE WEEK</div>
-                    <div style={{ color: 'var(--text-2)', fontSize: '12px', marginTop: '2px' }}>{ticker} is this week's community pick.</div>
+                    <div style={{ color: 'var(--ws-accent)', fontWeight: 700, fontSize: '11px', letterSpacing: '0.5px' }}>STOCK OF THE WEEK</div>
+                    <div style={{ color: 'var(--ws-text-2)', fontSize: '12px', marginTop: '2px' }}>{ticker} is this week's community pick.</div>
                   </div>
                 </div>
               )}
 
               {/* Share */}
-              <div style={{ background: 'rgba(255,255,255,0.04)', backdropFilter: 'blur(20px)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '14px', padding: '16px 18px' }}>
-                <div style={{ fontSize: '10px', color: 'var(--accent)', letterSpacing: '1.5px', fontWeight: 700, marginBottom: '12px' }}>SHARE</div>
+              <div style={{ background: 'var(--ws-bg-1)', border: '1px solid var(--ws-border)', padding: '16px 18px' }}>
+                <div style={{ fontSize: '10px', color: 'var(--ws-text-3)', fontFamily: "'JetBrains Mono', monospace", letterSpacing: '1.5px', fontWeight: 700, marginBottom: '12px' }}>SHARE</div>
                 <ShareCardComponent
                   ticker={ticker}
                   name={data?.name || 'N/A'}
@@ -647,40 +644,22 @@ export default function StockPage({ params }) {
               <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
                 <a href={data.cik ? `https://www.sec.gov/cgi-bin/browse-edgar?action=getcompany&CIK=${data.cik}&type=10-K` : `https://www.sec.gov/cgi-bin/browse-edgar?action=getcompany&company=${encodeURIComponent(data.name)}&type=10-K&dateb=&owner=include&count=10&search_text=&action=getcompany`}
                   target="_blank" rel="noopener noreferrer"
-                  className="btn-secondary"
-                  style={{ textAlign: 'center', fontSize: '12px', padding: '10px 8px' }}>
+                  style={{ textAlign: 'center', fontSize: '12px', padding: '10px 8px', background: 'var(--ws-bg-1)', border: '1px solid var(--ws-border)', color: 'var(--ws-text)', textDecoration: 'none' }}>
                   SEC Filings ↗
                 </a>
-                <button onClick={toggleWatchlist} className={inWatchlist ? 'btn-primary' : 'btn-secondary'}
-                  style={{ fontSize: '12px', padding: '10px 8px', width: '100%' }}>
-                  {inWatchlist ? '★ In Watchlist' : '☆ Add to Watchlist'}
+                <button onClick={toggleWatchlist}
+                  style={inWatchlist
+                    ? { fontSize: '12px', padding: '10px 8px', width: '100%', background: 'var(--ws-text)', color: 'var(--ws-bg)', border: 'none', fontWeight: 600, cursor: 'pointer' }
+                    : { fontSize: '12px', padding: '10px 8px', width: '100%', background: 'var(--ws-bg-1)', border: '1px solid var(--ws-border)', color: 'var(--ws-text)', cursor: 'pointer' }}>
+                  {inWatchlist ? 'Remove from Watchlist' : 'Add to Watchlist'}
                 </button>
                 <button onClick={() => { window.location.href = `/stock/${ticker}?refresh=true`; }}
-                  className="btn-secondary"
-                  style={{ fontSize: '12px', padding: '10px 8px', width: '100%' }}>
+                  style={{ fontSize: '12px', padding: '10px 8px', width: '100%', background: 'var(--ws-bg-1)', border: '1px solid var(--ws-border)', color: 'var(--ws-text)', cursor: 'pointer' }}>
                   ↻ Refresh data
                 </button>
               </div>
 
-              {/* Continue Research */}
-              <div>
-                <div style={{ color: 'var(--accent)', fontSize: '11px', letterSpacing: '2px', marginBottom: '10px', fontWeight: 700 }}>CONTINUE RESEARCH</div>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                  {[
-                    { key: 'quality', title: 'Quality Scorecard', desc: 'Is this a high-quality business?' },
-                    { key: 'financials', title: 'Financials', desc: 'Income, cash flow, balance sheet' },
-                    { key: 'dcf', title: 'DCF Valuation', desc: "What's it really worth?" },
-                  ].map(s => (
-                    <button key={s.key} onClick={() => { setTab(s.key); window.scrollTo({ top: 0, behavior: 'smooth' }); }}
-                      style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '12px', padding: '14px 16px', textAlign: 'left', cursor: 'pointer', fontFamily: 'Nunito, sans-serif', width: '100%' }}>
-                      <div style={{ color: 'var(--accent)', fontSize: '13px', fontWeight: 700, marginBottom: '2px' }}>{s.title}</div>
-                      <div style={{ color: 'var(--text-3)', fontSize: '12px' }}>{s.desc}</div>
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              <div style={{ color: 'var(--text-3)', fontSize: '10px', letterSpacing: '1px', paddingTop: '4px' }}>
+              <div style={{ color: 'var(--ws-text-3)', fontSize: '10px', letterSpacing: '1px', paddingTop: '4px' }}>
                 SOURCE: SEC EDGAR (XBRL) · ALPHA VANTAGE · FINNHUB · NOT INVESTMENT ADVICE
               </div>
 
@@ -775,9 +754,9 @@ export default function StockPage({ params }) {
 
       const finalNote = +((cbs * 0.45 + oppo * 0.30 + gqs * 0.25)).toFixed(2);
 
-      const scoreColor = (s) => s >= 4 ? 'var(--green)' : s >= 3 ? 'var(--accent)' : 'var(--red)';
+      const scoreColor = (s) => s >= 4 ? 'var(--ws-accent)' : s >= 3 ? 'var(--ws-text)' : 'var(--ws-red)';
       const ScoreBar = ({ score }) => (
-        <div style={{ height: '3px', background: 'var(--border-2)', marginTop: '8px', borderRadius: '2px' }}>
+        <div style={{ height: '3px', background: 'var(--ws-border)', marginTop: '8px', borderRadius: '2px' }}>
           <div style={{ width: `${(score / 5) * 100}%`, height: '100%', background: scoreColor(score), borderRadius: '2px' }} />
         </div>
       );
@@ -789,103 +768,103 @@ export default function StockPage({ params }) {
     <a href="/sign-in" style={{ position: 'absolute', inset: 0, zIndex: 2, display: 'flex', alignItems: 'center', justifyContent: 'center', textDecoration: 'none', opacity: 0, transition: 'opacity 0.2s' }}
       onMouseEnter={e => e.currentTarget.style.opacity = '1'}
       onMouseLeave={e => e.currentTarget.style.opacity = '0'}>
-      <div style={{ background: 'var(--bg-2)', border: '1px solid var(--accent)', padding: '10px 20px', color: 'var(--accent)', fontSize: '11px', fontWeight: 700, letterSpacing: '2px' }}>
-        🔒 SIGN IN TO SEE SCORES
+      <div style={{ background: 'var(--ws-bg-1)', border: '1px solid var(--ws-accent)', padding: '10px 20px', color: 'var(--ws-accent)', fontSize: '11px', fontWeight: 700, letterSpacing: '2px' }}>
+        SIGN IN TO SEE SCORES
       </div>
     </a>
   )}
-  <div style={{ background: 'var(--bg-1)', border: '1px solid var(--border)', borderRadius: '16px', padding: '24px', filter: !isSignedIn ? 'blur(12px)' : 'none', pointerEvents: !isSignedIn ? 'none' : 'auto', userSelect: !isSignedIn ? 'none' : 'auto', overflow: 'hidden' }}>
-            <div className="quality-score-grid" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr 1fr', gap: '1px', background: 'var(--border)' }}>
+  <div style={{ background: 'var(--ws-bg-1)', border: '1px solid var(--ws-border)', padding: '24px', filter: !isSignedIn ? 'blur(12px)' : 'none', pointerEvents: !isSignedIn ? 'none' : 'auto', userSelect: !isSignedIn ? 'none' : 'auto', overflow: 'hidden' }}>
+            <div className="quality-score-grid" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr 1fr', gap: '1px', background: 'var(--ws-border)' }}>
               {[
                 { label: 'CORE BUSINESS', score: cbs, desc: 'ROIC · Margins · Leverage' },
                 { label: 'OPPO SCORE', score: oppo, desc: 'P/FCF · FCF Yield' },
                 { label: 'GROWTH QUALITY', score: gqs, desc: 'Revenue · FCF trend' },
                 { label: 'FINAL NOTE', score: finalNote, desc: 'Weighted composite', highlight: true },
               ].map(s => (
-                <div key={s.label} style={{ background: s.highlight ? 'var(--bg-2)' : 'var(--bg-1)', padding: '12px 8px', textAlign: 'center' }}>
-                  <div style={{ color: 'var(--text-3)', fontSize: '8px', letterSpacing: '1px', marginBottom: '8px', lineHeight: 1.3 }}>{s.label}</div>
+                <div key={s.label} style={{ background: s.highlight ? 'var(--ws-bg-2)' : 'var(--ws-bg-1)', padding: '12px 8px', textAlign: 'center' }}>
+                  <div style={{ color: 'var(--ws-text-3)', fontSize: '8px', letterSpacing: '1px', marginBottom: '8px', lineHeight: 1.3 }}>{s.label}</div>
                   <div style={{ fontSize: s.highlight ? '36px' : '30px', fontWeight: 700, color: scoreColor(s.score), letterSpacing: '-1px', lineHeight: 1 }}>
                     {s.score.toFixed(1)}
                   </div>
-                  <div style={{ color: 'var(--text-3)', fontSize: '8px', marginTop: '4px', lineHeight: 1.3 }}>{s.desc}</div>
+                  <div style={{ color: 'var(--ws-text-3)', fontSize: '8px', marginTop: '4px', lineHeight: 1.3 }}>{s.desc}</div>
                   <ScoreBar score={s.score} />
                 </div>
               ))}
             </div>
-            <div style={{ color: 'var(--text-3)', fontSize: '10px', letterSpacing: '1px', marginTop: '12px', textAlign: 'center' }}>
+            <div style={{ color: 'var(--ws-text-3)', fontSize: '10px', letterSpacing: '1px', marginTop: '12px', textAlign: 'center' }}>
               AUTOMATED SCORE · BASED ON SEC EDGAR & FINNHUB · NOT A BUY/SELL SIGNAL · CBS 45% · OPPO 30% · GQS 25%
             </div>
           </div>
         </div>
 
-          <div style={{ color: 'var(--accent)', fontSize: '10px', letterSpacing: '2px', borderBottom: '1px solid var(--border)', paddingBottom: '6px', marginBottom: '12px' }}>CORE BUSINESS BREAKDOWN</div>
-          <div className="grid-4" style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '1px', background: 'var(--border)', marginBottom: '24px' }}>
+          <div style={{ color: 'var(--ws-text-3)', fontSize: '10px', letterSpacing: '2px', borderBottom: '1px solid var(--ws-border)', paddingBottom: '6px', marginBottom: '12px' }}>CORE BUSINESS BREAKDOWN</div>
+          <div className="grid-4" style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '1px', background: 'var(--ws-border)', marginBottom: '24px' }}>
             {[
               { label: 'ROIC', val: fmtP(data.roic), score: roicScore, desc: `Threshold: ${(roicThreshold * 100).toFixed(0)}% for ${data.sector || 'this sector'}` },
               { label: isFinancial ? 'NET MARGIN' : 'GROSS MARGIN', val: isFinancial ? fmtP(data.netMargin) : fmtP(data.grossMargin), score: gmScore, desc: `Threshold: ${(gmThreshold * 100).toFixed(0)}% for ${data.sector || 'this sector'}` },
               { label: 'OP. MARGIN', val: fmtP(data.opMargin), score: omScore, desc: `Threshold: ${(omThreshold * 100).toFixed(0)}% for ${data.sector || 'this sector'}` },
               { label: 'DEBT/EQUITY', val: fmtN(data.debtToEquity), score: deScore, desc: 'Lower is better' },
             ].map(m => (
-              <div key={m.label} style={{ background: 'var(--bg-1)', padding: '16px' }}>
+              <div key={m.label} style={{ background: 'var(--ws-bg-1)', padding: '16px' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
-                  <span style={{ color: 'var(--text-3)', fontSize: '10px', letterSpacing: '1px' }}>{m.label}</span>
+                  <span style={{ color: 'var(--ws-text-3)', fontSize: '10px', letterSpacing: '1px' }}>{m.label}</span>
                   <span style={{ color: scoreColor(m.score), fontSize: '10px' }}>{m.score.toFixed(1)}/5</span>
                 </div>
                 <div style={{ fontSize: '28px', fontWeight: 600, color: scoreColor(m.score), marginBottom: '4px' }}>{m.val}</div>
-                <div style={{ color: 'var(--text-3)', fontSize: '10px' }}>{m.desc}</div>
+                <div style={{ color: 'var(--ws-text-3)', fontSize: '10px' }}>{m.desc}</div>
               </div>
             ))}
           </div>
 
-          <div style={{ color: 'var(--accent)', fontSize: '10px', letterSpacing: '2px', borderBottom: '1px solid var(--border)', paddingBottom: '6px', marginBottom: '12px' }}>OPPORTUNITY BREAKDOWN</div>
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '1px', background: 'var(--border)', marginBottom: '24px' }}>
+          <div style={{ color: 'var(--ws-text-3)', fontSize: '10px', letterSpacing: '2px', borderBottom: '1px solid var(--ws-border)', paddingBottom: '6px', marginBottom: '12px' }}>OPPORTUNITY BREAKDOWN</div>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '1px', background: 'var(--ws-border)', marginBottom: '24px' }}>
             {[
               { label: 'P/FCF', val: fmtN(data.pfcf), score: pfcfScore, desc: data.pfcf < 20 ? 'Attractive entry' : data.pfcf < 35 ? 'Fair valuation' : 'Expensive' },
               { label: 'FCF YIELD', val: data.fcfYield ? `${data.fcfYield}%` : 'N/A', score: fcfYieldScore, desc: data.fcfYield > 5 ? 'Strong yield' : data.fcfYield > 2 ? 'Moderate yield' : 'Low yield' },
             ].map(m => (
-              <div key={m.label} style={{ background: 'var(--bg-1)', padding: '16px' }}>
+              <div key={m.label} style={{ background: 'var(--ws-bg-1)', padding: '16px' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
-                  <span style={{ color: 'var(--text-3)', fontSize: '10px', letterSpacing: '1px' }}>{m.label}</span>
+                  <span style={{ color: 'var(--ws-text-3)', fontSize: '10px', letterSpacing: '1px' }}>{m.label}</span>
                   <span style={{ color: scoreColor(m.score), fontSize: '10px' }}>{m.score.toFixed(1)}/5</span>
                 </div>
                 <div style={{ fontSize: '28px', fontWeight: 600, color: scoreColor(m.score), marginBottom: '4px' }}>{m.val}</div>
-                <div style={{ color: 'var(--text-3)', fontSize: '10px' }}>{m.desc}</div>
+                <div style={{ color: 'var(--ws-text-3)', fontSize: '10px' }}>{m.desc}</div>
               </div>
             ))}
-            <div style={{ background: 'var(--bg-1)', padding: '16px' }}>
-              <div style={{ color: 'var(--text-3)', fontSize: '10px', letterSpacing: '1px', marginBottom: '8px' }}>52W RANGE</div>
+            <div style={{ background: 'var(--ws-bg-1)', padding: '16px' }}>
+              <div style={{ color: 'var(--ws-text-3)', fontSize: '10px', letterSpacing: '1px', marginBottom: '8px' }}>52W RANGE</div>
               {data.high52 && data.low52 && data.currentPrice ? (() => {
                 const pct = Math.round(((data.currentPrice - data.low52) / (data.high52 - data.low52)) * 100);
-                const color = pct < 30 ? 'var(--green)' : pct > 75 ? 'var(--red)' : 'var(--accent)';
+                const color = pct < 30 ? 'var(--ws-accent)' : pct > 75 ? 'var(--ws-red)' : 'var(--ws-text)';
                 return (
                   <>
                     <div style={{ fontSize: '28px', fontWeight: 600, color, marginBottom: '4px' }}>{pct}%</div>
-                    <div style={{ color: 'var(--text-3)', fontSize: '10px', marginBottom: '10px' }}>
+                    <div style={{ color: 'var(--ws-text-3)', fontSize: '10px', marginBottom: '10px' }}>
                       {pct < 30 ? 'Near 52W low' : pct > 75 ? 'Near 52W high' : 'Mid range'}
                     </div>
-                    <div style={{ position: 'relative', height: '3px', background: 'var(--border-2)', borderRadius: '2px', marginBottom: '6px' }}>
+                    <div style={{ position: 'relative', height: '3px', background: 'var(--ws-border)', borderRadius: '2px', marginBottom: '6px' }}>
                       <div style={{ position: 'absolute', left: `${pct}%`, top: '-3px', width: '2px', height: '9px', background: color, borderRadius: '1px' }} />
                     </div>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '9px', color: 'var(--text-3)' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '9px', color: 'var(--ws-text-3)' }}>
                       <span>${data.low52}</span>
                       <span>${data.high52}</span>
                     </div>
                   </>
                 );
-              })() : <div style={{ color: 'var(--text-3)', fontSize: '10px' }}>N/A</div>}
+              })() : <div style={{ color: 'var(--ws-text-3)', fontSize: '10px' }}>N/A</div>}
             </div>
           </div>
 
-          <div style={{ color: 'var(--accent)', fontSize: '10px', letterSpacing: '2px', borderBottom: '1px solid var(--border)', paddingBottom: '6px', marginBottom: '12px' }}>GROWTH QUALITY BREAKDOWN</div>
-          <div className="grid-3" style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '1px', background: 'var(--border)', marginBottom: '24px' }}>
+          <div style={{ color: 'var(--ws-text-3)', fontSize: '10px', letterSpacing: '2px', borderBottom: '1px solid var(--ws-border)', paddingBottom: '6px', marginBottom: '12px' }}>GROWTH QUALITY BREAKDOWN</div>
+          <div className="grid-3" style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '1px', background: 'var(--ws-border)', marginBottom: '24px' }}>
             {[
               { label: 'REVENUE GROWTH', val: data.revGrowth !== null ? `${data.revGrowth > 0 ? '+' : ''}${data.revGrowth}%` : 'N/A', score: revGrowthScore, chart: revChart },
-              { label: 'FCF TREND', val: fcfTrend === 1 ? 'IMPROVING' : fcfTrend === 0 ? 'DECLINING' : 'N/A', score: fcfTrend === 1 ? 4 : fcfTrend === 0 ? 2 : 2.5, chart: fcfChart, color: '#8b5cf6' },
+              { label: 'FCF TREND', val: fcfTrend === 1 ? 'IMPROVING' : fcfTrend === 0 ? 'DECLINING' : 'N/A', score: fcfTrend === 1 ? 4 : fcfTrend === 0 ? 2 : 2.5, chart: fcfChart, color: 'var(--ws-text-2)' },
               { label: 'MARGIN TREND', val: marginTrend === 1 ? 'EXPANDING' : marginTrend === 0 ? 'COMPRESSING' : 'N/A', score: marginTrend === 1 ? 4 : marginTrend === 0 ? 2 : 2.5, chart: marginChart, isLine: true },
             ].map(m => (
-              <div key={m.label} style={{ background: 'var(--bg-1)', padding: '16px' }}>
+              <div key={m.label} style={{ background: 'var(--ws-bg-1)', padding: '16px' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
-                  <span style={{ color: 'var(--text-3)', fontSize: '10px', letterSpacing: '1px' }}>{m.label}</span>
+                  <span style={{ color: 'var(--ws-text-3)', fontSize: '10px', letterSpacing: '1px' }}>{m.label}</span>
                   <span style={{ color: scoreColor(m.score), fontSize: '10px' }}>{m.score.toFixed(1)}/5</span>
                 </div>
                 <div style={{ fontSize: '22px', fontWeight: 600, color: scoreColor(m.score), marginBottom: '8px' }}>{m.val}</div>
@@ -894,7 +873,7 @@ export default function StockPage({ params }) {
             ))}
           </div>
 
-          <div style={{ color: 'var(--text-3)', fontSize: '10px', letterSpacing: '1px' }}>
+          <div style={{ color: 'var(--ws-text-3)', fontSize: '10px', letterSpacing: '1px' }}>
             SECTOR-ADJUSTED THRESHOLDS · CBS = ROIC×40% + GROSS MARGIN×25% + OP MARGIN×25% + D/E×10% · OPPO = P/FCF×55% + FCF YIELD×45% · GQS = REV GROWTH×60% + TREND×40%
           </div>
         </>
@@ -904,19 +883,12 @@ export default function StockPage({ params }) {
 )}
 
         {/* FINANCIALS TAB */}
-        {tab === 'financials' && !isPro && !checkingPro && (
-          <div style={{ textAlign: 'center', padding: '60px 24px', background: 'var(--bg-1)', border: '1px solid var(--border)', borderRadius: '20px' }}>
-            <div style={{ color: 'var(--accent)', fontSize: '13px', letterSpacing: '2px', marginBottom: '12px', fontWeight: 700 }}>🔒 SIGN IN REQUIRED</div>
-            <div style={{ color: 'var(--text-2)', fontSize: '13px', marginBottom: '24px' }}>Create a free account to access Financial Statements.</div>
-            <a href="/sign-in" className="btn-primary" style={{ textDecoration: 'none', display: 'inline-block' }}>Create free account →</a>
-          </div>
-        )}
-        {tab === 'financials' && isPro && (
+        {tab === 'financials' && (
   <div>
     <div style={{ display: 'flex', gap: '8px', marginBottom: '16px' }}>
       {[['snapshot', 'SNAPSHOT'], ['income', 'INCOME'], ['balance', 'BALANCE'], ['cashflow', 'CASH FLOW']].map(([key, label]) => (
         <button key={key} onClick={() => setFinTab(key)}
-          style={{ flex: 1, padding: '10px 8px', fontSize: '13px', letterSpacing: '0.3px', borderRadius: '12px', background: finTab === key ? 'linear-gradient(135deg, #a78bfa, #60a5fa)' : 'rgba(255,255,255,0.04)', color: finTab === key ? '#000' : 'var(--text-2)', border: finTab === key ? 'none' : '1px solid var(--border)', cursor: 'pointer', fontFamily: 'Nunito, sans-serif', fontWeight: 700 }}>
+          style={{ flex: 1, padding: '10px 8px', fontSize: '13px', letterSpacing: '0.3px', background: finTab === key ? 'var(--ws-text)' : 'var(--ws-bg-1)', color: finTab === key ? 'var(--ws-bg)' : 'var(--ws-text-2)', border: finTab === key ? 'none' : '1px solid var(--ws-border)', cursor: 'pointer', fontWeight: 600 }}>
           {label}
         </button>
       ))}
@@ -926,88 +898,88 @@ export default function StockPage({ params }) {
               <div style={{ marginBottom: '16px' }}>
   <div className="grid-4" style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '10px' }}>
 
-    <div style={{ background: 'var(--bg-1)', border: '1px solid var(--border)', borderRadius: '14px', padding: '16px' }}>
-      <div style={{ color: 'var(--accent)', fontSize: '10px', letterSpacing: '2px', marginBottom: '12px' }}>VALUATION</div>
+    <div style={{ background: 'var(--ws-bg-1)', border: '1px solid var(--ws-border)', padding: '16px' }}>
+      <div style={{ color: 'var(--ws-text-3)', fontSize: '10px', letterSpacing: '2px', marginBottom: '12px' }}>VALUATION</div>
       <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '11px' }}>
         <tbody>
           {[
             { label: 'Market Cap', val: fmt(data.marketCap) },
-            { label: 'P/E', val: fmtN(data.pe), color: data.pe > 0 && data.pe < 20 ? 'var(--green)' : data.pe > 40 ? 'var(--red)' : 'var(--text)' },
-            { label: 'P/FCF', val: fmtN(data.pfcf), color: data.pfcf > 0 && data.pfcf < 20 ? 'var(--green)' : data.pfcf > 40 ? 'var(--red)' : 'var(--text)' },
+            { label: 'P/E', val: fmtN(data.pe), color: data.pe > 0 && data.pe < 20 ? 'var(--ws-accent)' : data.pe > 40 ? 'var(--ws-red)' : 'var(--ws-text)' },
+            { label: 'P/FCF', val: fmtN(data.pfcf), color: data.pfcf > 0 && data.pfcf < 20 ? 'var(--ws-accent)' : data.pfcf > 40 ? 'var(--ws-red)' : 'var(--ws-text)' },
             { label: 'EV/EBITDA', val: fmtN(data.evEbitda) },
             { label: 'P/B', val: fmtN(data.priceToBook) },
-            { label: 'FCF Yield', val: data.fcfYield ? `${data.fcfYield}%` : 'N/A', color: data.fcfYield > 5 ? 'var(--green)' : data.fcfYield > 0 ? 'var(--accent)' : 'var(--red)' },
+            { label: 'FCF Yield', val: data.fcfYield ? `${data.fcfYield}%` : 'N/A', color: data.fcfYield > 5 ? 'var(--ws-accent)' : data.fcfYield > 0 ? 'var(--ws-text-2)' : 'var(--ws-red)' },
             { label: 'Div. Yield', val: data.dividendYield ? `${(+data.dividendYield).toFixed(2)}%` : '—' },
           ].map(r => (
-            <tr key={r.label} style={{ borderBottom: '1px solid var(--border)' }}>
-              <td style={{ padding: '4px 0', color: 'var(--text-3)', fontSize: '10px' }}>{r.label}</td>
-              <td style={{ padding: '4px 0', textAlign: 'right', color: r.color || 'var(--text)', fontSize: '11px', fontWeight: 500 }}>{r.val}</td>
+            <tr key={r.label} style={{ borderBottom: '1px solid var(--ws-border)' }}>
+              <td style={{ padding: '4px 0', color: 'var(--ws-text-3)', fontSize: '10px' }}>{r.label}</td>
+              <td style={{ padding: '4px 0', textAlign: 'right', color: r.color || 'var(--ws-text)', fontSize: '11px', fontWeight: 500 }}>{r.val}</td>
             </tr>
           ))}
         </tbody>
       </table>
     </div>
 
-    <div style={{ background: 'var(--bg-1)', border: '1px solid var(--border)', borderRadius: '14px', padding: '16px' }}>
-      <div style={{ color: 'var(--accent)', fontSize: '10px', letterSpacing: '2px', marginBottom: '12px' }}>PROFITABILITY</div>
+    <div style={{ background: 'var(--ws-bg-1)', border: '1px solid var(--ws-border)', padding: '16px' }}>
+      <div style={{ color: 'var(--ws-text-3)', fontSize: '10px', letterSpacing: '2px', marginBottom: '12px' }}>PROFITABILITY</div>
       <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '11px' }}>
         <tbody>
           {[
-            { label: 'Gross Margin', val: fmtP(data.grossMargin), color: data.grossMargin > 50 ? 'var(--green)' : data.grossMargin > 30 ? 'var(--accent)' : 'var(--red)' },
-            { label: 'Op. Margin', val: fmtP(data.opMargin), color: data.opMargin > 20 ? 'var(--green)' : data.opMargin > 10 ? 'var(--accent)' : 'var(--red)' },
-            { label: 'Net Margin', val: fmtP(data.netMargin), color: data.netMargin > 15 ? 'var(--green)' : data.netMargin > 5 ? 'var(--accent)' : 'var(--red)' },
-            { label: 'ROE', val: fmtP(data.roe), color: data.roe > 20 ? 'var(--green)' : data.roe > 10 ? 'var(--accent)' : 'var(--red)' },
-            { label: 'ROA', val: fmtP(data.roa), color: data.roa > 10 ? 'var(--green)' : data.roa > 5 ? 'var(--accent)' : 'var(--red)' },
-            { label: 'ROIC', val: fmtP(data.roic), color: data.roic > 15 ? 'var(--green)' : data.roic > 8 ? 'var(--accent)' : 'var(--red)' },
+            { label: 'Gross Margin', val: fmtP(data.grossMargin), color: data.grossMargin > 50 ? 'var(--ws-accent)' : data.grossMargin > 30 ? 'var(--ws-text-2)' : 'var(--ws-red)' },
+            { label: 'Op. Margin', val: fmtP(data.opMargin), color: data.opMargin > 20 ? 'var(--ws-accent)' : data.opMargin > 10 ? 'var(--ws-text-2)' : 'var(--ws-red)' },
+            { label: 'Net Margin', val: fmtP(data.netMargin), color: data.netMargin > 15 ? 'var(--ws-accent)' : data.netMargin > 5 ? 'var(--ws-text-2)' : 'var(--ws-red)' },
+            { label: 'ROE', val: fmtP(data.roe), color: data.roe > 20 ? 'var(--ws-accent)' : data.roe > 10 ? 'var(--ws-text-2)' : 'var(--ws-red)' },
+            { label: 'ROA', val: fmtP(data.roa), color: data.roa > 10 ? 'var(--ws-accent)' : data.roa > 5 ? 'var(--ws-text-2)' : 'var(--ws-red)' },
+            { label: 'ROIC', val: fmtP(data.roic), color: data.roic > 15 ? 'var(--ws-accent)' : data.roic > 8 ? 'var(--ws-text-2)' : 'var(--ws-red)' },
             { label: 'SBC', val: fmt(data.sbcVal) },
             { label: 'Dividends Paid', val: fmt(data.dividendsPaidVal) },
           ].map(r => (
-            <tr key={r.label} style={{ borderBottom: '1px solid var(--border)' }}>
-              <td style={{ padding: '4px 0', color: 'var(--text-3)', fontSize: '10px' }}>{r.label}</td>
-              <td style={{ padding: '4px 0', textAlign: 'right', color: r.color || 'var(--text)', fontSize: '11px', fontWeight: 500 }}>{r.val}</td>
+            <tr key={r.label} style={{ borderBottom: '1px solid var(--ws-border)' }}>
+              <td style={{ padding: '4px 0', color: 'var(--ws-text-3)', fontSize: '10px' }}>{r.label}</td>
+              <td style={{ padding: '4px 0', textAlign: 'right', color: r.color || 'var(--ws-text)', fontSize: '11px', fontWeight: 500 }}>{r.val}</td>
             </tr>
           ))}
         </tbody>
       </table>
     </div>
 
-    <div style={{ background: 'var(--bg-1)', border: '1px solid var(--border)', borderRadius: '14px', padding: '16px' }}>
-      <div style={{ color: 'var(--accent)', fontSize: '10px', letterSpacing: '2px', marginBottom: '12px' }}>BALANCE SHEET</div>
+    <div style={{ background: 'var(--ws-bg-1)', border: '1px solid var(--ws-border)', padding: '16px' }}>
+      <div style={{ color: 'var(--ws-text-3)', fontSize: '10px', letterSpacing: '2px', marginBottom: '12px' }}>BALANCE SHEET</div>
       <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '11px' }}>
         <tbody>
           {[
             { label: 'Total Assets', val: fmt(data.assetsVal) },
             { label: 'Total Liabilities', val: fmt(data.totalLiabilitiesVal) },
             { label: 'Equity', val: fmt(data.equityVal) },
-            { label: 'Net Debt', val: fmt(data.netDebt), color: data.netDebt < 0 ? 'var(--green)' : 'var(--text)' },
-            { label: 'Cash', val: fmt(data.cashVal), color: 'var(--green)' },
+            { label: 'Net Debt', val: fmt(data.netDebt), color: data.netDebt < 0 ? 'var(--ws-accent)' : 'var(--ws-text)' },
+            { label: 'Cash', val: fmt(data.cashVal), color: 'var(--ws-accent)' },
             { label: 'LT Debt', val: fmt(data.debtVal) },
-            { label: 'D/E Ratio', val: fmtN(data.debtToEquity), color: data.debtToEquity < 1 ? 'var(--green)' : data.debtToEquity < 2 ? 'var(--accent)' : 'var(--red)' },
-            { label: 'Current Ratio', val: data.currentAssetsVal && data.currentLiabilitiesVal ? fmtN(data.currentAssetsVal / data.currentLiabilitiesVal) : 'N/A', color: data.currentAssetsVal / data.currentLiabilitiesVal > 2 ? 'var(--green)' : data.currentAssetsVal / data.currentLiabilitiesVal > 1 ? 'var(--accent)' : 'var(--red)' },
+            { label: 'D/E Ratio', val: fmtN(data.debtToEquity), color: data.debtToEquity < 1 ? 'var(--ws-accent)' : data.debtToEquity < 2 ? 'var(--ws-text-2)' : 'var(--ws-red)' },
+            { label: 'Current Ratio', val: data.currentAssetsVal && data.currentLiabilitiesVal ? fmtN(data.currentAssetsVal / data.currentLiabilitiesVal) : 'N/A', color: data.currentAssetsVal / data.currentLiabilitiesVal > 2 ? 'var(--ws-accent)' : data.currentAssetsVal / data.currentLiabilitiesVal > 1 ? 'var(--ws-text-2)' : 'var(--ws-red)' },
           ].map(r => (
-            <tr key={r.label} style={{ borderBottom: '1px solid var(--border)' }}>
-              <td style={{ padding: '4px 0', color: 'var(--text-3)', fontSize: '10px' }}>{r.label}</td>
-              <td style={{ padding: '4px 0', textAlign: 'right', color: r.color || 'var(--text)', fontSize: '11px', fontWeight: 500 }}>{r.val}</td>
+            <tr key={r.label} style={{ borderBottom: '1px solid var(--ws-border)' }}>
+              <td style={{ padding: '4px 0', color: 'var(--ws-text-3)', fontSize: '10px' }}>{r.label}</td>
+              <td style={{ padding: '4px 0', textAlign: 'right', color: r.color || 'var(--ws-text)', fontSize: '11px', fontWeight: 500 }}>{r.val}</td>
             </tr>
           ))}
         </tbody>
       </table>
     </div>
 
-    <div style={{ background: 'var(--bg-1)', border: '1px solid var(--border)', borderRadius: '14px', padding: '16px' }}>
-      <div style={{ color: 'var(--accent)', fontSize: '10px', letterSpacing: '2px', marginBottom: '12px' }}>EFFICIENCY</div>
+    <div style={{ background: 'var(--ws-bg-1)', border: '1px solid var(--ws-border)', padding: '16px' }}>
+      <div style={{ color: 'var(--ws-text-3)', fontSize: '10px', letterSpacing: '2px', marginBottom: '12px' }}>EFFICIENCY</div>
       <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '11px' }}>
         <tbody>
           {[
-            { label: 'Cash Conv. Cycle', val: data.ccc != null ? `${data.ccc}d` : 'N/A', color: data.ccc != null && data.ccc < 30 ? 'var(--green)' : data.ccc != null && data.ccc < 60 ? 'var(--accent)' : data.ccc != null ? 'var(--red)' : 'var(--text-3)' },
-            { label: 'Inventory Turnover', val: data.inventoryTurnover != null ? fmtN(data.inventoryTurnover) : 'N/A', color: data.inventoryTurnover > 8 ? 'var(--green)' : data.inventoryTurnover > 4 ? 'var(--accent)' : 'var(--text)' },
+            { label: 'Cash Conv. Cycle', val: data.ccc != null ? `${data.ccc}d` : 'N/A', color: data.ccc != null && data.ccc < 30 ? 'var(--ws-accent)' : data.ccc != null && data.ccc < 60 ? 'var(--ws-text-2)' : data.ccc != null ? 'var(--ws-red)' : 'var(--ws-text-3)' },
+            { label: 'Inventory Turnover', val: data.inventoryTurnover != null ? fmtN(data.inventoryTurnover) : 'N/A', color: data.inventoryTurnover > 8 ? 'var(--ws-accent)' : data.inventoryTurnover > 4 ? 'var(--ws-text-2)' : 'var(--ws-text)' },
             { label: 'DSO', val: data.dso != null ? `${data.dso}d` : 'N/A' },
             { label: 'DIO', val: data.dio != null ? `${data.dio}d` : 'N/A' },
             { label: 'DPO', val: data.dpo != null ? `${data.dpo}d` : 'N/A' },
           ].map(r => (
-            <tr key={r.label} style={{ borderBottom: '1px solid var(--border)' }}>
-              <td style={{ padding: '4px 0', color: 'var(--text-3)', fontSize: '10px' }}>{r.label}</td>
-              <td style={{ padding: '4px 0', textAlign: 'right', color: r.color || 'var(--text)', fontSize: '11px', fontWeight: 500 }}>{r.val}</td>
+            <tr key={r.label} style={{ borderBottom: '1px solid var(--ws-border)' }}>
+              <td style={{ padding: '4px 0', color: 'var(--ws-text-3)', fontSize: '10px' }}>{r.label}</td>
+              <td style={{ padding: '4px 0', textAlign: 'right', color: r.color || 'var(--ws-text)', fontSize: '11px', fontWeight: 500 }}>{r.val}</td>
             </tr>
           ))}
         </tbody>
@@ -1018,8 +990,8 @@ export default function StockPage({ params }) {
 </div>
 
 <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '10px', marginBottom: '16px' }}>
-  <div style={{ background: 'var(--bg-1)', border: '1px solid var(--border)', borderRadius: '14px', padding: '16px' }}>
-    <div style={{ color: 'var(--accent)', fontSize: '10px', letterSpacing: '2px', marginBottom: '12px' }}>PER SHARE & MARKET DATA</div>
+  <div style={{ background: 'var(--ws-bg-1)', border: '1px solid var(--ws-border)', padding: '16px' }}>
+    <div style={{ color: 'var(--ws-text-3)', fontSize: '10px', letterSpacing: '2px', marginBottom: '12px' }}>PER SHARE & MARKET DATA</div>
     <div className="per-share-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: '10px' }}>
       {[
         { label: 'EPS (TTM)', val: data.eps ? `$${data.eps}` : 'N/A' },
@@ -1028,9 +1000,9 @@ export default function StockPage({ params }) {
         { label: '52W High', val: data.high52 ? `$${data.high52}` : 'N/A' },
         { label: '52W Low', val: data.low52 ? `$${data.low52}` : 'N/A' },
       ].map(r => (
-        <div key={r.label} style={{ background: 'var(--bg-2)', borderRadius: '10px', padding: '12px' }}>
-          <div style={{ color: 'var(--text-3)', fontSize: '10px', letterSpacing: '1px', marginBottom: '6px' }}>{r.label}</div>
-          <div style={{ color: 'var(--text)', fontSize: '13px', fontWeight: 600 }}>{r.val}</div>
+        <div key={r.label} style={{ background: 'var(--ws-bg-2)', padding: '12px' }}>
+          <div style={{ color: 'var(--ws-text-3)', fontSize: '10px', letterSpacing: '1px', marginBottom: '6px' }}>{r.label}</div>
+          <div style={{ color: 'var(--ws-text)', fontSize: '13px', fontWeight: 600 }}>{r.val}</div>
         </div>
       ))}
     </div>
@@ -1038,12 +1010,12 @@ export default function StockPage({ params }) {
 </div>
 
               <div style={{ display: 'flex', gap: '10px', marginBottom: '16px' }}>
-                <div style={{ flex: 1, background: 'var(--bg-1)' }}>
+                <div style={{ flex: 1, background: 'var(--ws-bg-1)' }}>
                   <StockChart ticker={ticker} />
                 </div>
               </div>
 
-              <div style={{ color: 'var(--text-3)', fontSize: '10px', letterSpacing: '2px', borderBottom: '1px solid var(--border)', paddingBottom: '6px', marginBottom: '12px' }}>PROFITABILITY & RETURNS</div>
+              <div style={{ color: 'var(--ws-text-3)', fontSize: '10px', letterSpacing: '2px', borderBottom: '1px solid var(--ws-border)', paddingBottom: '6px', marginBottom: '12px' }}>PROFITABILITY & RETURNS</div>
               <div className="grid-4" style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '10px', marginBottom: '16px' }}>
                 {[
                   { label: 'REVENUE (TTM)', val: fmt(data.revVal), sub: data.revGrowth !== null ? `${data.revGrowth > 0 ? '+' : ''}${data.revGrowth}% YOY` : null, good: data.revGrowth > 0 },
@@ -1051,15 +1023,15 @@ export default function StockPage({ params }) {
                   { label: 'OP. MARGIN', val: fmtP(data.opMargin), sub: data.opMargin > 15 ? 'ABOVE THRESHOLD' : 'BELOW THRESHOLD', good: data.opMargin > 15 },
                   { label: 'ROE', val: fmtP(data.roe), sub: data.roe > 15 ? 'STRONG RETURN' : 'MODERATE RETURN', good: data.roe > 15 },
                 ].map(m => (
-                  <div key={m.label} style={{ background: 'var(--bg-1)', border: '1px solid var(--border)', borderRadius: '14px', padding: '14px' }}>
-                    <div style={{ color: 'var(--text-3)', fontSize: '10px', letterSpacing: '1px', marginBottom: '6px' }}>{m.label}</div>
-                    <div style={{ fontSize: '20px', fontWeight: 600, marginBottom: '4px' }}>{m.val}</div>
-                    {m.sub && <div style={{ color: m.good ? 'var(--green)' : 'var(--red)', fontSize: '10px', letterSpacing: '0.5px' }}>{m.sub}</div>}
+                  <div key={m.label} style={{ background: 'var(--ws-bg-1)', border: '1px solid var(--ws-border)', padding: '14px' }}>
+                    <div style={{ color: 'var(--ws-text-3)', fontSize: '10px', letterSpacing: '1px', marginBottom: '6px' }}>{m.label}</div>
+                    <div style={{ fontSize: '20px', fontWeight: 600, marginBottom: '4px', color: 'var(--ws-text)' }}>{m.val}</div>
+                    {m.sub && <div style={{ color: m.good ? 'var(--ws-accent)' : 'var(--ws-red)', fontSize: '10px', letterSpacing: '0.5px' }}>{m.sub}</div>}
                   </div>
                 ))}
               </div>
 
-              <div style={{ color: 'var(--text-3)', fontSize: '10px', letterSpacing: '2px', borderBottom: '1px solid var(--border)', paddingBottom: '6px', marginBottom: '12px' }}>CASH FLOW & BALANCE SHEET</div>
+              <div style={{ color: 'var(--ws-text-3)', fontSize: '10px', letterSpacing: '2px', borderBottom: '1px solid var(--ws-border)', paddingBottom: '6px', marginBottom: '12px' }}>CASH FLOW & BALANCE SHEET</div>
               <div className="grid-4" style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '10px', marginBottom: '16px' }}>
                 {[
                   { label: 'FREE CASH FLOW', val: fmt(data.fcfVal), sub: data.fcfVal > 0 ? 'POSITIVE FCF' : 'NEGATIVE FCF', good: data.fcfVal > 0 },
@@ -1067,21 +1039,21 @@ export default function StockPage({ params }) {
                   { label: 'NET DEBT', val: fmt(data.netDebt), sub: data.netDebt < 0 ? 'NET CASH POSITION' : 'NET DEBT POSITION', good: data.netDebt < 0 },
                   { label: 'CASH & EQUIV.', val: fmt(data.cashVal), sub: null },
                 ].map(m => (
-                  <div key={m.label} style={{ background: 'var(--bg-1)', border: '1px solid var(--border)', borderRadius: '14px', padding: '14px' }}>
-                    <div style={{ color: 'var(--text-3)', fontSize: '10px', letterSpacing: '1px', marginBottom: '6px' }}>{m.label}</div>
-                    <div style={{ fontSize: '20px', fontWeight: 600, marginBottom: '4px' }}>{m.val}</div>
-                    {m.sub && <div style={{ color: m.good ? 'var(--green)' : 'var(--red)', fontSize: '10px', letterSpacing: '0.5px' }}>{m.sub}</div>}
+                  <div key={m.label} style={{ background: 'var(--ws-bg-1)', border: '1px solid var(--ws-border)', padding: '14px' }}>
+                    <div style={{ color: 'var(--ws-text-3)', fontSize: '10px', letterSpacing: '1px', marginBottom: '6px' }}>{m.label}</div>
+                    <div style={{ fontSize: '20px', fontWeight: 600, marginBottom: '4px', color: 'var(--ws-text)' }}>{m.val}</div>
+                    {m.sub && <div style={{ color: m.good ? 'var(--ws-accent)' : 'var(--ws-red)', fontSize: '10px', letterSpacing: '0.5px' }}>{m.sub}</div>}
                   </div>
                 ))}
               </div>
 
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px', marginBottom: '16px' }}>
                 {[
-                  { title: 'REVENUE', chart: revChart, color: 'var(--amber)', type: 'line' },
-                  { title: 'FREE CASH FLOW', chart: fcfChart, color: '#8b5cf6', type: 'line' },
+                  { title: 'REVENUE', chart: revChart, color: 'var(--ws-text-2)', type: 'line' },
+                  { title: 'FREE CASH FLOW', chart: fcfChart, color: 'var(--ws-accent)', type: 'line' },
                 ].map(({ title, chart, color, type }) => (
-                  <div key={title} style={{ background: 'var(--bg-1)', border: '1px solid var(--border)', borderRadius: '14px', padding: '16px' }}>
-                    <div style={{ color: 'var(--text-3)', fontSize: '10px', letterSpacing: '2px', marginBottom: '12px' }}>{title}</div>
+                  <div key={title} style={{ background: 'var(--ws-bg-1)', border: '1px solid var(--ws-border)', padding: '16px' }}>
+                    <div style={{ color: 'var(--ws-text-3)', fontSize: '10px', letterSpacing: '2px', marginBottom: '12px' }}>{title}</div>
                     <MiniLine data={chart} color={color} />
                   </div>
                 ))}
@@ -1114,27 +1086,27 @@ export default function StockPage({ params }) {
       };
       return (
         <div style={{ overflowX: 'auto' }}>
-          <div style={{ color: 'var(--text-3)', fontSize: '10px', letterSpacing: '1px', marginBottom: '8px' }}>All values in USD · Source: SEC EDGAR</div>
+          <div style={{ color: 'var(--ws-text-3)', fontSize: '10px', letterSpacing: '1px', marginBottom: '8px' }}>All values in USD · Source: SEC EDGAR</div>
           <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '11px', minWidth: '700px' }}>
             <thead>
-              <tr style={{ borderBottom: '1px solid var(--border)' }}>
-                <th style={{ padding: '8px 0', textAlign: 'left', fontWeight: 400, fontSize: '10px', letterSpacing: '1px', color: 'var(--text-3)', width: '180px' }}>METRIC</th>
-                {years.map(y => <th key={y} style={{ padding: '8px 12px', textAlign: 'right', fontWeight: 400, fontSize: '10px', color: 'var(--text-3)' }}>{y}</th>)}
-                <th style={{ padding: '8px 12px', textAlign: 'right', fontWeight: 600, fontSize: '10px', color: 'var(--accent)' }}>TTM</th>
+              <tr style={{ borderBottom: '1px solid var(--ws-border)' }}>
+                <th style={{ padding: '8px 0', textAlign: 'left', fontWeight: 400, fontSize: '10px', letterSpacing: '1px', color: 'var(--ws-text-3)', width: '180px' }}>METRIC</th>
+                {years.map(y => <th key={y} style={{ padding: '8px 12px', textAlign: 'right', fontWeight: 400, fontSize: '10px', color: 'var(--ws-text-3)' }}>{y}</th>)}
+                <th style={{ padding: '8px 12px', textAlign: 'right', fontWeight: 600, fontSize: '10px', color: 'var(--ws-accent)' }}>TTM</th>
               </tr>
             </thead>
             <tbody>
               {rows.map((row, i) => {
-                if (row.divider) return <tr key={i}><td colSpan={years.length + 2} style={{ padding: '4px 0', borderBottom: '1px solid var(--border)' }} /></tr>;
+                if (row.divider) return <tr key={i}><td colSpan={years.length + 2} style={{ padding: '4px 0', borderBottom: '1px solid var(--ws-border)' }} /></tr>;
                 return (
-                  <tr key={i} style={{ borderBottom: '1px solid var(--border)', background: i % 2 === 0 ? 'transparent' : 'var(--bg-1)' }}>
-                    <td style={{ padding: '6px 0', paddingLeft: row.indent ? '16px' : '0', color: row.bold ? 'var(--text)' : 'var(--text-3)', fontWeight: row.bold ? 600 : 400, fontSize: '11px' }}>{row.label}</td>
+                  <tr key={i} style={{ borderBottom: '1px solid var(--ws-border)', background: i % 2 === 0 ? 'transparent' : 'var(--ws-bg-1)' }}>
+                    <td style={{ padding: '6px 0', paddingLeft: row.indent ? '16px' : '0', color: row.bold ? 'var(--ws-text)' : 'var(--ws-text-3)', fontWeight: row.bold ? 600 : 400, fontSize: '11px' }}>{row.label}</td>
                     {years.map((y, j) => {
                       const h = row.history?.[j];
-                      const color = row.green ? 'var(--green)' : row.neg ? 'var(--red)' : 'var(--text)';
-                      return <td key={y} style={{ padding: '6px 12px', textAlign: 'right', color: h?.val != null ? color : 'var(--text-3)' }}>{fmtV(h?.val, row)}</td>;
+                      const color = row.green ? 'var(--ws-accent)' : row.neg ? 'var(--ws-red)' : 'var(--ws-text)';
+                      return <td key={y} style={{ padding: '6px 12px', textAlign: 'right', color: h?.val != null ? color : 'var(--ws-text-3)' }}>{fmtV(h?.val, row)}</td>;
                     })}
-                    <td style={{ padding: '6px 12px', textAlign: 'right', color: row.green ? 'var(--accent)' : row.neg ? 'var(--red)' : 'var(--text)', fontWeight: 600 }}>{fmtV(row.ttm, row)}</td>
+                    <td style={{ padding: '6px 12px', textAlign: 'right', color: row.green ? 'var(--ws-accent)' : row.neg ? 'var(--ws-red)' : 'var(--ws-text)', fontWeight: 600 }}>{fmtV(row.ttm, row)}</td>
                   </tr>
                 );
               })}
@@ -1157,9 +1129,9 @@ export default function StockPage({ params }) {
         { label: "Stockholders' Equity", val: data.equityVal, bold: true, green: true },
         { label: 'Retained Earnings', val: data.retainedEarningsVal },
         { label: 'RATIOS', section: true },
-        { label: 'D/E Ratio', val: data.debtToEquity, raw: true, suffix: 'x', color: data.debtToEquity < 1 ? 'var(--green)' : data.debtToEquity < 2 ? 'var(--accent)' : 'var(--red)' },
-        { label: 'Current Ratio', val: data.currentAssetsVal && data.currentLiabilitiesVal ? +(data.currentAssetsVal/data.currentLiabilitiesVal).toFixed(2) : null, raw: true, suffix: 'x', color: data.currentAssetsVal/data.currentLiabilitiesVal > 1.5 ? 'var(--green)' : 'var(--accent)' },
-        { label: 'Net Debt', val: data.netDebt, color: data.netDebt < 0 ? 'var(--green)' : 'var(--text)' },
+        { label: 'D/E Ratio', val: data.debtToEquity, raw: true, suffix: 'x', color: data.debtToEquity < 1 ? 'var(--ws-accent)' : data.debtToEquity < 2 ? 'var(--ws-text-2)' : 'var(--ws-red)' },
+        { label: 'Current Ratio', val: data.currentAssetsVal && data.currentLiabilitiesVal ? +(data.currentAssetsVal/data.currentLiabilitiesVal).toFixed(2) : null, raw: true, suffix: 'x', color: data.currentAssetsVal/data.currentLiabilitiesVal > 1.5 ? 'var(--ws-accent)' : 'var(--ws-text-2)' },
+        { label: 'Net Debt', val: data.netDebt, color: data.netDebt < 0 ? 'var(--ws-accent)' : 'var(--ws-text)' },
         { label: 'Cash & Equivalents', val: data.cashVal, green: true },
       ];
       const fmtV = (v, row) => {
@@ -1170,18 +1142,18 @@ export default function StockPage({ params }) {
       return (
         <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '11px', maxWidth: '500px' }}>
           <thead>
-            <tr style={{ borderBottom: '1px solid var(--border)' }}>
-              <th style={{ padding: '8px 0', textAlign: 'left', fontWeight: 400, fontSize: '10px', color: 'var(--text-3)' }}>METRIC</th>
-              <th style={{ padding: '8px 12px', textAlign: 'right', fontWeight: 600, fontSize: '10px', color: 'var(--accent)' }}>TTM</th>
+            <tr style={{ borderBottom: '1px solid var(--ws-border)' }}>
+              <th style={{ padding: '8px 0', textAlign: 'left', fontWeight: 400, fontSize: '10px', color: 'var(--ws-text-3)' }}>METRIC</th>
+              <th style={{ padding: '8px 12px', textAlign: 'right', fontWeight: 600, fontSize: '10px', color: 'var(--ws-accent)' }}>TTM</th>
             </tr>
           </thead>
           <tbody>
             {rows.map((row, i) => {
-              if (row.section) return <tr key={i}><td colSpan={2} style={{ padding: '10px 0 4px', color: 'var(--accent)', fontSize: '10px', letterSpacing: '2px', borderBottom: '1px solid var(--border)' }}>{row.label}</td></tr>;
+              if (row.section) return <tr key={i}><td colSpan={2} style={{ padding: '10px 0 4px', color: 'var(--ws-accent)', fontSize: '10px', letterSpacing: '2px', borderBottom: '1px solid var(--ws-border)' }}>{row.label}</td></tr>;
               return (
-                <tr key={i} style={{ borderBottom: '1px solid var(--border)' }}>
-                  <td style={{ padding: '6px 0', color: row.bold ? 'var(--text)' : 'var(--text-3)', fontWeight: row.bold ? 600 : 400 }}>{row.label}</td>
-                  <td style={{ padding: '6px 12px', textAlign: 'right', color: row.color || (row.green ? 'var(--green)' : row.neg ? 'var(--red)' : 'var(--text)'), fontWeight: row.bold ? 600 : 400 }}>{fmtV(row.val, row)}</td>
+                <tr key={i} style={{ borderBottom: '1px solid var(--ws-border)' }}>
+                  <td style={{ padding: '6px 0', color: row.bold ? 'var(--ws-text)' : 'var(--ws-text-3)', fontWeight: row.bold ? 600 : 400 }}>{row.label}</td>
+                  <td style={{ padding: '6px 12px', textAlign: 'right', color: row.color || (row.green ? 'var(--ws-accent)' : row.neg ? 'var(--ws-red)' : 'var(--ws-text)'), fontWeight: row.bold ? 600 : 400 }}>{fmtV(row.val, row)}</td>
                 </tr>
               );
             })}
@@ -1210,24 +1182,24 @@ export default function StockPage({ params }) {
         <div style={{ overflowX: 'auto' }}>
           <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '11px', minWidth: '700px' }}>
             <thead>
-              <tr style={{ borderBottom: '1px solid var(--border)' }}>
-                <th style={{ padding: '8px 0', textAlign: 'left', fontWeight: 400, fontSize: '10px', color: 'var(--text-3)', width: '200px' }}>METRIC</th>
-                {years.map(y => <th key={y} style={{ padding: '8px 12px', textAlign: 'right', fontWeight: 400, fontSize: '10px', color: 'var(--text-3)' }}>{y}</th>)}
-                <th style={{ padding: '8px 12px', textAlign: 'right', fontWeight: 600, fontSize: '10px', color: 'var(--accent)' }}>TTM</th>
+              <tr style={{ borderBottom: '1px solid var(--ws-border)' }}>
+                <th style={{ padding: '8px 0', textAlign: 'left', fontWeight: 400, fontSize: '10px', color: 'var(--ws-text-3)', width: '200px' }}>METRIC</th>
+                {years.map(y => <th key={y} style={{ padding: '8px 12px', textAlign: 'right', fontWeight: 400, fontSize: '10px', color: 'var(--ws-text-3)' }}>{y}</th>)}
+                <th style={{ padding: '8px 12px', textAlign: 'right', fontWeight: 600, fontSize: '10px', color: 'var(--ws-accent)' }}>TTM</th>
               </tr>
             </thead>
             <tbody>
               {rows.map((row, i) => {
-                if (row.divider) return <tr key={i}><td colSpan={years.length + 2} style={{ padding: '4px 0', borderBottom: '1px solid var(--border)' }} /></tr>;
+                if (row.divider) return <tr key={i}><td colSpan={years.length + 2} style={{ padding: '4px 0', borderBottom: '1px solid var(--ws-border)' }} /></tr>;
                 return (
-                  <tr key={i} style={{ borderBottom: '1px solid var(--border)', background: i % 2 === 0 ? 'transparent' : 'var(--bg-1)' }}>
-                    <td style={{ padding: '6px 0', paddingLeft: row.indent ? '16px' : '0', color: row.bold ? 'var(--text)' : 'var(--text-3)', fontWeight: row.bold ? 600 : 400 }}>{row.label}</td>
+                  <tr key={i} style={{ borderBottom: '1px solid var(--ws-border)', background: i % 2 === 0 ? 'transparent' : 'var(--ws-bg-1)' }}>
+                    <td style={{ padding: '6px 0', paddingLeft: row.indent ? '16px' : '0', color: row.bold ? 'var(--ws-text)' : 'var(--ws-text-3)', fontWeight: row.bold ? 600 : 400 }}>{row.label}</td>
                     {years.map((y, j) => {
                       const h = row.history?.[j];
-                      const color = row.green ? 'var(--green)' : row.neg ? 'var(--red)' : 'var(--text)';
-                      return <td key={y} style={{ padding: '6px 12px', textAlign: 'right', color: h?.val != null ? color : 'var(--text-3)' }}>{fmtV(h?.val)}</td>;
+                      const color = row.green ? 'var(--ws-accent)' : row.neg ? 'var(--ws-red)' : 'var(--ws-text)';
+                      return <td key={y} style={{ padding: '6px 12px', textAlign: 'right', color: h?.val != null ? color : 'var(--ws-text-3)' }}>{fmtV(h?.val)}</td>;
                     })}
-                    <td style={{ padding: '6px 12px', textAlign: 'right', color: row.green ? 'var(--accent)' : row.neg ? 'var(--red)' : 'var(--text)', fontWeight: 600 }}>{fmtV(row.ttm)}</td>
+                    <td style={{ padding: '6px 12px', textAlign: 'right', color: row.green ? 'var(--ws-accent)' : row.neg ? 'var(--ws-red)' : 'var(--ws-text)', fontWeight: 600 }}>{fmtV(row.ttm)}</td>
                   </tr>
                 );
               })}
@@ -1237,34 +1209,27 @@ export default function StockPage({ params }) {
       );
     })()}
 
-    <div style={{ color: 'var(--text-3)', fontSize: '10px', letterSpacing: '1px', marginTop: '16px' }}>
+    <div style={{ color: 'var(--ws-text-3)', fontSize: '10px', letterSpacing: '1px', marginTop: '16px' }}>
       SOURCE: SEC EDGAR (XBRL) · FINNHUB · NOT INVESTMENT ADVICE
     </div>
   </div>
 )}
 
         {/* DCF TAB */}
-        {tab === 'dcf' && !isPro && !checkingPro && (
-          <div style={{ textAlign: 'center', padding: '80px 24px' }}>
-            <div style={{ color: 'var(--accent)', fontSize: '13px', letterSpacing: '2px', marginBottom: '12px' }}>🔒 SIGN IN REQUIRED</div>
-            <div style={{ color: 'var(--text-2)', fontSize: '12px', marginBottom: '24px' }}>Create a free account to access DCF Valuation.</div>
-            <a href="/sign-in" className="btn-primary" style={{ textDecoration: 'none', display: 'inline-block' }}>Create free account →</a>
-          </div>
-        )}
-        {tab === 'dcf' && isPro && (
+        {tab === 'dcf' && (
           <div>
             <div style={S.section}>GRAHAM INTRINSIC VALUE — V = EPS × (8.5 + 2g)</div>
 
             {data.eps ? (
               <>
-                <div style={{ background: 'var(--bg-1)', border: '1px solid var(--border)', padding: '16px', marginBottom: '24px', fontSize: '11px', color: 'var(--text-2)', lineHeight: 1.8 }}>
-                  <span style={{ color: 'var(--accent)' }}>V = EPS × (8.5 + 2g) × (4.4/5.5)</span> &nbsp;·&nbsp;
-                  EPS: <span style={{ color: 'var(--text)' }}>${data.eps}</span> &nbsp;·&nbsp;
-                  5Y EPS CAGR (g): <span style={{ color: 'var(--text)' }}>{data.epsCagr !== null ? `${data.epsCagr}%` : 'N/A'}</span> &nbsp;·&nbsp;
-                  <span style={{ color: 'var(--text-3)' }}>Benjamin Graham formula · Not investment advice</span>
+                <div style={{ background: 'var(--ws-bg-1)', border: '1px solid var(--ws-border)', padding: '16px', marginBottom: '24px', fontSize: '11px', color: 'var(--ws-text-2)', lineHeight: 1.8 }}>
+                  <span style={{ color: 'var(--ws-accent)' }}>V = EPS × (8.5 + 2g) × (4.4/5.5)</span> &nbsp;·&nbsp;
+                  EPS: <span style={{ color: 'var(--ws-text)' }}>${data.eps}</span> &nbsp;·&nbsp;
+                  5Y EPS CAGR (g): <span style={{ color: 'var(--ws-text)' }}>{data.epsCagr !== null ? `${data.epsCagr}%` : 'N/A'}</span> &nbsp;·&nbsp;
+                  <span style={{ color: 'var(--ws-text-3)' }}>Benjamin Graham formula · Not investment advice</span>
                 </div>
 
-                <div className="grid-3" style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '1px', background: 'var(--border)', marginBottom: '24px' }}>
+                <div className="grid-3" style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '1px', background: 'var(--ws-border)', marginBottom: '24px' }}>
                   {[
                     { label: 'CONSERVATIVE', g: data.epsCagr !== null && !isNaN(data.epsCagr) ? Math.min(+(data.epsCagr * 0.5).toFixed(1), 15) : 3, desc: '50% of 5Y EPS CAGR (max 15%)' },
                     { label: 'BASE', g: data.epsCagr !== null && !isNaN(data.epsCagr) ? Math.min(+Number(data.epsCagr).toFixed(1), 20) : 7, desc: '5Y EPS CAGR historical (max 20%)' },
@@ -1275,19 +1240,19 @@ export default function StockPage({ params }) {
                     const diff = price ? (((intrinsic - price) / price) * 100).toFixed(1) : null;
                     const underval = price ? intrinsic > price : null;
                     return (
-                      <div key={scenario.label} style={{ background: 'var(--bg-1)', padding: '20px' }}>
-                        <div style={{ color: 'var(--text-3)', fontSize: '10px', letterSpacing: '2px', marginBottom: '12px' }}>{scenario.label}</div>
-                        <div style={{ color: 'var(--text-3)', fontSize: '10px', marginBottom: '4px' }}>g = {g}%</div>
-                        <div style={{ fontSize: '32px', fontWeight: 600, color: underval ? 'var(--green)' : 'var(--red)', marginBottom: '4px', letterSpacing: '-1px' }}>
+                      <div key={scenario.label} style={{ background: 'var(--ws-bg-1)', padding: '20px' }}>
+                        <div style={{ color: 'var(--ws-text-3)', fontSize: '10px', letterSpacing: '2px', marginBottom: '12px' }}>{scenario.label}</div>
+                        <div style={{ color: 'var(--ws-text-3)', fontSize: '10px', marginBottom: '4px' }}>g = {g}%</div>
+                        <div style={{ fontSize: '32px', fontWeight: 600, color: underval ? 'var(--ws-accent)' : 'var(--ws-red)', marginBottom: '4px', letterSpacing: '-1px' }}>
                           ${intrinsic}
                         </div>
-                        <div style={{ color: 'var(--text-3)', fontSize: '10px', marginBottom: '12px' }}>{scenario.desc}</div>
+                        <div style={{ color: 'var(--ws-text-3)', fontSize: '10px', marginBottom: '12px' }}>{scenario.desc}</div>
                         {diff !== null && (
-                          <div style={{ borderTop: '1px solid var(--border)', paddingTop: '10px' }}>
-                            <div style={{ color: underval ? 'var(--green)' : 'var(--red)', fontSize: '13px', fontWeight: 600 }}>
-                              {underval ? '▲' : '▼'} {Math.abs(diff)}% {underval ? 'UPSIDE' : 'DOWNSIDE'}
+                          <div style={{ borderTop: '1px solid var(--ws-border)', paddingTop: '10px' }}>
+                            <div style={{ color: underval ? 'var(--ws-accent)' : 'var(--ws-red)', fontSize: '13px', fontWeight: 600 }}>
+                              {underval ? '+' : '-'} {Math.abs(diff)}% {underval ? 'UPSIDE' : 'DOWNSIDE'}
                             </div>
-                            <div style={{ color: 'var(--text-3)', fontSize: '10px', marginTop: '2px' }}>
+                            <div style={{ color: 'var(--ws-text-3)', fontSize: '10px', marginTop: '2px' }}>
                               vs current price ${price?.toFixed(2)}
                             </div>
                           </div>
@@ -1297,15 +1262,15 @@ export default function StockPage({ params }) {
                   })}
                 </div>
 
-                <div style={{ color: 'var(--text-3)', fontSize: '10px', letterSpacing: '1px' }}>
+                <div style={{ color: 'var(--ws-text-3)', fontSize: '10px', letterSpacing: '1px' }}>
                   GRAHAM FORMULA (1962) · EPS FROM SEC EDGAR & FINNHUB · GROWTH FROM SEC EDGAR · NOT INVESTMENT ADVICE
                 </div>
               </>
             ) : (
-              <div style={{ background: 'var(--bg-1)', border: '1px solid var(--border)', padding: '40px', textAlign: 'center' }}>
-                <div style={{ color: 'var(--accent)', fontSize: '24px', fontWeight: 600, letterSpacing: '4px', marginBottom: '8px' }}>N/A</div>
-                <div style={{ color: 'var(--text-2)', fontSize: '12px', marginBottom: '4px' }}>EPS DATA NOT AVAILABLE</div>
-                <div style={{ color: 'var(--text-3)', fontSize: '11px' }}>Graham formula requires EPS data from Alpha Vantage.</div>
+              <div style={{ background: 'var(--ws-bg-1)', border: '1px solid var(--ws-border)', padding: '40px', textAlign: 'center' }}>
+                <div style={{ color: 'var(--ws-accent)', fontSize: '24px', fontWeight: 600, letterSpacing: '4px', marginBottom: '8px' }}>N/A</div>
+                <div style={{ color: 'var(--ws-text-2)', fontSize: '12px', marginBottom: '4px' }}>EPS DATA NOT AVAILABLE</div>
+                <div style={{ color: 'var(--ws-text-3)', fontSize: '11px' }}>Graham formula requires EPS data from Alpha Vantage.</div>
               </div>
             )}
           </div>

@@ -1,16 +1,27 @@
 import { supabase } from '../../../lib/supabase';
 
+// Tickers only get re-fetched when someone actually views them (no bulk daily cron), so
+// stock_cache rows sit at wildly different ages. Without this filter, "today's movers"
+// would mix a % change from 5 minutes ago with one from last week. 24h matches the same
+// freshness window /api/stock already treats as "current" (see CACHE_HOURS there).
+const MAX_CACHE_AGE_HOURS = 24;
+
 export async function GET() {
   try {
     const { data: rows } = await supabase
       .from('stock_cache')
-      .select('ticker, data')
+      .select('ticker, data, updated_at')
       .not('data->currentPrice', 'is', null)
       .not('data->priceChangePct', 'is', null);
 
-    if (!rows?.length) return Response.json({ gainers: [], losers: [], topRoic: [], topFcfYield: [], topRevGrowth: [], topScore: [] });
+    if (!rows?.length) return Response.json({ gainers: [], losers: [], topRoic: [], topFcfYield: [], topRevGrowth: [], topScore: [], bigCapMovers: [] });
 
-    const stocks = rows.map(r => ({
+    const freshRows = rows.filter(r => {
+      const hoursOld = (Date.now() - new Date(r.updated_at).getTime()) / (1000 * 60 * 60);
+      return hoursOld < MAX_CACHE_AGE_HOURS;
+    });
+
+    const stocks = freshRows.map(r => ({
       ticker: r.ticker,
       name: r.data.name,
       sector: r.data.sector,
@@ -54,6 +65,14 @@ export async function GET() {
   .filter(s => max === null || Math.abs(s[key]) <= max)
   .sort((a, b) => dir === 'desc' ? b[key] - a[key] : a[key] - b[key]);
 
+    // Big caps (>$10B) ranked by size of today's move either direction — a 5% swing in a
+    // mega-cap moves the market more than the same swing in an illiquid micro-cap.
+    const BIG_CAP_THRESHOLD = 10e9;
+    const bigCapMovers = withScore
+      .filter(s => s.marketCap != null && s.marketCap >= BIG_CAP_THRESHOLD && s.priceChangePct != null)
+      .sort((a, b) => Math.abs(b.priceChangePct) - Math.abs(a.priceChangePct))
+      .slice(0, 20);
+
     return Response.json({
       gainers: sorted(withScore, 'priceChangePct').slice(0, 20),
       losers: sorted(withScore, 'priceChangePct', 'asc').slice(0, 20),
@@ -61,9 +80,10 @@ export async function GET() {
       topFcfYield: sorted(withScore, 'fcfYield', 'desc', 50).slice(0, 10),
       topRevGrowth: sorted(withScore, 'revGrowth', 'desc', 300).slice(0, 10),
       topScore: sorted(withScore, 'score').slice(0, 10),
+      bigCapMovers,
     });
   } catch (e) {
     console.error(e);
-    return Response.json({ gainers: [], losers: [], topRoic: [], topFcfYield: [], topRevGrowth: [], topScore: [] });
+    return Response.json({ gainers: [], losers: [], topRoic: [], topFcfYield: [], topRevGrowth: [], topScore: [], bigCapMovers: [] });
   }
 }

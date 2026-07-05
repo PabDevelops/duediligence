@@ -15,7 +15,7 @@ export default function CookieBanner() {
   if (!visible) return null;
 
   return (
-    <div style={{ position: 'fixed', bottom: 0, left: 0, right: 0, background: 'rgba(15,17,25,0.95)', backdropFilter: 'blur(20px)', borderTop: '1px solid var(--border)', padding: '16px 24px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', zIndex: 100, gap: '24px', fontFamily: 'Nunito, sans-serif' }}>
+    <div style={{ position: 'fixed', bottom: 0, left: 0, right: 0, background: 'rgba(15,17,25,0.95)', backdropFilter: 'blur(20px)', borderTop: '1px solid var(--border)', padding: '16px 24px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', zIndex: 100, gap: '24px', fontFamily: 'Inter, sans-serif' }}>
       <div style={{ fontSize: '13px', color: 'var(--text-2)', lineHeight: 1.6, maxWidth: '700px' }}>
         We use cookies to improve your experience and analyse site usage. By continuing you agree to our{' '}
         <a href="/privacy" style={{ color: 'var(--accent)', textDecoration: 'none', fontWeight: 600 }}>Privacy Policy</a>

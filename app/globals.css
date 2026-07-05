@@ -1,34 +1,76 @@
-@import url('https://fonts.googleapis.com/css2?family=Nunito:wght@400;500;600;700;800;900&family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@500;700&display=swap');
 @import "tailwindcss";
 
 :root {
-  --bg: #08090f;
-  --bg-1: #0f1119;
-  --bg-2: #161923;
-  --bg-3: #1e2230;
-  --border: #ffffff0f;
-  --border-2: #ffffff18;
-  --text: #f0f1f5;
-  --text-2: #b0b7c9;
-  --text-3: #6b7491;
-  --accent: #a78bfa;
-  --accent-2: #60a5fa;
-  --accent-dim: #a78bfa14;
-  --green: #34d399;
-  --green-dim: #34d39918;
-  --amber: #fbbf24;
-  --amber-dim: #fbbf2418;
-  --red: #f87171;
-  --red-dim: #f8717118;
-  --blue: #60a5fa;
-  --glow: 0 0 80px #a78bfa22;
-  --glow-sm: 0 0 24px #a78bfa18;
+  /* Marketing theme — matches the app's own --ws-* light palette below, so
+     the landing and other public pages (about, blog, pricing, privacy, terms)
+     look like the same product as the workspace, not a separate dark site. */
+  --bg: #f8f9fa;
+  --bg-1: #ffffff;
+  --bg-2: #f1f3f5;
+  --bg-3: #e9ecef;
+  --border: #e5e7eb;
+  --border-2: #d1d5db;
+  --text: #1f2937;
+  --text-2: #4b5563;
+  --text-3: #9ca3af;
+  --accent: #0f766e;
+  --accent-2: #2563eb;
+  --accent-dim: rgba(15, 118, 110, 0.08);
+  --green: #059669;
+  --green-dim: rgba(5, 150, 105, 0.12);
+  --amber: #d97706;
+  --amber-dim: rgba(217, 119, 6, 0.12);
+  --red: #dc2626;
+  --red-dim: rgba(220, 38, 38, 0.10);
+  --blue: #2563eb;
+  --glow: 0 0 80px rgba(15, 118, 110, 0.15);
+  --glow-sm: 0 0 24px rgba(15, 118, 110, 0.12);
   --radius: 16px;
   --radius-sm: 10px;
   --radius-lg: 24px;
-  --font-display: 'Nunito', sans-serif;
-  --font-body: 'Nunito', sans-serif;
+  --font-display: 'Inter', sans-serif;
+  --font-body: 'Inter', sans-serif;
   --font-mono: 'JetBrains Mono', monospace;
+
+  /* Workspace (light) theme — scoped to .workspace, does not affect the tokens above */
+  --ws-bg: #f8f9fa;
+  --ws-bg-1: #ffffff;
+  --ws-bg-2: #f1f3f5;
+  --ws-text: #1f2937;
+  --ws-text-2: #4b5563;
+  --ws-text-3: #9ca3af;
+  --ws-border: #e5e7eb;
+  --ws-accent: #0f766e;
+  --ws-accent-dim: rgba(15, 118, 110, 0.08);
+  --ws-red: #ef4444;
+  --ws-radius: 12px;
+  --ws-sidebar-width: 240px;
+}
+
+.workspace {
+  background: var(--ws-bg);
+  color: var(--ws-text);
+  font-family: 'Inter', sans-serif;
+  min-height: 100vh;
+  transition: background 0.2s ease, color 0.2s ease, border-color 0.2s ease;
+}
+.workspace.dark,
+html[data-ws-theme="dark"] .workspace {
+  --ws-bg: #0b0d13;
+  --ws-bg-1: #111420;
+  --ws-bg-2: #191c2b;
+  --ws-text: #f3f4f6;
+  --ws-text-2: #a3aed0;
+  --ws-text-3: #5f6b8b;
+  --ws-border: #1f2538;
+  --ws-accent: #14b8a6;
+  --ws-accent-dim: rgba(20, 184, 166, 0.15);
+  --ws-red: #f87171;
+}
+.workspace * {
+  font-family: inherit;
+  transition: background-color 0.2s ease, border-color 0.2s ease, color 0.2s ease;
 }
 
 * {
@@ -41,7 +83,7 @@
 html, body {
   background: var(--bg);
   color: var(--text);
-  font-family: 'Nunito', sans-serif;
+  font-family: 'Inter', sans-serif;
   font-size: 14px;
   line-height: 1.6;
   -webkit-font-smoothing: antialiased;
@@ -49,12 +91,12 @@ html, body {
 
 /* Unified button style */
 .btn-primary {
-  background: linear-gradient(135deg, #a78bfa, #60a5fa);
-  color: #000;
+  background: linear-gradient(135deg, #0f766e, #2563eb);
+  color: #fff;
   border: none;
   padding: 12px 28px;
   border-radius: 12px;
-  font-family: 'Nunito', sans-serif;
+  font-family: 'Inter', sans-serif;
   font-size: 14px;
   font-weight: 600;
   cursor: pointer;
@@ -65,15 +107,15 @@ html, body {
 }
 .btn-primary:hover {
   opacity: 0.9;
-  box-shadow: 0 0 24px rgba(167, 139, 250, 0.35);
+  box-shadow: 0 0 24px rgba(15, 118, 110, 0.35);
 }
 .btn-secondary {
-  background: rgba(255,255,255,0.06);
+  background: rgba(15, 23, 42, 0.04);
   color: var(--text-2);
-  border: 1px solid rgba(255,255,255,0.1);
+  border: 1px solid rgba(15, 23, 42, 0.1);
   padding: 12px 28px;
   border-radius: 12px;
-  font-family: 'Nunito', sans-serif;
+  font-family: 'Inter', sans-serif;
   font-size: 14px;
   font-weight: 500;
   cursor: pointer;
@@ -83,7 +125,7 @@ html, body {
   display: inline-block;
 }
 .btn-secondary:hover {
-  border-color: rgba(167,139,250,0.4);
+  border-color: rgba(15, 118, 110, 0.4);
   color: var(--accent);
 }
 
@@ -117,29 +159,29 @@ html, body {
 
 /* Glass card — landing only */
 .glass {
-  background: rgba(255, 255, 255, 0.05);
+  background: rgba(15, 23, 42, 0.03);
   backdrop-filter: blur(24px);
   -webkit-backdrop-filter: blur(24px);
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(15, 23, 42, 0.08);
   border-radius: 20px;
   transition: border-color 0.25s, box-shadow 0.25s;
 }
 .glass:hover {
-  border-color: rgba(167, 139, 250, 0.3);
-  box-shadow: 0 0 40px rgba(167, 139, 250, 0.12), inset 0 1px 0 rgba(255,255,255,0.08);
+  border-color: rgba(15, 118, 110, 0.3);
+  box-shadow: 0 0 40px rgba(15, 118, 110, 0.1), inset 0 1px 0 rgba(255,255,255,0.5);
 }
 .glass-strong {
-  background: rgba(255, 255, 255, 0.07);
+  background: rgba(15, 23, 42, 0.045);
   backdrop-filter: blur(40px);
   -webkit-backdrop-filter: blur(40px);
-  border: 1px solid rgba(255, 255, 255, 0.12);
+  border: 1px solid rgba(15, 23, 42, 0.1);
   border-radius: 20px;
-  box-shadow: inset 0 1px 0 rgba(255,255,255,0.1);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.5);
 }
 
 /* Gradient text utility */
 .gradient-text {
-  background: linear-gradient(135deg, #a78bfa, #60a5fa);
+  background: linear-gradient(135deg, #0f766e, #2563eb);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
@@ -157,7 +199,7 @@ html, body {
   transform: translate(-50%, -50%);
   width: 600px;
   height: 300px;
-  background: radial-gradient(ellipse, #a78bfa12 0%, transparent 70%);
+  background: radial-gradient(ellipse, rgba(15, 118, 110, 0.1) 0%, transparent 70%);
   pointer-events: none;
   z-index: 0;
 }
@@ -176,12 +218,12 @@ html, body {
   justify-content: space-between;
   position: sticky;
   top: 0;
-  background: rgba(8,9,15,0.85);
+  background: rgba(255,255,255,0.85);
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
   z-index: 10;
   gap: 12px;
-  font-family: 'Nunito', sans-serif;
+  font-family: 'Inter', sans-serif;
 }
 
 .topbar-logo {
@@ -189,7 +231,7 @@ html, body {
   display: flex;
   align-items: center;
   flex-shrink: 0;
-  font-family: 'Nunito', sans-serif;
+  font-family: 'Inter', sans-serif;
   font-weight: 900;
   font-size: 20px;
   letter-spacing: -0.5px;
@@ -197,11 +239,11 @@ html, body {
 }
 
 .topbar-search {
-  background: rgba(255,255,255,0.06);
+  background: rgba(15, 23, 42, 0.04);
   border: 1px solid var(--border);
   border-radius: 10px;
   color: var(--text);
-  font-family: 'Nunito', sans-serif;
+  font-family: 'Inter', sans-serif;
   font-size: 13px;
   padding: 6px 14px;
   width: 180px;
@@ -213,25 +255,25 @@ html, body {
 .topbar-search-mobile { width: 100%; font-size: 14px; padding: 7px 12px; }
 
 .topbar-discover {
-  background: rgba(167,139,250,0.1);
-  border: 1px solid rgba(167,139,250,0.25);
+  background: rgba(15, 118, 110, 0.08);
+  border: 1px solid rgba(15, 118, 110, 0.25);
   border-radius: 10px;
   color: var(--accent);
-  font-family: 'Nunito', sans-serif;
+  font-family: 'Inter', sans-serif;
   font-size: 13px;
   font-weight: 600;
   padding: 6px 14px;
   cursor: pointer;
   transition: background 0.2s;
 }
-.topbar-discover:hover { background: rgba(167,139,250,0.2); }
+.topbar-discover:hover { background: rgba(15, 118, 110, 0.16); }
 
 .topbar-nav-link {
   color: var(--text-3);
   text-decoration: none;
   font-size: 13px;
   font-weight: 500;
-  font-family: 'Nunito', sans-serif;
+  font-family: 'Inter', sans-serif;
   transition: color 0.15s;
 }
 .topbar-nav-link:hover,
@@ -251,7 +293,7 @@ html, body {
   overflow-y: auto;
   z-index: 999;
   margin-top: 4px;
-  box-shadow: 0 8px 32px rgba(0,0,0,0.4);
+  box-shadow: 0 8px 32px rgba(15,23,42,0.12);
 }
 .suggestion-item {
   padding: 10px 14px;
@@ -260,7 +302,7 @@ html, body {
   align-items: center;
   gap: 8px;
   border-bottom: 1px solid var(--border);
-  font-family: 'Nunito', sans-serif;
+  font-family: 'Inter', sans-serif;
   transition: background 0.15s;
 }
 .suggestion-item:hover { background: var(--bg-2); }
@@ -271,20 +313,20 @@ html, body {
 
 /* Pro badge */
 .pro-badge {
-  background: linear-gradient(135deg, #a78bfa, #60a5fa);
-  color: #000;
+  background: linear-gradient(135deg, #0f766e, #2563eb);
+  color: #fff;
   font-size: 10px;
   font-weight: 700;
   padding: 2px 8px;
   border-radius: 20px;
-  font-family: 'Nunito', sans-serif;
+  font-family: 'Inter', sans-serif;
 }
 
 /* Mobile menu overlay */
 .topbar-mobile-menu {
   display: flex;
   flex-direction: column;
-  background: rgba(8,9,15,0.95);
+  background: rgba(255,255,255,0.95);
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
   border-bottom: 1px solid var(--border);
@@ -299,7 +341,7 @@ html, body {
   font-size: 15px;
   font-weight: 500;
   border-bottom: 1px solid var(--border);
-  font-family: 'Nunito', sans-serif;
+  font-family: 'Inter', sans-serif;
   transition: color 0.15s;
 }
 .topbar-mobile-link:last-child { border-bottom: none; }
@@ -351,6 +393,14 @@ html, body {
   .watchlist-widget {
     display: none !important;
   }
+  .landing-feature-row {
+    grid-template-columns: 1fr !important;
+    gap: 24px !important;
+    padding: 36px 0 !important;
+  }
+  .landing-feature-text, .landing-feature-mockup {
+    order: initial !important;
+  }
 }
 
 @media (min-width: 769px) {
@@ -384,7 +434,7 @@ html, body {
   gap: 8px;
   flex-shrink: 0;
   padding-left: 24px;
-  border-left: 1px solid rgba(255, 255, 255, 0.08);
+  border-left: 1px solid var(--ws-border);
 }
 
 .stock-overview-grid {
@@ -401,7 +451,7 @@ html, body {
   }
   .stock-hero-score {
     border-left: none;
-    border-top: 1px solid rgba(255, 255, 255, 0.08);
+    border-top: 1px solid var(--ws-border);
     padding-left: 0;
     padding-top: 16px;
     flex-direction: column;
