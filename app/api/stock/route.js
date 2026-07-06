@@ -42,6 +42,281 @@ async function fetchYahooQuote(ticker) {
   };
 }
 
+// Yahoo's quoteSummary/fundamentals-timeseries endpoints require a session cookie + crumb
+// (unauthenticated calls return "Invalid Crumb"). Cached per warm serverless instance.
+let yahooAuthCache = null;
+async function getYahooAuth() {
+  if (yahooAuthCache && Date.now() < yahooAuthCache.expires) return yahooAuthCache;
+  const UA = 'Mozilla/5.0';
+  const r1 = await fetch('https://fc.yahoo.com', { headers: { 'User-Agent': UA }, redirect: 'manual' });
+  const cookie = (r1.headers.get('set-cookie') || '').split(';')[0];
+  const r2 = await fetch('https://query1.finance.yahoo.com/v1/test/getcrumb', {
+    headers: { 'User-Agent': UA, Cookie: cookie },
+  });
+  const crumb = await r2.text();
+  if (!crumb || crumb.includes('<')) throw new Error('Failed to obtain Yahoo crumb');
+  yahooAuthCache = { cookie, crumb, expires: Date.now() + 50 * 60 * 1000 };
+  return yahooAuthCache;
+}
+
+const YAHOO_TS_TYPES = [
+  'annualTotalRevenue', 'annualNetIncomeCommonStockholders', 'annualNetIncome', 'annualOperatingIncome',
+  'annualOperatingCashFlow', 'annualFreeCashFlow', 'annualTotalAssets', 'annualStockholdersEquity',
+  'annualTotalDebt', 'annualLongTermDebt', 'annualCashAndCashEquivalents', 'annualGrossProfit',
+  'annualBasicEPS', 'annualDilutedEPS', 'annualBasicAverageShares', 'annualDilutedAverageShares',
+  'annualResearchAndDevelopment', 'annualCostOfRevenue', 'annualSellingGeneralAndAdministration',
+  'annualPretaxIncome', 'annualTaxProvision', 'annualInterestExpense', 'annualCapitalExpenditure',
+  'annualInventory', 'annualAccountsReceivable', 'annualAccountsPayable', 'annualStockBasedCompensation',
+  'annualDepreciationAndAmortization', 'annualCommonStockDividendPaid', 'annualInvestingCashFlow',
+  'annualFinancingCashFlow', 'annualCurrentAssets', 'annualCurrentLiabilities',
+  'annualTotalLiabilitiesNetMinorityInterest', 'annualRetainedEarnings',
+].join(',');
+
+// Reads a fundamentals-timeseries response for the first candidate type with data,
+// returning up to the 6 most recent years in the same { year, val } shape as buildHistory().
+function tsSeries(tsJson, ...candidateTypes) {
+  const results = tsJson?.timeseries?.result || [];
+  for (const type of candidateTypes) {
+    const entry = results.find(r => r.meta?.type?.[0] === type);
+    const arr = entry?.[type];
+    if (arr && arr.some(x => x?.reportedValue?.raw != null)) {
+      return arr
+        .filter(x => x?.reportedValue?.raw != null)
+        .map(x => ({ year: x.asOfDate.slice(0, 4), val: x.reportedValue.raw }))
+        .slice(-6);
+    }
+  }
+  return [];
+}
+
+// Same ratio/margin/history math as the SEC-EDGAR path below, but operating on
+// ascending { year, val } arrays (latest = last element) instead of raw XBRL facts.
+function computeDerivedFinancials(h) {
+  const latest = (arr) => arr.length ? arr[arr.length - 1].val : null;
+  const prev = (arr) => arr.length > 1 ? arr[arr.length - 2].val : null;
+
+  const revVal = latest(h.revHistory), revPrev = prev(h.revHistory);
+  const niVal = latest(h.niHistory);
+  const oiVal = latest(h.oiHistory);
+  const fcfVal = latest(h.fcfHistory);
+  const assetsVal = latest(h.assetsHistory);
+  const equityVal = latest(h.equityHistory);
+  const debtVal = latest(h.debtHistory);
+  const cashVal = latest(h.cashHistory);
+  const rdVal = latest(h.rdHistory);
+  const cogsVal = latest(h.cogsHistory);
+  const sgaVal = latest(h.sgaHistory);
+  const ebtVal = latest(h.ebtHistory);
+  const taxVal = latest(h.taxHistory);
+  const interestVal = latest(h.interestHistory);
+  const sharesBasicVal = latest(h.sharesBasicHistory);
+  const sharesDilutedVal = latest(h.sharesDilutedHistory);
+  const currentAssetsVal = latest(h.currentAssetsHistory);
+  const currentLiabilitiesVal = latest(h.currentLiabilitiesHistory);
+  const totalLiabilitiesVal = latest(h.totalLiabilitiesHistory);
+  const retainedEarningsVal = latest(h.retainedEarningsHistory);
+  const capexVal = latest(h.capexHistory);
+  const inventoryVal = latest(h.inventoryHistory);
+  const receivablesVal = latest(h.receivablesHistory);
+  const payablesVal = latest(h.payablesHistory);
+  const sbcVal = latest(h.sbcHistory);
+  const daVal = latest(h.daHistory);
+  const dividendsPaidVal = latest(h.dividendsPaidHistory);
+  const investingCFVal = latest(h.investingCFHistory);
+  const financingCFVal = latest(h.financingCFHistory);
+
+  const dso = receivablesVal && revVal ? +((receivablesVal / revVal) * 365).toFixed(1) : null;
+  const dio = inventoryVal && cogsVal ? +((inventoryVal / cogsVal) * 365).toFixed(1) : null;
+  const dpo = payablesVal && cogsVal ? +((payablesVal / cogsVal) * 365).toFixed(1) : null;
+  const ccc = dso !== null && dio !== null && dpo !== null ? +(dso + dio - dpo).toFixed(1) : null;
+  const inventoryTurnover = cogsVal && inventoryVal ? +(cogsVal / inventoryVal).toFixed(2) : null;
+
+  const gpVal = latest(h.gpHistory);
+  const opMargin = revVal && oiVal ? +((oiVal / revVal) * 100).toFixed(1) : null;
+  const netMargin = revVal && niVal ? +((niVal / revVal) * 100).toFixed(1) : null;
+  const grossMargin = revVal && gpVal ? +((gpVal / revVal) * 100).toFixed(1) : null;
+  const revGrowth = revVal && revPrev ? +(((revVal - revPrev) / Math.abs(revPrev)) * 100).toFixed(1) : null;
+  const roe = equityVal && niVal ? +((niVal / equityVal) * 100).toFixed(1) : null;
+  const roa = assetsVal && niVal ? +((niVal / assetsVal) * 100).toFixed(1) : null;
+  const investedCapital = (equityVal ?? 0) + (debtVal ?? 0);
+  const roic = investedCapital > 0 && oiVal !== null ? +((oiVal / investedCapital) * 100).toFixed(1) : null;
+  const debtToEquity = equityVal && debtVal ? +(debtVal / equityVal).toFixed(2) : null;
+  const netDebt = (debtVal ?? 0) - (cashVal ?? 0);
+
+  const marginHistory = h.revHistory.map((r, i) => {
+    const oi = h.oiHistory[i];
+    if (!oi || !r.val) return { year: r.year, margin: null };
+    return { year: r.year, margin: +((oi.val / r.val) * 100).toFixed(1) };
+  });
+
+  const sharesLatest = h.sharesHistory[h.sharesHistory.length - 1]?.val;
+  const sharesOldest = h.sharesHistory[0]?.val;
+  const shareDilution = sharesLatest && sharesOldest
+    ? +(((sharesLatest - sharesOldest) / sharesOldest) * 100).toFixed(1)
+    : null;
+
+  const epsHistory = h.niHistory.map((ni, i) => {
+    const sh = h.sharesHistory[i];
+    if (!ni || !sh || !sh.val) return null;
+    return { year: ni.year, eps: +(ni.val / sh.val).toFixed(2) };
+  }).filter(Boolean);
+
+  const epsOldest = epsHistory[0]?.eps;
+  const epsLatest = epsHistory[epsHistory.length - 1]?.eps;
+  const epsYears = epsHistory.length > 1 ? epsHistory.length - 1 : 1;
+  const epsCagrRaw = epsOldest && epsLatest && epsOldest > 0 && epsLatest > 0
+    ? +(((Math.pow(epsLatest / epsOldest, 1 / epsYears)) - 1) * 100).toFixed(1)
+    : null;
+  const epsCagr = epsCagrRaw !== null && epsCagrRaw > 0 && epsCagrRaw < 50
+    ? epsCagrRaw
+    : revGrowth !== null && revGrowth > 0 ? Math.min(revGrowth, 20) : null;
+
+  return {
+    revVal, niVal, oiVal, fcfVal, assetsVal, equityVal, debtVal, cashVal, gpVal, rdVal,
+    cogsVal, sgaVal, ebtVal, taxVal, interestVal, sharesBasicVal, sharesDilutedVal,
+    currentAssetsVal, currentLiabilitiesVal, totalLiabilitiesVal, retainedEarningsVal,
+    capexVal, inventoryVal, receivablesVal, payablesVal, sbcVal, daVal, dividendsPaidVal,
+    investingCFVal, financingCFVal,
+    dso, dio, dpo, ccc, inventoryTurnover, opMargin, netMargin, grossMargin, revGrowth,
+    roe, roa, roic, debtToEquity, netDebt, marginHistory, shareDilution, epsHistory, epsCagr,
+  };
+}
+
+// Full fundamentals for tickers not covered by SEC EDGAR (non-US filers), sourced from
+// Yahoo Finance's quoteSummary + fundamentals-timeseries endpoints (unofficial, needs the
+// crumb/cookie above). Returns null if Yahoo has no usable financial statement data at all,
+// so the caller can fall back to a price-only quote.
+async function fetchYahooFundamentals(ticker) {
+  try {
+    const auth = await getYahooAuth();
+    const headers = { 'User-Agent': 'Mozilla/5.0', Cookie: auth.cookie };
+    const now = Math.floor(Date.now() / 1000);
+    const tenYearsAgo = now - 10 * 365 * 24 * 3600;
+
+    const [qsRes, tsRes] = await Promise.all([
+      fetch(`https://query2.finance.yahoo.com/v10/finance/quoteSummary/${ticker}?modules=assetProfile,summaryDetail,defaultKeyStatistics,financialData&crumb=${encodeURIComponent(auth.crumb)}`, { headers }),
+      fetch(`https://query2.finance.yahoo.com/ws/fundamentals-timeseries/v1/finance/timeseries/${ticker}?symbol=${ticker}&type=${YAHOO_TS_TYPES}&period1=${tenYearsAgo}&period2=${now}&crumb=${encodeURIComponent(auth.crumb)}`, { headers }),
+    ]);
+
+    const qs = await qsRes.json();
+    const ts = await tsRes.json();
+    const r = qs?.quoteSummary?.result?.[0];
+    if (!r) return null;
+
+    const profile = r.assetProfile || {};
+    const summary = r.summaryDetail || {};
+    const keyStats = r.defaultKeyStatistics || {};
+    const fin = r.financialData || {};
+    const num = (m) => (m && m.raw != null ? m.raw : null);
+
+    const histories = {
+      revHistory: tsSeries(ts, 'annualTotalRevenue'),
+      niHistory: tsSeries(ts, 'annualNetIncomeCommonStockholders', 'annualNetIncome'),
+      oiHistory: tsSeries(ts, 'annualOperatingIncome'),
+      fcfHistory: tsSeries(ts, 'annualOperatingCashFlow'),
+      assetsHistory: tsSeries(ts, 'annualTotalAssets'),
+      equityHistory: tsSeries(ts, 'annualStockholdersEquity'),
+      debtHistory: tsSeries(ts, 'annualTotalDebt', 'annualLongTermDebt'),
+      cashHistory: tsSeries(ts, 'annualCashAndCashEquivalents'),
+      gpHistory: tsSeries(ts, 'annualGrossProfit'),
+      rdHistory: tsSeries(ts, 'annualResearchAndDevelopment'),
+      cogsHistory: tsSeries(ts, 'annualCostOfRevenue'),
+      sgaHistory: tsSeries(ts, 'annualSellingGeneralAndAdministration'),
+      ebtHistory: tsSeries(ts, 'annualPretaxIncome'),
+      taxHistory: tsSeries(ts, 'annualTaxProvision'),
+      interestHistory: tsSeries(ts, 'annualInterestExpense'),
+      sharesHistory: tsSeries(ts, 'annualDilutedAverageShares', 'annualBasicAverageShares'),
+      sharesBasicHistory: tsSeries(ts, 'annualBasicAverageShares'),
+      sharesDilutedHistory: tsSeries(ts, 'annualDilutedAverageShares'),
+      capexHistory: tsSeries(ts, 'annualCapitalExpenditure'),
+      investingCFHistory: tsSeries(ts, 'annualInvestingCashFlow'),
+      financingCFHistory: tsSeries(ts, 'annualFinancingCashFlow'),
+      currentAssetsHistory: tsSeries(ts, 'annualCurrentAssets'),
+      currentLiabilitiesHistory: tsSeries(ts, 'annualCurrentLiabilities'),
+      totalLiabilitiesHistory: tsSeries(ts, 'annualTotalLiabilitiesNetMinorityInterest'),
+      inventoryHistory: tsSeries(ts, 'annualInventory'),
+      receivablesHistory: tsSeries(ts, 'annualAccountsReceivable'),
+      payablesHistory: tsSeries(ts, 'annualAccountsPayable'),
+      sbcHistory: tsSeries(ts, 'annualStockBasedCompensation'),
+      daHistory: tsSeries(ts, 'annualDepreciationAndAmortization'),
+      dividendsPaidHistory: tsSeries(ts, 'annualCommonStockDividendPaid'),
+      retainedEarningsHistory: tsSeries(ts, 'annualRetainedEarnings'),
+    };
+
+    if (histories.revHistory.length === 0 && histories.niHistory.length === 0) return null;
+
+    const d = computeDerivedFinancials(histories);
+
+    const currentPrice = num(fin.currentPrice) ?? num(summary.regularMarketPreviousClose) ?? null;
+    const sharesOutstanding = num(keyStats.sharesOutstanding);
+    const marketCap = num(summary.marketCap) ?? (sharesOutstanding && currentPrice ? currentPrice * sharesOutstanding : null);
+    const debtToEquity = num(fin.debtToEquity) != null ? +(num(fin.debtToEquity) / 100).toFixed(2) : d.debtToEquity;
+
+    return {
+      sector: profile.sector || null,
+      industry: profile.industry || null,
+      description: profile.longBusinessSummary || null,
+      employees: profile.fullTimeEmployees || null,
+      weburl: profile.website || null,
+      cik: null,
+
+      revVal: d.revVal, niVal: d.niVal, oiVal: d.oiVal, fcfVal: d.fcfVal,
+      assetsVal: d.assetsVal, equityVal: d.equityVal, debtVal: d.debtVal, cashVal: d.cashVal,
+      sharesVal: histories.sharesHistory.length ? histories.sharesHistory[histories.sharesHistory.length - 1].val : null,
+      rdVal: d.rdVal, cogsVal: d.cogsVal, sgaVal: d.sgaVal, ebtVal: d.ebtVal, taxVal: d.taxVal,
+      interestVal: d.interestVal, sharesBasicVal: d.sharesBasicVal, sharesDilutedVal: d.sharesDilutedVal,
+      currentAssetsVal: d.currentAssetsVal, currentLiabilitiesVal: d.currentLiabilitiesVal,
+      totalLiabilitiesVal: d.totalLiabilitiesVal, retainedEarningsVal: d.retainedEarningsVal,
+      capexVal: d.capexVal, investingCFVal: d.investingCFVal, financingCFVal: d.financingCFVal,
+      inventoryVal: d.inventoryVal, receivablesVal: d.receivablesVal, payablesVal: d.payablesVal,
+      sbcVal: d.sbcVal, dividendsPaidVal: d.dividendsPaidVal,
+      dso: d.dso, dio: d.dio, dpo: d.dpo, ccc: d.ccc, inventoryTurnover: d.inventoryTurnover,
+
+      opMargin: d.opMargin ?? (num(fin.operatingMargins) != null ? +(num(fin.operatingMargins) * 100).toFixed(1) : null),
+      netMargin: d.netMargin ?? (num(fin.profitMargins) != null ? +(num(fin.profitMargins) * 100).toFixed(1) : null),
+      grossMargin: d.grossMargin ?? (num(fin.grossMargins) != null ? +(num(fin.grossMargins) * 100).toFixed(1) : null),
+      revGrowth: d.revGrowth ?? (num(fin.revenueGrowth) != null ? +(num(fin.revenueGrowth) * 100).toFixed(1) : null),
+      roe: d.roe ?? (num(fin.returnOnEquity) != null ? +(num(fin.returnOnEquity) * 100).toFixed(1) : null),
+      roa: d.roa ?? (num(fin.returnOnAssets) != null ? +(num(fin.returnOnAssets) * 100).toFixed(1) : null),
+      roic: d.roic,
+      debtToEquity,
+
+      revHistory: histories.revHistory, niHistory: histories.niHistory,
+      fcfHistory: histories.fcfHistory, oiHistory: histories.oiHistory,
+      sharesHistory: histories.sharesHistory, gpHistory: histories.gpHistory,
+      marginHistory: d.marginHistory, shareDilution: d.shareDilution,
+      cogsHistory: histories.cogsHistory, sgaHistory: histories.sgaHistory,
+      rdHistory: histories.rdHistory, ebtHistory: histories.ebtHistory, taxHistory: histories.taxHistory,
+      sharesBasicHistory: histories.sharesBasicHistory, sharesDilutedHistory: histories.sharesDilutedHistory,
+      currentAssetsHistory: histories.currentAssetsHistory,
+      currentLiabilitiesHistory: histories.currentLiabilitiesHistory,
+      totalLiabilitiesHistory: histories.totalLiabilitiesHistory,
+      capexHistory: histories.capexHistory, operatingCFHistory: histories.fcfHistory,
+      investingCFHistory: histories.investingCFHistory, financingCFHistory: histories.financingCFHistory,
+      epsCagr: d.epsCagr, epsHistory: d.epsHistory,
+
+      eps: num(keyStats.trailingEps) ?? null,
+      pe: num(summary.trailingPE) ?? null,
+      forwardPE: num(summary.forwardPE) ?? num(keyStats.forwardPE) ?? null,
+      marketCap,
+      pfcf: marketCap && d.fcfVal && d.fcfVal > 0 ? +(marketCap / d.fcfVal).toFixed(1) : null,
+      fcfYield: marketCap && d.fcfVal ? +((d.fcfVal / marketCap) * 100).toFixed(2) : null,
+      high52: num(summary.fiftyTwoWeekHigh) ?? null,
+      low52: num(summary.fiftyTwoWeekLow) ?? null,
+      beta: num(keyStats.beta) ?? num(summary.beta) ?? null,
+      sharesOutstanding,
+      dividendYield: num(summary.dividendYield) != null ? +(num(summary.dividendYield) * 100).toFixed(2) : null,
+      netDebt: d.netDebt,
+      evEbitda: num(keyStats.enterpriseToEbitda) ?? null,
+      priceToBook: num(keyStats.priceToBook) ?? null,
+      analystTarget: num(fin.targetMeanPrice) ?? null,
+      operatingCFVal: d.fcfVal,
+    };
+  } catch (e) {
+    return null;
+  }
+}
+
 async function fetchDescription(ticker) {
   if (!AV_KEY) return null;
   try {
@@ -88,31 +363,18 @@ export async function GET(request) {
     
     if (!company && ticker.includes('.')) {
       // International ticker with an exchange suffix (e.g. LLOY.L) — our Finnhub plan
-      // doesn't cover non-US exchanges, so fall back to Yahoo Finance for price only.
-      const yh = await fetchYahooQuote(ticker).catch(() => null);
+      // doesn't cover non-US exchanges, so source price from Yahoo's chart endpoint and,
+      // when available, full financials from Yahoo's quoteSummary/timeseries endpoints.
+      const [yh, fundamentals] = await Promise.all([
+        fetchYahooQuote(ticker).catch(() => null),
+        fetchYahooFundamentals(ticker).catch(() => null),
+      ]);
       if (!yh) return Response.json({ error: 'Ticker no encontrado' }, { status: 404 });
 
-      const result = {
-        name: yh.name,
-        ticker,
-        cik: null,
-        sector: null,
-        industry: null,
-        exchange: yh.exchange,
-        description: null,
-        currentPrice: yh.currentPrice,
-        priceChange: yh.priceChange,
-        priceChangePct: yh.priceChangePct,
-        prevClose: yh.prevClose,
-        marketCap: null,
-        eps: null,
-        pe: null,
-        forwardPE: null,
-        high52: yh.high52,
-        low52: yh.low52,
-        beta: null,
-        sharesOutstanding: null,
-        dividendYield: null,
+      const empty = {
+        cik: null, sector: null, industry: null, description: null,
+        marketCap: null, eps: null, pe: null, forwardPE: null, beta: null,
+        sharesOutstanding: null, dividendYield: null,
         grossMargin: null, opMargin: null, netMargin: null,
         roe: null, roa: null, roic: null,
         revGrowth: null, debtToEquity: null,
@@ -124,10 +386,25 @@ export async function GET(request) {
         cogsHistory: [], sgaHistory: [], rdHistory: [], ebtHistory: [],
         taxHistory: [], sharesBasicHistory: [], sharesDilutedHistory: [],
         capexHistory: [], operatingCFHistory: [], investingCFHistory: [], financingCFHistory: [],
-        epsCagr: null, epsHistory: [],
-        analystTarget: null,
+        epsCagr: null, epsHistory: [], analystTarget: null,
+        evEbitda: null, priceToBook: null,
+      };
+
+      const result = {
+        ...empty,
+        ...(fundamentals || {}),
+        name: yh.name,
+        ticker,
+        exchange: yh.exchange,
+        description: fundamentals?.description || null,
+        currentPrice: yh.currentPrice,
+        priceChange: yh.priceChange,
+        priceChangePct: yh.priceChangePct,
+        prevClose: yh.prevClose,
+        high52: fundamentals?.high52 ?? yh.high52,
+        low52: fundamentals?.low52 ?? yh.low52,
         currency: yh.currency,
-        finnhubFallback: true,
+        finnhubFallback: !fundamentals,
         internationalSource: 'yahoo',
       };
 
@@ -151,16 +428,19 @@ export async function GET(request) {
       const fhProfile = await fhProfileRes.json();
 
       if (!fhProfile.name) {
-        // Finnhub's profile2 is company-oriented and often comes back empty for ETFs/funds —
-        // Yahoo's chart endpoint covers those fine, so try it before giving up.
-        const yh = await fetchYahooQuote(ticker).catch(() => null);
+        // Finnhub's profile2 is company-oriented and often comes back empty for ETFs/funds
+        // and international names without a US listing — try Yahoo (price always, full
+        // financials when Yahoo has statement data) before giving up.
+        const [yh, fundamentals] = await Promise.all([
+          fetchYahooQuote(ticker).catch(() => null),
+          fetchYahooFundamentals(ticker).catch(() => null),
+        ]);
         if (!yh) return Response.json({ error: 'Ticker no encontrado' }, { status: 404 });
 
-        const yhResult = {
-          name: yh.name, ticker, cik: null, sector: null, industry: null, exchange: yh.exchange,
-          description: null, currentPrice: yh.currentPrice, priceChange: yh.priceChange, priceChangePct: yh.priceChangePct,
-          prevClose: yh.prevClose, marketCap: null, eps: null, pe: null, forwardPE: null,
-          high52: yh.high52, low52: yh.low52, beta: null, sharesOutstanding: null, dividendYield: null,
+        const empty = {
+          cik: null, sector: null, industry: null, description: null,
+          marketCap: null, eps: null, pe: null, forwardPE: null, beta: null,
+          sharesOutstanding: null, dividendYield: null,
           grossMargin: null, opMargin: null, netMargin: null, roe: null, roa: null, roic: null,
           revGrowth: null, debtToEquity: null,
           revVal: null, niVal: null, oiVal: null, fcfVal: null,
@@ -172,7 +452,25 @@ export async function GET(request) {
           taxHistory: [], sharesBasicHistory: [], sharesDilutedHistory: [],
           capexHistory: [], operatingCFHistory: [], investingCFHistory: [], financingCFHistory: [],
           epsCagr: null, epsHistory: [], analystTarget: null,
-          currency: yh.currency, finnhubFallback: true, internationalSource: 'yahoo',
+          evEbitda: null, priceToBook: null,
+        };
+
+        const yhResult = {
+          ...empty,
+          ...(fundamentals || {}),
+          name: yh.name,
+          ticker,
+          exchange: yh.exchange,
+          description: fundamentals?.description || null,
+          currentPrice: yh.currentPrice,
+          priceChange: yh.priceChange,
+          priceChangePct: yh.priceChangePct,
+          prevClose: yh.prevClose,
+          high52: fundamentals?.high52 ?? yh.high52,
+          low52: fundamentals?.low52 ?? yh.low52,
+          currency: yh.currency,
+          finnhubFallback: !fundamentals,
+          internationalSource: 'yahoo',
         };
 
         try {

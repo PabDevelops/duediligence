@@ -21,6 +21,9 @@ const fmt = (val) => {
 const fmtP = (v) => v !== null && v !== undefined ? `${v}%` : 'N/A';
 const fmtN = (v, d = 2) => v !== null && v !== undefined ? v.toFixed(d) : 'N/A';
 
+const CURRENCY_SYMBOLS = { USD: '$', EUR: '€', GBP: '£', JPY: '¥', CNY: '¥', CHF: 'CHF ', CAD: 'C$', AUD: 'A$', HKD: 'HK$', INR: '₹', KRW: '₩', SEK: 'kr', NOK: 'kr', DKK: 'kr' };
+const curSym = (code) => !code || code === 'USD' ? '$' : (CURRENCY_SYMBOLS[code] || `${code} `);
+
 const S = {
   card: { background: 'var(--ws-bg-1)', border: '1px solid var(--ws-border)', padding: '16px', marginBottom: '1px' },
   label: { color: 'var(--ws-text-3)', fontSize: '10px', letterSpacing: '2px', marginBottom: '4px' },
@@ -358,7 +361,11 @@ export default function StockPage({ params }) {
           <span style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: '11px', color: 'var(--ws-accent)', fontWeight: 700, letterSpacing: '1px' }}>
             $ traq {ticker}
           </span>
-          {data.finnhubFallback && (
+          {data.internationalSource === 'yahoo' ? (
+            <span style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: '9px', color: 'var(--ws-text-3)', letterSpacing: '1px' }}>
+              {data.finnhubFallback ? '[INTERNATIONAL — PRICE ONLY]' : '[INTERNATIONAL — YAHOO FINANCE]'}
+            </span>
+          ) : data.finnhubFallback && (
             <span style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: '9px', color: 'var(--ws-text-3)', letterSpacing: '1px' }}>
               [LIMITED — FINNHUB ONLY]
             </span>
@@ -385,7 +392,7 @@ export default function StockPage({ params }) {
                 <h1 style={{ fontSize: '22px', fontWeight: 800, letterSpacing: '-0.5px', marginBottom: '10px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', lineHeight: 1.2, color: 'var(--ws-text)' }}>{data.name}</h1>
                 {price && (
                   <div style={{ display: 'flex', alignItems: 'baseline', gap: '12px', flexWrap: 'wrap' }}>
-                    <span style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: '28px', fontWeight: 700, letterSpacing: '-1px', color: 'var(--ws-text)' }}>${price.toFixed(2)}</span>
+                    <span style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: '28px', fontWeight: 700, letterSpacing: '-1px', color: 'var(--ws-text)' }}>{curSym(data.currency)}{price.toFixed(2)}</span>
                     <span style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: '13px', fontWeight: 700, color: change >= 0 ? 'var(--ws-accent)' : 'var(--ws-red)' }}>
                       {change >= 0 ? '+' : ''}{changePct?.toFixed(2)}%
                     </span>
@@ -601,9 +608,9 @@ export default function StockPage({ params }) {
                   </div>
                   <div style={{ marginTop: '12px', fontSize: '12px', color: 'var(--ws-text-2)', lineHeight: 1.6 }}>
                     {fairValue.negative ? (
-                      <>Negative earnings — no positive estimate. Price: <b style={{ color: 'var(--ws-text)' }}>${price?.toFixed(2)}</b></>
+                      <>Negative earnings — no positive estimate. Price: <b style={{ color: 'var(--ws-text)' }}>{curSym(data.currency)}{price?.toFixed(2)}</b></>
                     ) : (
-                      <>Price: <b style={{ color: 'var(--ws-text)' }}>${price?.toFixed(2)}</b> · Estimate: <b style={{ color: 'var(--ws-text)' }}>${fairValue.estimate.toFixed(2)}</b></>
+                      <>Price: <b style={{ color: 'var(--ws-text)' }}>{curSym(data.currency)}{price?.toFixed(2)}</b> · Estimate: <b style={{ color: 'var(--ws-text)' }}>{curSym(data.currency)}{fairValue.estimate.toFixed(2)}</b></>
                     )}
                   </div>
                 </div>
@@ -996,11 +1003,11 @@ export default function StockPage({ params }) {
     <div style={{ color: 'var(--ws-text-3)', fontSize: '10px', letterSpacing: '2px', marginBottom: '12px' }}>PER SHARE & MARKET DATA</div>
     <div className="per-share-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: '10px' }}>
       {[
-        { label: 'EPS (TTM)', val: data.eps ? `$${data.eps}` : 'N/A' },
+        { label: 'EPS (TTM)', val: data.eps ? `${curSym(data.currency)}${data.eps}` : 'N/A' },
         { label: 'Shs Outstanding', val: data.sharesOutstanding ? `${(data.sharesOutstanding / 1e6).toFixed(0)}M` : 'N/A' },
         { label: 'Beta', val: fmtN(data.beta) },
-        { label: '52W High', val: data.high52 ? `$${data.high52}` : 'N/A' },
-        { label: '52W Low', val: data.low52 ? `$${data.low52}` : 'N/A' },
+        { label: '52W High', val: data.high52 ? `${curSym(data.currency)}${data.high52}` : 'N/A' },
+        { label: '52W Low', val: data.low52 ? `${curSym(data.currency)}${data.low52}` : 'N/A' },
       ].map(r => (
         <div key={r.label} style={{ background: 'var(--ws-bg-2)', padding: '12px' }}>
           <div style={{ color: 'var(--ws-text-3)', fontSize: '10px', letterSpacing: '1px', marginBottom: '6px' }}>{r.label}</div>
@@ -1226,7 +1233,7 @@ export default function StockPage({ params }) {
               <>
                 <div style={{ background: 'var(--ws-bg-1)', border: '1px solid var(--ws-border)', padding: '16px', marginBottom: '24px', fontSize: '11px', color: 'var(--ws-text-2)', lineHeight: 1.8 }}>
                   <span style={{ color: 'var(--ws-accent)' }}>V = EPS × (8.5 + 2g) × (4.4/5.5)</span> &nbsp;·&nbsp;
-                  EPS: <span style={{ color: 'var(--ws-text)' }}>${data.eps}</span> &nbsp;·&nbsp;
+                  EPS: <span style={{ color: 'var(--ws-text)' }}>{curSym(data.currency)}{data.eps}</span> &nbsp;·&nbsp;
                   5Y EPS CAGR (g): <span style={{ color: 'var(--ws-text)' }}>{data.epsCagr !== null ? `${data.epsCagr}%` : 'N/A'}</span> &nbsp;·&nbsp;
                   <span style={{ color: 'var(--ws-text-3)' }}>Benjamin Graham formula · Not investment advice</span>
                 </div>
@@ -1246,7 +1253,7 @@ export default function StockPage({ params }) {
                         <div style={{ color: 'var(--ws-text-3)', fontSize: '10px', letterSpacing: '2px', marginBottom: '12px' }}>{scenario.label}</div>
                         <div style={{ color: 'var(--ws-text-3)', fontSize: '10px', marginBottom: '4px' }}>g = {g}%</div>
                         <div style={{ fontSize: '32px', fontWeight: 600, color: underval ? 'var(--ws-accent)' : 'var(--ws-red)', marginBottom: '4px', letterSpacing: '-1px' }}>
-                          ${intrinsic}
+                          {curSym(data.currency)}{intrinsic}
                         </div>
                         <div style={{ color: 'var(--ws-text-3)', fontSize: '10px', marginBottom: '12px' }}>{scenario.desc}</div>
                         {diff !== null && (
@@ -1255,7 +1262,7 @@ export default function StockPage({ params }) {
                               {underval ? '+' : '-'} {Math.abs(diff)}% {underval ? 'UPSIDE' : 'DOWNSIDE'}
                             </div>
                             <div style={{ color: 'var(--ws-text-3)', fontSize: '10px', marginTop: '2px' }}>
-                              vs current price ${price?.toFixed(2)}
+                              vs current price {curSym(data.currency)}{price?.toFixed(2)}
                             </div>
                           </div>
                         )}
