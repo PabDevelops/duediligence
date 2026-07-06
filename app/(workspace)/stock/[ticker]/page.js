@@ -119,10 +119,15 @@ export default function StockPage({ params }) {
   const [sotw, setSotw] = useState(null);
   const [achievementToast, setAchievementToast] = useState(null);
   const [relatedPosts, setRelatedPosts] = useState([]);
+  const [news, setNews] = useState([]);
   const { isSignedIn, user } = useUser();
 
   useEffect(() => {
     fetch(`/api/blog?ticker=${ticker}`).then(r => r.json()).then(d => setRelatedPosts(d.posts || [])).catch(() => {});
+  }, [ticker]);
+
+  useEffect(() => {
+    fetch(`/api/filings?tickers=${ticker}`).then(r => r.json()).then(d => setNews(d.holdingsNews || [])).catch(() => {});
   }, [ticker]);
 
   useEffect(() => {
@@ -541,6 +546,33 @@ export default function StockPage({ params }) {
                   ))}
                 </div>
               </div>
+
+              {/* NEWS */}
+              {news.length > 0 && (
+                <div>
+                  <div style={{ color: 'var(--ws-text-3)', fontSize: '10px', fontFamily: "'JetBrains Mono', monospace", letterSpacing: '1.5px', marginBottom: '10px', fontWeight: 700 }}>NEWS</div>
+                  <div style={{ display: 'flex', gap: '14px', overflowX: 'auto', paddingBottom: '6px' }}>
+                    {news.slice(0, 5).map((n, i) => (
+                      <a key={n.id || i} href={n.url} target="_blank" rel="noopener noreferrer"
+                        style={{
+                          flex: '0 0 220px', width: '220px', display: 'flex', flexDirection: 'column',
+                          textDecoration: 'none', border: '1px solid var(--ws-border)', background: 'var(--ws-bg-1)', overflow: 'hidden',
+                        }}>
+                        {n.image && (
+                          <img src={n.image} alt="" style={{ width: '100%', height: '120px', objectFit: 'cover', flexShrink: 0 }} />
+                        )}
+                        <div style={{ padding: '10px 12px' }}>
+                          <div style={{
+                            fontSize: '12px', fontWeight: 600, color: 'var(--ws-text)', lineHeight: 1.4, marginBottom: '8px',
+                            display: '-webkit-box', WebkitLineClamp: 3, WebkitBoxOrient: 'vertical', overflow: 'hidden',
+                          }}>{n.title}</div>
+                          <div style={{ fontSize: '10px', color: 'var(--ws-text-3)' }}>{n.source} · {n.time}</div>
+                        </div>
+                      </a>
+                    ))}
+                  </div>
+                </div>
+              )}
 
               {/* Related reading */}
               {relatedPosts.length > 0 && (

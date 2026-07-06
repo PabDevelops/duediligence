@@ -397,8 +397,18 @@ html, body {
   .bottom-nav {
     display: block !important;
   }
+  @media (orientation: portrait) {
+    .bottom-nav {
+      display: none !important;
+    }
+  }
   body {
     padding-bottom: 64px;
+  }
+  @media (orientation: portrait) {
+    body {
+      padding-bottom: 0 !important;
+    }
   }
   .watchlist-widget {
     display: none !important;
