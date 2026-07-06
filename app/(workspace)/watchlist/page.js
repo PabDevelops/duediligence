@@ -12,6 +12,13 @@ const fmt = (val) => {
   return `$${val.toLocaleString()}`;
 };
 
+const CURRENCIES = { USD: '$', EUR: '€', GBP: '£' };
+
+const formatCurrency = (val, symbol = '$') => {
+  if (val === null || val === undefined) return '—';
+  return `${symbol}${val.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+};
+
 function NewsRow({ item, onTicker, isLast }) {
   const [expanded, setExpanded] = useState(false);
   const sourceLetter = item.source ? item.source.charAt(0).toUpperCase() : 'N';
@@ -151,12 +158,12 @@ export default function WorkspaceNews() {
               Your watchlist is empty — add stocks from any stock page.
             </div>
           ) : (
-            <div style={{ border: '1px solid var(--ws-border)', overflow: 'hidden', marginBottom: '28px' }}>
-              <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '12px' }}>
+            <div className="responsive-table-container" style={{ border: '1px solid var(--ws-border)', marginBottom: '28px', background: 'var(--ws-bg-1)' }}>
+              <table className="responsive-table" style={{ fontSize: '12px' }}>
                 <thead>
                   <tr style={{ borderBottom: '1px solid var(--ws-border)', background: 'var(--ws-bg-1)' }}>
                     {['Stock', 'Price', 'Change', 'Market cap', 'P/E', 'FCF yield', '1M', ''].map(h => (
-                      <th key={h} style={{ padding: '9px 12px', textAlign: h === 'Stock' ? 'left' : 'right', fontWeight: 600, fontSize: '10px', color: 'var(--ws-text-3)' }}>{h}</th>
+                      <th key={h} className={h === 'Stock' ? 'sticky-col' : ''} style={{ padding: '9px 12px', textAlign: h === 'Stock' ? 'left' : 'right', fontWeight: 600, fontSize: '10px', color: 'var(--ws-text-3)' }}>{h}</th>
                     ))}
                   </tr>
                 </thead>
@@ -166,14 +173,14 @@ export default function WorkspaceNews() {
                     const up = s?.priceChangePct >= 0;
                     return (
                       <tr key={ticker} onClick={() => goTicker(ticker)}
-                        style={{ borderBottom: '1px solid var(--ws-border)', cursor: 'pointer' }}
+                        style={{ borderBottom: '1px solid var(--ws-border)', cursor: 'pointer', background: 'var(--ws-bg-1)' }}
                         onMouseEnter={e => e.currentTarget.style.background = 'var(--ws-bg-2)'}
-                        onMouseLeave={e => e.currentTarget.style.background = 'transparent'}>
-                        <td style={{ padding: '10px 12px' }}>
+                        onMouseLeave={e => e.currentTarget.style.background = 'var(--ws-bg-1)'}>
+                        <td className="sticky-col" style={{ padding: '10px 12px' }}>
                           <div style={{ fontWeight: 600, color: 'var(--ws-text)' }}>{ticker}</div>
                           <div style={{ color: 'var(--ws-text-3)', fontSize: '11px' }}>{s?.name || '…'}</div>
                         </td>
-                        <td style={{ padding: '10px 12px', textAlign: 'right', fontWeight: 600 }}>{s?.currentPrice ? `$${s.currentPrice.toFixed(2)}` : '—'}</td>
+                        <td style={{ padding: '10px 12px', textAlign: 'right', fontWeight: 600 }}>{s?.currentPrice ? formatCurrency(s.currentPrice, CURRENCIES[s.currency] || s.currency) : '—'}</td>
                         <td style={{ padding: '10px 12px', textAlign: 'right', color: up ? 'var(--ws-accent)' : 'var(--ws-red)', fontWeight: 600 }}>
                           {s?.priceChangePct ? `${up ? '+' : ''}${s.priceChangePct.toFixed(2)}%` : '—'}
                         </td>

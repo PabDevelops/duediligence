@@ -44,6 +44,7 @@ export default function WorkspaceScreener() {
   const [page, setPage] = useState(1);
   const [isPro, setIsPro] = useState(false);
   const [activePreset, setActivePreset] = useState('all');
+  const [showFilters, setShowFilters] = useState(false);
   const tableRef = useRef(null);
   const PAGE_SIZE = 50;
 
@@ -209,18 +210,13 @@ export default function WorkspaceScreener() {
 
       <div style={{ display: 'flex', flex: 1, overflow: 'hidden' }}>
 
+      {/* Filters Sidebar Backdrop on Mobile */}
+      {showFilters && (
+        <div className="screener-filters-backdrop" onClick={() => setShowFilters(false)} />
+      )}
+
       {/* Filters Sidebar */}
-      <div style={{
-        width: '240px',
-        flexShrink: 0,
-        borderRight: '1px solid var(--ws-border)',
-        background: 'var(--ws-bg-2)',
-        padding: '20px 16px',
-        display: 'flex',
-        flexDirection: 'column',
-        gap: '20px',
-        overflowY: 'auto'
-      }}>
+      <div className={`screener-filters-sidebar ${showFilters ? 'open' : ''}`}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           <div style={{ color: 'var(--ws-text)', fontFamily: "'JetBrains Mono', monospace", fontSize: '11px', fontWeight: 700, letterSpacing: '1.5px' }}>
             SCREENER FILTERS
@@ -464,11 +460,24 @@ export default function WorkspaceScreener() {
                 {p.label}
               </button>
             ))}
+            <button className="mobile-filters-toggle-btn" onClick={() => setShowFilters(!showFilters)} style={{
+              background: showFilters ? 'var(--ws-accent)' : 'var(--ws-bg-2)',
+              color: showFilters ? 'var(--ws-bg-1)' : 'var(--ws-text)',
+              border: '1px solid var(--ws-border)',
+              borderRadius: '20px',
+              padding: '4px 12px',
+              fontSize: '11px',
+              fontWeight: 700,
+              cursor: 'pointer',
+              marginLeft: 'auto'
+            }}>
+              {showFilters ? '✕ Close Filters' : '⚙ Filters'}
+            </button>
           </div>
         </div>
 
         {/* Quantitative Data Table */}
-        <div ref={tableRef} style={{ flex: 1, overflow: 'auto' }}>
+        <div ref={tableRef} className="responsive-table-container" style={{ flex: 1, overflow: 'auto' }}>
           {loading ? (
             <div style={{ padding: '80px 20px', textAlign: 'center', color: 'var(--ws-text-3)' }}>
               <div style={{ display: 'inline-flex', alignItems: 'center', gap: '10px' }}>
@@ -477,10 +486,10 @@ export default function WorkspaceScreener() {
               </div>
             </div>
           ) : (
-            <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '11px', textAlign: 'left' }}>
+            <table className="responsive-table" style={{ fontSize: '11px', textAlign: 'left' }}>
               <thead style={{ position: 'sticky', top: 0, background: 'var(--ws-bg)', zIndex: 2 }}>
                 <tr style={{ background: 'var(--ws-bg-2)' }}>
-                  <th style={{ padding: '12px 14px', fontWeight: 700, fontSize: '10px', color: 'var(--ws-text-3)', width: '70px', borderBottom: '2px solid var(--ws-border)' }}>TICKER</th>
+                  <th className="sticky-col" style={{ padding: '12px 14px', fontWeight: 700, fontSize: '10px', color: 'var(--ws-text-3)', width: '70px', borderBottom: '2px solid var(--ws-border)' }}>TICKER</th>
                   <th style={{ padding: '12px 14px', fontWeight: 700, fontSize: '10px', color: 'var(--ws-text-3)', borderBottom: '2px solid var(--ws-border)' }}>COMPANY NAME</th>
                   <th style={{ padding: '12px 14px', fontWeight: 700, fontSize: '10px', color: 'var(--ws-text-3)', borderBottom: '2px solid var(--ws-border)' }}>SECTOR</th>
                   <ColHeader col="currentPrice" label="PRICE" />
@@ -500,13 +509,13 @@ export default function WorkspaceScreener() {
                     style={{
                       borderBottom: '1px solid var(--ws-border)',
                       cursor: 'pointer',
-                      background: idx % 2 === 0 ? 'none' : 'rgba(255,255,255,0.01)',
+                      background: idx % 2 === 0 ? 'var(--ws-bg-1)' : 'var(--ws-bg-2)',
                       transition: 'background 0.15s ease'
                     }}
                     onMouseEnter={e => e.currentTarget.style.background = 'var(--ws-bg-2)'}
-                    onMouseLeave={e => e.currentTarget.style.background = idx % 2 === 0 ? 'none' : 'rgba(255,255,255,0.01)'}
+                    onMouseLeave={e => e.currentTarget.style.background = idx % 2 === 0 ? 'var(--ws-bg-1)' : 'var(--ws-bg-2)'}
                   >
-                    <td style={{ padding: '10px 14px', fontWeight: 800, color: 'var(--ws-text)' }}>
+                    <td className="sticky-col" style={{ padding: '10px 14px', fontWeight: 800, color: 'var(--ws-text)' }}>
                       {s.ticker}
                     </td>
                     <td style={{ padding: '10px 14px', color: 'var(--ws-text-2)', fontWeight: 600, maxWidth: '180px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>

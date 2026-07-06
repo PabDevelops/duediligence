@@ -193,6 +193,11 @@ function Card({ title, subtitle, rightElement, dragProps, children }) {
 // currency preference stays in sync between that page and this dashboard widget.
 const CURRENCIES = { USD: '$', EUR: '€', GBP: '£' };
 
+const formatCurrency = (val, symbol = '$') => {
+  if (val === null || val === undefined) return '—';
+  return `${symbol}${val.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+};
+
 // "Movers" (gainers) dropped from here — it's now covered by the header marquee's
 // dropdown, so this widget focuses on the proprietary quality metrics that live
 // nowhere else in the app. topFcfYield/topRevGrowth were already computed by
@@ -252,6 +257,8 @@ export default function WorkspaceHome() {
   const [prices, setPrices] = useState({});
   const [pricesLoading, setPricesLoading] = useState(false);
   const [dayChanges, setDayChanges] = useState({}); // ticker -> today's % change
+  const [stockDetails, setStockDetails] = useState({}); // ticker -> full stock api data
+  const [txCurrency, setTxCurrency] = useState('USD');
   const [portfolioTab, setPortfolioTab] = useState('pies'); // Default to 'pies' view for cleaner collapsed list
   const [currency, setCurrency] = useState('USD');
   // Approximate fallback rates in case the live fetch fails (network/CORS) — overwritten below when it succeeds.
@@ -272,6 +279,12 @@ export default function WorkspaceHome() {
   const changeCurrency = (c) => { setCurrency(c); localStorage.setItem('portfolio_currency', c); };
   const fxRate = currency === 'USD' ? 1 : (fxRates[currency] || 1);
   const currencySymbol = CURRENCIES[currency];
+
+  const toUSD = (amount, ccy) => {
+    if (!ccy || ccy === 'USD' || amount === null || amount === undefined) return amount;
+    const r = fxRates[ccy];
+    return r ? amount / r : amount;
+  };
 
   // Widget States
   const [sotw, setSotw] = useState(null);
@@ -494,18 +507,23 @@ export default function WorkspaceHome() {
       tickers.map(ticker =>
         fetch(`/api/stock?ticker=${ticker}${refresh ? '&refresh=true' : ''}`)
           .then(r => r.json())
-          .then(data => ({ ticker, price: data.currentPrice, changePct: data.priceChangePct }))
-          .catch(() => ({ ticker, price: null, changePct: null }))
+          .then(data => ({ ticker, data }))
+          .catch(() => ({ ticker, data: null }))
       )
     ).then(results => {
       const priceMap = {};
       const changeMap = {};
+      const detailMap = {};
       results.forEach(r => {
-        if (r.price !== null) priceMap[r.ticker] = r.price;
-        if (r.changePct !== null && r.changePct !== undefined) changeMap[r.ticker] = r.changePct;
+        if (r.data) {
+          detailMap[r.ticker] = r.data;
+          if (r.data.currentPrice !== null) priceMap[r.ticker] = r.data.currentPrice;
+          if (r.data.priceChangePct !== null && r.data.priceChangePct !== undefined) changeMap[r.ticker] = r.data.priceChangePct;
+        }
       });
       setPrices(prev => ({ ...prev, ...priceMap }));
       setDayChanges(prev => ({ ...prev, ...changeMap }));
+      setStockDetails(prev => ({ ...prev, ...detailMap }));
       setPricesLoading(false);
     });
   };
@@ -521,26 +539,33 @@ export default function WorkspaceHome() {
     return () => clearInterval(interval);
   }, [quoteTickers]);
 
-  // Uniform display holdings: [{ ticker, shares, avgPrice, pie }]
+  // Uniform display holdings: [{ ticker, shares, avgPrice, pie, costCurrency, avgPriceUSD }]
   const displayHoldings = useMemo(() => {
     if (isSignedIn) {
       const byKey = {};
       holdings.forEach(h => {
         const key = `${h.ticker}-${h.pie || ''}`;
-        const p = byKey[key] ||= { ticker: h.ticker, shares: 0, cost: 0, pie: h.pie || '' };
+        const p = byKey[key] ||= { ticker: h.ticker, shares: 0, cost: 0, costUSD: 0, pie: h.pie || '', costCurrency: h.cost_basis_currency || 'USD' };
         p.shares += Number(h.shares);
         p.cost += Number(h.shares) * Number(h.cost_basis);
+        p.costUSD += Number(h.shares) * toUSD(Number(h.cost_basis), h.cost_basis_currency || 'USD');
       });
       return Object.values(byKey).map(p => ({
         ticker: p.ticker,
         shares: p.shares,
         avgPrice: p.cost / p.shares,
-        pie: p.pie
+        avgPriceUSD: p.costUSD / p.shares,
+        pie: p.pie,
+        costCurrency: p.costCurrency
       }));
     } else {
-      return portfolio;
+      return portfolio.map(p => ({
+        ...p,
+        avgPriceUSD: toUSD(p.avgPrice, p.costCurrency || 'USD'),
+        costCurrency: p.costCurrency || 'USD'
+      }));
     }
-  }, [holdings, portfolio, isSignedIn]);
+  }, [holdings, portfolio, isSignedIn, fxRates]);
 
   // Group display holdings by Pie
   const piesData = useMemo(() => {
@@ -555,9 +580,12 @@ export default function WorkspaceHome() {
       let cost = 0;
       let val = 0;
       items.forEach(item => {
-        const currentPrice = prices[item.ticker] || item.avgPrice;
-        cost += item.shares * item.avgPrice;
-        val += item.shares * currentPrice;
+        const priceCurrency = stockDetails[item.ticker]?.currency || 'USD';
+        const priceNative = prices[item.ticker] ?? item.avgPrice;
+        const currentPriceUSD = toUSD(priceNative, priceCurrency);
+        const avgPriceUSD = item.avgPriceUSD ?? toUSD(item.avgPrice, item.costCurrency);
+        cost += item.shares * avgPriceUSD;
+        val += item.shares * currentPriceUSD;
       });
       const gain = val - cost;
       const gainPct = cost > 0 ? (gain / cost) * 100 : 0;
@@ -574,19 +602,22 @@ export default function WorkspaceHome() {
       if (b.name === 'Unassigned') return -1;
       return b.value - a.value;
     });
-  }, [displayHoldings, prices]);
+  }, [displayHoldings, prices, stockDetails, fxRates]);
 
   // Record a daily portfolio snapshot from Home too — not just /portfolio — so the growth
   // chart keeps accumulating points even for users who only ever look at the dashboard.
   const homeTotals = useMemo(() => {
     let cost = 0, value = 0;
     displayHoldings.forEach(item => {
-      const currentPrice = prices[item.ticker];
-      cost += item.shares * item.avgPrice;
-      value += item.shares * (currentPrice ?? item.avgPrice);
+      const priceCurrency = stockDetails[item.ticker]?.currency || 'USD';
+      const priceNative = prices[item.ticker];
+      const currentPriceUSD = toUSD(priceNative, priceCurrency);
+      const avgPriceUSD = item.avgPriceUSD ?? toUSD(item.avgPrice, item.costCurrency);
+      cost += item.shares * avgPriceUSD;
+      value += item.shares * (currentPriceUSD ?? avgPriceUSD);
     });
     return { cost, value };
-  }, [displayHoldings, prices]);
+  }, [displayHoldings, prices, stockDetails, fxRates]);
 
   const homePricesReady = displayHoldings.length > 0 && displayHoldings.every(item => prices[item.ticker] != null);
 
@@ -623,7 +654,8 @@ export default function WorkspaceHome() {
           shares: parsedShares,
           costBasis: parsedPrice,
           purchaseDate: new Date().toISOString().slice(0, 10),
-          pie: pieTrimmed
+          pie: pieTrimmed,
+          costBasisCurrency: txCurrency
         })
       });
       if (res.ok) {
@@ -635,9 +667,9 @@ export default function WorkspaceHome() {
       if (existing) {
         const newShares = existing.shares + parsedShares;
         const newAvg = ((existing.shares * existing.avgPrice) + (parsedShares * parsedPrice)) / newShares;
-        newPort = portfolio.map(p => (p.ticker === tickUpper && (p.pie || '') === pieTrimmed) ? { ...p, shares: newShares, avgPrice: parseFloat(newAvg.toFixed(2)) } : p);
+        newPort = portfolio.map(p => (p.ticker === tickUpper && (p.pie || '') === pieTrimmed) ? { ...p, shares: newShares, avgPrice: parseFloat(newAvg.toFixed(2)), costCurrency: p.costCurrency || txCurrency } : p);
       } else {
-        newPort = [...portfolio, { ticker: tickUpper, shares: parsedShares, avgPrice: parsedPrice, pie: pieTrimmed }];
+        newPort = [...portfolio, { ticker: tickUpper, shares: parsedShares, avgPrice: parsedPrice, pie: pieTrimmed, costCurrency: txCurrency }];
       }
       savePortfolio(newPort);
     }
@@ -1192,7 +1224,7 @@ export default function WorkspaceHome() {
                             {item.ticker}
                           </td>
                           <td style={{ padding: '10px 18px', textAlign: 'right', fontWeight: 600, color: 'var(--ws-text)' }}>
-                            {price != null ? `$${price.toFixed(2)}` : '—'}
+                            {price != null ? formatCurrency(price, CURRENCIES[stockDetails[item.ticker]?.currency] || stockDetails[item.ticker]?.currency) : '—'}
                           </td>
                           <td style={{ padding: '10px 18px', textAlign: 'right', fontWeight: 700, color: hasChange ? (changePct >= 0 ? '#10b981' : 'var(--ws-red)') : 'var(--ws-text-3)' }}>
                             {hasChange ? `${changePct >= 0 ? '+' : ''}${changePct.toFixed(2)}%` : '—'}
@@ -1243,7 +1275,7 @@ export default function WorkspaceHome() {
                             {ticker}
                           </td>
                           <td style={{ padding: '10px 18px', textAlign: 'right', fontWeight: 600, color: 'var(--ws-text)' }}>
-                            {price != null ? `$${price.toFixed(2)}` : '—'}
+                            {price != null ? formatCurrency(price, CURRENCIES[stockDetails[ticker]?.currency] || stockDetails[ticker]?.currency) : '—'}
                           </td>
                           <td style={{ padding: '10px 18px', textAlign: 'right', fontWeight: 700, color: hasChange ? (changePct >= 0 ? '#10b981' : 'var(--ws-red)') : 'var(--ws-text-3)' }}>
                             {hasChange ? `${changePct >= 0 ? '+' : ''}${changePct.toFixed(2)}%` : '—'}
@@ -1271,12 +1303,16 @@ export default function WorkspaceHome() {
     let totalValue = 0;
     let totalTodayChange = 0;
     displayHoldings.forEach(item => {
-      const currentPrice = prices[item.ticker] || item.avgPrice;
+      const priceCurrency = stockDetails[item.ticker]?.currency || 'USD';
+      const priceNative = prices[item.ticker] ?? item.avgPrice;
+      const currentPriceUSD = toUSD(priceNative, priceCurrency);
+      const avgPriceUSD = item.avgPriceUSD ?? toUSD(item.avgPrice, item.costCurrency);
+      
       const changePct = dayChanges[item.ticker];
-      totalCost += item.shares * item.avgPrice;
-      totalValue += item.shares * currentPrice;
+      totalCost += item.shares * avgPriceUSD;
+      totalValue += item.shares * currentPriceUSD;
       if (changePct != null) {
-        totalTodayChange += item.shares * currentPrice * (changePct / 100);
+        totalTodayChange += item.shares * currentPriceUSD * (changePct / 100);
       }
     });
 
@@ -1291,21 +1327,36 @@ export default function WorkspaceHome() {
     // Allocation breakdown — grouped by Pie or by individual stock, whichever tab is active
     const chartData = portfolioTab === 'pies'
       ? piesData.map(group => ({ name: group.name, value: group.value })).filter(g => g.value > 0)
-      : displayHoldings.map(item => ({
-          name: item.ticker,
-          value: item.shares * (prices[item.ticker] || item.avgPrice)
-        })).filter(s => s.value > 0).sort((a, b) => b.value - a.value);
+      : displayHoldings.map(item => {
+          const priceCurrency = stockDetails[item.ticker]?.currency || 'USD';
+          const priceNative = prices[item.ticker] ?? item.avgPrice;
+          const currentPriceUSD = toUSD(priceNative, priceCurrency);
+          return {
+            name: item.ticker,
+            value: item.shares * currentPriceUSD
+          };
+        }).filter(s => s.value > 0).sort((a, b) => b.value - a.value);
     const hasHoldings = chartData.length > 0;
 
     // Every individual position, ranked by market value — always visible, no clicking required
     const sortedHoldings = displayHoldings
       .map(item => {
-        const currentPrice = prices[item.ticker] || item.avgPrice;
-        const value = item.shares * currentPrice;
-        const cost = item.shares * item.avgPrice;
-        const ret = value - cost;
-        const retPct = cost > 0 ? (ret / cost) * 100 : 0;
-        return { ...item, currentPrice, value, ret, retPct, changePct: dayChanges[item.ticker] };
+        const priceCurrency = stockDetails[item.ticker]?.currency || 'USD';
+        const priceNative = prices[item.ticker] ?? item.avgPrice;
+        const currentPriceUSD = toUSD(priceNative, priceCurrency);
+        const valueUSD = item.shares * currentPriceUSD;
+        const costUSD = item.shares * (item.avgPriceUSD ?? toUSD(item.avgPrice, item.costCurrency));
+        const ret = valueUSD - costUSD;
+        const retPct = costUSD > 0 ? (ret / costUSD) * 100 : 0;
+        return {
+          ...item,
+          currentPrice: priceNative,
+          priceCurrency,
+          value: valueUSD,
+          ret,
+          retPct,
+          changePct: dayChanges[item.ticker]
+        };
       })
       .sort((a, b) => b.value - a.value);
 
@@ -1479,8 +1530,8 @@ export default function WorkspaceHome() {
                           {/* Avg cost / price stay in their native trading currency (USD here) — only
                               aggregate value/gain figures convert to the selected reporting currency,
                               same behavior as the dedicated /portfolio page. */}
-                          <td style={{ padding: '8px 12px', textAlign: 'right', color: 'var(--ws-text-2)' }}>${item.avgPrice.toFixed(2)}</td>
-                          <td style={{ padding: '8px 12px', textAlign: 'right', color: 'var(--ws-text)', fontWeight: 600 }}>${item.currentPrice.toFixed(2)}</td>
+                          <td style={{ padding: '8px 12px', textAlign: 'right', color: 'var(--ws-text-2)' }}>{formatCurrency(item.avgPrice, CURRENCIES[item.costCurrency] || item.costCurrency)}</td>
+                          <td style={{ padding: '8px 12px', textAlign: 'right', color: 'var(--ws-text)', fontWeight: 600 }}>{formatCurrency(item.currentPrice, CURRENCIES[item.priceCurrency] || item.priceCurrency)}</td>
                           <td style={{ padding: '8px 12px', textAlign: 'right', fontWeight: 700, color: hasChange ? (changePositive ? '#10b981' : 'var(--ws-red)') : 'var(--ws-text-3)' }}>
                             {hasChange ? `${changePositive ? '+' : ''}${item.changePct.toFixed(2)}%` : '—'}
                           </td>
@@ -1637,7 +1688,27 @@ export default function WorkspaceHome() {
                   />
                 </div>
                 <div>
-                  <label style={{ fontSize: '9px', color: 'var(--ws-text-3)', fontWeight: 700, textTransform: 'uppercase' }}>Avg Cost</label>
+                  <div style={{ fontSize: '9px', color: 'var(--ws-text-3)', fontWeight: 700, textTransform: 'uppercase', display: 'flex', justifyContent: 'space-between' }}>
+                    <span>Avg Cost</span>
+                    <select
+                      value={txCurrency}
+                      onChange={e => setTxCurrency(e.target.value)}
+                      style={{
+                        fontSize: '9px',
+                        fontWeight: 700,
+                        color: 'var(--ws-accent)',
+                        background: 'none',
+                        border: 'none',
+                        cursor: 'pointer',
+                        padding: 0,
+                        outline: 'none'
+                      }}
+                    >
+                      {Object.keys(CURRENCIES).map(c => (
+                        <option key={c} value={c} style={{ background: 'var(--ws-bg-1)', color: 'var(--ws-text)' }}>{c}</option>
+                      ))}
+                    </select>
+                  </div>
                   <input
                     type="number"
                     step="any"
@@ -2086,117 +2157,105 @@ export default function WorkspaceHome() {
         </button>
 
         {showConfig && (
-          <div style={{
-            position: 'absolute',
-            bottom: '100%',
-            right: 0,
-            paddingBottom: '8px', // Invisible bridge to keep hover active
-            width: '280px',
-            zIndex: 100,
-            transformOrigin: 'bottom right',
-            animation: 'fadeInSlideUp 0.18s cubic-bezier(0.16, 1, 0.3, 1) forwards'
-          }}>
-            <div style={{
-              background: 'var(--ws-bg-1)',
-              border: '1px solid var(--ws-border)',
-              boxShadow: '0 10px 25px rgba(0,0,0,0.08)',
-              padding: '16px',
-              display: 'flex',
-              flexDirection: 'column',
-              gap: '14px',
-            }}>
-              {/* Layout Mode Presets */}
-              <div>
-                <div style={{ fontSize: '10px', fontWeight: 700, color: 'var(--ws-text-3)', textTransform: 'uppercase', marginBottom: '8px', letterSpacing: '0.5px' }}>
-                  Dashboard Layout
+          <div className="home-config-popup-wrapper">
+            <div className="home-config-popup">
+              <div className="home-config-popup-col-1">
+                {/* Layout Mode Presets */}
+                <div>
+                  <div style={{ fontSize: '10px', fontWeight: 700, color: 'var(--ws-text-3)', textTransform: 'uppercase', marginBottom: '8px', letterSpacing: '0.5px' }}>
+                    Dashboard Layout
+                  </div>
+                  <div style={{ display: 'flex', gap: '6px' }}>
+                    {[
+                      { id: 'split', label: 'Standard' },
+                      { id: 'equal', label: '50/50' },
+                      { id: 'full', label: 'Full Width' }
+                    ].map(lay => (
+                      <button
+                        key={lay.id}
+                        onClick={() => changeLayoutMode(lay.id)}
+                        style={{
+                          flex: 1,
+                          padding: '6px 0',
+                          fontSize: '11px',
+                          fontWeight: 600,
+                          borderRadius: '4px',
+                          border: layoutMode === lay.id ? '1px solid var(--ws-accent)' : '1px solid var(--ws-border)',
+                          background: layoutMode === lay.id ? 'var(--ws-accent-dim)' : 'var(--ws-bg-2)',
+                          color: layoutMode === lay.id ? 'var(--ws-accent)' : 'var(--ws-text-2)',
+                          cursor: 'pointer',
+                          transition: 'all 0.1s ease'
+                        }}
+                      >
+                        {lay.label}
+                      </button>
+                    ))}
+                  </div>
                 </div>
-                <div style={{ display: 'flex', gap: '6px' }}>
-                  {[
-                    { id: 'split', label: 'Standard' },
-                    { id: 'equal', label: '50/50' },
-                    { id: 'full', label: 'Full Width' }
-                  ].map(lay => (
-                    <button
-                      key={lay.id}
-                      onClick={() => changeLayoutMode(lay.id)}
-                      style={{
-                        flex: 1,
-                        padding: '6px 0',
-                        fontSize: '11px',
-                        fontWeight: 600,
-                        borderRadius: '4px',
-                        border: layoutMode === lay.id ? '1px solid var(--ws-accent)' : '1px solid var(--ws-border)',
-                        background: layoutMode === lay.id ? 'var(--ws-accent-dim)' : 'var(--ws-bg-2)',
-                        color: layoutMode === lay.id ? 'var(--ws-accent)' : 'var(--ws-text-2)',
-                        cursor: 'pointer',
-                        transition: 'all 0.1s ease'
-                      }}
-                    >
-                      {lay.label}
-                    </button>
-                  ))}
-                </div>
+
+                {/* Reset Buttons */}
+                <button
+                  onClick={() => {
+                    setWidgets(DEFAULT_WIDGETS);
+                    localStorage.setItem('traqcker_dashboard_layout', JSON.stringify(DEFAULT_WIDGETS));
+                    changeLayoutMode('split');
+                    setShowConfig(false);
+                  }}
+                  style={{
+                    padding: '8px 0',
+                    fontSize: '11px',
+                    fontWeight: 700,
+                    border: 'none',
+                    background: 'var(--ws-bg-2)',
+                    color: 'var(--ws-red)',
+                    cursor: 'pointer',
+                    marginTop: '4px',
+                    transition: 'all 0.15s ease',
+                    width: '100%'
+                  }}
+                  onMouseEnter={e => e.currentTarget.style.opacity = 0.9}
+                  onMouseLeave={e => e.currentTarget.style.opacity = 1}
+                >
+                  Reset Layout & Widgets
+                </button>
               </div>
 
-              {/* Active Widgets Checkboxes */}
-              <div>
-                <div style={{ fontSize: '10px', fontWeight: 700, color: 'var(--ws-text-3)', textTransform: 'uppercase', marginBottom: '8px', letterSpacing: '0.5px' }}>
-                  Active Widgets
-                </div>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', maxHeight: '180px', overflowY: 'auto' }}>
-                  {widgets.map(w => {
-                    const label = w.id === 'indices' ? 'Market Benchmarks'
-                                : w.id === 'portfolio' ? 'Equity Portfolio'
-                                : w.id === 'sotw' ? 'Stock of the Week'
-                                : w.id === 'workspace' ? 'Coverage Workspace'
-                                : w.id === 'earnings' ? 'Earnings Calendar'
-                                : w.id === 'movers' ? 'Market Intelligence'
-                                : w.id === 'secFeed' ? 'Market News'
-                                : w.id;
-                    const isVisible = w.visible !== false;
-                    return (
-                      <label key={w.id} style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '12px', color: 'var(--ws-text)', cursor: 'pointer' }}>
-                        <input
-                          type="checkbox"
-                          checked={isVisible}
-                          onChange={() => {
-                            const updated = widgets.map(item => item.id === w.id ? { ...item, visible: !isVisible } : item);
-                            setWidgets(updated);
-                            localStorage.setItem('traqcker_dashboard_layout', JSON.stringify(updated));
-                          }}
-                          style={{ accentColor: 'var(--ws-accent)' }}
-                        />
-                        {label}
-                      </label>
-                    );
-                  })}
+              <div className="home-config-popup-col-2">
+                {/* Active Widgets Checkboxes */}
+                <div>
+                  <div style={{ fontSize: '10px', fontWeight: 700, color: 'var(--ws-text-3)', textTransform: 'uppercase', marginBottom: '8px', letterSpacing: '0.5px' }}>
+                    Active Widgets
+                  </div>
+                  <div className="home-config-popup-widgets-list">
+                    {widgets.map(w => {
+                      const label = w.id === 'indices' ? 'Market Benchmarks'
+                                  : w.id === 'portfolio' ? 'Equity Portfolio'
+                                  : w.id === 'sotw' ? 'Stock of the Week'
+                                  : w.id === 'workspace' ? 'Coverage Workspace'
+                                  : w.id === 'earnings' ? 'Earnings Calendar'
+                                  : w.id === 'movers' ? 'Market Intelligence'
+                                  : w.id === 'secFeed' ? 'Market News'
+                                  : w.id;
+                      const isVisible = w.visible !== false;
+                      return (
+                        <label key={w.id} style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '12px', color: 'var(--ws-text)', cursor: 'pointer' }}>
+                          <input
+                            type="checkbox"
+                            checked={isVisible}
+                            onChange={() => {
+                              const updated = widgets.map(item => item.id === w.id ? { ...item, visible: !isVisible } : item);
+                              setWidgets(updated);
+                              localStorage.setItem('traqcker_dashboard_layout', JSON.stringify(updated));
+                            }}
+                            style={{ accentColor: 'var(--ws-accent)' }}
+                          />
+                          {label}
+                        </label>
+                      );
+                    })}
+                  </div>
                 </div>
               </div>
-
-              {/* Reset Buttons */}
-              <button
-                onClick={() => {
-                  setWidgets(DEFAULT_WIDGETS);
-                  localStorage.setItem('traqcker_dashboard_layout', JSON.stringify(DEFAULT_WIDGETS));
-                  changeLayoutMode('split');
-                  setShowConfig(false);
-                }}
-                style={{
-                  padding: '8px 0',
-                  fontSize: '11px',
-                  fontWeight: 700,
-                  border: 'none',
-                  background: 'var(--ws-bg-2)',
-                  color: 'var(--ws-red)',
-                  cursor: 'pointer',
-                  marginTop: '4px',
-                  transition: 'all 0.15s ease'
-                }}
-                onMouseEnter={e => e.currentTarget.style.opacity = 0.9}
-                onMouseLeave={e => e.currentTarget.style.opacity = 1}
-              >
-                Reset Layout & Widgets
-              </button>
             </div>
           </div>
         )}

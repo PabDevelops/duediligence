@@ -2,11 +2,15 @@
 import { useRef, useState } from 'react';
 import html2canvas from 'html2canvas';
 
-export default function ShareCard({ ticker, name, price, priceChange, score, verdict, fairValue, fairValueNegative, consensus, userVote }) {
+const CURRENCY_SYMBOLS = { USD: '$', EUR: '€', GBP: '£', JPY: '¥', CNY: '¥', CHF: 'CHF ', CAD: 'C$', AUD: 'A$', HKD: 'HK$', INR: '₹', KRW: '₩', SEK: 'kr', NOK: 'kr', DKK: 'kr' };
+const curSym = (code) => !code || code === 'USD' ? '$' : (CURRENCY_SYMBOLS[code] || `${code} `);
+
+export default function ShareCard({ ticker, name, price, priceChange, score, verdict, fairValue, fairValueNegative, consensus, userVote, currency }) {
   const cardRef = useRef(null);
   const [copied, setCopied] = useState(false);
   const [imgLoading, setImgLoading] = useState(false);
 
+  const currencySymbol = curSym(currency);
   const stockUrl = `https://traqcker.com/stock/${ticker}`;
 
   const verdictColor = verdict === 'BUY' ? '#34d399' : verdict === 'SELL' ? '#f87171' : '#fbbf24';
@@ -91,7 +95,7 @@ export default function ShareCard({ ticker, name, price, priceChange, score, ver
 
         {/* Price */}
         <div style={{ textAlign: 'center', borderTop: '1px solid rgba(255,255,255,0.08)', borderBottom: '1px solid rgba(255,255,255,0.08)', padding: '28px 0', marginBottom: '40px' }}>
-          <span style={{ fontSize: '52px', fontWeight: 900, color: '#ffffff' }}>${price?.toFixed(2) || '—'}</span>
+          <span style={{ fontSize: '52px', fontWeight: 900, color: '#ffffff' }}>{currencySymbol}{price?.toFixed(2) || '—'}</span>
           {priceChange !== undefined && (
             <span style={{ fontSize: '24px', fontWeight: 700, color: priceChange >= 0 ? '#34d399' : '#f87171', marginLeft: '14px' }}>
               {priceChange >= 0 ? '↑' : '↓'}{Math.abs(priceChange).toFixed(2)}%
@@ -99,7 +103,7 @@ export default function ShareCard({ ticker, name, price, priceChange, score, ver
           )}
           {fairValue != null && !fairValueNegative && (
             <div style={{ fontSize: '16px', color: '#6b7491', marginTop: '10px' }}>
-              Fair Value: <span style={{ color: '#a78bfa', fontWeight: 700 }}>${fairValue.toFixed(2)}</span>
+              Fair Value: <span style={{ color: '#a78bfa', fontWeight: 700 }}>{currencySymbol}{fairValue.toFixed(2)}</span>
             </div>
           )}
         </div>

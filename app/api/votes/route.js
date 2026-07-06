@@ -1,5 +1,6 @@
 import { supabase } from '../../../lib/supabase';
 import { getUserId } from '../../../lib/auth';
+import { fetchYahooRecommendationTrend } from '../../../lib/yahooFinance';
 
 export async function GET(req) {
   try {
@@ -58,27 +59,37 @@ export async function GET(req) {
       return Response.json({ percentages, userVote, total, source: 'community' });
     }
 
-    // Few votes — seed with Finnhub analyst recommendations
+    // Few votes — seed with analyst recommendations. Finnhub's free plan only covers
+    // US-listed tickers, so international ones (LLOY.L, SAP.DE, ...) fall back to Yahoo's
+    // recommendation trend, which reports the same strongBuy/buy/hold/sell/strongSell shape.
+    let rec = null;
     try {
       const fhRes = await fetch(
         `https://finnhub.io/api/v1/stock/recommendation?symbol=${ticker}&token=${process.env.FINNHUB_API_KEY}`,
         { next: { revalidate: 3600 } }
       );
       const fhData = await fhRes.json();
-      const rec = Array.isArray(fhData) && fhData[0];
-      if (rec) {
-        const buy  = (rec.strongBuy || 0) + (rec.buy || 0);
-        const hold = rec.hold || 0;
-        const sell = (rec.sell || 0) + (rec.strongSell || 0);
-        const total = buy + hold + sell || 1;
+      rec = Array.isArray(fhData) && fhData[0] ? fhData[0] : null;
+    } catch { /* try Yahoo below */ }
+
+    if (!rec) {
+      rec = await fetchYahooRecommendationTrend(ticker);
+    }
+
+    if (rec) {
+      const buy  = (rec.strongBuy || 0) + (rec.buy || 0);
+      const hold = rec.hold || 0;
+      const sell = (rec.sell || 0) + (rec.strongSell || 0);
+      const total = buy + hold + sell;
+      if (total > 0) {
         const percentages = {
           BUY:  Math.round((buy  / total) * 100),
           HOLD: Math.round((hold / total) * 100),
           SELL: Math.round((sell / total) * 100),
         };
-        return Response.json({ percentages, userVote, total: rec.buy + rec.strongBuy + rec.hold + rec.sell + rec.strongSell, source: 'analysts' });
+        return Response.json({ percentages, userVote, total, source: 'analysts' });
       }
-    } catch { /* fallback below */ }
+    }
 
     // No analyst data either — return equal split
     return Response.json({ percentages: { BUY: 33, HOLD: 34, SELL: 33 }, userVote, total: 0, source: 'none' });

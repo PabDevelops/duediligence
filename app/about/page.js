@@ -2,157 +2,92 @@
 import Topbar from '../components/Topbar';
 import { useRouter } from 'next/navigation';
 
-const SCORE_CRITERIA = [
-  { label: 'Return on Capital', desc: 'Does the business generate strong returns on what it invests?', weight: 'High' },
-  { label: 'Revenue Growth',    desc: 'Is the company growing its top line consistently?',           weight: 'High' },
-  { label: 'Profit Margins',    desc: 'How much of each dollar of revenue becomes profit?',          weight: 'Medium' },
-  { label: 'Debt Level',        desc: 'Is the balance sheet healthy? Can they handle a downturn?',   weight: 'Medium' },
-  { label: 'Free Cash Flow',    desc: 'Does the business actually convert earnings to cash?',        weight: 'High' },
-  { label: 'Earnings Quality',  desc: 'Are the reported numbers reliable and consistent?',           weight: 'Medium' },
-];
-
-const SOURCES = [
-  { 
-    name: 'SEC EDGAR',      
-    desc: 'Official US regulator. Every public company must file here. Income statements, balance sheets, cash flows — straight from the source.', 
-    icon: (
-      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-        <rect x="3" y="22" width="18" height="2" />
-        <line x1="6" y1="18" x2="6" y2="6" />
-        <line x1="10" y1="18" x2="10" y2="6" />
-        <line x1="14" y1="18" x2="14" y2="6" />
-        <line x1="18" y1="18" x2="18" y2="6" />
-        <polygon points="12 2 3 6 21 6 12 2" />
-      </svg>
-    )
-  },
-  { 
-    name: 'Alpha Vantage',  
-    desc: 'Company descriptions, sector data, and supplementary fundamental metrics.',                                                              
-    icon: (
-      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-        <circle cx="12" cy="12" r="10" />
-        <line x1="12" y1="16" x2="12" y2="12" />
-        <line x1="12" y1="8" x2="12.01" y2="8" />
-      </svg>
-    )
-  },
-  { 
-    name: 'Finnhub',        
-    desc: 'Live stock prices and real-time market data.',                                                                                          
-    icon: (
-      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-        <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2" />
-      </svg>
-    )
-  },
-];
-
-const STEPS = [
-  { n: '01', title: 'Search any company', desc: 'Type a name or ticker. We cover 8,000+ US-listed stocks — from S&P 500 giants to small caps.' },
-  { n: '02', title: 'Read the score',     desc: 'A 0–100 quality score tells you at a glance whether the business is strong, average, or weak.' },
-  { n: '03', title: 'Dig deeper',         desc: 'Fair value estimate, financial statements, margins, growth history — all in one page. No spreadsheet needed.' },
-];
+const MONO = "'JetBrains Mono', monospace";
 
 export default function About() {
   const router = useRouter();
 
   return (
-    <div style={{ background: 'var(--bg)', minHeight: '100vh', color: 'var(--text)', fontFamily: 'Inter, sans-serif' }}>
+    <div style={{ background: '#ffffff', minHeight: '100vh', color: 'var(--text)', fontFamily: 'Inter, sans-serif' }}>
       <Topbar />
-      <div style={{ maxWidth: '820px', margin: '0 auto', padding: '60px 24px 100px' }}>
-
-        {/* Hero */}
-        <div style={{ marginBottom: '72px' }}>
-          <div style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', background: 'var(--accent-dim)', border: '1px solid var(--accent)', padding: '4px 14px', borderRadius: '20px', marginBottom: '20px' }}>
-            <span style={{ width: 6, height: 6, borderRadius: '50%', background: 'var(--green)', display: 'inline-block' }} />
-            <span style={{ color: 'var(--accent)', fontSize: '11px', letterSpacing: '2px', fontWeight: 700 }}>ABOUT TRAQCKER</span>
-          </div>
-          <h1 style={{ fontSize: '42px', fontWeight: 900, letterSpacing: '-1.5px', lineHeight: 1.1, marginBottom: '20px' }}>
-            Built for people who<br />
-            <span className="gradient-text">just want facts.</span>
-          </h1>
-          <p style={{ color: 'var(--text-2)', fontSize: '16px', lineHeight: 1.9, maxWidth: '620px', marginBottom: '14px' }}>
-            Most stock tools are either expensive, overwhelming with jargon, or quietly designed to push you into trades that benefit them — not you.
-          </p>
-          <p style={{ color: 'var(--text-2)', fontSize: '16px', lineHeight: 1.9, maxWidth: '620px' }}>
-            Traqcker pulls real data straight from official company filings and turns it into a simple score. No complicated formulas. No noise. Just what matters.
-          </p>
+      
+      {/* HERO SECTION */}
+      <section style={{ maxWidth: '820px', margin: '0 auto', padding: '80px 24px 48px', textAlign: 'left' }}>
+        <div style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', background: 'var(--accent-dim)', border: '1px solid var(--accent)', padding: '4px 14px', borderRadius: '20px', marginBottom: '24px' }}>
+          <span style={{ width: 6, height: 6, borderRadius: '50%', background: 'var(--accent)', display: 'inline-block' }} />
+          <span style={{ color: 'var(--accent)', fontSize: '11px', letterSpacing: '2px', fontWeight: 700 }}>OUR STORY</span>
         </div>
+        <h1 style={{ fontSize: '48px', fontWeight: 900, letterSpacing: '-1.5px', lineHeight: 1.1, marginBottom: '24px', color: 'var(--text)' }}>
+          Building the intelligence platform for public market research.
+        </h1>
+        <p style={{ color: 'var(--text-2)', fontSize: '16px', lineHeight: 1.9, maxWidth: '680px' }}>
+          Traqcker is a modern financial terminal designed to give independent analysts and retail investors direct, unfiltered access to clean public company filings, financial scores, and portfolio analysis.
+        </p>
+      </section>
 
-        {/* How it works */}
-        <div style={{ marginBottom: '72px' }}>
-          <div style={{ color: 'var(--text-3)', fontSize: '11px', letterSpacing: '2px', fontWeight: 700, marginBottom: '28px' }}>HOW IT WORKS</div>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '16px' }} className="grid-3">
-            {STEPS.map(s => (
-              <div key={s.n} className="glass" style={{ padding: '28px 24px' }}>
-                <div style={{ fontSize: '32px', fontWeight: 900, color: 'var(--border-2)', letterSpacing: '-2px', marginBottom: '12px', fontFamily: 'Inter, sans-serif' }}>{s.n}</div>
-                <div style={{ fontSize: '15px', fontWeight: 700, marginBottom: '8px' }}>{s.title}</div>
-                <div style={{ color: 'var(--text-3)', fontSize: '13px', lineHeight: 1.7 }}>{s.desc}</div>
-              </div>
-            ))}
+      {/* FOUNDER'S LETTER / MISSION */}
+      <section style={{ borderTop: '1px solid var(--border)', borderBottom: '1px solid var(--border)', background: '#fafafa', padding: '80px 24px' }}>
+        <div style={{ maxWidth: '820px', margin: '0 auto' }}>
+          <div style={{ fontSize: '28px', fontWeight: 800, letterSpacing: '-1px', color: 'var(--text)', marginBottom: '32px', borderLeft: '3px solid var(--accent)', paddingLeft: '24px', lineHeight: 1.3 }}>
+            “In investment research, verified facts are the only currency that matters.”
           </div>
-        </div>
-
-        {/* Quality Score explained */}
-        <div style={{ marginBottom: '72px' }}>
-          <div style={{ color: 'var(--text-3)', fontSize: '11px', letterSpacing: '2px', fontWeight: 700, marginBottom: '12px' }}>THE QUALITY SCORE</div>
-          <h2 style={{ fontSize: '26px', fontWeight: 800, letterSpacing: '-0.5px', marginBottom: '12px' }}>A 0–100 score built on fundamentals</h2>
-          <p style={{ color: 'var(--text-2)', fontSize: '14px', lineHeight: 1.8, maxWidth: '600px', marginBottom: '28px' }}>
-            We analyse six dimensions of a business and combine them into one number. Higher is better — but we show you the breakdown so you can see exactly why.
-          </p>
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }} className="quality-score-grid">
-            {SCORE_CRITERIA.map(c => (
-              <div key={c.label} className="card" style={{ padding: '18px 20px', display: 'flex', gap: '14px', alignItems: 'flex-start' }}>
-                <div style={{ width: 8, height: 8, borderRadius: '50%', background: c.weight === 'High' ? 'var(--accent)' : 'var(--text-3)', flexShrink: 0, marginTop: '5px' }} />
-                <div>
-                  <div style={{ fontSize: '14px', fontWeight: 700, marginBottom: '4px' }}>{c.label}</div>
-                  <div style={{ color: 'var(--text-3)', fontSize: '12px', lineHeight: 1.6 }}>{c.desc}</div>
-                </div>
-              </div>
-            ))}
-          </div>
-          <div style={{ marginTop: '12px', display: 'flex', alignItems: 'center', gap: '16px' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-              <span style={{ width: 8, height: 8, borderRadius: '50%', background: 'var(--accent)', display: 'inline-block' }} />
-              <span style={{ color: 'var(--text-3)', fontSize: '12px' }}>High weight</span>
-            </div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-              <span style={{ width: 8, height: 8, borderRadius: '50%', background: 'var(--text-3)', display: 'inline-block' }} />
-              <span style={{ color: 'var(--text-3)', fontSize: '12px' }}>Medium weight</span>
-            </div>
+          
+          <div style={{ color: 'var(--text-2)', fontSize: '15px', lineHeight: 1.8, display: 'flex', flexDirection: 'column', gap: '20px' }}>
+            <p>
+              Most investment tools are designed to overwhelm you with complex jargon or push you into trades that generate commissions. They give you numbers, but they don't help you understand the quality of the business.
+            </p>
+            <p>
+              We believe independent researchers shouldn't have to spend thousands of dollars a year to access clean, direct financial data. At Traqcker, we go straight to the primary source. We fetch files directly from regulatory bodies, compute margins transparently, and map them to historical visual models.
+            </p>
+            <p>
+              When you evaluate a stock on Traqcker, you don't just see a quality score. You can click on any metric to inspect the exact line in the company's financial reports. We believe in total transparency, facts over predictions, and absolute clarity.
+            </p>
           </div>
         </div>
+      </section>
 
-        {/* Data sources */}
-        <div style={{ marginBottom: '72px' }}>
-          <div style={{ color: 'var(--text-3)', fontSize: '11px', letterSpacing: '2px', fontWeight: 700, marginBottom: '12px' }}>DATA SOURCES</div>
-          <h2 style={{ fontSize: '26px', fontWeight: 800, letterSpacing: '-0.5px', marginBottom: '12px' }}>No analysts. No estimates. Just filings.</h2>
-          <p style={{ color: 'var(--text-2)', fontSize: '14px', lineHeight: 1.8, maxWidth: '600px', marginBottom: '28px' }}>
-            We go straight to the source. Every number comes from documents companies are legally required to file with regulators — not third-party estimates or analyst forecasts.
-          </p>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-            {SOURCES.map(s => (
-              <div key={s.name} className="glass" style={{ padding: '24px', display: 'flex', gap: '20px', alignItems: 'flex-start' }}>
-                <div style={{ color: 'var(--accent)', flexShrink: 0, marginTop: '2px' }}>{s.icon}</div>
-                <div>
-                  <div style={{ fontSize: '15px', fontWeight: 700, marginBottom: '6px' }}>{s.name}</div>
-                  <div style={{ color: 'var(--text-3)', fontSize: '13px', lineHeight: 1.7 }}>{s.desc}</div>
-                </div>
-              </div>
-            ))}
+      {/* WHY TRAQCKER EXISTS */}
+      <section style={{ maxWidth: '820px', margin: '0 auto', padding: '80px 24px' }}>
+        <div style={{ color: 'var(--text-3)', fontSize: '11px', letterSpacing: '2px', fontWeight: 700, marginBottom: '36px' }}>WHY TRAQCKER EXISTS</div>
+        
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '32px' }} className="quality-score-grid">
+          <div>
+            <h3 style={{ fontSize: '16px', fontWeight: 800, color: 'var(--text)', marginBottom: '10px' }}>No Analyst Bias</h3>
+            <p style={{ color: 'var(--text-2)', fontSize: '13px', lineHeight: 1.7 }}>
+              We don't publish speculative target prices or buy/sell recommendations. We provide the historical data, quality score, and intrinsic calculations so you can make your own decisions.
+            </p>
+          </div>
+          <div>
+            <h3 style={{ fontSize: '16px', fontWeight: 800, color: 'var(--text)', marginBottom: '10px' }}>Source Transparency</h3>
+            <p style={{ color: 'var(--text-2)', fontSize: '13px', lineHeight: 1.7 }}>
+              Every calculation on our platform is open and verifiable. Clicking any number opens a direct reference to the SEC EDGAR filing row so you can audit the source yourself.
+            </p>
+          </div>
+          <div>
+            <h3 style={{ fontSize: '16px', fontWeight: 800, color: 'var(--text)', marginBottom: '10px' }}>Multi-Currency Standard</h3>
+            <p style={{ color: 'var(--text-2)', fontSize: '13px', lineHeight: 1.7 }}>
+              We normalize global assets under one unified interface, converting local currencies and tickers automatically so you can evaluate domestic and foreign positions side-by-side.
+            </p>
+          </div>
+          <div>
+            <h3 style={{ fontSize: '16px', fontWeight: 800, color: 'var(--text)', marginBottom: '10px' }}>Clean Speed</h3>
+            <p style={{ color: 'var(--text-2)', fontSize: '13px', lineHeight: 1.7 }}>
+              A high-performance workspace caching system allows you to load watchlists and portfolios instantly, refreshing prices in the background without locking up the UI.
+            </p>
           </div>
         </div>
+      </section>
 
-        {/* Team */}
-        <div style={{ marginBottom: '72px' }}>
+      {/* TEAM SECTION */}
+      <section style={{ borderTop: '1px solid var(--border)', background: '#fafafa', padding: '80px 24px' }}>
+        <div style={{ maxWidth: '820px', margin: '0 auto' }}>
           <div style={{ color: 'var(--text-3)', fontSize: '11px', letterSpacing: '2px', fontWeight: 700, marginBottom: '28px' }}>THE TEAM</div>
-          <div className="glass" style={{ padding: '32px', display: 'flex', alignItems: 'center', gap: '28px' }}>
-            <img src="/pablo.jpg" alt="Pablo Rodriguez" style={{ width: '88px', height: '88px', objectFit: 'cover', borderRadius: '50%', flexShrink: 0, border: '2px solid var(--border-2)' }} />
+          <div style={{ border: '1px solid var(--border)', borderRadius: '16px', padding: '32px', display: 'flex', alignItems: 'center', gap: '28px', background: '#ffffff' }}>
+            <img src="/pablo.jpg" alt="Pablo Rodriguez" style={{ width: '88px', height: '88px', objectFit: 'cover', borderRadius: '50%', flexShrink: 0, border: '2px solid var(--border)' }} />
             <div>
-              <div style={{ fontSize: '20px', fontWeight: 800, marginBottom: '4px' }}>Pablo Rodriguez</div>
+              <div style={{ fontSize: '20px', fontWeight: 800, marginBottom: '4px', color: 'var(--text)' }}>Pablo Rodriguez</div>
               <div className="gradient-text" style={{ fontSize: '13px', fontWeight: 700, marginBottom: '10px' }}>Founder</div>
-              <p style={{ color: 'var(--text-3)', fontSize: '13px', lineHeight: 1.7, marginBottom: '12px', maxWidth: '420px' }}>
+              <p style={{ color: 'var(--text-2)', fontSize: '13px', lineHeight: 1.7, marginBottom: '12px', maxWidth: '440px' }}>
                 Built Traqcker out of frustration with tools that were either too expensive or too complex. Wanted something honest, simple, and actually useful for normal investors.
               </p>
               <a href="https://twitter.com/InvestingPablo" target="_blank" rel="noopener noreferrer"
@@ -162,17 +97,19 @@ export default function About() {
             </div>
           </div>
         </div>
+      </section>
 
-        {/* CTA */}
-        <div className="glass-strong" style={{ padding: '48px 40px', textAlign: 'center', borderRadius: '24px' }}>
-          <h2 style={{ fontSize: '28px', fontWeight: 900, letterSpacing: '-0.5px', marginBottom: '12px' }}>
-            Try it on any stock. It's free.
+      {/* FINAL CTA */}
+      <section style={{ maxWidth: '820px', margin: '0 auto', padding: '80px 24px 100px' }}>
+        <div style={{ border: '1px solid var(--border)', borderRadius: '24px', padding: '48px 40px', textAlign: 'center', background: '#ffffff' }}>
+          <h2 style={{ fontSize: '28px', fontWeight: 900, letterSpacing: '-0.5px', marginBottom: '12px', color: 'var(--text)' }}>
+            Start your research today.
           </h2>
-          <p style={{ color: 'var(--text-3)', fontSize: '14px', marginBottom: '28px' }}>
-            No credit card. No sign-up required to get started.
+          <p style={{ color: 'var(--text-2)', fontSize: '14px', marginBottom: '28px' }}>
+            Try Traqcker Pro free for 14 days. No credit card required.
           </p>
-          <button className="btn-primary" onClick={() => router.push('/')} style={{ padding: '14px 36px', fontSize: '15px' }}>
-            Analyse a stock →
+          <button className="btn-primary" onClick={() => router.push('/pricing')} style={{ padding: '14px 36px', fontSize: '15px' }}>
+            Start Free Trial →
           </button>
         </div>
 
@@ -181,8 +118,8 @@ export default function About() {
           <span>Not investment advice · Data from public sources</span>
           <span>© 2026 Traqcker</span>
         </div>
+      </section>
 
-      </div>
     </div>
   );
 }

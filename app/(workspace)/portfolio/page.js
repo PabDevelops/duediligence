@@ -604,7 +604,7 @@ export default function WorkspacePortfolio() {
     fetch('/api/portfolio/snapshot').then(r => r.json()).then(d => setSnapshots(d.snapshots || [])).catch(() => {});
   }, [isSignedIn]);
 
-  const load = () => {
+  const load = ({ refresh = false } = {}) => {
     if (!isSignedIn) return;
     fetch('/api/portfolio').then(async r => {
       const d = await r.json();
@@ -614,18 +614,20 @@ export default function WorkspacePortfolio() {
       setLoading(false);
       const tickers = [...new Set((d.holdings || []).map(h => h.ticker))];
       tickers.forEach(ticker => {
-        fetch(`/api/stock?ticker=${ticker}&refresh=true`).then(r => r.json()).then(data => setStocks(prev => ({ ...prev, [ticker]: data })));
+        fetch(`/api/stock?ticker=${ticker}${refresh ? '&refresh=true' : ''}`).then(r => r.json()).then(data => setStocks(prev => ({ ...prev, [ticker]: data })));
         fetch(`/api/sparkline?ticker=${ticker}`).then(r => r.json()).then(data => setSparklines(prev => ({ ...prev, [ticker]: data.candles }))).catch(() => {});
       });
     });
   };
 
-  useEffect(load, [isSignedIn]);
+  useEffect(() => {
+    load({ refresh: false });
+  }, [isSignedIn]);
 
   // Keep holding prices reasonably live — reload isn't the only way to see a move.
   useEffect(() => {
     if (!isSignedIn) return;
-    const interval = setInterval(load, 60000);
+    const interval = setInterval(() => load({ refresh: false }), 60000);
     return () => clearInterval(interval);
   }, [isSignedIn]);
 
@@ -846,12 +848,12 @@ export default function WorkspacePortfolio() {
                     </div>
                   </div>
                 )}
-                <div style={{ border: '1px solid var(--ws-border)', overflow: 'hidden' }}>
-                  <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '12px' }}>
+                <div className="responsive-table-container" style={{ border: '1px solid var(--ws-border)', background: 'var(--ws-bg-1)' }}>
+                  <table className="responsive-table" style={{ fontSize: '12px' }}>
                     <thead>
                       <tr style={{ borderBottom: '1px solid var(--ws-border)', background: 'var(--ws-bg-1)' }}>
                         {['Stock', '1M', 'Shares', 'Avg cost', 'Price', 'Day', 'P/E', 'Div yield', 'Market value', 'Gain/loss', 'Allocation', ''].map(h => (
-                          <th key={h} style={{ padding: '9px 12px', textAlign: h === 'Stock' ? 'left' : h === '1M' ? 'center' : 'right', fontWeight: 600, fontSize: '10px', color: 'var(--ws-text-3)' }}>{h}</th>
+                          <th key={h} className={h === 'Stock' ? 'sticky-col' : ''} style={{ padding: '9px 12px', textAlign: h === 'Stock' ? 'left' : h === '1M' ? 'center' : 'right', fontWeight: 600, fontSize: '10px', color: 'var(--ws-text-3)' }}>{h}</th>
                         ))}
                       </tr>
                     </thead>
@@ -861,10 +863,10 @@ export default function WorkspacePortfolio() {
                         const lastLot = [...p.lots].sort((a, b) => new Date(b.created_at) - new Date(a.created_at))[0];
                         return (
                           <tr key={p.ticker} onClick={() => router.push(`/stock/${p.ticker}`)}
-                            style={{ borderBottom: '1px solid var(--ws-border)', cursor: 'pointer' }}
+                            style={{ borderBottom: '1px solid var(--ws-border)', cursor: 'pointer', background: 'var(--ws-bg-1)' }}
                             onMouseEnter={e => e.currentTarget.style.background = 'var(--ws-bg-2)'}
-                            onMouseLeave={e => e.currentTarget.style.background = 'transparent'}>
-                            <td style={{ padding: '10px 12px' }}>
+                            onMouseLeave={e => e.currentTarget.style.background = 'var(--ws-bg-1)'}>
+                            <td className="sticky-col" style={{ padding: '10px 12px' }}>
                               <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                                 <StockLogo ticker={p.ticker} size={24} />
                                 <div>

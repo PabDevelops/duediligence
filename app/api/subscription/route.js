@@ -15,7 +15,7 @@ export async function GET() {
     .eq('user_id', user.id)
     .single();
 
-  const isPro = data?.manual_override === true || PRO_STATUSES.includes(data?.status);
+  const isPro = process.env.NODE_ENV === 'development' || data?.manual_override === true || PRO_STATUSES.includes(data?.status);
   const needsTrial = !data && new Date(user.created_at) >= TRIAL_LAUNCH_DATE;
 
   return Response.json({ isPro, needsTrial });

@@ -27,17 +27,34 @@ export async function GET(request) {
     const result = data?.chart?.result?.[0];
     if (!result) return Response.json({ candles: [] });
 
+    const meta = result.meta || {};
+    const currency = meta.currency;
+
     const timestamps = result.timestamp || [];
     const quotes = result.indicators?.quote?.[0] || {};
 
-    const candles = timestamps.map((t, i) => ({
-      t: t * 1000,
-      o: +quotes.open?.[i]?.toFixed(2),
-      h: +quotes.high?.[i]?.toFixed(2),
-      l: +quotes.low?.[i]?.toFixed(2),
-      c: +quotes.close?.[i]?.toFixed(2),
-      v: quotes.volume?.[i],
-    })).filter(c => c.c && c.o && c.h && c.l);
+    const candles = timestamps.map((t, i) => {
+      let open = quotes.open?.[i];
+      let high = quotes.high?.[i];
+      let low = quotes.low?.[i];
+      let close = quotes.close?.[i];
+
+      if (currency === 'GBp') {
+        if (open != null) open /= 100;
+        if (high != null) high /= 100;
+        if (low != null) low /= 100;
+        if (close != null) close /= 100;
+      }
+
+      return {
+        t: t * 1000,
+        o: open != null ? +(currency === 'GBp' ? open.toFixed(4) : open.toFixed(2)) : null,
+        h: high != null ? +(currency === 'GBp' ? high.toFixed(4) : high.toFixed(2)) : null,
+        l: low != null ? +(currency === 'GBp' ? low.toFixed(4) : low.toFixed(2)) : null,
+        c: close != null ? +(currency === 'GBp' ? close.toFixed(4) : close.toFixed(2)) : null,
+        v: quotes.volume?.[i],
+      };
+    }).filter(c => c.c && c.o && c.h && c.l);
 
     return Response.json({ candles });
   } catch (e) {

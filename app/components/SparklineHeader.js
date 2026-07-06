@@ -10,25 +10,36 @@ const RANGES = [
   { label: '1Y', range: '1y', interval: '1wk' },
 ];
 
-const CustomTooltip = ({ active, payload }) => {
+const CURRENCY_SYMBOLS = { USD: '$', EUR: '€', GBP: '£', JPY: '¥', CNY: '¥', CHF: 'CHF ', CAD: 'C$', AUD: 'A$', HKD: 'HK$', INR: '₹', KRW: '₩', SEK: 'kr', NOK: 'kr', DKK: 'kr' };
+const curSym = (code) => !code || code === 'USD' ? '$' : (CURRENCY_SYMBOLS[code] || `${code} `);
+
+const CustomTooltip = ({ active, payload, currency }) => {
   if (!active || !payload?.length) return null;
   return (
     <div style={{ background: 'var(--bg-2)', border: '1px solid var(--border)', padding: '4px 8px', fontSize: '10px', fontFamily: 'JetBrains Mono, monospace', color: 'var(--text)' }}>
-      ${payload[0].value?.toFixed(2)}
+      {curSym(currency)}{payload[0].value?.toFixed(2)}
     </div>
   );
 };
 
-export default function SparklineHeader({ ticker }) {
+export default function SparklineHeader({ ticker, currency }) {
   const [range, setRange] = useState('1mo');
   const [data, setData] = useState(null);
 
   useEffect(() => {
+    let active = true;
     setData(null);
     fetch(`/api/sparkline?ticker=${ticker}&range=${range}`)
       .then(r => r.json())
-      .then(d => setData(d.candles || null))
+      .then(d => {
+        if (active) {
+          setData(d.candles || null);
+        }
+      })
       .catch(() => {});
+    return () => {
+      active = false;
+    };
   }, [ticker, range]);
 
   const first = data?.[0]?.c;
@@ -53,7 +64,7 @@ export default function SparklineHeader({ ticker }) {
         <ResponsiveContainer width="100%" height={48}>
           <LineChart data={chartData} margin={{ top: 2, right: 0, bottom: 2, left: 0 }}>
             <YAxis domain={['auto', 'auto']} hide />
-            <Tooltip content={<CustomTooltip />} />
+            <Tooltip content={(props) => <CustomTooltip {...props} currency={currency} />} />
             <Line type="monotone" dataKey="v" stroke={lineColor} strokeWidth={1.5} dot={false} isAnimationActive={false} />
           </LineChart>
         </ResponsiveContainer>

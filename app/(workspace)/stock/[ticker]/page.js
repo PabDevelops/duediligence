@@ -361,13 +361,9 @@ export default function StockPage({ params }) {
           <span style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: '11px', color: 'var(--ws-accent)', fontWeight: 700, letterSpacing: '1px' }}>
             $ traq {ticker}
           </span>
-          {data.internationalSource === 'yahoo' ? (
+          {data.finnhubFallback && (
             <span style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: '9px', color: 'var(--ws-text-3)', letterSpacing: '1px' }}>
-              {data.finnhubFallback ? '[INTERNATIONAL — PRICE ONLY]' : '[INTERNATIONAL — YAHOO FINANCE]'}
-            </span>
-          ) : data.finnhubFallback && (
-            <span style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: '9px', color: 'var(--ws-text-3)', letterSpacing: '1px' }}>
-              [LIMITED — FINNHUB ONLY]
+              [LIMITED DATA]
             </span>
           )}
         </div>
@@ -377,12 +373,12 @@ export default function StockPage({ params }) {
           <div className="stock-hero" style={{ padding: 0 }}>
             {/* Left: identity + price */}
             <div className="stock-hero-left" style={{ gap: '16px' }}>
-              <div style={{ width: '52px', height: '52px', background: 'white', border: '1px solid var(--ws-border)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, overflow: 'hidden' }}>
+              <div style={{ width: '72px', height: '72px', background: 'white', border: '1px solid var(--ws-border)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, overflow: 'hidden' }}>
                 <img
                   src={`https://img.logo.dev/ticker/${ticker}?token=pk_B4aaLZF6S4G1YbCgqZq2Ug`}
                   alt={data.name}
-                  style={{ width: '38px', height: '38px', objectFit: 'contain' }}
-                  onError={e => { e.target.style.display = 'none'; e.target.parentElement.innerHTML = `<span style="color:var(--ws-accent);font-weight:700;font-size:16px;font-family:'JetBrains Mono',monospace">${ticker.slice(0,2)}</span>`; e.target.parentElement.style.background = 'var(--ws-bg-2)'; }}
+                  style={{ width: '54px', height: '54px', objectFit: 'contain' }}
+                  onError={e => { e.target.style.display = 'none'; e.target.parentElement.innerHTML = `<span style="color:var(--ws-accent);font-weight:700;font-size:22px;font-family:'JetBrains Mono',monospace">${ticker.slice(0,2)}</span>`; e.target.parentElement.style.background = 'var(--ws-bg-2)'; }}
                 />
               </div>
               <div style={{ minWidth: 0 }}>
@@ -400,6 +396,11 @@ export default function StockPage({ params }) {
                   </div>
                 )}
               </div>
+            </div>
+
+            {/* Middle: price chart */}
+            <div className="stock-hero-chart">
+              <SparklineHeader ticker={ticker} currency={data?.currency} />
             </div>
 
             {/* Right: terminal score block */}
@@ -541,14 +542,6 @@ export default function StockPage({ params }) {
                 </div>
               </div>
 
-              {/* Price chart */}
-              <div>
-                <div style={{ color: 'var(--ws-text-3)', fontSize: '10px', fontFamily: "'JetBrains Mono', monospace", letterSpacing: '1.5px', marginBottom: '10px', fontWeight: 700 }}>PRICE CHART</div>
-                <div style={{ background: 'var(--ws-bg-1)', border: '1px solid var(--ws-border)', padding: '16px 16px 12px' }}>
-                  <SparklineHeader ticker={ticker} />
-                </div>
-              </div>
-
               {/* Related reading */}
               {relatedPosts.length > 0 && (
                 <div>
@@ -629,7 +622,7 @@ export default function StockPage({ params }) {
               {/* Share */}
               <div style={{ background: 'var(--ws-bg-1)', border: '1px solid var(--ws-border)', padding: '16px 18px' }}>
                 <div style={{ fontSize: '10px', color: 'var(--ws-text-3)', fontFamily: "'JetBrains Mono', monospace", letterSpacing: '1.5px', fontWeight: 700, marginBottom: '12px' }}>SHARE</div>
-                <ShareCardComponent
+                 <ShareCardComponent
                   ticker={ticker}
                   name={data?.name || 'N/A'}
                   price={data?.currentPrice || 0}
@@ -646,6 +639,7 @@ export default function StockPage({ params }) {
                   fairValueNegative={fairValue?.negative ?? false}
                   consensus={voteConsensus}
                   userVote={userVote}
+                  currency={data?.currency}
                 />
               </div>
 
@@ -1020,7 +1014,7 @@ export default function StockPage({ params }) {
 
               <div style={{ display: 'flex', gap: '10px', marginBottom: '16px' }}>
                 <div style={{ flex: 1, background: 'var(--ws-bg-1)' }}>
-                  <StockChart ticker={ticker} />
+                  <StockChart ticker={ticker} currency={data?.currency} />
                 </div>
               </div>
 

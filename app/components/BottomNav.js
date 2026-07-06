@@ -68,6 +68,9 @@ export default function BottomNav() {
     return () => { clearInterval(interval); window.removeEventListener('resize', measure); };
   }, []);
 
+  const isPublicPage = ['/', '/about', '/pricing', '/privacy', '/terms', '/sign-in', '/sign-up'].includes(path);
+  if (!isSignedIn || isPublicPage) return null;
+
   const isHome = path === '/';
   const isSearch = path === '/screener' || path === '/compare';
   const isWatchlist = path.startsWith('/watchlist');

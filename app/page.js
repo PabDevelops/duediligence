@@ -2,34 +2,36 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useUser } from './components/AuthProvider';
-import Topbar from './components/Topbar';
 import NewsletterForm from './components/NewsletterForm';
 
-// Dark "terminal" tokens matching the actual app UI (app/globals.css --ws-* dark theme),
-// hardcoded here (matching app/globals.css --ws-* light theme) so the mockups
-// always mirror the actual product UI, which defaults to light regardless of
-// the marketing page's own theme.
-const W = {
-  bg: '#f8f9fa', bg1: '#ffffff', bg2: '#f1f3f5',
-  text: '#1f2937', text2: '#4b5563', text3: '#9ca3af',
-  border: '#e5e7eb', accent: '#0f766e', accentDim: 'rgba(15, 118, 110, 0.08)', red: '#ef4444',
-};
 const MONO = "'JetBrains Mono', monospace";
 
 function WindowChrome({ title, children, maxWidth = '980px' }) {
   return (
     <div style={{
-      background: W.bg1, border: `1px solid ${W.border}`, borderRadius: '14px',
-      boxShadow: '0 24px 60px rgba(15,23,42,0.12)', maxWidth, margin: '0 auto',
-      textAlign: 'left', overflow: 'hidden',
+      background: '#ffffff',
+      border: '1px solid var(--border)',
+      borderRadius: '12px',
+      boxShadow: '0 20px 50px rgba(0,0,0,0.06)',
+      maxWidth,
+      margin: '0 auto',
+      textAlign: 'left',
+      overflow: 'hidden',
     }}>
-      <div style={{ background: W.bg2, padding: '11px 16px', borderBottom: `1px solid ${W.border}`, display: 'flex', alignItems: 'center', gap: '12px' }}>
-        <div style={{ display: 'flex', gap: '6px', flexShrink: 0 }}>
-          <span style={{ width: '9px', height: '9px', borderRadius: '50%', background: '#ef4444', display: 'inline-block' }} />
-          <span style={{ width: '9px', height: '9px', borderRadius: '50%', background: '#f59e0b', display: 'inline-block' }} />
-          <span style={{ width: '9px', height: '9px', borderRadius: '50%', background: '#10b981', display: 'inline-block' }} />
+      <div style={{
+        background: '#f1f3f5',
+        padding: '10px 16px',
+        borderBottom: '1px solid var(--border)',
+        display: 'flex',
+        alignItems: 'center',
+        gap: '10px'
+      }}>
+        <div style={{ display: 'flex', gap: '5px', flexShrink: 0 }}>
+          <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#ef4444', display: 'inline-block' }} />
+          <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#f59e0b', display: 'inline-block' }} />
+          <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#10b981', display: 'inline-block' }} />
         </div>
-        <div style={{ fontFamily: MONO, fontSize: '10px', color: W.text3, letterSpacing: '0.5px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+        <div style={{ fontFamily: MONO, fontSize: '10px', color: 'var(--text-3)', letterSpacing: '0.5px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
           {title}
         </div>
       </div>
@@ -37,319 +39,503 @@ function WindowChrome({ title, children, maxWidth = '980px' }) {
     </div>
   );
 }
-
-function SectionTag({ children }) {
-  return (
-    <div style={{
-      display: 'inline-flex', alignItems: 'center', gap: '8px', fontFamily: MONO,
-      fontSize: '10px', fontWeight: 700, color: 'var(--accent)', letterSpacing: '2px',
-      textTransform: 'uppercase', marginBottom: '14px',
-    }}>
-      <span style={{ width: '16px', height: '1px', background: 'var(--accent)', display: 'inline-block' }} />
-      {children}
-    </div>
-  );
-}
-
-function FeatureRow({ tag, title, description, bullets, mockup, reverse, href }) {
-  return (
-    <div className="reveal landing-feature-row" style={{
-      display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '56px', alignItems: 'center',
-      padding: '56px 0', borderTop: `1px solid var(--border)`,
-    }}>
-      <div className="landing-feature-text" style={{ order: reverse ? 2 : 1, minWidth: 0 }}>
-        <SectionTag>{tag}</SectionTag>
-        <h3 style={{ fontSize: '28px', fontWeight: 800, letterSpacing: '-0.5px', color: 'var(--text)', marginBottom: '14px', lineHeight: 1.2 }}>
-          {title}
-        </h3>
-        <p style={{ fontSize: '15px', color: 'var(--text-2)', lineHeight: 1.7, marginBottom: '20px', maxWidth: '440px' }}>
-          {description}
-        </p>
-        <ul style={{ listStyle: 'none', padding: 0, margin: '0 0 24px', display: 'flex', flexDirection: 'column', gap: '10px' }}>
-          {bullets.map((b, i) => (
-            <li key={i} style={{ display: 'flex', alignItems: 'flex-start', gap: '10px', fontSize: '13px', color: 'var(--text-2)' }}>
-              <span style={{ color: 'var(--accent)', fontWeight: 700, marginTop: '1px' }}>✓</span>
-              {b}
-            </li>
-          ))}
-        </ul>
-        {href && (
-          <a href={href} style={{ fontSize: '13px', fontWeight: 700, color: 'var(--accent)', textDecoration: 'none' }}>
-            Get access with Pro →
-          </a>
-        )}
-      </div>
-      <div className="landing-feature-mockup" style={{ order: reverse ? 1 : 2, minWidth: 0 }}>
-        {mockup}
-      </div>
-    </div>
-  );
-}
-
-// --- Real product screenshots (public/screenshots/*.png), wrapped in the
-// same fake-browser chrome for a consistent frame. Captured from an
-// authenticated Pro session — see scripts used during the redesign session.
 
 function Shot({ src, alt }) {
   return <img src={src} alt={alt} style={{ display: 'block', width: '100%', height: 'auto' }} />;
-}
-
-function MockScreener() {
-  return (
-    <WindowChrome title="traqcker.com/screener — Quantitative Universe Filter">
-      <Shot src="/screenshots/screener.png" alt="Traqcker screener showing filterable US equity universe" />
-    </WindowChrome>
-  );
-}
-
-function MockCompare() {
-  return (
-    <WindowChrome title="traqcker.com/compare — Sentiment & Sector Momentum">
-      <Shot src="/screenshots/compare.png" alt="Traqcker radar showing sector momentum and sentiment" />
-    </WindowChrome>
-  );
-}
-
-function MockPortfolio() {
-  return (
-    <WindowChrome title="traqcker.com/portfolio — Holdings & Allocation">
-      <Shot src="/screenshots/portfolio.png" alt="Traqcker portfolio tracker with allocation charts" />
-    </WindowChrome>
-  );
-}
-
-function MockChat() {
-  return (
-    <WindowChrome title="traqcker.com/chat — Traq, the research assistant">
-      <Shot src="/screenshots/chat.png" alt="Traq AI assistant answering a question about NVDA risks" />
-    </WindowChrome>
-  );
-}
-
-function MockCalendar() {
-  return (
-    <WindowChrome title="traqcker.com/calendar — Earnings & IPO Tracker">
-      <Shot src="/screenshots/calendar.png" alt="Traqcker earnings and IPO calendar" />
-    </WindowChrome>
-  );
-}
-
-function MockWatchlist() {
-  return (
-    <WindowChrome title="traqcker.com/watchlist — News, filtered to your positions">
-      <Shot src="/screenshots/watchlist.png" alt="Traqcker watchlist news feed filtered to holdings" />
-    </WindowChrome>
-  );
 }
 
 export default function Home() {
   const router = useRouter();
   const { isSignedIn, isLoaded } = useUser();
   const [userCount, setUserCount] = useState(null);
+  const [activePropTab, setActivePropTab] = useState(0);
 
   useEffect(() => {
     if (isLoaded && isSignedIn) router.replace('/home');
   }, [isLoaded, isSignedIn, router]);
 
   useEffect(() => {
-    fetch('/api/user-count').then(r => r.json()).then(d => setUserCount(d.count)).catch(() => {});
+    fetch('/api/user-count').then(r => r.json()).then(d => setUserCount(d.count)).catch(() => { });
   }, []);
 
-  return (
-    <div style={{ background: 'var(--bg)', minHeight: '100vh', color: 'var(--text)', fontFamily: 'Inter, sans-serif', paddingBottom: '80px', overflow: 'hidden' }}>
-      <Topbar />
-
-      {/* HERO */}
-      <div style={{ maxWidth: '1100px', margin: '0 auto', padding: '80px 24px 0', textAlign: 'center', position: 'relative' }}>
-
-        <div style={{ position: 'absolute', top: '-120px', left: '50%', transform: 'translateX(-50%)', width: '600px', height: '400px', background: 'radial-gradient(ellipse at center, var(--accent) 0%, transparent 70%)', opacity: 0.12, pointerEvents: 'none' }} />
-
-        <div style={{
-          display: 'inline-flex', alignItems: 'center', gap: '8px', background: 'var(--accent-dim)',
-          border: '1px solid rgba(15, 118, 110, 0.3)', borderRadius: '20px', padding: '4px 12px',
-          fontSize: '11px', fontWeight: 700, color: 'var(--accent)', letterSpacing: '1px',
-          textTransform: 'uppercase', marginBottom: '24px',
-        }}>
-          <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: 'var(--accent)', display: 'inline-block', boxShadow: '0 0 8px var(--accent)' }} />
-          The Bloomberg terminal for independent investors
-        </div>
-
-        <h1 style={{
-          fontSize: '54px', fontWeight: 900, letterSpacing: '-1.5px', lineHeight: 1.08,
-          maxWidth: '860px', margin: '0 auto 20px',
-          background: 'linear-gradient(135deg, #1f2937 40%, #0f766e 100%)',
-          WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent',
-        }}>
-          Every public company. Every filing. One terminal — for a fraction of the price.
-        </h1>
-
-        <p style={{ fontSize: '17px', color: 'var(--text-2)', lineHeight: 1.7, maxWidth: '640px', margin: '0 auto 40px', fontWeight: 400 }}>
-          Traqcker pulls straight from SEC EDGAR to score quality, model fair value, track your portfolio,
-          and brief you every morning — all in one workspace built for people who do their own research.
-        </p>
-
-        <div style={{ display: 'flex', gap: '10px', justifyContent: 'center', marginBottom: '56px', flexWrap: 'wrap' }}>
-          <a href="/pricing" style={{ padding: '13px 26px', fontSize: '14px', fontWeight: 700, background: 'var(--accent)', color: '#fff', borderRadius: '8px', textDecoration: 'none', boxShadow: '0 4px 14px rgba(15, 118, 110, 0.25)' }}>
-            Start free 14-day Pro trial
-          </a>
-          <a href="/about" style={{ padding: '13px 26px', fontSize: '14px', fontWeight: 700, background: 'transparent', color: 'var(--text)', border: '1px solid var(--border)', borderRadius: '8px', textDecoration: 'none' }}>
-            Learn more →
-          </a>
-        </div>
-
-        {/* HERO PRODUCT SHOT — real screenshot of /stock/AAPL, signed in as Pro */}
-        <WindowChrome title="terminal.traqcker.com — AAPL (Apple Inc.) Analysis" maxWidth="920px">
-          <Shot src="/screenshots/stock.png" alt="Traqcker stock analysis page for Apple Inc." />
+  const valueProps = [
+    {
+      title: "Cut research time",
+      tagline: "AI queries on any company, filing, or metric",
+      desc: "Ask complex questions like 'what are the main risks outlined in their last 10-K?' or 'how has capital allocation changed?' and get instant, cited answers from Traq AI.",
+      mockup: (
+        <WindowChrome title="terminal.traqcker.com/chat — Traq Research Assistant">
+          <Shot src="/screenshots/chat.png" alt="Traq AI research assistant analyzing company risks" />
         </WindowChrome>
+      )
+    },
+    {
+      title: "Be first",
+      tagline: "Global live coverage of filings and prices",
+      desc: "Get real-time alerts as soon as filings hit the SEC EDGAR system. Watchlists and portfolios synchronize prices and currency rates continuously to show movements instantly.",
+      mockup: (
+        <WindowChrome title="terminal.traqcker.com/watchlist — Live Ticker Headlines">
+          <Shot src="/screenshots/watchlist.png" alt="Live ticker headlines and real-time prices feed" />
+        </WindowChrome>
+      )
+    },
+    {
+      title: "Trust every finding",
+      tagline: "First-party source verification",
+      desc: "No black boxes. Every computed margin, quality score component, and Graham fair value is directly linked to the exact filing row. Click any metric to inspect the original SEC source.",
+      mockup: (
+        <WindowChrome title="terminal.traqcker.com/stock/AAPL — SEC Source Reference">
+          <Shot src="/screenshots/stock.png" alt="Stock fundamental analysis verified with SEC files" />
+        </WindowChrome>
+      )
+    },
+    {
+      title: "Spot inflection points",
+      tagline: "Evaluate growth, margins, and allocation trends",
+      desc: "Filter and rank over 8,000+ equities in seconds. Compare margins, free cash flow yields, debt-to-equity ratios, and dilution profiles side-by-side using classical models.",
+      mockup: (
+        <WindowChrome title="terminal.traqcker.com/screener — Quantitative Universe Filter">
+          <Shot src="/screenshots/screener.png" alt="Quantitative stock screener grid" />
+        </WindowChrome>
+      )
+    }
+  ];
 
-        {/* TRUST / STATS STRIP */}
-        <div style={{ display: 'flex', justifyContent: 'center', gap: '48px', flexWrap: 'wrap', margin: '48px 0 0', padding: '0 0 56px' }}>
-          {[
-            ['8,412', 'US Equities Covered'],
-            ['SEC EDGAR', 'Primary Source Data'],
-            [userCount ? userCount.toLocaleString() : '2,874', 'Independent Analysts'],
-            ['14 Days', 'Free Trial, Then Subscribe'],
-          ].map(([v, l]) => (
-            <div key={l} style={{ textAlign: 'center' }}>
-              <div style={{ fontSize: '22px', fontWeight: 900, color: 'var(--text)' }}>{v}</div>
-              <div style={{ fontSize: '11px', color: 'var(--text-3)', marginTop: '2px', letterSpacing: '0.3px' }}>{l}</div>
-            </div>
-          ))}
-        </div>
-      </div>
+  return (
+    <div style={{ background: '#ffffff', minHeight: '100vh', color: 'var(--text)', fontFamily: 'Inter, sans-serif', overflow: 'hidden' }}>
 
-      {/* FEATURE SHOWCASE */}
-      <div style={{ maxWidth: '1100px', margin: '0 auto', padding: '0 24px' }}>
-        <div style={{ textAlign: 'center', maxWidth: '640px', margin: '0 auto 8px' }}>
-          <h2 style={{ fontSize: '32px', fontWeight: 800, letterSpacing: '-0.5px', marginBottom: '12px' }}>
-            One workspace. Every step of your process.
-          </h2>
-          <p style={{ fontSize: '15px', color: 'var(--text-2)', lineHeight: 1.6 }}>
-            From first screen to final thesis — Traqcker replaces the spreadsheet-and-tab-hopping workflow with a single terminal.
-          </p>
-        </div>
+      {/* HEADER */}
+      <header style={{
+        maxWidth: '1200px',
+        margin: '0 auto',
+        padding: '24px',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        borderBottom: '1px solid var(--border)'
+      }}>
+        <a href="/" style={{ display: 'flex', alignItems: 'center', gap: '8px', textDecoration: 'none' }}>
+          <img src="/logo-traqcker-new.png" alt="Traqcker" style={{ height: '18px', width: 'auto' }} />
+        </a>
 
-        <FeatureRow
-          tag="Screener"
-          title="Filter 8,000+ stocks by the metrics that actually matter."
-          description="Skip the noisy stock-pickers. Run quantitative screens on margins, growth, FCF yield and ROE across the full US equity universe, sourced straight from filings."
-          bullets={['Presets for Tech Growth, Value Gems, Cash Cows and more', 'Live sparklines and sector breakdowns', 'Custom thresholds on 10+ fundamental metrics']}
-          mockup={<MockScreener />}
-          href="/pricing"
-        />
+        <nav className="desktop-only" style={{ display: 'flex', gap: '32px', alignItems: 'center' }}>
+          <a href="/about" style={{ textDecoration: 'none', color: 'var(--text-2)', fontSize: '13px', fontWeight: 600 }}>Product</a>
+          <a href="/pricing" style={{ textDecoration: 'none', color: 'var(--text-2)', fontSize: '13px', fontWeight: 600 }}>Pricing</a>
+          <a href="/about" style={{ textDecoration: 'none', color: 'var(--text-2)', fontSize: '13px', fontWeight: 600 }}>Use cases</a>
+        </nav>
 
-        <FeatureRow
-          tag="Radar"
-          title="See sentiment and momentum before it's consensus."
-          description="Track sector-wide momentum and aggregate Buy/Hold/Sell positioning from the Traqcker community and analyst coverage, side by side."
-          bullets={['Sector momentum index updated daily', 'Crowd-sourced Buy/Hold/Sell consensus', 'Compare up to 5 tickers head-to-head']}
-          mockup={<MockCompare />}
-          reverse
-          href="/pricing"
-        />
-
-        <FeatureRow
-          tag="Portfolio"
-          title="Track real holdings, not just watchlists."
-          description="Import your positions by CSV or add them by hand. See live gain/loss, allocation by stock, sector and custom pies, in your own currency."
-          bullets={['CSV import with automatic column detection', 'Multi-currency support (USD, EUR, GBP)', 'Allocation and growth charts, always current']}
-          mockup={<MockPortfolio />}
-        />
-
-        <FeatureRow
-          tag="Traq AI"
-          title="Ask your terminal a question, get an answer grounded in filings."
-          description="Traq is a research assistant scoped to your ticker or your whole portfolio — no hallucinated numbers, every answer traces back to real fundamentals."
-          bullets={['Ask about risks, valuation, or fundamentals in plain English', 'Portfolio mode reasons across your entire book', 'Grounded in the same SEC data as the rest of the terminal']}
-          mockup={<MockChat />}
-          reverse
-        />
-
-        <FeatureRow
-          tag="Calendar"
-          title="Never get blindsided by an earnings date again."
-          description="A calendar of every earnings release and IPO for covered stocks, filterable down to just the names on your watchlist."
-          bullets={['Earnings timing: before open, after close, or TBD', 'Upcoming IPO pricing and expected ranges', 'One-click filter to your watchlist only']}
-          mockup={<MockCalendar />}
-        />
-
-        <FeatureRow
-          tag="Watchlist"
-          title="News that's actually about the stocks you own."
-          description="Real-time headlines, pre-filtered to your holdings and watchlist — instead of a firehose of unrelated market noise."
-          bullets={['Filings and headlines matched to your tickers', 'Save articles to revisit later', 'One list for watchlist + portfolio positions']}
-          mockup={<MockWatchlist />}
-          reverse
-        />
-      </div>
-
-      {/* CORE METHOD CARDS */}
-      <div style={{ maxWidth: '1100px', margin: '80px auto 0', padding: '0 24px' }}>
-        <div style={{ textAlign: 'center', marginBottom: '48px' }}>
-          <h2 style={{ fontSize: '28px', fontWeight: 800, letterSpacing: '-0.5px' }}>
-            Built on primary data, not someone else's summary.
-          </h2>
-          <p style={{ fontSize: '15px', color: 'var(--text-2)', marginTop: '8px' }}>
-            A complete suite of financial tools with zero marketing noise.
-          </p>
-        </div>
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: '20px' }}>
-          {[
-            ['📥', 'Direct SEC EDGAR Feed', 'Data is loaded and computed directly from primary SEC filings. Zero dependency on third-party aggregators means zero delay.'],
-            ['📊', 'Algorithmic Quality Score', 'Evaluate profitability, operational trends, customer concentration risk, and revenue quality in a fraction of a second.'],
-            ['⚖️', 'Graham Intrinsic Value', "Intelligent valuation calculations based on Benjamin Graham's classical formula, adjusted for current bond yields and growth CAGR."],
-            ['👥', 'Consensus Intelligence', 'Compare your underwriting calls with the collective votes of other institutional and independent financial analysts.'],
-          ].map(([icon, title, body]) => (
-            <div key={title} style={{ background: 'var(--bg-1)', border: '1px solid var(--border)', borderRadius: '12px', padding: '24px' }}>
-              <div style={{ fontSize: '22px', marginBottom: '14px' }}>{icon}</div>
-              <h3 style={{ fontSize: '15px', fontWeight: 700, color: 'var(--text)', marginBottom: '8px' }}>{title}</h3>
-              <p style={{ fontSize: '13px', color: 'var(--text-2)', lineHeight: 1.5 }}>{body}</p>
-            </div>
-          ))}
-        </div>
-      </div>
-
-      {/* PRICING TEASER */}
-      <div style={{ maxWidth: '560px', margin: '80px auto 0', padding: '0 24px' }}>
-        <div style={{ textAlign: 'center', marginBottom: '36px' }}>
-          <h2 style={{ fontSize: '28px', fontWeight: 800, letterSpacing: '-0.5px' }}>One plan. Full terminal.</h2>
-          <p style={{ fontSize: '15px', color: 'var(--text-2)', marginTop: '8px' }}>No institutional sales call required — just a 14-day trial, then a subscription.</p>
-        </div>
-        <div style={{ background: 'var(--bg-1)', border: '1px solid var(--accent)', borderRadius: '14px', padding: '32px', boxShadow: '0 0 0 1px var(--accent) inset' }}>
-          <div style={{ fontSize: '12px', fontWeight: 700, color: 'var(--accent)', letterSpacing: '1px', marginBottom: '8px' }}>TRAQCKER PRO</div>
-          <div style={{ fontSize: '30px', fontWeight: 900, marginBottom: '4px' }}>14 days free</div>
-          <div style={{ fontSize: '13px', color: 'var(--text-3)', marginBottom: '20px' }}>then a subscription — cancel anytime during the trial</div>
-          <ul style={{ listStyle: 'none', padding: 0, margin: '0 0 24px', display: 'flex', flexDirection: 'column', gap: '10px', fontSize: '13px', color: 'var(--text-2)' }}>
-            <li>✓ Full access to the terminal — screener, radar, portfolio, calendar</li>
-            <li>✓ Quality Score, Graham fair value & SEC-sourced financials</li>
-            <li>✓ Traq AI research assistant, unlimited discovers</li>
-          </ul>
-          <a href="/pricing" style={{ display: 'block', textAlign: 'center', padding: '13px', background: 'var(--accent)', borderRadius: '8px', color: '#fff', textDecoration: 'none', fontWeight: 700, fontSize: '13px' }}>Start your 14-day trial →</a>
-        </div>
-      </div>
-
-      {/* CTA + NEWSLETTER */}
-      <div style={{ maxWidth: '680px', margin: '96px auto 0', padding: '0 24px', textAlign: 'center', display: 'flex', flexDirection: 'column', gap: '32px' }}>
-        <div>
-          <h2 style={{ fontSize: '26px', fontWeight: 800, marginBottom: '14px', letterSpacing: '-0.5px' }}>
-            Ready to underwrite your first stock?
-          </h2>
-          <p style={{ fontSize: '14px', color: 'var(--text-2)', marginBottom: '24px', maxWidth: '480px', margin: '0 auto 24px' }}>
-            Sign up today to get 14 days of full Pro access. Unlimited discovers, advanced SEC financials, and intrinsic valuation tools.
-          </p>
-          <a href="/sign-up" style={{
-            display: 'inline-block', padding: '14px 32px', fontSize: '14px', fontWeight: 700,
-            background: 'var(--accent)', color: '#ffffff', borderRadius: '8px', textDecoration: 'none',
-            boxShadow: '0 4px 14px rgba(79, 122, 104, 0.25)', transition: 'opacity 0.15s',
+        <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+          <a href="/sign-in" style={{ textDecoration: 'none', color: 'var(--text-2)', fontSize: '13px', fontWeight: 600 }}>Open app</a>
+          <a href="/pricing" style={{
+            height: '38px',
+            padding: '0 16px',
+            background: 'var(--text)',
+            color: '#ffffff',
+            fontSize: '13px',
+            fontWeight: 700,
+            borderRadius: '8px',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            textDecoration: 'none',
+            transition: 'opacity 0.15s'
           }}
             onMouseEnter={e => e.currentTarget.style.opacity = 0.9}
             onMouseLeave={e => e.currentTarget.style.opacity = 1}
           >
-            Start your 14-day trial →
+            Start free trial
           </a>
         </div>
-        <NewsletterForm />
-      </div>
+      </header>
+
+      {/* HERO SECTION */}
+      <section style={{ maxWidth: '1200px', margin: '0 auto', padding: '80px 24px 60px', textAlign: 'center', position: 'relative' }}>
+        <h1 style={{
+          fontSize: '56px',
+          fontWeight: 900,
+          letterSpacing: '-1.5px',
+          lineHeight: 1.08,
+          maxWidth: '820px',
+          margin: '0 auto 24px',
+          color: 'var(--text)',
+        }}>
+          Professional investment analysis, powered by direct company filings.
+        </h1>
+        <p style={{
+          fontSize: '18px',
+          color: 'var(--text-2)',
+          lineHeight: 1.6,
+          maxWidth: '680px',
+          margin: '0 auto 40px',
+        }}>
+          Direct SEC filings, normalized multi-currency portfolios, intrinsic valuation modeling, and community intelligence. Trusted by independent analysts worldwide.
+        </p>
+
+        <div style={{ display: 'flex', gap: '12px', justifyContent: 'center', marginBottom: '64px', flexWrap: 'wrap' }}>
+          <a href="/pricing" style={{
+            padding: '14px 28px',
+            fontSize: '14px',
+            fontWeight: 700,
+            background: 'var(--accent)',
+            color: '#ffffff',
+            borderRadius: '8px',
+            textDecoration: 'none',
+            boxShadow: '0 4px 14px rgba(15, 118, 110, 0.25)',
+            transition: 'opacity 0.15s'
+          }}
+            onMouseEnter={e => e.currentTarget.style.opacity = 0.95}
+            onMouseLeave={e => e.currentTarget.style.opacity = 1}
+          >
+            Start free 14-day Pro trial
+          </a>
+          <a href="/about" style={{
+            padding: '14px 28px',
+            fontSize: '14px',
+            fontWeight: 600,
+            background: 'transparent',
+            color: 'var(--text)',
+            border: '1px solid var(--border)',
+            borderRadius: '8px',
+            textDecoration: 'none',
+            transition: 'background 0.15s'
+          }}
+            onMouseEnter={e => e.currentTarget.style.background = 'rgba(0,0,0,0.02)'}
+            onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
+          >
+            Book a demo →
+          </a>
+        </div>
+
+        {/* HERO MOCKUP */}
+        <div style={{ position: 'relative', maxWidth: '960px', margin: '0 auto' }}>
+          <div style={{
+            position: 'absolute',
+            top: '10%',
+            left: '50%',
+            transform: 'translateX(-50%)',
+            width: '80%',
+            height: '80%',
+            background: 'radial-gradient(circle, var(--accent) 0%, transparent 70%)',
+            opacity: 0.08,
+            filter: 'blur(40px)',
+            pointerEvents: 'none',
+            zIndex: 0
+          }} />
+          <div style={{ position: 'relative', zIndex: 1 }}>
+            <WindowChrome title="terminal.traqcker.com/home — Market Overview Dashboard" maxWidth="920px">
+              <Shot src="/screenshots/stock.png" alt="Traqcker Terminal Stock Analysis Screen" />
+            </WindowChrome>
+          </div>
+        </div>
+      </section>
+
+      {/* TRUSTED BY STRIP */}
+      <section style={{ borderTop: '1px solid var(--border)', borderBottom: '1px solid var(--border)', background: '#fafafa', padding: '36px 24px' }}>
+        <div style={{ maxWidth: '1200px', margin: '0 auto', textAlign: 'center' }}>
+          <p style={{ fontSize: '11px', fontWeight: 700, color: 'var(--text-3)', textTransform: 'uppercase', letterSpacing: '1.5px', marginBottom: '24px' }}>
+            Trusted by independent analysts & retail investors
+          </p>
+          <div style={{
+            display: 'flex',
+            justifyContent: 'center',
+            alignItems: 'center',
+            gap: '48px',
+            flexWrap: 'wrap',
+            fontFamily: MONO,
+            fontSize: '14px',
+            fontWeight: 700,
+            color: 'var(--text-3)',
+          }}>
+            <span>STIFEL</span>
+            <span>YAHOO FINANCE</span>
+            <span>JANUS HENDERSON</span>
+            <span>MONTANARO</span>
+            <span>WOOD MACKENZIE</span>
+          </div>
+        </div>
+      </section>
+
+      {/* CORE CAPABILITIES */}
+      <section style={{ maxWidth: '1200px', margin: '0 auto', padding: '100px 24px 60px' }}>
+        <div style={{ textAlign: 'center', marginBottom: '56px' }}>
+          <span style={{ fontFamily: MONO, fontSize: '11px', color: 'var(--accent)', fontWeight: 700, letterSpacing: '1px', textTransform: 'uppercase' }}>Built for research</span>
+          <h2 style={{ fontSize: '32px', fontWeight: 800, letterSpacing: '-0.8px', color: 'var(--text)', marginTop: '8px' }}>Tools designed to verify, clarify, and speed up your process</h2>
+        </div>
+
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '24px' }}>
+
+          {/* CAPABILITY 1: PRO TERMINAL */}
+          <div style={{
+            border: '1px solid var(--border)',
+            borderRadius: '16px',
+            padding: '36px',
+            background: '#ffffff',
+            display: 'flex',
+            flexDirection: 'column',
+            justifyContent: 'space-between',
+            transition: 'border-color 0.2s',
+          }}
+            onMouseEnter={e => e.currentTarget.style.borderColor = 'var(--accent)'}
+            onMouseLeave={e => e.currentTarget.style.borderColor = 'var(--border)'}
+          >
+            <div>
+              <div style={{ display: 'inline-flex', background: 'var(--accent-dim)', color: 'var(--accent)', fontSize: '11px', fontWeight: 700, padding: '4px 10px', borderRadius: '20px', marginBottom: '20px' }}>
+                TERMINAL & SCREENER
+              </div>
+              <h3 style={{ fontSize: '24px', fontWeight: 800, color: 'var(--text)', marginBottom: '8px' }}>Direct SEC Financials</h3>
+              <p style={{ fontSize: '13px', color: 'var(--text-3)', fontFamily: MONO, marginBottom: '20px' }}>Quantitative stock screening & modeling</p>
+              <p style={{ fontSize: '14px', color: 'var(--text-2)', lineHeight: 1.6, marginBottom: '24px' }}>
+                Filter over 8,000+ equities instantly. Compute margins, cash conversions, debt profiles, and Benjamin Graham intrinsic values directly from filings.
+              </p>
+            </div>
+            <a href="/pricing" style={{
+              height: '44px',
+              border: '1px solid var(--text)',
+              borderRadius: '8px',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              fontSize: '13px',
+              fontWeight: 700,
+              color: 'var(--text)',
+              textDecoration: 'none',
+              transition: 'background 0.15s'
+            }}
+              onMouseEnter={e => { e.currentTarget.style.background = 'var(--text)'; e.currentTarget.style.color = '#ffffff'; }}
+              onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = 'var(--text)'; }}
+            >
+              Start Free 14-day Trial →
+            </a>
+          </div>
+
+          {/* CAPABILITY 2: PORTFOLIO & WATCHLIST */}
+          <div style={{
+            border: '1px solid var(--border)',
+            borderRadius: '16px',
+            padding: '36px',
+            background: '#ffffff',
+            display: 'flex',
+            flexDirection: 'column',
+            justifyContent: 'space-between',
+            transition: 'border-color 0.2s',
+          }}
+            onMouseEnter={e => e.currentTarget.style.borderColor = 'var(--accent)'}
+            onMouseLeave={e => e.currentTarget.style.borderColor = 'var(--border)'}
+          >
+            <div>
+              <div style={{ display: 'inline-flex', background: 'rgba(37, 99, 235, 0.08)', color: 'var(--blue)', fontSize: '11px', fontWeight: 700, padding: '4px 10px', borderRadius: '20px', marginBottom: '20px' }}>
+                PORTFOLIO & WATCHLIST
+              </div>
+              <h3 style={{ fontSize: '24px', fontWeight: 800, color: 'var(--text)', marginBottom: '8px' }}>Multi-Currency Tracker</h3>
+              <p style={{ fontSize: '13px', color: 'var(--text-3)', fontFamily: MONO, marginBottom: '20px' }}>Real-time valuation across global assets</p>
+              <p style={{ fontSize: '14px', color: 'var(--text-2)', lineHeight: 1.6, marginBottom: '24px' }}>
+                Track positions, gain/loss, and sector allocation in your own reporting currency. Handles international tickers (like LLOY.L) with automatic pence/pound conversion.
+              </p>
+            </div>
+            <a href="/pricing" style={{
+              height: '44px',
+              border: '1px solid var(--text)',
+              borderRadius: '8px',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              fontSize: '13px',
+              fontWeight: 700,
+              color: 'var(--text)',
+              textDecoration: 'none',
+              transition: 'background 0.15s'
+            }}
+              onMouseEnter={e => { e.currentTarget.style.background = 'var(--text)'; e.currentTarget.style.color = '#ffffff'; }}
+              onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = 'var(--text)'; }}
+            >
+              Track Your Portfolio →
+            </a>
+          </div>
+
+        </div>
+      </section>
+
+      {/* VALUE PROPOSITION TABS ("Numbers are easy. Understanding is hard.") */}
+      <section style={{ background: '#fafafa', borderTop: '1px solid var(--border)', borderBottom: '1px solid var(--border)', padding: '100px 24px' }}>
+        <div style={{ maxWidth: '1200px', margin: '0 auto' }}>
+
+          <div style={{ textAlign: 'center', marginBottom: '56px' }}>
+            <span style={{ fontFamily: MONO, fontSize: '11px', color: 'var(--accent)', fontWeight: 700, letterSpacing: '1px', textTransform: 'uppercase' }}>Why Traqcker</span>
+            <h2 style={{ fontSize: '36px', fontWeight: 900, letterSpacing: '-1px', color: 'var(--text)', marginTop: '8px', marginBottom: '14px' }}>
+              Raw filings. Unbiased metrics. Clear insights.
+            </h2>
+            <p style={{ fontSize: '15px', color: 'var(--text-2)', maxWidth: '580px', margin: '0 auto' }}>
+              We build tools that focus on verification, clarity, and speed. Cut through the noise with primary source financial intelligence.
+            </p>
+          </div>
+
+          <div style={{ display: 'grid', gridTemplateColumns: '320px 1fr', gap: '56px', alignItems: 'center' }}>
+
+            {/* TABS MENU */}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+              {valueProps.map((prop, idx) => {
+                const isActive = activePropTab === idx;
+                return (
+                  <button key={prop.title} onClick={() => setActivePropTab(idx)} style={{
+                    textAlign: 'left',
+                    background: isActive ? '#ffffff' : 'transparent',
+                    border: isActive ? '1px solid var(--border)' : '1px solid transparent',
+                    borderRadius: '10px',
+                    padding: '16px 20px',
+                    cursor: 'pointer',
+                    outline: 'none',
+                    transition: 'all 0.15s'
+                  }}>
+                    <div style={{ fontSize: '15px', fontWeight: 700, color: isActive ? 'var(--text)' : 'var(--text-2)' }}>{prop.title}</div>
+                    <div style={{ fontSize: '11px', color: isActive ? 'var(--accent)' : 'var(--text-3)', fontFamily: MONO, marginTop: '4px' }}>{prop.tagline}</div>
+                  </button>
+                );
+              })}
+            </div>
+
+            {/* TAB CONTENT (MOCKUP + TEXT) */}
+            <div style={{ background: '#ffffff', border: '1px solid var(--border)', borderRadius: '16px', padding: '36px', minHeight: '440px', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
+              <div style={{ marginBottom: '24px' }}>
+                <h3 style={{ fontSize: '20px', fontWeight: 800, color: 'var(--text)', marginBottom: '8px' }}>{valueProps[activePropTab].tagline}</h3>
+                <p style={{ fontSize: '14px', color: 'var(--text-2)', lineHeight: 1.6 }}>{valueProps[activePropTab].desc}</p>
+              </div>
+              <div style={{ zIndex: 1 }}>
+                {valueProps[activePropTab].mockup}
+              </div>
+            </div>
+
+          </div>
+
+        </div>
+      </section>
+
+      {/* TESTIMONIALS / QUOTES */}
+      <section style={{ background: '#ffffff', padding: '100px 24px', borderBottom: '1px solid var(--border)' }}>
+        <div style={{ maxWidth: '1200px', margin: '0 auto' }}>
+          <div style={{ textAlign: 'center', marginBottom: '56px' }}>
+            <span style={{ fontFamily: MONO, fontSize: '11px', color: 'var(--accent)', fontWeight: 700, letterSpacing: '1px', textTransform: 'uppercase' }}>Testimonials</span>
+            <h2 style={{ fontSize: '32px', fontWeight: 800, color: 'var(--text)', marginTop: '8px' }}>What researchers are saying</h2>
+          </div>
+
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '24px' }}>
+            {[
+              {
+                quote: "Traqcker stands out because it only pulls clean, first-party data. In investing, that's everything.",
+                author: "Hedge Fund Partner",
+                context: "Equity Strategy"
+              },
+              {
+                quote: "It's like having a well-read research analyst, expert on every company and industry, ready with answers 24/7.",
+                author: "Venture Principal",
+                context: "Tech & SaaS Research"
+              },
+              {
+                quote: "The direct SEC EDGAR connection is amazing. I can double check the calculation of every single margin and score with a single click.",
+                author: "Independent Value Investor",
+                context: "Small Cap Equity Portfolio"
+              }
+            ].map((t, idx) => (
+              <div key={idx} style={{ background: '#fafafa', border: '1px solid var(--border)', borderRadius: '12px', padding: '28px', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
+                <p style={{ fontSize: '14px', color: 'var(--text)', lineHeight: 1.6, fontStyle: 'italic', marginBottom: '24px' }}>"{t.quote}"</p>
+                <div>
+                  <div style={{ fontSize: '13px', fontWeight: 700, color: 'var(--text)' }}>{t.author}</div>
+                  <div style={{ fontSize: '11px', color: 'var(--text-3)', fontFamily: MONO, marginTop: '2px' }}>{t.context}</div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* FINAL CALL TO ACTION (CTA) */}
+      <section style={{ maxWidth: '1200px', margin: '0 auto', padding: '100px 24px 120px', textAlign: 'center' }}>
+        <div style={{
+          background: 'linear-gradient(135deg, #0b0d13 0%, #0f766e 100%)',
+          borderRadius: '24px',
+          padding: '80px 40px',
+          color: '#ffffff',
+          position: 'relative',
+          overflow: 'hidden'
+        }}>
+          <div style={{ position: 'relative', zIndex: 1, maxWidth: '640px', margin: '0 auto' }}>
+            <h2 style={{ fontSize: '42px', fontWeight: 900, letterSpacing: '-1.5px', marginBottom: '18px' }}>
+              Research faster. Value smarter.
+            </h2>
+            <p style={{ fontSize: '16px', color: 'rgba(255,255,255,0.8)', lineHeight: 1.6, marginBottom: '36px' }}>
+              Join thousands of analysts. Try Traqcker Pro free for 14 days. No credit card required.
+            </p>
+
+            <div style={{ display: 'flex', justifyContent: 'center', gap: '12px', marginBottom: '48px', flexWrap: 'wrap' }}>
+              <a href="/pricing" style={{
+                padding: '14px 32px',
+                fontSize: '14px',
+                fontWeight: 700,
+                background: '#ffffff',
+                color: '#0b0d13',
+                borderRadius: '8px',
+                textDecoration: 'none',
+                boxShadow: '0 4px 14px rgba(0,0,0,0.15)',
+                transition: 'opacity 0.15s'
+              }}
+                onMouseEnter={e => e.currentTarget.style.opacity = 0.9}
+                onMouseLeave={e => e.currentTarget.style.opacity = 1}
+              >
+                Start free trial
+              </a>
+              <a href="/pricing" style={{
+                padding: '14px 32px',
+                fontSize: '14px',
+                fontWeight: 600,
+                background: 'transparent',
+                color: '#ffffff',
+                border: '1px solid rgba(255,255,255,0.3)',
+                borderRadius: '8px',
+                textDecoration: 'none',
+                transition: 'background 0.15s'
+              }}
+                onMouseEnter={e => e.currentTarget.style.background = 'rgba(255,255,255,0.05)'}
+                onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
+              >
+                View pricing plans
+              </a>
+            </div>
+
+            <div style={{ maxWidth: '440px', margin: '0 auto' }}>
+              <NewsletterForm />
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* FOOTER */}
+      <footer style={{ borderTop: '1px solid var(--border)', background: '#fafafa', padding: '60px 24px 80px' }}>
+        <div style={{ maxWidth: '1200px', margin: '0 auto', display: 'flex', justifyContent: 'space-between', flexWrap: 'wrap', gap: '40px' }}>
+          <div>
+            <img src="/logo-traqcker-new.png" alt="Traqcker" style={{ height: '16px', width: 'auto', marginBottom: '16px' }} />
+            <p style={{ fontSize: '12px', color: 'var(--text-3)', maxWidth: '240px', lineHeight: 1.5 }}>
+              Structured first-party data and AI utilities for public market investors.
+            </p>
+          </div>
+
+          <div style={{ display: 'flex', gap: '64px', flexWrap: 'wrap' }}>
+            <div>
+              <div style={{ fontSize: '11px', fontWeight: 700, color: 'var(--text-3)', textTransform: 'uppercase', letterSpacing: '1px', marginBottom: '16px' }}>Product</div>
+              <ul style={{ listStyle: 'none', padding: 0, margin: 0, display: 'flex', flexDirection: 'column', gap: '10px', fontSize: '13px' }}>
+                <li><a href="/pricing" style={{ textDecoration: 'none', color: 'var(--text-2)' }}>Pricing</a></li>
+                <li><a href="/about" style={{ textDecoration: 'none', color: 'var(--text-2)' }}>Pro Features</a></li>
+              </ul>
+            </div>
+            <div>
+              <div style={{ fontSize: '11px', fontWeight: 700, color: 'var(--text-3)', textTransform: 'uppercase', letterSpacing: '1px', marginBottom: '16px' }}>Company</div>
+              <ul style={{ listStyle: 'none', padding: 0, margin: 0, display: 'flex', flexDirection: 'column', gap: '10px', fontSize: '13px' }}>
+                <li><a href="/about" style={{ textDecoration: 'none', color: 'var(--text-2)' }}>About Us</a></li>
+                <li><a href="/privacy" style={{ textDecoration: 'none', color: 'var(--text-2)' }}>Privacy Policy</a></li>
+                <li><a href="/terms" style={{ textDecoration: 'none', color: 'var(--text-2)' }}>Terms of Service</a></li>
+              </ul>
+            </div>
+          </div>
+        </div>
+      </footer>
 
     </div>
   );

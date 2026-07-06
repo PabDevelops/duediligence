@@ -12,7 +12,10 @@ const RANGES = [
   { label: '5Y', value: '5y' },
 ];
 
-export default function StockChart({ ticker }) {
+const CURRENCY_SYMBOLS = { USD: '$', EUR: '€', GBP: '£', JPY: '¥', CNY: '¥', CHF: 'CHF ', CAD: 'C$', AUD: 'A$', HKD: 'HK$', INR: '₹', KRW: '₩', SEK: 'kr', NOK: 'kr', DKK: 'kr' };
+const curSym = (code) => !code || code === 'USD' ? '$' : (CURRENCY_SYMBOLS[code] || `${code} `);
+
+export default function StockChart({ ticker, currency }) {
   const containerRef = useRef(null);
   const chartRef = useRef(null);
   const seriesRef = useRef(null);
@@ -23,14 +26,24 @@ export default function StockChart({ ticker }) {
 
   // Fetch data
   useEffect(() => {
+    let active = true;
     setLoading(true);
     fetch(`/api/chart?ticker=${ticker}&range=${range}`)
       .then(r => r.json())
       .then(d => {
-        setCandles(d.candles || []);
-        setLoading(false);
+        if (active) {
+          setCandles(d.candles || []);
+          setLoading(false);
+        }
       })
-      .catch(() => setLoading(false));
+      .catch(() => {
+        if (active) {
+          setLoading(false);
+        }
+      });
+    return () => {
+      active = false;
+    };
   }, [ticker, range]);
 
   // Create/update chart when data arrives
@@ -48,6 +61,8 @@ export default function StockChart({ ticker }) {
         chartRef.current = null;
       }
 
+      const currencySymbol = curSym(currency);
+
       const chart = createChart(containerRef.current, {
         layout: {
           background: { type: ColorType.Solid, color: '#111111' },
@@ -62,6 +77,11 @@ export default function StockChart({ ticker }) {
         crosshair: { mode: 1 },
         rightPriceScale: { borderColor: '#222222' },
         timeScale: { borderColor: '#222222', timeVisible: true },
+        localization: {
+          priceFormatter: (price) => {
+            return `${currencySymbol}${price < 1.0 ? price.toFixed(4) : price.toFixed(2)}`;
+          },
+        },
         width: containerRef.current.clientWidth,
         height: 320,
       });
@@ -70,7 +90,7 @@ export default function StockChart({ ticker }) {
 
       if (mode === 'candles') {
         const { CandlestickSeries } = await import('lightweight-charts');
-const series = chart.addSeries(CandlestickSeries, {
+        const series = chart.addSeries(CandlestickSeries, {
           upColor: '#22c55e',
           downColor: '#ef4444',
           borderUpColor: '#22c55e',
@@ -87,7 +107,7 @@ const series = chart.addSeries(CandlestickSeries, {
         })));
       } else {
         const { AreaSeries } = await import('lightweight-charts');
-const series = chart.addSeries(AreaSeries, {
+        const series = chart.addSeries(AreaSeries, {
           lineColor: '#F59E0B',
           topColor: 'rgba(245, 158, 11, 0.15)',
           bottomColor: 'rgba(245, 158, 11, 0)',
@@ -117,7 +137,7 @@ const series = chart.addSeries(AreaSeries, {
         chartRef.current = null;
       }
     };
-  }, [candles, mode, loading]);
+  }, [candles, mode, loading, currency]);
 
   return (
     <div style={{ background: 'var(--bg-1)', padding: '16px', position: 'relative' }}>

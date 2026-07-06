@@ -791,22 +791,13 @@ export default function MarketRadar() {
         )}
       </div>
 
+      {/* Right Spotlight Panel Backdrop on Mobile */}
+      {spotlightTicker && (
+        <div className="radar-spotlight-backdrop" onClick={() => { setSpotlightTicker(null); setSpotlightData(null); }} />
+      )}
+
       {/* Right Spotlight Panel (Side drawer / cockpit analyzer) */}
-      <div style={{
-        width: '360px',
-        flexShrink: 0,
-        background: 'var(--ws-bg-1)',
-        borderLeft: '1px solid var(--ws-border)',
-        padding: '24px 20px',
-        display: 'flex',
-        flexDirection: 'column',
-        gap: '20px',
-        overflowY: 'auto',
-        position: 'sticky',
-        top: 0,
-        height: 'calc(100vh - var(--topbar-height))',
-        boxSizing: 'border-box'
-      }}>
+      <div className={`radar-spotlight-panel ${spotlightTicker ? 'open' : ''}`}>
         {spotlightTicker ? (
           loadingSpotlight ? (
             <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '100%', color: 'var(--ws-text-3)' }}>

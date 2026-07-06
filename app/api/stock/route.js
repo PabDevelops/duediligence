@@ -1,4 +1,5 @@
 import { supabase } from '../../../lib/supabase';
+import { getYahooAuth } from '../../../lib/yahooFinance';
 
 const FH_KEY = process.env.FINNHUB_API_KEY;
 const AV_KEY = process.env.ALPHA_VANTAGE_API_KEY;
@@ -40,23 +41,6 @@ async function fetchYahooQuote(ticker) {
     high52,
     low52,
   };
-}
-
-// Yahoo's quoteSummary/fundamentals-timeseries endpoints require a session cookie + crumb
-// (unauthenticated calls return "Invalid Crumb"). Cached per warm serverless instance.
-let yahooAuthCache = null;
-async function getYahooAuth() {
-  if (yahooAuthCache && Date.now() < yahooAuthCache.expires) return yahooAuthCache;
-  const UA = 'Mozilla/5.0';
-  const r1 = await fetch('https://fc.yahoo.com', { headers: { 'User-Agent': UA }, redirect: 'manual' });
-  const cookie = (r1.headers.get('set-cookie') || '').split(';')[0];
-  const r2 = await fetch('https://query1.finance.yahoo.com/v1/test/getcrumb', {
-    headers: { 'User-Agent': UA, Cookie: cookie },
-  });
-  const crumb = await r2.text();
-  if (!crumb || crumb.includes('<')) throw new Error('Failed to obtain Yahoo crumb');
-  yahooAuthCache = { cookie, crumb, expires: Date.now() + 50 * 60 * 1000 };
-  return yahooAuthCache;
 }
 
 const YAHOO_TS_TYPES = [
@@ -247,10 +231,22 @@ async function fetchYahooFundamentals(ticker) {
 
     const d = computeDerivedFinancials(histories);
 
-    const currentPrice = num(fin.currentPrice) ?? num(summary.regularMarketPreviousClose) ?? null;
+    let currentPrice = num(fin.currentPrice) ?? num(summary.regularMarketPreviousClose) ?? null;
     const sharesOutstanding = num(keyStats.sharesOutstanding);
+    if (summary.currency === 'GBp' && currentPrice != null) {
+      currentPrice /= 100;
+    }
     const marketCap = num(summary.marketCap) ?? (sharesOutstanding && currentPrice ? currentPrice * sharesOutstanding : null);
     const debtToEquity = num(fin.debtToEquity) != null ? +(num(fin.debtToEquity) / 100).toFixed(2) : d.debtToEquity;
+
+    let high52 = num(summary.fiftyTwoWeekHigh) ?? null;
+    let low52 = num(summary.fiftyTwoWeekLow) ?? null;
+    let analystTarget = num(fin.targetMeanPrice) ?? null;
+    if (summary.currency === 'GBp') {
+      if (high52 != null) high52 /= 100;
+      if (low52 != null) low52 /= 100;
+      if (analystTarget != null) analystTarget /= 100;
+    }
 
     return {
       sector: profile.sector || null,
@@ -301,15 +297,15 @@ async function fetchYahooFundamentals(ticker) {
       marketCap,
       pfcf: marketCap && d.fcfVal && d.fcfVal > 0 ? +(marketCap / d.fcfVal).toFixed(1) : null,
       fcfYield: marketCap && d.fcfVal ? +((d.fcfVal / marketCap) * 100).toFixed(2) : null,
-      high52: num(summary.fiftyTwoWeekHigh) ?? null,
-      low52: num(summary.fiftyTwoWeekLow) ?? null,
+      high52,
+      low52,
       beta: num(keyStats.beta) ?? num(summary.beta) ?? null,
       sharesOutstanding,
       dividendYield: num(summary.dividendYield) != null ? +(num(summary.dividendYield) * 100).toFixed(2) : null,
       netDebt: d.netDebt,
       evEbitda: num(keyStats.enterpriseToEbitda) ?? null,
       priceToBook: num(keyStats.priceToBook) ?? null,
-      analystTarget: num(fin.targetMeanPrice) ?? null,
+      analystTarget,
       operatingCFVal: d.fcfVal,
     };
   } catch (e) {
@@ -348,7 +344,50 @@ export async function GET(request) {
     if (cached && !forceRefresh) {
       const hoursOld = (Date.now() - new Date(cached.updated_at).getTime()) / (1000 * 60 * 60);
       if (hoursOld < CACHE_HOURS && cached.data?.description) {
-        return Response.json({ ...cached.data, cached: true });
+        const minsOld = hoursOld * 60;
+        if (minsOld < 2) {
+          return Response.json({ ...cached.data, cached: true });
+        } else {
+          // Cache is valid for heavy financials, but update the stock price in real-time
+          try {
+            let freshPriceData = null;
+            if (ticker.includes('.')) {
+              freshPriceData = await fetchYahooQuote(ticker).catch(() => null);
+            } else {
+              const fhRes = await fetch(`https://finnhub.io/api/v1/quote?symbol=${ticker}&token=${FH_KEY}`);
+              if (fhRes.ok) {
+                const fh = await fhRes.json();
+                if (fh.c != null) {
+                  freshPriceData = {
+                    currentPrice: fh.c,
+                    priceChange: fh.d || null,
+                    priceChangePct: fh.dp || null,
+                    prevClose: fh.pc || null
+                  };
+                }
+              }
+            }
+            if (freshPriceData && freshPriceData.currentPrice != null) {
+              const updatedData = {
+                ...cached.data,
+                currentPrice: freshPriceData.currentPrice,
+                priceChange: freshPriceData.priceChange,
+                priceChangePct: freshPriceData.priceChangePct,
+                prevClose: freshPriceData.prevClose
+              };
+              // Update DB cache in background asynchronously
+              supabase
+                .from('stock_cache')
+                .upsert({ ticker, data: updatedData, updated_at: new Date().toISOString() })
+                .then(() => {})
+                .catch(() => {});
+              return Response.json({ ...updatedData, cached: true, priceUpdated: true });
+            }
+          } catch (err) {
+            console.error('Error doing fast price update:', err);
+          }
+          return Response.json({ ...cached.data, cached: true });
+        }
       }
     }
   } catch (e) {}
