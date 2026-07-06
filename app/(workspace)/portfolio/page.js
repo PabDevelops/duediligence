@@ -204,11 +204,14 @@ function ImportCsvModal({ onClose, onImported, defaultCurrency }) {
   );
 }
 
-function AddHoldingModal({ onClose, onAdded, existingPies, defaultCurrency, editLot }) {
+function AddHoldingModal({ onClose, onAdded, existingPies, defaultCurrency, editLot, presetTicker }) {
   const isEdit = !!editLot;
-  const [query, setQuery] = useState(editLot?.ticker || '');
+  const [query, setQuery] = useState(editLot?.ticker || presetTicker || '');
   const [suggestions, setSuggestions] = useState([]);
-  const [selected, setSelected] = useState(editLot ? { ticker: editLot.ticker, name: editLot.ticker } : null);
+  const [selected, setSelected] = useState(
+    editLot ? { ticker: editLot.ticker, name: editLot.ticker } :
+    presetTicker ? { ticker: presetTicker, name: presetTicker } : null
+  );
   const [preview, setPreview] = useState(null);
   const [shares, setShares] = useState(editLot ? String(editLot.shares) : '');
   const [costBasis, setCostBasis] = useState(editLot ? String(editLot.cost_basis) : '');
@@ -224,6 +227,12 @@ function AddHoldingModal({ onClose, onAdded, existingPies, defaultCurrency, edit
   const pieSuggestions = existingPies.filter(p => p.toLowerCase().includes(pie.toLowerCase()) && p.toLowerCase() !== pie.toLowerCase());
 
   useEffect(() => { inputRef.current?.focus(); }, []);
+
+  useEffect(() => {
+    if (presetTicker && !editLot) {
+      fetch(`/api/stock?ticker=${presetTicker}`).then(r => r.json()).then(setPreview).catch(() => {});
+    }
+  }, [presetTicker, editLot]);
 
   useEffect(() => {
     if (selected || query.length < 1) { setSuggestions([]); return; }
@@ -288,8 +297,12 @@ function AddHoldingModal({ onClose, onAdded, existingPies, defaultCurrency, edit
   return (
     <div onClick={onClose} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.35)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 200 }}>
       <div onClick={e => e.stopPropagation()} style={{ width: '420px', maxWidth: '92vw', background: 'var(--ws-bg-1)', border: '1px solid var(--ws-border)', borderRadius: '12px', padding: '22px', boxShadow: '0 12px 40px rgba(0,0,0,0.18)' }}>
-        <div style={{ fontSize: '15px', fontWeight: 700, color: 'var(--ws-text)', marginBottom: '4px' }}>{isEdit ? `Edit ${editLot.ticker} lot` : 'Add holding'}</div>
-        <div style={{ fontSize: '12px', color: 'var(--ws-text-3)', marginBottom: '16px' }}>{isEdit ? 'Update shares, cost, or date for this entry.' : 'Search a ticker, then enter shares and cost.'}</div>
+        <div style={{ fontSize: '15px', fontWeight: 700, color: 'var(--ws-text)', marginBottom: '4px' }}>
+          {isEdit ? `Edit ${editLot.ticker} lot` : presetTicker ? `Buy ${presetTicker}` : 'Add holding'}
+        </div>
+        <div style={{ fontSize: '12px', color: 'var(--ws-text-3)', marginBottom: '16px' }}>
+          {isEdit ? 'Update shares, cost, or date for this entry.' : presetTicker ? `Add a purchase of ${presetTicker} directly to your holdings.` : 'Search a ticker, then enter shares and cost.'}
+        </div>
 
         <form onSubmit={submit} style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
           {!isEdit && (
@@ -297,7 +310,8 @@ function AddHoldingModal({ onClose, onAdded, existingPies, defaultCurrency, edit
           <div style={{ position: 'relative' }}>
             <input ref={inputRef} value={query} placeholder="Search ticker or company…"
               onChange={e => { setQuery(e.target.value.toUpperCase()); setSelected(null); setPreview(null); setManualLookupState('idle'); }}
-              style={inputStyle} autoComplete="off" required />
+              style={{ ...inputStyle, background: presetTicker ? 'var(--ws-bg-2)' : 'var(--ws-bg)', cursor: presetTicker ? 'not-allowed' : 'text' }}
+              autoComplete="off" required disabled={!!presetTicker} />
             {suggestions.length > 0 && (
               <div style={{ position: 'absolute', top: '40px', left: 0, right: 0, background: 'var(--ws-bg-1)', border: '1px solid var(--ws-border)', boxShadow: '0 8px 24px rgba(0,0,0,0.1)', maxHeight: '220px', overflowY: 'auto', zIndex: 10 }}>
                 {suggestions.map(s => (
@@ -627,6 +641,7 @@ export default function WorkspacePortfolio() {
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState(null);
   const [showModal, setShowModal] = useState(false);
+  const [buyTicker, setBuyTicker] = useState(null);
   const [showImport, setShowImport] = useState(false);
   const [editLot, setEditLot] = useState(null);
   const [sellPosition, setSellPosition] = useState(null);
@@ -803,6 +818,13 @@ export default function WorkspacePortfolio() {
     load();
   };
 
+  const removePosition = async (ticker) => {
+    if (confirm(`Are you sure you want to remove all holdings for ${ticker}?`)) {
+      await fetch('/api/portfolio', { method: 'DELETE', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ ticker }) });
+      load();
+    }
+  };
+
   return (
     <div style={{ padding: '24px' }}>
       <div style={{ border: '1px solid var(--ws-border)', background: 'var(--ws-bg-1)', marginBottom: '20px', overflow: 'hidden' }}>
@@ -952,22 +974,24 @@ export default function WorkspacePortfolio() {
                               {p.gain == null ? '—' : `${p.gain >= 0 ? '+' : ''}${fmtC(p.gain)} (${p.gainPct >= 0 ? '+' : ''}${p.gainPct.toFixed(1)}%)`}
                             </td>
                             <td style={{ padding: '10px 12px', textAlign: 'right', color: 'var(--ws-text-2)' }}>{allocation.toFixed(1)}%</td>
-                            <td style={{ padding: '10px 12px', textAlign: 'right', whiteSpace: 'nowrap' }} onClick={e => e.stopPropagation()}>
-                              <button onClick={() => setSellPosition(p)} title="Sell shares"
-                                style={{ background: 'none', border: '1px solid var(--ws-border)', color: 'var(--ws-text-2)', cursor: 'pointer', fontSize: '10px', fontWeight: 600, padding: '4px 8px', marginRight: '4px' }}>
-                                Sell
-                              </button>
-                              <button onClick={() => setEditLot(lastLot)} title={`Edit last entry: ${lastLot.shares} sh @ ${lastLot.cost_basis} ${lastLot.cost_basis_currency} on ${lastLot.purchase_date}`}
-                                style={{ background: 'none', border: 'none', color: 'var(--ws-text-3)', cursor: 'pointer', fontSize: '13px', marginLeft: '2px' }}>
-                                ✎
-                              </button>
-                              {p.lots.map(lot => (
-                                <button key={lot.id} onClick={() => removeLot(lot.id)} title={`Remove lot: ${lot.shares} sh @ ${lot.cost_basis} ${lot.cost_basis_currency} on ${lot.purchase_date}`}
-                                  style={{ background: 'none', border: 'none', color: 'var(--ws-text-3)', cursor: 'pointer', fontSize: '13px', marginLeft: '4px' }}>
-                                  ✕
-                                </button>
-                              ))}
-                            </td>
+                             <td style={{ padding: '10px 12px', textAlign: 'right', whiteSpace: 'nowrap' }} onClick={e => e.stopPropagation()}>
+                               <button onClick={() => setBuyTicker(p.ticker)} title="Buy shares"
+                                 style={{ background: 'var(--ws-accent)', border: 'none', color: 'var(--ws-bg-1)', cursor: 'pointer', fontSize: '10px', fontWeight: 700, padding: '5px 10px', marginRight: '4px', borderRadius: '4px' }}>
+                                 Buy
+                               </button>
+                               <button onClick={() => setSellPosition(p)} title="Sell shares"
+                                 style={{ background: 'none', border: '1px solid var(--ws-border)', color: 'var(--ws-text-2)', cursor: 'pointer', fontSize: '10px', fontWeight: 600, padding: '4px 8px', marginRight: '4px', borderRadius: '4px' }}>
+                                 Sell
+                               </button>
+                               <button onClick={() => setEditLot(lastLot)} title={`Edit last entry: ${lastLot.shares} sh @ ${lastLot.cost_basis} ${lastLot.cost_basis_currency} on ${lastLot.purchase_date}`}
+                                 style={{ background: 'none', border: 'none', color: 'var(--ws-text-3)', cursor: 'pointer', fontSize: '13px', marginLeft: '2px' }}>
+                                 ✎
+                               </button>
+                               <button onClick={() => removePosition(p.ticker)} title={`Remove entire ${p.ticker} position`}
+                                 style={{ background: 'none', border: 'none', color: 'var(--ws-text-3)', cursor: 'pointer', fontSize: '13px', marginLeft: '6px' }}>
+                                 ✕
+                               </button>
+                             </td>
                           </tr>
                         );
                       })}
@@ -980,7 +1004,7 @@ export default function WorkspacePortfolio() {
         </>
       )}
 
-      {showModal && <AddHoldingModal onClose={() => setShowModal(false)} onAdded={() => { setShowModal(false); load(); }} existingPies={existingPies} defaultCurrency={currency} />}
+      {(showModal || buyTicker) && <AddHoldingModal presetTicker={buyTicker} onClose={() => { setShowModal(false); setBuyTicker(null); }} onAdded={() => { setShowModal(false); setBuyTicker(null); load(); }} existingPies={existingPies} defaultCurrency={currency} />}
       {showImport && <ImportCsvModal onClose={() => setShowImport(false)} onImported={() => { setShowImport(false); load(); }} defaultCurrency={currency} />}
       {editLot && <AddHoldingModal onClose={() => setEditLot(null)} onAdded={() => { setEditLot(null); load(); }} existingPies={existingPies} defaultCurrency={currency} editLot={editLot} />}
       {sellPosition && <SellModal position={sellPosition} onClose={() => setSellPosition(null)} onSold={() => { setSellPosition(null); load(); }} />}

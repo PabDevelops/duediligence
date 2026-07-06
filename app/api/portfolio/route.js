@@ -82,9 +82,13 @@ export async function DELETE(request) {
   const userId = await getUserId();
   if (!userId) return Response.json({ error: 'Not authenticated' }, { status: 401 });
 
-  const { id } = await request.json();
-  if (!id) return Response.json({ error: 'id required' }, { status: 400 });
+  const { id, ticker } = await request.json();
+  if (!id && !ticker) return Response.json({ error: 'id or ticker required' }, { status: 400 });
 
-  await supabase.from('portfolio_holdings').delete().eq('id', id).eq('user_id', userId);
+  if (id) {
+    await supabase.from('portfolio_holdings').delete().eq('id', id).eq('user_id', userId);
+  } else if (ticker) {
+    await supabase.from('portfolio_holdings').delete().eq('ticker', ticker.toUpperCase()).eq('user_id', userId);
+  }
   return Response.json({ success: true });
 }
