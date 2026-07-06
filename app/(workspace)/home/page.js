@@ -3,6 +3,7 @@ import { useState, useEffect, useMemo, useRef, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { useUser } from '../../components/AuthProvider';
 import { PieChart, Pie, Cell, ResponsiveContainer } from 'recharts';
+import MarketStatusDot from '../../components/workspace/MarketStatusDot';
 
 // Premium SVG Gear Icon
 function GearIcon({ style }) {
@@ -1464,7 +1465,10 @@ export default function WorkspaceHome() {
                             <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                               <StockLogo ticker={item.ticker} name={item.ticker} size={22} />
                               <div style={{ minWidth: 0 }}>
-                                <div style={{ fontWeight: 800, color: 'var(--ws-text)' }}>{item.ticker}</div>
+                                <div style={{ fontWeight: 800, color: 'var(--ws-text)', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                                  {item.ticker}
+                                  <MarketStatusDot ticker={item.ticker} />
+                                </div>
                                 {item.pie && (
                                   <div style={{ fontSize: '9px', color: 'var(--ws-accent)', fontWeight: 600, marginTop: '1px' }}>{item.pie}</div>
                                 )}

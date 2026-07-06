@@ -8,6 +8,7 @@ import SparklineHeader from '../../../components/SparklineHeader';
 import OnboardingBanner from '../../../components/OnboardingBanner';
 import ShareCardComponent from '../../../components/ShareCard';
 import AchievementToast from '../../../components/AchievementToast';
+import MarketStatusDot from '../../../components/workspace/MarketStatusDot';
 import { useUser } from '../../../components/AuthProvider';
 
 const fmt = (val) => {
@@ -388,19 +389,7 @@ export default function StockPage({ params }) {
                     <span style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: '13px', fontWeight: 700, color: change >= 0 ? 'var(--ws-accent)' : 'var(--ws-red)' }}>
                       {change >= 0 ? '+' : ''}{changePct?.toFixed(2)}%
                     </span>
-                    {data.extendedHoursPrice != null && (
-                      <span style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: '11px', color: 'var(--ws-text-3)', display: 'flex', alignItems: 'baseline', gap: '5px' }}>
-                        <span style={{ letterSpacing: '1px', fontWeight: 700 }}>
-                          {data.extendedHoursSession === 'pre' ? 'PRE' : 'AFTER'}
-                        </span>
-                        <span style={{ color: 'var(--ws-text)' }}>${data.extendedHoursPrice.toFixed(2)}</span>
-                        {data.extendedHoursChangePct != null && (
-                          <span style={{ color: data.extendedHoursChangePct >= 0 ? 'var(--ws-accent)' : 'var(--ws-red)', fontWeight: 700 }}>
-                            {data.extendedHoursChangePct >= 0 ? '+' : ''}{data.extendedHoursChangePct.toFixed(2)}%
-                          </span>
-                        )}
-                      </span>
-                    )}
+                    <MarketStatusDot ticker={ticker} showLabel />
                   </div>
                 )}
               </div>

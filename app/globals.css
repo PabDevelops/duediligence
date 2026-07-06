@@ -130,6 +130,12 @@ html, body {
 }
 
 
+/* MarketStatusDot ping animation */
+@keyframes market-dot-ping {
+  0% { transform: scale(1); opacity: 0.6; }
+  75%, 100% { transform: scale(2); opacity: 0; }
+}
+
 /* Scroll reveal animation */
 @keyframes fadeUp {
   from { opacity: 0; transform: translateY(24px); }

@@ -5,6 +5,7 @@ import { useUser } from '../../components/AuthProvider';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import Sparkline from '../../components/Sparkline';
+import MarketStatusDot from '../../components/workspace/MarketStatusDot';
 
 const formatCurrency = (val, symbol = '$') => {
   if (val === null || val === undefined) return '—';
@@ -867,7 +868,10 @@ export default function WorkspacePortfolio() {
                               <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                                 <StockLogo ticker={p.ticker} size={24} />
                                 <div>
-                                  <div style={{ fontWeight: 600, color: 'var(--ws-text)' }}>{p.ticker}</div>
+                                  <div style={{ fontWeight: 600, color: 'var(--ws-text)', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                                    {p.ticker}
+                                    <MarketStatusDot ticker={p.ticker} />
+                                  </div>
                                   <div style={{ color: 'var(--ws-text-3)', fontSize: '11px' }}>{p.name || '…'}</div>
                                 </div>
                               </div>
