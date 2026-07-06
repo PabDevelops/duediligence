@@ -544,6 +544,17 @@ html, body {
   margin-bottom: 18px;
 }
 
+/* Home Dashboard Widget Adaptations */
+.home-portfolio-summary {
+  grid-template-columns: repeat(3, 1fr);
+}
+.home-portfolio-summary-item {
+  padding: 12px 14px;
+}
+.home-portfolio-summary-item:not(:last-child) {
+  border-right: 1px solid var(--ws-border);
+}
+
 /* Home dashboard's custom grid collapses below 1023px (mobile/tablet layout) */
 @media (max-width: 1023px) {
   .home-main-grid {
@@ -554,6 +565,63 @@ html, body {
   }
   .portfolio-allocations-grid {
     grid-template-columns: 1fr !important;
+  }
+}
+
+@media (max-width: 768px) {
+  .home-container {
+    padding: 12px !important;
+    gap: 16px !important;
+  }
+  .widget-card-header {
+    padding: 10px 12px !important;
+  }
+  .widget-card-body table th,
+  .widget-card-body table td {
+    padding: 8px 10px !important;
+  }
+  .home-portfolio-summary {
+    grid-template-columns: 1fr !important;
+  }
+  .home-portfolio-summary-item:not(:last-child) {
+    border-right: none !important;
+    border-bottom: 1px solid var(--ws-border);
+  }
+}
+
+@media (max-width: 480px) {
+  .home-container {
+    padding: 8px !important;
+    gap: 12px !important;
+  }
+  .widget-card-body table th,
+  .widget-card-body table td {
+    padding: 6px 8px !important;
+  }
+  .home-portfolio-summary-item {
+    padding: 8px 10px !important;
+  }
+  .widget-indices-grid {
+    padding: 10px !important;
+    gap: 8px !important;
+  }
+  .widget-sotw-body {
+    padding: 12px !important;
+  }
+  .sotw-teaser-stats {
+    flex-direction: column !important;
+    gap: 8px !important;
+  }
+  .widget-portfolio-body {
+    padding: 10px !important;
+    gap: 10px !important;
+  }
+  .home-portfolio-trade-grid {
+    grid-template-columns: 1fr 1fr !important;
+  }
+  .home-marquee-container {
+    gap: 12px !important;
+    padding: 8px 0 8px 12px !important;
   }
 }
 

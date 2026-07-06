@@ -143,6 +143,7 @@ function Card({ title, subtitle, rightElement, dragProps, children }) {
   return (
     <div 
       {...dragProps}
+      className="widget-card"
       style={{
         border: '1px solid var(--ws-border)',
         background: 'var(--ws-bg-1)',
@@ -154,7 +155,7 @@ function Card({ title, subtitle, rightElement, dragProps, children }) {
         ...dragProps?.style
       }}
     >
-      <div style={{
+      <div className="widget-card-header" style={{
         padding: '14px 18px',
         borderBottom: '1px solid var(--ws-border)',
         display: 'flex',
@@ -182,7 +183,7 @@ function Card({ title, subtitle, rightElement, dragProps, children }) {
         </div>
         {rightElement}
       </div>
-      <div style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
+      <div className="widget-card-body" style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
         {children}
       </div>
     </div>
@@ -938,7 +939,7 @@ export default function WorkspaceHome() {
           }
         }}
       >
-        <div style={{ padding: '16px', display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(130px, 1fr))', gap: '12px' }}>
+        <div className="widget-indices-grid" style={{ padding: '16px', display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(130px, 1fr))', gap: '12px' }}>
           {indices.map(idx => {
             const positive = idx.changePct >= 0;
             const changeStr = `${positive ? '+' : ''}${idx.changePct?.toFixed(2)}%`;
@@ -1021,7 +1022,7 @@ export default function WorkspaceHome() {
         }}
       >
         {sotw ? (
-          <div style={{ padding: '20px', display: 'flex', flexDirection: 'column', gap: '18px' }}>
+          <div className="widget-sotw-body" style={{ padding: '20px', display: 'flex', flexDirection: 'column', gap: '18px' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
               <div onClick={() => router.push(`/stock/${sotw.ticker}`)} 
                 style={{ display: 'flex', alignItems: 'center', gap: '12px', cursor: 'pointer' }}>
@@ -1051,7 +1052,7 @@ export default function WorkspaceHome() {
 
             {/* Quick teaser stats — a starting point for the week's research, not a verdict */}
             {sotwStats && (
-              <div style={{ display: 'flex', gap: '10px' }}>
+              <div className="sotw-teaser-stats" style={{ display: 'flex', gap: '10px' }}>
                 {[
                   { label: 'Sector', value: sotwStats.sector || '—' },
                   {
@@ -1412,7 +1413,7 @@ export default function WorkspaceHome() {
           }
         }}
       >
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '14px', padding: '16px' }}>
+        <div className="widget-portfolio-body" style={{ display: 'flex', flexDirection: 'column', gap: '14px', padding: '16px' }}>
           {/* Sign In Banner if not signed in */}
           {!isSignedIn && (
             <div style={{
@@ -1447,13 +1448,12 @@ export default function WorkspaceHome() {
           )}
 
           {/* Summary Row — Value, Today's move and Total Return, all at a glance */}
-          <div style={{
+          <div className="home-portfolio-summary" style={{
             display: 'grid',
-            gridTemplateColumns: 'repeat(3, 1fr)',
             background: 'var(--ws-bg-2)',
             border: '1px solid var(--ws-border)'
           }}>
-            <div style={{ padding: '12px 14px' }}>
+            <div className="home-portfolio-summary-item">
               <div style={{ fontSize: '10px', color: 'var(--ws-text-3)', fontWeight: 700, textTransform: 'uppercase' }}>
                 Portfolio Value
               </div>
@@ -1461,7 +1461,7 @@ export default function WorkspaceHome() {
                 {currencySymbol}{(totalValue * fxRate).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
               </div>
             </div>
-            <div style={{ padding: '12px 14px', borderLeft: '1px solid var(--ws-border)', borderRight: '1px solid var(--ws-border)' }}>
+            <div className="home-portfolio-summary-item">
               <div style={{ fontSize: '10px', color: 'var(--ws-text-3)', fontWeight: 700, textTransform: 'uppercase' }}>
                 Today
               </div>
@@ -1469,7 +1469,7 @@ export default function WorkspaceHome() {
                 {todayPositive ? '+' : '-'} {currencySymbol}{Math.abs(totalTodayChange * fxRate).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} ({totalTodayPct.toFixed(2)}%)
               </div>
             </div>
-            <div style={{ padding: '12px 14px' }}>
+            <div className="home-portfolio-summary-item">
               <div style={{ fontSize: '10px', color: 'var(--ws-text-3)', fontWeight: 700, textTransform: 'uppercase' }}>
                 Total Return
               </div>
@@ -1641,7 +1641,7 @@ export default function WorkspaceHome() {
               gap: '10px'
             }}>
               <div style={{ fontSize: '11px', fontWeight: 700, color: 'var(--ws-text)' }}>New Transaction</div>
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '8px' }}>
+              <div className="home-portfolio-trade-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '8px' }}>
                 <div>
                   <label style={{ fontSize: '9px', color: 'var(--ws-text-3)', fontWeight: 700, textTransform: 'uppercase' }}>Ticker</label>
                   <input
@@ -2114,7 +2114,7 @@ export default function WorkspaceHome() {
   const rightWidgets = widgets.filter(w => w.column === 'right' && w.visible !== false).sort((a, b) => a.order - b.order);
 
   return (
-    <div style={{ padding: '24px', display: 'flex', flexDirection: 'column', gap: '24px' }}>
+    <div className="home-container" style={{ padding: '24px', display: 'flex', flexDirection: 'column', gap: '24px' }}>
       
       {/* Floating layout/config gear — fixed bottom-right, stays reachable while scrolling */}
       <div
@@ -2274,7 +2274,7 @@ export default function WorkspaceHome() {
         const signFor = (s) => (colorMode === 'positive' || (colorMode === 'signed' && s.priceChangePct >= 0)) ? '+' : '';
 
         return (
-          <div style={{
+          <div className="home-marquee-container" style={{
             background: 'var(--ws-bg-1)',
             border: '1px solid var(--ws-border)',
             padding: '12px 0 12px 18px',
