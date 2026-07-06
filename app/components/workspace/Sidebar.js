@@ -276,7 +276,7 @@ export default function Sidebar({ theme, onToggleTheme }) {
 
         {/* User + Theme row */}
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderTop: '1px solid var(--ws-border)', paddingTop: '12px' }}>
-          <UserMenu variant="light" />
+          <UserMenu variant="light" dropUp />
           <button
             onClick={onToggleTheme}
             id="theme-toggle-btn"

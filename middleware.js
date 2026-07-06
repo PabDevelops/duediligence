@@ -1,5 +1,6 @@
 import { createServerClient } from '@supabase/ssr';
 import { NextResponse } from 'next/server';
+import { getCookieDomain } from './lib/cookieDomain';
 
 // Marketing/informational pages that live on the apex domain (traqcker.com).
 // Everything else is the app/workspace terminal, served from
@@ -52,6 +53,7 @@ export async function middleware(request) {
   if (redirect) return redirect;
 
   let response = NextResponse.next({ request });
+  const cookieDomain = getCookieDomain(request.headers.get('host'));
 
   const supabase = createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL,
@@ -64,7 +66,9 @@ export async function middleware(request) {
         setAll(cookiesToSet) {
           cookiesToSet.forEach(({ name, value }) => request.cookies.set(name, value));
           response = NextResponse.next({ request });
-          cookiesToSet.forEach(({ name, value, options }) => response.cookies.set(name, value, options));
+          cookiesToSet.forEach(({ name, value, options }) => {
+            response.cookies.set(name, value, cookieDomain ? { ...options, domain: cookieDomain } : options);
+          });
         },
       },
     }

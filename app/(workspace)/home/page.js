@@ -891,13 +891,15 @@ export default function WorkspaceHome() {
                 height: '110px'
               }}>
                 <div>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                    <span style={{ fontSize: '11px', fontWeight: 700, color: 'var(--ws-text)' }}>{idx.label}</span>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '6px' }}>
+                    <span style={{ fontSize: '11px', fontWeight: 700, color: 'var(--ws-text)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{idx.label}</span>
                     <span style={{
                       fontFamily: "'JetBrains Mono', monospace",
                       fontSize: '9px',
                       fontWeight: 700,
-                      color: positive ? '#10b981' : 'var(--ws-red)'
+                      color: positive ? '#10b981' : 'var(--ws-red)',
+                      whiteSpace: 'nowrap',
+                      flexShrink: 0,
                     }}>
                       {changeStr}
                     </span>

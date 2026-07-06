@@ -22,7 +22,7 @@ const THEMES = {
   },
 };
 
-export default function UserMenu({ variant = 'dark' }) {
+export default function UserMenu({ variant = 'dark', dropUp = false }) {
   const theme = THEMES[variant];
   const { user } = useUser();
   const router = useRouter();
@@ -44,7 +44,17 @@ export default function UserMenu({ variant = 'dark' }) {
       </button>
       {open && (
         <div className={theme.menuClass}
-          style={{ position: 'absolute', bottom: '38px', left: 0, minWidth: '160px', padding: '6px', zIndex: 100, background: variant === 'light' ? 'var(--ws-bg)' : undefined, border: variant === 'light' ? '1px solid var(--ws-border)' : undefined, borderRadius: variant === 'light' ? 'var(--ws-radius)' : undefined, boxShadow: variant === 'light' ? '0 4px 16px rgba(0,0,0,0.08)' : undefined }}>
+          style={{
+            position: 'absolute',
+            ...(dropUp ? { bottom: '38px' } : { top: '38px' }),
+            right: dropUp ? 'auto' : 0,
+            left: dropUp ? 0 : 'auto',
+            minWidth: '160px', padding: '6px', zIndex: 100,
+            background: variant === 'light' ? 'var(--ws-bg)' : undefined,
+            border: variant === 'light' ? '1px solid var(--ws-border)' : undefined,
+            borderRadius: variant === 'light' ? 'var(--ws-radius)' : undefined,
+            boxShadow: variant === 'light' ? '0 4px 16px rgba(0,0,0,0.08)' : undefined,
+          }}>
           <Link href="/profile" onClick={() => setOpen(false)}
             style={{ display: 'block', padding: '8px 12px', borderRadius: '6px', color: theme.text, fontSize: '13px', textDecoration: 'none' }}>
             Profile

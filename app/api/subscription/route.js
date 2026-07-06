@@ -11,11 +11,11 @@ export async function GET() {
 
   const { data } = await adminSupabase
     .from('subscriptions')
-    .select('status')
+    .select('status, manual_override')
     .eq('user_id', user.id)
     .single();
 
-  const isPro = PRO_STATUSES.includes(data?.status);
+  const isPro = data?.manual_override === true || PRO_STATUSES.includes(data?.status);
   const needsTrial = !data && new Date(user.created_at) >= TRIAL_LAUNCH_DATE;
 
   return Response.json({ isPro, needsTrial });
