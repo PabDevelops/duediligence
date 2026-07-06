@@ -564,6 +564,9 @@ html, body {
   .home-main-grid {
     grid-template-columns: 1fr !important;
   }
+  .home-main-grid > div {
+    padding: 0 !important;
+  }
   .portfolio-overview-grid {
     grid-template-columns: 1fr !important;
   }
