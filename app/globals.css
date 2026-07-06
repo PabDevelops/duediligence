@@ -530,6 +530,16 @@ html, body {
   }
 }
 
+/* Home dashboard's custom grid has a fixed 360px column baked into its inline
+   style (user-selectable layout modes) — collapse it to a single column below
+   900px so phones (portrait AND landscape) don't get squeezed into an
+   overflowing desktop layout. 900px (not 768px) so landscape phones are covered too. */
+@media (max-width: 900px) {
+  .home-main-grid {
+    grid-template-columns: 1fr !important;
+  }
+}
+
 @media (max-width: 768px) {
   /* Landing hero */
   .hero-grid {

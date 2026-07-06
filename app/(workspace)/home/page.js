@@ -2332,11 +2332,11 @@ export default function WorkspaceHome() {
       })()}
 
       {/* 3. Main Custom Grid Layout */}
-      <div style={{ 
-        display: 'grid', 
-        gridTemplateColumns: layoutMode === 'full' ? '1fr' : layoutMode === 'equal' ? '1fr 1fr' : '1fr 360px', 
-        gap: '20px', 
-        alignItems: 'start' 
+      <div className="home-main-grid" style={{
+        display: 'grid',
+        gridTemplateColumns: layoutMode === 'full' ? '1fr' : layoutMode === 'equal' ? '1fr 1fr' : '1fr 360px',
+        gap: '20px',
+        alignItems: 'start'
       }}>
         
         {/* LEFT COLUMN */}

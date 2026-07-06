@@ -69,7 +69,12 @@ export default function BottomNav() {
   }, []);
 
   const isPublicPage = ['/', '/about', '/pricing', '/privacy', '/terms', '/sign-in', '/sign-up'].includes(path);
-  if (!isSignedIn || isPublicPage) return null;
+  // The terminal (workspace) has its own mobile nav — hamburger + Sidebar drawer in
+  // app/(workspace)/layout.js. Skip this legacy bottom bar there so the two don't stack
+  // and fight for the same (already tight, especially in landscape) screen space.
+  const WORKSPACE_ROOTS = ['home', 'calendar', 'chat', 'compare', 'portfolio', 'profile', 'screener', 'search', 'settings', 'stock', 'watchlist'];
+  const isWorkspaceRoute = WORKSPACE_ROOTS.includes(path.split('/')[1]);
+  if (!isSignedIn || isPublicPage || isWorkspaceRoute) return null;
 
   const isHome = path === '/';
   const isSearch = path === '/screener' || path === '/compare';
