@@ -865,7 +865,7 @@ export default function WorkspacePortfolio() {
         </div>
       ) : (
         <>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '12px', marginBottom: '18px' }}>
+          <div className="portfolio-overview-grid">
             <div style={{ border: '1px solid var(--ws-border)', padding: '14px' }}>
               <div style={{ fontSize: '10px', color: 'var(--ws-text-3)', letterSpacing: '0.5px', marginBottom: '4px' }}>MARKET VALUE</div>
               <div style={{ fontSize: '20px', fontWeight: 700, color: 'var(--ws-text)' }}>{fmtC(totals.value)}</div>
@@ -886,7 +886,7 @@ export default function WorkspacePortfolio() {
             <GrowthChart snapshots={snapshots} currentValue={totals.value} currentCost={totals.cost} rate={rate} symbol={symbol} />
           </div>
 
-          <div style={{ display: 'grid', gridTemplateColumns: `repeat(${1 + (bySectorChart.length > 1 ? 1 : 0) + (hasPies ? 1 : 0)}, 1fr)`, gap: '12px', marginBottom: '18px' }}>
+          <div className="portfolio-allocations-grid" style={{ gridTemplateColumns: `repeat(${1 + (bySectorChart.length > 1 ? 1 : 0) + (hasPies ? 1 : 0)}, 1fr)` }}>
             <AllocationChart title="ALLOCATION BY STOCK" data={byTickerChart} />
             {bySectorChart.length > 1 && <AllocationChart title="ALLOCATION BY SECTOR" data={bySectorChart} />}
             {hasPies && <AllocationChart title="ALLOCATION BY PIE" data={byPieChart} />}
