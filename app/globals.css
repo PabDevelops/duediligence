@@ -54,8 +54,12 @@
   font-family: 'Inter', sans-serif;
   min-height: 100vh;
   transition: background 0.2s ease, color 0.2s ease, border-color 0.2s ease;
+  /* clip (not hidden) — hidden establishes a scroll container, which breaks the
+     sidebar's position: sticky since it becomes the nearest scrolling ancestor
+     instead of the real viewport. clip still clamps horizontal overflow without
+     that side effect. */
   max-width: 100%;
-  overflow-x: hidden;
+  overflow-x: clip;
 }
 .workspace.dark,
 html[data-ws-theme="dark"] .workspace {
@@ -94,7 +98,7 @@ html, body {
   line-height: 1.6;
   -webkit-font-smoothing: antialiased;
   max-width: 100%;
-  overflow-x: hidden;
+  overflow-x: clip;
 }
 
 /* Unified button style */
@@ -559,10 +563,25 @@ html, body {
   border-right: 1px solid var(--ws-border);
 }
 
+/* Every widget card clips its own content at its own boundary — a safety net so
+   no single widget (a wide table, an unwrapped row, the marquee tape, etc.) can
+   push the page wider than the viewport. Cards that need their own horizontal
+   scroll (holdings tables) already wrap that in an inner overflowX:auto div,
+   which still scrolls fine nested inside this. */
+.widget-card {
+  max-width: 100%;
+  overflow-x: hidden;
+}
+
 /* Home dashboard's custom grid collapses below 1023px (mobile/tablet layout) */
 @media (max-width: 1023px) {
   .home-main-grid {
     grid-template-columns: 1fr !important;
+  }
+  .home-main-grid,
+  .home-main-grid > div {
+    min-width: 0;
+    max-width: 100%;
   }
   .home-main-grid > div {
     padding: 0 !important;

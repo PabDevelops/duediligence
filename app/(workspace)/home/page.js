@@ -242,9 +242,21 @@ export default function WorkspaceHome() {
   // Layout States
   const [widgets, setWidgets] = useState([]);
   const [draggedId, setDraggedId] = useState(null);
-  
+
   const [showConfig, setShowConfig] = useState(false);
   const [layoutMode, setLayoutMode] = useState('split');
+
+  // Mobile gets a single fixed widget order/column — dragging into left/right
+  // columns is a desktop-mouse feature that doesn't translate to touch, and
+  // whatever split a user dragged into on desktop shouldn't also apply on
+  // a narrow phone screen where there's only room for one column anyway.
+  const [isMobile, setIsMobile] = useState(false);
+  useEffect(() => {
+    const check = () => setIsMobile(window.innerWidth < 1024);
+    check();
+    window.addEventListener('resize', check);
+    return () => window.removeEventListener('resize', check);
+  }, []);
 
   // Portfolio States
   const { isSignedIn } = useUser();
@@ -2113,6 +2125,11 @@ export default function WorkspaceHome() {
   const leftWidgets = widgets.filter(w => w.column === 'left' && w.visible !== false).sort((a, b) => a.order - b.order);
   const rightWidgets = widgets.filter(w => w.column === 'right' && w.visible !== false).sort((a, b) => a.order - b.order);
 
+  // Mobile: one fixed order regardless of the user's desktop drag/column setup — see isMobile above.
+  const mobileWidgets = DEFAULT_WIDGETS
+    .map(def => widgets.find(w => w.id === def.id) || def)
+    .filter(w => w.visible !== false);
+
   return (
     <div className="home-container" style={{ padding: '24px', display: 'flex', flexDirection: 'column', gap: '24px' }}>
       
@@ -2160,7 +2177,8 @@ export default function WorkspaceHome() {
           <div className="home-config-popup-wrapper">
             <div className="home-config-popup">
               <div className="home-config-popup-col-1">
-                {/* Layout Mode Presets */}
+                {/* Layout Mode Presets — desktop only, mobile always uses one fixed column */}
+                {!isMobile && (
                 <div>
                   <div style={{ fontSize: '10px', fontWeight: 700, color: 'var(--ws-text-3)', textTransform: 'uppercase', marginBottom: '8px', letterSpacing: '0.5px' }}>
                     Dashboard Layout
@@ -2192,6 +2210,7 @@ export default function WorkspaceHome() {
                     ))}
                   </div>
                 </div>
+                )}
 
                 {/* Reset Buttons */}
                 <button
@@ -2331,55 +2350,66 @@ export default function WorkspaceHome() {
         );
       })()}
 
-      {/* 3. Main Custom Grid Layout */}
-      <div className="home-main-grid" style={{
-        display: 'grid',
-        gridTemplateColumns: layoutMode === 'full' ? '1fr' : layoutMode === 'equal' ? '1fr 1fr' : '1fr 360px',
-        gap: '20px',
-        alignItems: 'start'
-      }}>
-        
-        {/* LEFT COLUMN */}
-        <div 
-          data-column-container="true"
-          onDragOver={(e) => handleDragOverColumn(e, 'left')}
-          style={{
-            display: 'flex',
-            flexDirection: 'column',
-            gap: '20px',
-            minHeight: '400px',
-            padding: '4px',
-            transition: 'all 0.2s ease'
-          }}
-        >
-          {leftWidgets.map((widget) => (
+      {/* 3. Main Custom Grid Layout — mobile always gets one fixed-order column; the
+          draggable left/right split below is a desktop-only feature (see isMobile above). */}
+      {isMobile ? (
+        <div className="home-main-grid" style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+          {mobileWidgets.map((widget) => (
             <div key={widget.id}>
               {renderWidget(widget.id)}
             </div>
           ))}
         </div>
+      ) : (
+        <div className="home-main-grid" style={{
+          display: 'grid',
+          gridTemplateColumns: layoutMode === 'full' ? '1fr' : layoutMode === 'equal' ? '1fr 1fr' : '1fr 360px',
+          gap: '20px',
+          alignItems: 'start'
+        }}>
 
-        {/* RIGHT COLUMN */}
-        <div
-          data-column-container="true"
-          onDragOver={(e) => handleDragOverColumn(e, 'right')}
-          style={{
-            display: 'flex',
-            flexDirection: 'column',
-            gap: '20px',
-            minHeight: '400px',
-            padding: '4px',
-            transition: 'all 0.2s ease'
-          }}
-        >
-          {rightWidgets.map((widget) => (
-            <div key={widget.id}>
-              {renderWidget(widget.id)}
-            </div>
-          ))}
+          {/* LEFT COLUMN */}
+          <div
+            data-column-container="true"
+            onDragOver={(e) => handleDragOverColumn(e, 'left')}
+            style={{
+              display: 'flex',
+              flexDirection: 'column',
+              gap: '20px',
+              minHeight: '400px',
+              padding: '4px',
+              transition: 'all 0.2s ease'
+            }}
+          >
+            {leftWidgets.map((widget) => (
+              <div key={widget.id}>
+                {renderWidget(widget.id)}
+              </div>
+            ))}
+          </div>
+
+          {/* RIGHT COLUMN */}
+          <div
+            data-column-container="true"
+            onDragOver={(e) => handleDragOverColumn(e, 'right')}
+            style={{
+              display: 'flex',
+              flexDirection: 'column',
+              gap: '20px',
+              minHeight: '400px',
+              padding: '4px',
+              transition: 'all 0.2s ease'
+            }}
+          >
+            {rightWidgets.map((widget) => (
+              <div key={widget.id}>
+                {renderWidget(widget.id)}
+              </div>
+            ))}
+          </div>
+
         </div>
-
-      </div>
+      )}
 
       {/* Slide & Fade Animation styles for the Customize Dropdown */}
       <style>{`
