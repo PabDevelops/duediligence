@@ -8,51 +8,153 @@ const DAY_NAMES = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 
 const toKey = (d) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
 
+function StockLogo({ ticker, size = 20 }) {
+  const [error, setError] = useState(false);
+  if (error || !ticker) {
+    return (
+      <div style={{ width: size, height: size, borderRadius: '4px', background: 'var(--ws-bg-2)', border: '1px solid var(--ws-border)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '8px', fontWeight: 700, color: 'var(--ws-accent)', flexShrink: 0 }}>
+        {ticker?.slice(0, 2)}
+      </div>
+    );
+  }
+  return (
+    <img src={`https://img.logo.dev/ticker/${ticker.toUpperCase()}?token=pk_B4aaLZF6S4G1YbCgqZq2Ug`} alt={ticker}
+      style={{ width: size, height: size, borderRadius: '4px', border: '1px solid var(--ws-border)', objectFit: 'contain', background: '#fff', padding: '1.5px', flexShrink: 0 }}
+      onError={() => setError(true)} />
+  );
+}
+
 export default function WorkspaceCalendar() {
   const router = useRouter();
   const { isSignedIn } = useUser();
   const [cursor, setCursor] = useState(() => { const d = new Date(); d.setDate(1); return d; });
   const [earnings, setEarnings] = useState(null);
   const [ipos, setIpos] = useState([]);
+  
+  // Filtering & Search states
   const [watchlistOnly, setWatchlistOnly] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [typeFilter, setTypeFilter] = useState('all'); // all | earnings | ipos
   const [watchlistTickers, setWatchlistTickers] = useState(new Set());
   const [selectedDate, setSelectedDate] = useState(null);
+  const [togglingWatchlist, setTogglingWatchlist] = useState(null);
 
-  useEffect(() => {
+  // Fetch Calendar Data (Earnings & IPOs)
+  const fetchCalendarData = () => {
     const from = toKey(new Date(cursor.getFullYear(), cursor.getMonth(), 1));
     const to = toKey(new Date(cursor.getFullYear(), cursor.getMonth() + 1, 0));
     setEarnings(null);
-    fetch(`/api/earnings?from=${from}&to=${to}`).then(r => r.json()).then(d => {
-      setEarnings(d.earnings || []);
-      setIpos(d.ipos || []);
-    });
-  }, [cursor]);
+    fetch(`/api/earnings?from=${from}&to=${to}`)
+      .then(r => r.json())
+      .then(d => {
+        setEarnings(d.earnings || []);
+        setIpos(d.ipos || []);
+      })
+      .catch(() => {
+        setEarnings([]);
+        setIpos([]);
+      });
+  };
 
   useEffect(() => {
+    fetchCalendarData();
+  }, [cursor]);
+
+  // Fetch Watchlist Tickers
+  const fetchWatchlist = () => {
     if (!isSignedIn) return;
-    fetch('/api/watchlist').then(r => r.json()).then(d => {
-      setWatchlistTickers(new Set((d.tickers || []).map(t => t.ticker)));
-    });
+    fetch('/api/watchlist')
+      .then(r => r.json())
+      .then(d => {
+        setWatchlistTickers(new Set((d.tickers || []).map(t => t.ticker)));
+      })
+      .catch(() => {});
+  };
+
+  useEffect(() => {
+    fetchWatchlist();
   }, [isSignedIn]);
 
-  const filteredEarnings = useMemo(
-    () => watchlistOnly ? (earnings || []).filter(e => watchlistTickers.has(e.ticker)) : (earnings || []),
-    [earnings, watchlistOnly, watchlistTickers]
-  );
-  const filteredIpos = useMemo(
-    () => watchlistOnly ? ipos.filter(e => watchlistTickers.has(e.ticker)) : ipos,
-    [ipos, watchlistOnly, watchlistTickers]
-  );
+  // Watchlist Toggle Handler
+  const handleToggleWatchlist = async (e, ticker) => {
+    e.stopPropagation();
+    if (!isSignedIn) {
+      router.push('/sign-in');
+      return;
+    }
+    setTogglingWatchlist(ticker);
+    const isAdded = watchlistTickers.has(ticker);
+    try {
+      const res = await fetch('/api/watchlist', {
+        method: isAdded ? 'DELETE' : 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ticker })
+      });
+      if (res.ok) {
+        setWatchlistTickers(prev => {
+          const next = new Set(prev);
+          if (isAdded) next.delete(ticker);
+          else next.add(ticker);
+          return next;
+        });
+      }
+    } catch (err) {
+      console.error('Failed to update watchlist', err);
+    } finally {
+      setTogglingWatchlist(null);
+    }
+  };
 
+  // Compile calendar events by Date
+  const allEventsThisMonth = useMemo(() => {
+    const earnList = (earnings || []).map(e => ({ ...e, type: 'earnings' }));
+    const ipoList = ipos.map(i => ({ ...i, type: 'ipo' }));
+    return [...earnList, ...ipoList];
+  }, [earnings, ipos]);
+
+  // Apply filters: Watchlist, Search, Type
+  const filteredEvents = useMemo(() => {
+    return allEventsThisMonth.filter(event => {
+      // 1. Watchlist filter
+      if (watchlistOnly && !watchlistTickers.has(event.ticker)) return false;
+
+      // 2. Type filter
+      if (typeFilter === 'earnings' && event.type !== 'earnings') return false;
+      if (typeFilter === 'ipos' && event.type !== 'ipo') return false;
+
+      // 3. Search query filter
+      if (searchQuery) {
+        const query = searchQuery.toLowerCase();
+        const matchesTicker = event.ticker?.toLowerCase().includes(query);
+        const matchesName = event.name?.toLowerCase().includes(query);
+        if (!matchesTicker && !matchesName) return false;
+      }
+
+      return true;
+    });
+  }, [allEventsThisMonth, watchlistOnly, watchlistTickers, typeFilter, searchQuery]);
+
+  // Categorize filtered events by date
   const byDate = useMemo(() => {
     const acc = {};
-    filteredEarnings.forEach(e => { (acc[e.date] ||= { earnings: [], ipos: [] }).earnings.push(e); });
-    filteredIpos.forEach(e => { (acc[e.date] ||= { earnings: [], ipos: [] }).ipos.push(e); });
+    filteredEvents.forEach(e => {
+      acc[e.date] ||= [];
+      acc[e.date].push(e);
+    });
     return acc;
-  }, [filteredEarnings, filteredIpos]);
+  }, [filteredEvents]);
+
+  // Stats Counters
+  const stats = useMemo(() => {
+    const totalEarnings = (earnings || []).length;
+    const totalIpos = ipos.length;
+    const watchlistMatch = allEventsThisMonth.filter(e => watchlistTickers.has(e.ticker)).length;
+    return { totalEarnings, totalIpos, watchlistMatch };
+  }, [earnings, ipos, allEventsThisMonth, watchlistTickers]);
 
   const todayKey = toKey(new Date());
 
+  // Generate calendar grid cells (42 days)
   const cells = useMemo(() => {
     const firstOfMonth = new Date(cursor.getFullYear(), cursor.getMonth(), 1);
     const startOffset = firstOfMonth.getDay();
@@ -65,106 +167,227 @@ export default function WorkspaceCalendar() {
     });
   }, [cursor]);
 
-  const selected = selectedDate ? (byDate[selectedDate] || { earnings: [], ipos: [] }) : null;
-  const totalEventsThisMonth = filteredEarnings.length + filteredIpos.length;
+  // Timeline list events (grouped by date)
+  const timelineGrouped = useMemo(() => {
+    // If selectedDate is set, show only that day. Otherwise, show all filtered events
+    const sourceDates = selectedDate ? [selectedDate] : Object.keys(byDate).sort();
+    return sourceDates.map(dateKey => {
+      const events = byDate[dateKey] || [];
+      return {
+        date: dateKey,
+        events: events.sort((a, b) => a.ticker.localeCompare(b.ticker))
+      };
+    }).filter(group => group.events.length > 0);
+  }, [byDate, selectedDate]);
 
   return (
     <div style={{ padding: '24px' }}>
+      
+      {/* 1. Terminal style Header */}
       <div style={{ border: '1px solid var(--ws-border)', background: 'var(--ws-bg-1)', marginBottom: '20px', overflow: 'hidden' }}>
         <div style={{ background: 'var(--ws-bg-2)', borderBottom: '1px solid var(--ws-border)', padding: '7px 16px' }}>
           <span style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: '11px', color: 'var(--ws-accent)', fontWeight: 700, letterSpacing: '1px' }}>
-            $ traq calendar
+            $ traq calendar --interactive
           </span>
         </div>
-        <div style={{ padding: '18px 20px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '12px' }}>
+        <div style={{ padding: '20px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '16px' }}>
           <div>
-            <div style={{ fontSize: '20px', fontWeight: 700, color: 'var(--ws-text)' }}>Calendar</div>
-            <div style={{ fontSize: '13px', color: 'var(--ws-text-2)' }}>Earnings and IPOs for covered stocks.</div>
+            <div style={{ fontSize: '22px', fontWeight: 800, color: 'var(--ws-text)', display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <span>Market Calendar</span>
+              <span style={{ fontSize: '11px', background: 'var(--ws-accent-dim)', color: 'var(--ws-accent)', padding: '2px 8px', borderRadius: '4px', fontWeight: 600 }}>LIVE</span>
+            </div>
+            <div style={{ fontSize: '13px', color: 'var(--ws-text-2)', marginTop: '4px' }}>Track scheduled earnings releases, expected analyst updates, and upcoming IPOs.</div>
           </div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-            {isSignedIn && (
-              <label style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '12px', color: 'var(--ws-text-2)', cursor: 'pointer', userSelect: 'none' }}>
-                <input type="checkbox" checked={watchlistOnly} onChange={e => setWatchlistOnly(e.target.checked)}
-                  style={{ accentColor: 'var(--ws-accent)', cursor: 'pointer' }} />
-                My watchlist only
-              </label>
-            )}
+          
+          {/* Month controls */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
             <button onClick={() => setCursor(c => new Date(c.getFullYear(), c.getMonth() - 1, 1))}
-              style={{ width: '28px', height: '28px', border: '1px solid var(--ws-border)', background: 'var(--ws-bg-1)', color: 'var(--ws-text)', cursor: 'pointer' }}>
+              className="ctrl-btn"
+              style={{ width: '32px', height: '32px', border: '1px solid var(--ws-border)', background: 'var(--ws-bg-1)', color: 'var(--ws-text)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', borderRadius: '4px', transition: 'all 0.15s ease' }}>
               ‹
             </button>
-            <div style={{ fontSize: '13px', fontWeight: 600, color: 'var(--ws-text)', width: '140px', textAlign: 'center' }}>
+            <div style={{ fontSize: '14px', fontWeight: 700, color: 'var(--ws-text)', width: '150px', textAlign: 'center', letterSpacing: '0.3px' }}>
               {MONTH_NAMES[cursor.getMonth()]} {cursor.getFullYear()}
             </div>
             <button onClick={() => setCursor(c => new Date(c.getFullYear(), c.getMonth() + 1, 1))}
-              style={{ width: '28px', height: '28px', border: '1px solid var(--ws-border)', background: 'var(--ws-bg-1)', color: 'var(--ws-text)', cursor: 'pointer' }}>
+              className="ctrl-btn"
+              style={{ width: '32px', height: '32px', border: '1px solid var(--ws-border)', background: 'var(--ws-bg-1)', color: 'var(--ws-text)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', borderRadius: '4px', transition: 'all 0.15s ease' }}>
               ›
             </button>
-            <button onClick={() => { const d = new Date(); d.setDate(1); setCursor(d); }}
-              style={{ padding: '0 12px', height: '28px', border: '1px solid var(--ws-border)', background: 'var(--ws-bg-1)', color: 'var(--ws-text-2)', fontSize: '12px', cursor: 'pointer' }}>
+            <button onClick={() => { const d = new Date(); d.setDate(1); setCursor(d); setSelectedDate(null); }}
+              className="ctrl-btn"
+              style={{ padding: '0 14px', height: '32px', border: '1px solid var(--ws-border)', background: 'var(--ws-bg-1)', color: 'var(--ws-text-2)', fontSize: '12px', fontWeight: 600, cursor: 'pointer', borderRadius: '4px', transition: 'all 0.15s ease' }}>
               Today
             </button>
           </div>
         </div>
       </div>
 
-      <div style={{ display: 'flex', alignItems: 'center', gap: '16px', marginBottom: '12px' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '11px', color: 'var(--ws-text-3)' }}>
-          <span style={{ width: '8px', height: '8px', borderRadius: '2px', background: 'var(--ws-accent)', display: 'inline-block' }} />
-          Earnings
+      {/* 2. Institutional Quick Stats Grid */}
+      <div className="calendar-stats-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '16px', marginBottom: '20px' }}>
+        <div style={{ border: '1px solid var(--ws-border)', background: 'var(--ws-bg-1)', padding: '16px', borderRadius: '4px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <div>
+            <div style={{ fontSize: '10px', color: 'var(--ws-text-3)', fontWeight: 700, letterSpacing: '0.5px', marginBottom: '4px' }}>EARNINGS THIS MONTH</div>
+            <div style={{ fontSize: '24px', fontWeight: 800, color: 'var(--ws-text)' }}>{earnings === null ? '—' : stats.totalEarnings}</div>
+            <div style={{ fontSize: '11px', color: 'var(--ws-text-2)', marginTop: '2px' }}>Covered companies reporting</div>
+          </div>
+          <div style={{ width: '40px', height: '40px', borderRadius: '8px', background: 'rgba(20, 184, 166, 0.08)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--ws-accent)' }}>
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="20" x2="18" y2="10"></line><line x1="12" y1="20" x2="12" y2="4"></line><line x1="6" y1="20" x2="6" y2="14"></line></svg>
+          </div>
         </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '11px', color: 'var(--ws-text-3)' }}>
-          <span style={{ width: '8px', height: '8px', borderRadius: '2px', background: '#7c6fe0' /* distinct IPO purple, intentionally outside the --ws-* accent palette */, display: 'inline-block' }} />
-          IPO
+        <div style={{ border: '1px solid var(--ws-border)', background: 'var(--ws-bg-1)', padding: '16px', borderRadius: '4px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <div>
+            <div style={{ fontSize: '10px', color: 'var(--ws-text-3)', fontWeight: 700, letterSpacing: '0.5px', marginBottom: '4px' }}>UPCOMING IPOS</div>
+            <div style={{ fontSize: '24px', fontWeight: 800, color: '#7c6fe0' }}>{earnings === null ? '—' : stats.totalIpos}</div>
+            <div style={{ fontSize: '11px', color: 'var(--ws-text-2)', marginTop: '2px' }}>New stock listings scheduled</div>
+          </div>
+          <div style={{ width: '40px', height: '40px', borderRadius: '8px', background: 'rgba(124, 111, 224, 0.08)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#7c6fe0' }}>
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"></polyline><polyline points="17 6 23 6 23 12"></polyline></svg>
+          </div>
+        </div>
+        <div style={{ border: '1px solid var(--ws-border)', background: 'var(--ws-bg-1)', padding: '16px', borderRadius: '4px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <div>
+            <div style={{ fontSize: '10px', color: 'var(--ws-text-3)', fontWeight: 700, letterSpacing: '0.5px', marginBottom: '4px' }}>WATCHLIST EVENTS</div>
+            <div style={{ fontSize: '24px', fontWeight: 800, color: 'var(--ws-accent)' }}>{earnings === null ? '—' : stats.watchlistMatch}</div>
+            <div style={{ fontSize: '11px', color: 'var(--ws-text-2)', marginTop: '2px' }}>Matching your watchlisted tickers</div>
+          </div>
+          <div style={{ width: '40px', height: '40px', borderRadius: '8px', background: 'var(--ws-accent-dim)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--ws-accent)' }}>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>
+          </div>
         </div>
       </div>
 
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 300px', gap: '20px', alignItems: 'start' }}>
-        <div style={{ border: '1px solid var(--ws-border)', overflow: 'hidden' }}>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', borderBottom: '1px solid var(--ws-border)' }}>
+      {/* 3. Filter and Search Bar */}
+      <div style={{ border: '1px solid var(--ws-border)', background: 'var(--ws-bg-1)', padding: '14px 18px', display: 'flex', flexWrap: 'wrap', gap: '14px', alignItems: 'center', justifyContent: 'space-between', marginBottom: '20px', borderRadius: '4px' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flex: 1, minWidth: '260px' }}>
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ color: 'var(--ws-text-3)' }}><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+          <input type="text" placeholder="Search by ticker or company name..."
+            value={searchQuery} onChange={e => setSearchQuery(e.target.value)}
+            style={{ width: '100%', background: 'none', border: 'none', color: 'var(--ws-text)', fontSize: '13px', outline: 'none' }} />
+          {searchQuery && (
+            <button onClick={() => setSearchQuery('')}
+              style={{ background: 'none', border: 'none', color: 'var(--ws-text-3)', cursor: 'pointer', fontSize: '12px' }}>✕</button>
+          )}
+        </div>
+        
+        <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flexWrap: 'wrap' }}>
+          {/* Event type pills */}
+          <div style={{ display: 'flex', border: '1px solid var(--ws-border)', borderRadius: '4px', overflow: 'hidden' }}>
+            <button onClick={() => setTypeFilter('all')}
+              style={{ border: 'none', height: '28px', padding: '0 12px', fontSize: '11px', fontWeight: 600, cursor: 'pointer', background: typeFilter === 'all' ? 'var(--ws-accent)' : 'var(--ws-bg-2)', color: typeFilter === 'all' ? 'var(--ws-bg-1)' : 'var(--ws-text-2)', transition: 'all 0.15s ease' }}>
+              All Events
+            </button>
+            <button onClick={() => setTypeFilter('earnings')}
+              style={{ border: 'none', height: '28px', padding: '0 12px', fontSize: '11px', fontWeight: 600, cursor: 'pointer', background: typeFilter === 'earnings' ? 'var(--ws-accent)' : 'var(--ws-bg-2)', color: typeFilter === 'earnings' ? 'var(--ws-bg-1)' : 'var(--ws-text-2)', transition: 'all 0.15s ease' }}>
+              Earnings
+            </button>
+            <button onClick={() => setTypeFilter('ipos')}
+              style={{ border: 'none', height: '28px', padding: '0 12px', fontSize: '11px', fontWeight: 600, cursor: 'pointer', background: typeFilter === 'ipos' ? 'var(--ws-accent)' : 'var(--ws-bg-2)', color: typeFilter === 'ipos' ? 'var(--ws-bg-1)' : 'var(--ws-text-2)', transition: 'all 0.15s ease' }}>
+              IPOs
+            </button>
+          </div>
+
+          {/* Watchlist toggle */}
+          {isSignedIn && (
+            <label style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '12px', color: 'var(--ws-text-2)', cursor: 'pointer', userSelect: 'none', background: 'var(--ws-bg-2)', padding: '4px 10px', borderRadius: '4px', border: '1px solid var(--ws-border)' }}>
+              <input type="checkbox" checked={watchlistOnly} onChange={e => setWatchlistOnly(e.target.checked)}
+                style={{ accentColor: 'var(--ws-accent)', cursor: 'pointer' }} />
+              Watchlist only
+            </label>
+          )}
+        </div>
+      </div>
+
+      {/* Legend */}
+      <div style={{ display: 'flex', alignItems: 'center', gap: '16px', marginBottom: '12px', paddingLeft: '4px' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '11px', color: 'var(--ws-text-3)', fontWeight: 600 }}>
+          <span style={{ width: '8px', height: '8px', borderRadius: '2px', background: 'var(--ws-accent)', display: 'inline-block' }} />
+          Earnings Release
+        </div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '11px', color: 'var(--ws-text-3)', fontWeight: 600 }}>
+          <span style={{ width: '8px', height: '8px', borderRadius: '2px', background: '#7c6fe0', display: 'inline-block' }} />
+          IPO Schedule
+        </div>
+      </div>
+
+      {/* 4. Main Dual Grid Layout */}
+      <div className="calendar-main-grid" style={{ display: 'grid', gridTemplateColumns: '1.2fr 1fr', gap: '20px', alignItems: 'start' }}>
+        
+        {/* Left Side: Monthly Grid view */}
+        <div style={{ border: '1px solid var(--ws-border)', background: 'var(--ws-bg-1)', borderRadius: '4px', overflow: 'hidden' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', borderBottom: '1px solid var(--ws-border)', background: 'var(--ws-bg-2)' }}>
             {DAY_NAMES.map(d => (
-              <div key={d} style={{ padding: '8px', fontSize: '10px', fontWeight: 700, color: 'var(--ws-text-3)', textAlign: 'center', letterSpacing: '0.5px' }}>{d}</div>
+              <div key={d} style={{ padding: '10px 8px', fontSize: '11px', fontWeight: 700, color: 'var(--ws-text-2)', textAlign: 'center', letterSpacing: '0.5px' }}>{d}</div>
             ))}
           </div>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)' }}>
             {cells.map((d, i) => {
               const key = toKey(d);
               const inMonth = d.getMonth() === cursor.getMonth();
-              const dayData = byDate[key] || { earnings: [], ipos: [] };
-              const allEvents = [...dayData.earnings.map(e => ({ ...e, type: 'earnings' })), ...dayData.ipos.map(e => ({ ...e, type: 'ipo' }))];
+              const dayData = byDate[key] || [];
               const isToday = key === todayKey;
               const isSelected = key === selectedDate;
+              const hasEvents = dayData.length > 0;
+
               return (
-                <div key={i} onClick={() => allEvents.length && setSelectedDate(key)}
+                <div key={i} onClick={() => hasEvents && setSelectedDate(isSelected ? null : key)}
                   style={{
-                    minHeight: '84px', padding: '6px', borderRight: (i + 1) % 7 !== 0 ? '1px solid var(--ws-border)' : 'none',
+                    minHeight: '94px',
+                    padding: '8px',
+                    borderRight: (i + 1) % 7 !== 0 ? '1px solid var(--ws-border)' : 'none',
                     borderBottom: i < 35 ? '1px solid var(--ws-border)' : 'none',
                     background: isSelected ? 'var(--ws-accent-dim)' : 'transparent',
-                    cursor: allEvents.length ? 'pointer' : 'default',
-                    opacity: inMonth ? 1 : 0.35,
+                    cursor: hasEvents ? 'pointer' : 'default',
+                    opacity: inMonth ? 1 : 0.3,
+                    transition: 'all 0.15s ease',
+                    position: 'relative'
                   }}
-                  onMouseEnter={e => { if (allEvents.length && !isSelected) e.currentTarget.style.background = 'var(--ws-bg-2)'; }}
-                  onMouseLeave={e => { if (!isSelected) e.currentTarget.style.background = 'transparent'; }}>
+                  className={`calendar-cell ${hasEvents ? 'clickable-cell' : ''} ${isSelected ? 'selected-cell' : ''}`}>
+                  
+                  {/* Day number */}
                   <div style={{
-                    fontSize: '11px', fontWeight: isToday ? 800 : 500, color: isToday ? 'var(--ws-accent)' : 'var(--ws-text-2)',
-                    marginBottom: '4px', display: 'flex', alignItems: 'center', justifyContent: 'center', width: '20px', height: '20px',
-                    borderRadius: '50%', background: isToday ? 'var(--ws-accent-dim)' : 'transparent',
+                    fontSize: '11px',
+                    fontWeight: isToday ? 800 : 600,
+                    color: isToday ? 'var(--ws-accent)' : 'var(--ws-text-2)',
+                    marginBottom: '6px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    width: '20px',
+                    height: '20px',
+                    borderRadius: '50%',
+                    background: isToday ? 'var(--ws-accent-dim)' : 'transparent',
+                    border: isToday ? '1px solid var(--ws-accent)' : 'none'
                   }}>
                     {d.getDate()}
                   </div>
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
-                    {allEvents.slice(0, 3).map((e, j) => (
+
+                  {/* Day mini events */}
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '3px' }}>
+                    {dayData.slice(0, 3).map((e, j) => (
                       <div key={j} style={{
-                        fontSize: '9px', fontWeight: 700,
-                        color: e.type === 'ipo' ? '#7c6fe0' /* distinct IPO purple, intentionally outside the --ws-* accent palette */ : 'var(--ws-accent)',
-                        background: e.type === 'ipo' ? '#7c6fe014' : 'var(--ws-accent-dim)',
-                        borderRadius: '3px', padding: '1px 4px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+                        fontSize: '9px',
+                        fontWeight: 700,
+                        color: e.type === 'ipo' ? '#7c6fe0' : 'var(--ws-accent)',
+                        background: e.type === 'ipo' ? 'rgba(124, 111, 224, 0.08)' : 'var(--ws-accent-dim)',
+                        borderRadius: '3px',
+                        padding: '2px 5px',
+                        overflow: 'hidden',
+                        textOverflow: 'ellipsis',
+                        whiteSpace: 'nowrap',
+                        borderLeft: `2px solid ${e.type === 'ipo' ? '#7c6fe0' : 'var(--ws-accent)'}`,
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '4px'
                       }}>
-                        {e.ticker}
+                        <span>{e.ticker}</span>
+                        {watchlistTickers.has(e.ticker) && <span style={{ color: '#d99a4e', fontSize: '7px' }}>★</span>}
                       </div>
                     ))}
-                    {allEvents.length > 3 && (
-                      <div style={{ fontSize: '9px', color: 'var(--ws-text-3)', paddingLeft: '4px' }}>+{allEvents.length - 3} more</div>
+                    {dayData.length > 3 && (
+                      <div style={{ fontSize: '9px', color: 'var(--ws-text-3)', fontWeight: 600, paddingLeft: '4px', marginTop: '2px' }}>
+                        +{dayData.length - 3} more
+                      </div>
                     )}
                   </div>
                 </div>
@@ -173,52 +396,176 @@ export default function WorkspaceCalendar() {
           </div>
         </div>
 
-        <div style={{ border: '1px solid var(--ws-border)', padding: '16px', position: 'sticky', top: '20px' }}>
+        {/* Right Side: Timeline / Detailed List view */}
+        <div style={{ border: '1px solid var(--ws-border)', background: 'var(--ws-bg-1)', borderRadius: '4px', padding: '18px', maxHeight: '680px', overflowY: 'auto', display: 'flex', flexDirection: 'column' }}>
+          
+          {/* Selected Date indicator header */}
+          <div style={{ borderBottom: '1px solid var(--ws-border)', paddingBottom: '12px', marginBottom: '16px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+            <div>
+              <div style={{ fontSize: '13px', fontWeight: 700, color: 'var(--ws-text)' }}>
+                {selectedDate ? 'Selected Schedule' : 'Schedule Feed'}
+              </div>
+              <div style={{ fontSize: '11px', color: 'var(--ws-text-3)' }}>
+                {selectedDate 
+                  ? `${new Date(selectedDate + 'T00:00:00').toLocaleDateString(undefined, { weekday: 'long', month: 'short', day: 'numeric' })}`
+                  : `${filteredEvents.length} events scheduled in this viewport`
+                }
+              </div>
+            </div>
+            {selectedDate && (
+              <button onClick={() => setSelectedDate(null)}
+                style={{ background: 'none', border: '1px solid var(--ws-border)', color: 'var(--ws-text-2)', cursor: 'pointer', fontSize: '10px', fontWeight: 600, padding: '4px 8px', borderRadius: '4px' }}>
+                Show Month Feed
+              </button>
+            )}
+          </div>
+
+          {/* Loading state */}
           {earnings === null ? (
-            <div style={{ color: 'var(--ws-text-3)', fontSize: '13px' }}>Loading…</div>
-          ) : !selectedDate ? (
-            <div style={{ color: 'var(--ws-text-3)', fontSize: '13px' }}>
-              {totalEventsThisMonth === 0
-                ? (watchlistOnly ? 'No events this month for your watchlist.' : 'No earnings or IPOs scheduled this month for covered stocks.')
-                : 'Click a day with events to see details.'}
+            <div style={{ padding: '40px 0', textAlign: 'center', color: 'var(--ws-text-3)', fontSize: '13px' }}>
+              <div className="spinner" style={{ width: '20px', height: '20px', border: '2px solid var(--ws-border)', borderTopColor: 'var(--ws-accent)', borderRadius: '50%', animation: 'spin 0.8s linear infinite', margin: '0 auto 10px' }} />
+              Loading calendar events...
+            </div>
+          ) : timelineGrouped.length === 0 ? (
+            <div style={{ padding: '60px 20px', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', textAlign: 'center', color: 'var(--ws-text-3)', fontSize: '13px' }}>
+              <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" style={{ marginBottom: '12px', color: 'var(--ws-text-3)' }}><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
+              <div>No events scheduled for the current selection.</div>
+              {watchlistOnly && <div style={{ fontSize: '11px', color: 'var(--ws-text-3)', marginTop: '4px' }}>Try switching off the "Watchlist only" filter.</div>}
             </div>
           ) : (
-            <>
-              <div style={{ fontSize: '13px', fontWeight: 700, color: 'var(--ws-text)', marginBottom: '12px' }}>
-                {new Date(selectedDate + 'T00:00:00').toLocaleDateString(undefined, { weekday: 'long', month: 'short', day: 'numeric' })}
-              </div>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-                {selected.earnings.map((e, i) => (
-                  <div key={'e' + e.ticker + i} onClick={() => router.push(`/stock/${e.ticker}`)}
-                    style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '8px 10px', cursor: 'pointer', border: '1px solid var(--ws-border)' }}
-                    onMouseEnter={ev => ev.currentTarget.style.background = 'var(--ws-bg-2)'}
-                    onMouseLeave={ev => ev.currentTarget.style.background = 'transparent'}>
-                    <span style={{ fontSize: '9px', fontWeight: 700, color: 'var(--ws-accent)', background: 'var(--ws-accent-dim)', borderRadius: '3px', padding: '2px 5px' }}>EARN</span>
-                    <span style={{ fontSize: '12px', fontWeight: 700, color: 'var(--ws-text)' }}>{e.ticker}</span>
-                    <span style={{ fontSize: '10px', color: 'var(--ws-text-3)' }}>{e.hour === 'bmo' ? 'Before open' : e.hour === 'amc' ? 'After close' : 'Time TBD'}</span>
-                    {e.epsEstimate != null && (
-                      <span style={{ fontSize: '11px', color: 'var(--ws-text-2)', marginLeft: 'auto' }} title="Analyst-estimated earnings per share">Est. EPS ${e.epsEstimate}</span>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+              {timelineGrouped.map(group => (
+                <div key={group.date}>
+                  {/* Group Date Header */}
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '2px 0', marginBottom: '8px', position: 'sticky', top: '0', background: 'var(--ws-bg-1)', zIndex: 1 }}>
+                    <div style={{ fontSize: '11px', fontWeight: 700, color: 'var(--ws-text)', letterSpacing: '0.3px', background: 'var(--ws-bg-2)', padding: '3px 8px', borderRadius: '4px' }}>
+                      {new Date(group.date + 'T00:00:00').toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric' })}
+                    </div>
+                    {group.date === todayKey && (
+                      <span style={{ fontSize: '9px', fontWeight: 700, color: 'var(--ws-bg-1)', background: 'var(--ws-accent)', padding: '2px 6px', borderRadius: '3px' }}>TODAY</span>
                     )}
+                    <div style={{ flex: 1, height: '1px', background: 'var(--ws-border)' }} />
                   </div>
-                ))}
-                {selected.ipos.map((e, i) => (
-                  <div key={'i' + e.ticker + i} onClick={() => router.push(`/stock/${e.ticker}`)}
-                    style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '8px 10px', cursor: 'pointer', border: '1px solid var(--ws-border)' }}
-                    onMouseEnter={ev => ev.currentTarget.style.background = 'var(--ws-bg-2)'}
-                    onMouseLeave={ev => ev.currentTarget.style.background = 'transparent'}>
-                    <span style={{ fontSize: '9px', fontWeight: 700, color: '#7c6fe0' /* distinct IPO purple, intentionally outside the --ws-* accent palette */, background: '#7c6fe014', borderRadius: '3px', padding: '2px 5px' }}>IPO</span>
-                    <span style={{ fontSize: '12px', fontWeight: 700, color: 'var(--ws-text)' }}>{e.ticker}</span>
-                    <span style={{ fontSize: '10px', color: 'var(--ws-text-3)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{e.name}</span>
-                    {e.price && (
-                      <span style={{ fontSize: '11px', color: 'var(--ws-text-2)', marginLeft: 'auto' }} title="Expected IPO price range">IPO price ${e.price}</span>
-                    )}
+
+                  {/* Group Items Stack */}
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                    {group.events.map((e, index) => {
+                      const isWatchlisted = watchlistTickers.has(e.ticker);
+                      return (
+                        <div key={e.type + e.ticker + index}
+                          onClick={() => router.push(`/stock/${e.ticker}`)}
+                          style={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '12px',
+                            padding: '10px 12px',
+                            cursor: 'pointer',
+                            border: '1px solid var(--ws-border)',
+                            background: 'var(--ws-bg-1)',
+                            borderRadius: '4px',
+                            transition: 'all 0.15s ease',
+                          }}
+                          className="timeline-item-card">
+                          
+                          {/* Logo */}
+                          <StockLogo ticker={e.ticker} size={28} />
+
+                          {/* Info */}
+                          <div style={{ flex: 1, minWidth: 0 }}>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                              <span style={{ fontSize: '13px', fontWeight: 700, color: 'var(--ws-text)' }}>{e.ticker}</span>
+                              <span style={{
+                                fontSize: '8px',
+                                fontWeight: 700,
+                                color: e.type === 'ipo' ? '#7c6fe0' : 'var(--ws-accent)',
+                                background: e.type === 'ipo' ? 'rgba(124, 111, 224, 0.08)' : 'var(--ws-accent-dim)',
+                                padding: '1px 5px',
+                                borderRadius: '3px',
+                                textTransform: 'uppercase'
+                              }}>
+                                {e.type === 'ipo' ? 'IPO' : 'EARN'}
+                              </span>
+                            </div>
+                            <div style={{ fontSize: '11px', color: 'var(--ws-text-3)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', marginTop: '1px' }}>
+                              {e.type === 'ipo' ? e.name : (e.hour === 'bmo' ? 'Before Open' : e.hour === 'amc' ? 'After Close' : 'Time TBD')}
+                            </div>
+                          </div>
+
+                          {/* Metric info */}
+                          {e.type === 'earnings' && e.epsEstimate != null && (
+                            <div style={{ textAlign: 'right', marginRight: '6px' }}>
+                              <div style={{ fontSize: '11px', fontWeight: 700, color: 'var(--ws-text)' }}>${e.epsEstimate.toFixed(2)}</div>
+                              <div style={{ fontSize: '8px', color: 'var(--ws-text-3)', fontWeight: 600 }}>EST. EPS</div>
+                            </div>
+                          )}
+                          {e.type === 'ipo' && e.price && (
+                            <div style={{ textAlign: 'right', marginRight: '6px' }}>
+                              <div style={{ fontSize: '11px', fontWeight: 700, color: 'var(--ws-text)' }}>${e.price}</div>
+                              <div style={{ fontSize: '8px', color: 'var(--ws-text-3)', fontWeight: 600 }}>IPO PRICE</div>
+                            </div>
+                          )}
+
+                          {/* Star Watchlist Action Button */}
+                          <button onClick={(event) => handleToggleWatchlist(event, e.ticker)}
+                            disabled={togglingWatchlist === e.ticker}
+                            style={{
+                              background: 'none',
+                              border: 'none',
+                              color: isWatchlisted ? '#d99a4e' : 'var(--ws-text-3)',
+                              cursor: 'pointer',
+                              fontSize: '15px',
+                              padding: '4px',
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                              transition: 'transform 0.15s ease'
+                            }}
+                            className="star-btn"
+                            title={isWatchlisted ? "Remove from watchlist" : "Add to watchlist"}>
+                            {isWatchlisted ? '★' : '☆'}
+                          </button>
+                        </div>
+                      );
+                    })}
                   </div>
-                ))}
-              </div>
-            </>
+                </div>
+              ))}
+            </div>
           )}
         </div>
+
       </div>
+
+      <style>{`
+        @keyframes spin {
+          to { transform: rotate(360deg); }
+        }
+        .ctrl-btn:hover {
+          background: var(--ws-bg-2) !important;
+          border-color: var(--ws-accent) !important;
+        }
+        .clickable-cell:hover {
+          background: var(--ws-bg-2) !important;
+          border-color: var(--ws-border) !important;
+        }
+        .selected-cell {
+          border: 1px solid var(--ws-accent) !important;
+        }
+        .timeline-item-card:hover {
+          background: var(--ws-bg-2) !important;
+          border-color: var(--ws-accent) !important;
+          transform: translateX(2px);
+        }
+        .star-btn:hover {
+          transform: scale(1.2);
+          color: #d99a4e !important;
+        }
+        @media (max-width: 1023px) {
+          .calendar-main-grid {
+            grid-template-columns: 1fr !important;
+          }
+        }
+      `}</style>
     </div>
   );
 }
