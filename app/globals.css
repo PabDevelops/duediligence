@@ -54,6 +54,8 @@
   font-family: 'Inter', sans-serif;
   min-height: 100vh;
   transition: background 0.2s ease, color 0.2s ease, border-color 0.2s ease;
+  max-width: 100%;
+  overflow-x: hidden;
 }
 .workspace.dark,
 html[data-ws-theme="dark"] .workspace {
@@ -91,6 +93,8 @@ html, body {
   font-size: 14px;
   line-height: 1.6;
   -webkit-font-smoothing: antialiased;
+  max-width: 100%;
+  overflow-x: hidden;
 }
 
 /* Unified button style */

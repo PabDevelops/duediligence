@@ -145,8 +145,8 @@ export default function WorkspaceLayout({ children }) {
           }} />
         )}
 
-        <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column' }}>
-          <main style={{ flex: 1 }}>{children}</main>
+        <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', maxWidth: '100%', overflowX: 'hidden' }}>
+          <main style={{ flex: 1, maxWidth: '100%', overflowX: 'hidden' }}>{children}</main>
         </div>
       </div>
 
