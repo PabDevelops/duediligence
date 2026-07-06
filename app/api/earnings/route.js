@@ -6,6 +6,28 @@ export async function GET(req) {
   try {
     const { searchParams } = new URL(req.url);
     const today = new Date();
+    const ticker = searchParams.get('ticker')?.toUpperCase();
+
+    if (ticker) {
+      const from = searchParams.get('from') || new Date(today.getTime() - 14 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10);
+      const to = searchParams.get('to') || new Date(today.getTime() + 90 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10);
+
+      const fhRes = await fetch(`https://finnhub.io/api/v1/calendar/earnings?symbol=${ticker}&from=${from}&to=${to}&token=${FH_KEY}`, {
+        headers: { 'User-Agent': 'Mozilla/5.0' },
+      }).then(r => r.json());
+
+      const earnings = (fhRes.earningsCalendar || [])
+        .filter(e => e.symbol === ticker && e.date)
+        .map(e => ({
+          ticker: e.symbol,
+          date: e.date,
+          epsEstimate: e.epsEstimate,
+          hour: e.hour,
+        }));
+
+      return Response.json({ earnings });
+    }
+
     const from = searchParams.get('from') || today.toISOString().slice(0, 10);
     const to = searchParams.get('to') || new Date(today.getTime() + 7 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10);
 

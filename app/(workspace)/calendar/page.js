@@ -407,7 +407,7 @@ export default function WorkspaceCalendar() {
               </div>
               <div style={{ fontSize: '11px', color: 'var(--ws-text-3)' }}>
                 {selectedDate 
-                  ? `${new Date(selectedDate + 'T00:00:00').toLocaleDateString(undefined, { weekday: 'long', month: 'short', day: 'numeric' })}`
+                  ? `${new Date(selectedDate + 'T00:00:00').toLocaleDateString('en-US', { weekday: 'long', month: 'short', day: 'numeric' })}`
                   : `${filteredEvents.length} events scheduled in this viewport`
                 }
               </div>
@@ -439,7 +439,7 @@ export default function WorkspaceCalendar() {
                   {/* Group Date Header */}
                   <div style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '2px 0', marginBottom: '8px', position: 'sticky', top: '0', background: 'var(--ws-bg-1)', zIndex: 1 }}>
                     <div style={{ fontSize: '11px', fontWeight: 700, color: 'var(--ws-text)', letterSpacing: '0.3px', background: 'var(--ws-bg-2)', padding: '3px 8px', borderRadius: '4px' }}>
-                      {new Date(group.date + 'T00:00:00').toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric' })}
+                      {new Date(group.date + 'T00:00:00').toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })}
                     </div>
                     {group.date === todayKey && (
                       <span style={{ fontSize: '9px', fontWeight: 700, color: 'var(--ws-bg-1)', background: 'var(--ws-accent)', padding: '2px 6px', borderRadius: '3px' }}>TODAY</span>

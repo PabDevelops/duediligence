@@ -120,7 +120,24 @@ export default function StockPage({ params }) {
   const [achievementToast, setAchievementToast] = useState(null);
   const [relatedPosts, setRelatedPosts] = useState([]);
   const [news, setNews] = useState([]);
+  const [upcomingEvent, setUpcomingEvent] = useState(null);
+  const [loadingEvent, setLoadingEvent] = useState(true);
   const { isSignedIn, user } = useUser();
+
+  useEffect(() => {
+    fetch(`/api/earnings?ticker=${ticker}`)
+      .then(r => r.json())
+      .then(d => {
+        if (d.earnings && d.earnings.length > 0) {
+          const sorted = d.earnings.sort((a, b) => new Date(a.date) - new Date(b.date));
+          const todayStr = new Date().toISOString().slice(0, 10);
+          const nextEvent = sorted.find(e => e.date >= todayStr) || sorted[sorted.length - 1];
+          setUpcomingEvent(nextEvent || null);
+        }
+      })
+      .catch(() => {})
+      .finally(() => setLoadingEvent(false));
+  }, [ticker]);
 
   useEffect(() => {
     fetch(`/api/blog?ticker=${ticker}`).then(r => r.json()).then(d => setRelatedPosts(d.posts || [])).catch(() => {});
@@ -638,6 +655,73 @@ export default function StockPage({ params }) {
                       <>Price: <b style={{ color: 'var(--ws-text)' }}>{curSym(data.currency)}{price?.toFixed(2)}</b> · Estimate: <b style={{ color: 'var(--ws-text)' }}>{curSym(data.currency)}{fairValue.estimate.toFixed(2)}</b></>
                     )}
                   </div>
+                </div>
+              )}
+
+              {/* Upcoming Event */}
+              {(!loadingEvent || upcomingEvent) && (
+                <div style={{ background: 'var(--ws-bg-1)', border: '1px solid var(--ws-border)', padding: '16px 18px' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
+                    <div style={{ fontSize: '10px', color: 'var(--ws-text-3)', fontFamily: "'JetBrains Mono', monospace", letterSpacing: '1.5px', fontWeight: 700 }}>UPCOMING EVENT</div>
+                    {upcomingEvent && (() => {
+                      const daysDiff = Math.ceil((new Date(upcomingEvent.date + 'T00:00:00') - new Date().setHours(0,0,0,0)) / (1000 * 60 * 60 * 24));
+                      let badgeText = '';
+                      let badgeBg = 'var(--ws-bg-2)';
+                      let badgeColor = 'var(--ws-text-2)';
+                      if (daysDiff === 0) {
+                        badgeText = 'TODAY';
+                        badgeBg = 'var(--ws-accent-dim)';
+                        badgeColor = 'var(--ws-accent)';
+                      } else if (daysDiff === 1) {
+                        badgeText = 'TOMORROW';
+                        badgeBg = 'var(--ws-accent-dim)';
+                        badgeColor = 'var(--ws-accent)';
+                      } else if (daysDiff > 1) {
+                        badgeText = `IN ${daysDiff} DAYS`;
+                        badgeBg = 'var(--ws-accent-dim)';
+                        badgeColor = 'var(--ws-accent)';
+                      } else if (daysDiff === -1) {
+                        badgeText = 'YESTERDAY';
+                        badgeBg = 'rgba(239, 68, 68, 0.1)';
+                        badgeColor = 'var(--ws-red)';
+                      } else if (daysDiff < -1) {
+                        badgeText = `${Math.abs(daysDiff)} DAYS AGO`;
+                        badgeBg = 'var(--ws-bg-2)';
+                        badgeColor = 'var(--ws-text-3)';
+                      }
+                      return (
+                        <div style={{ fontSize: '9px', fontWeight: 700, letterSpacing: '0.5px', background: badgeBg, color: badgeColor, padding: '2px 6px', borderRadius: '3px' }}>
+                          {badgeText}
+                        </div>
+                      );
+                    })()}
+                  </div>
+                  {upcomingEvent ? (
+                    <div>
+                      <div style={{ fontSize: '14px', fontWeight: 700, color: 'var(--ws-text)' }}>
+                        Earnings Report
+                      </div>
+                      <div style={{ fontSize: '12px', color: 'var(--ws-text-2)', marginTop: '4px', lineHeight: 1.4 }}>
+                        <span>
+                          {new Date(upcomingEvent.date + 'T00:00:00').toLocaleDateString('en-US', { weekday: 'long', month: 'short', day: 'numeric', year: 'numeric' })}
+                        </span>
+                        <span style={{ color: 'var(--ws-text-3)' }}> · </span>
+                        <span>
+                          {upcomingEvent.hour === 'bmo' ? 'Before Open' : upcomingEvent.hour === 'amc' ? 'After Close' : 'Time TBD'}
+                        </span>
+                        {upcomingEvent.epsEstimate != null && (
+                          <>
+                            <span style={{ color: 'var(--ws-text-3)' }}> · </span>
+                            <span>Est. EPS: ${upcomingEvent.epsEstimate.toFixed(2)}</span>
+                          </>
+                        )}
+                      </div>
+                    </div>
+                  ) : (
+                    <div style={{ fontSize: '12px', color: 'var(--ws-text-3)' }}>
+                      No earnings events scheduled in the next 90 days.
+                    </div>
+                  )}
                 </div>
               )}
 
