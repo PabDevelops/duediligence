@@ -3,46 +3,9 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useUser } from './components/AuthProvider';
 import NewsletterForm from './components/NewsletterForm';
+import { WindowChrome, Shot } from './components/WindowChrome';
 
 const MONO = "'JetBrains Mono', monospace";
-
-function WindowChrome({ title, children, maxWidth = '980px' }) {
-  return (
-    <div style={{
-      background: '#ffffff',
-      border: '1px solid var(--border)',
-      borderRadius: '12px',
-      boxShadow: '0 20px 50px rgba(0,0,0,0.06)',
-      maxWidth,
-      margin: '0 auto',
-      textAlign: 'left',
-      overflow: 'hidden',
-    }}>
-      <div style={{
-        background: '#f1f3f5',
-        padding: '10px 16px',
-        borderBottom: '1px solid var(--border)',
-        display: 'flex',
-        alignItems: 'center',
-        gap: '10px'
-      }}>
-        <div style={{ display: 'flex', gap: '5px', flexShrink: 0 }}>
-          <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#ef4444', display: 'inline-block' }} />
-          <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#f59e0b', display: 'inline-block' }} />
-          <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#10b981', display: 'inline-block' }} />
-        </div>
-        <div style={{ fontFamily: MONO, fontSize: '10px', color: 'var(--text-3)', letterSpacing: '0.5px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-          {title}
-        </div>
-      </div>
-      {children}
-    </div>
-  );
-}
-
-function Shot({ src, alt }) {
-  return <img src={src} alt={alt} style={{ display: 'block', width: '100%', height: 'auto' }} />;
-}
 
 export default function Home() {
   const router = useRouter();
@@ -121,7 +84,7 @@ export default function Home() {
         <nav className="desktop-only" style={{ display: 'flex', gap: '32px', alignItems: 'center' }}>
           <a href="/about" style={{ textDecoration: 'none', color: 'var(--text-2)', fontSize: '13px', fontWeight: 600 }}>Product</a>
           <a href="/pricing" style={{ textDecoration: 'none', color: 'var(--text-2)', fontSize: '13px', fontWeight: 600 }}>Pricing</a>
-          <a href="/about" style={{ textDecoration: 'none', color: 'var(--text-2)', fontSize: '13px', fontWeight: 600 }}>Use cases</a>
+          <a href="#product-tour" style={{ textDecoration: 'none', color: 'var(--text-2)', fontSize: '13px', fontWeight: 600 }}>Use cases</a>
         </nav>
 
         <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
@@ -188,7 +151,7 @@ export default function Home() {
           >
             Start free 14-day Pro trial
           </a>
-          <a href="/about" style={{
+          <a href="#product-tour" style={{
             padding: '14px 28px',
             fontSize: '14px',
             fontWeight: 600,
@@ -202,7 +165,7 @@ export default function Home() {
             onMouseEnter={e => e.currentTarget.style.background = 'rgba(0,0,0,0.02)'}
             onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
           >
-            Book a demo →
+            See product tour ↓
           </a>
         </div>
 
@@ -409,37 +372,92 @@ export default function Home() {
         </div>
       </section>
 
-      {/* TESTIMONIALS / QUOTES */}
-      <section style={{ background: '#ffffff', padding: '100px 24px', borderBottom: '1px solid var(--border)' }}>
+      {/* PRODUCT TOUR / FULL EXAMPLE OF WHAT THE APP OFFERS */}
+      <section id="product-tour" style={{ background: '#ffffff', padding: '100px 24px', borderBottom: '1px solid var(--border)' }}>
         <div style={{ maxWidth: '1200px', margin: '0 auto' }}>
           <div style={{ textAlign: 'center', marginBottom: '56px' }}>
-            <span style={{ fontFamily: MONO, fontSize: '11px', color: 'var(--accent)', fontWeight: 700, letterSpacing: '1px', textTransform: 'uppercase' }}>Testimonials</span>
-            <h2 style={{ fontSize: '32px', fontWeight: 800, color: 'var(--text)', marginTop: '8px' }}>What researchers are saying</h2>
+            <span style={{ fontFamily: MONO, fontSize: '11px', color: 'var(--accent)', fontWeight: 700, letterSpacing: '1px', textTransform: 'uppercase' }}>Product tour</span>
+            <h2 style={{ fontSize: '32px', fontWeight: 800, color: 'var(--text)', marginTop: '8px' }}>Everything Traqcker offers, in one walkthrough</h2>
+            <p style={{ fontSize: '15px', color: 'var(--text-2)', maxWidth: '620px', margin: '14px auto 0' }}>
+              From your morning dashboard to a full valuation model, here's what a real session inside Traqcker looks like.
+            </p>
           </div>
 
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '24px' }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '80px' }}>
             {[
               {
-                quote: "Traqcker stands out because it only pulls clean, first-party data. In investing, that's everything.",
-                author: "Hedge Fund Partner",
-                context: "Equity Strategy"
+                step: '01',
+                title: 'Start with a live market snapshot',
+                desc: "Your home dashboard opens with real-time indices, currency rates, and the day's biggest filings and price movers across your watchlist and portfolio.",
+                src: '/screenshots/home.png',
+                alt: 'Traqcker home dashboard with market snapshot',
+                windowTitle: 'terminal.traqcker.com/home — Market Overview Dashboard'
               },
               {
-                quote: "It's like having a well-read research analyst, expert on every company and industry, ready with answers 24/7.",
-                author: "Venture Principal",
-                context: "Tech & SaaS Research"
+                step: '02',
+                title: 'Track your holdings across currencies',
+                desc: 'Your portfolio view rolls up gain/loss, sector allocation, and dividend income in one reporting currency, no matter what exchange each position trades on.',
+                src: '/screenshots/portfolio.png',
+                alt: 'Traqcker multi-currency portfolio tracker',
+                windowTitle: 'terminal.traqcker.com/portfolio — Multi-Currency Portfolio'
               },
               {
-                quote: "The direct SEC EDGAR connection is amazing. I can double check the calculation of every single margin and score with a single click.",
-                author: "Independent Value Investor",
-                context: "Small Cap Equity Portfolio"
+                step: '03',
+                title: 'Drill into a single company',
+                desc: 'Every quality score, margin, and Graham fair value on a stock page links straight back to the exact row in the original SEC filing.',
+                src: '/screenshots/stock.png',
+                alt: 'Traqcker stock analysis page verified against SEC filings',
+                windowTitle: 'terminal.traqcker.com/stock/AAPL — SEC Source Reference'
+              },
+              {
+                step: '04',
+                title: 'Screen the entire market',
+                desc: 'Filter and rank 8,000+ equities by margin, free cash flow yield, debt profile, or dilution to find setups worth a closer look.',
+                src: '/screenshots/screener.png',
+                alt: 'Traqcker quantitative stock screener',
+                windowTitle: 'terminal.traqcker.com/screener — Quantitative Universe Filter'
+              },
+              {
+                step: '05',
+                title: 'Compare candidates side-by-side',
+                desc: 'Line up two or more companies across the same fundamentals to see who actually has the stronger balance sheet and growth trajectory.',
+                src: '/screenshots/compare.png',
+                alt: 'Traqcker side-by-side company comparison',
+                windowTitle: 'terminal.traqcker.com/compare — Side-by-Side Comparison'
+              },
+              {
+                step: '06',
+                title: 'Ask Traq AI the hard questions',
+                desc: "Get instant, cited answers to questions like \"what changed in their debt covenants?\" pulled directly from the filings, not a generic summary.",
+                src: '/screenshots/chat.png',
+                alt: 'Traq AI research assistant answering questions about filings',
+                windowTitle: 'terminal.traqcker.com/chat — Traq Research Assistant'
+              },
+              {
+                step: '07',
+                title: 'Never miss a catalyst',
+                desc: 'The earnings calendar and live filing feed keep you ahead of reports, dividends, and SEC EDGAR alerts for everything on your radar.',
+                src: '/screenshots/calendar.png',
+                alt: 'Traqcker earnings and filings calendar',
+                windowTitle: 'terminal.traqcker.com/calendar — Earnings & Filings Calendar'
               }
-            ].map((t, idx) => (
-              <div key={idx} style={{ background: '#fafafa', border: '1px solid var(--border)', borderRadius: '12px', padding: '28px', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
-                <p style={{ fontSize: '14px', color: 'var(--text)', lineHeight: 1.6, fontStyle: 'italic', marginBottom: '24px' }}>"{t.quote}"</p>
-                <div>
-                  <div style={{ fontSize: '13px', fontWeight: 700, color: 'var(--text)' }}>{t.author}</div>
-                  <div style={{ fontSize: '11px', color: 'var(--text-3)', fontFamily: MONO, marginTop: '2px' }}>{t.context}</div>
+            ].map((s, idx) => (
+              <div key={s.step} style={{
+                display: 'flex',
+                flexDirection: idx % 2 === 1 ? 'row-reverse' : 'row',
+                gap: '48px',
+                alignItems: 'center',
+                flexWrap: 'wrap'
+              }} className="product-tour-row">
+                <div style={{ flex: '1 1 320px' }}>
+                  <div style={{ fontFamily: MONO, fontSize: '12px', color: 'var(--accent)', fontWeight: 700, marginBottom: '12px' }}>{s.step}</div>
+                  <h3 style={{ fontSize: '24px', fontWeight: 800, color: 'var(--text)', marginBottom: '12px' }}>{s.title}</h3>
+                  <p style={{ fontSize: '14px', color: 'var(--text-2)', lineHeight: 1.7 }}>{s.desc}</p>
+                </div>
+                <div style={{ flex: '1.4 1 420px' }}>
+                  <WindowChrome title={s.windowTitle}>
+                    <Shot src={s.src} alt={s.alt} />
+                  </WindowChrome>
                 </div>
               </div>
             ))}

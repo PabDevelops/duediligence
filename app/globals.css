@@ -80,6 +80,10 @@ html[data-ws-theme="dark"] .workspace {
   padding: 0;
 }
 
+html {
+  scroll-behavior: smooth;
+}
+
 html, body {
   background: var(--bg);
   color: var(--text);
@@ -495,6 +499,12 @@ html, body {
   }
   .pricing-grid {
     grid-template-columns: 1fr !important;
+  }
+  .about-bento-grid {
+    grid-template-columns: 1fr !important;
+  }
+  .about-bento-grid > div {
+    grid-column: span 1 !important;
   }
   .screener-filter-btn {
     display: flex !important;
