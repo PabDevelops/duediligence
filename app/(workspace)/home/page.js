@@ -486,28 +486,38 @@ export default function WorkspaceHome() {
   }, [newsTickers.join(',')]);
 
   // Fetch current prices (and today's % change) for portfolio + watchlist + recently viewed tickers
-  useEffect(() => {
-    if (quoteTickers.length > 0) {
-      setPricesLoading(true);
-      Promise.all(
-        quoteTickers.map(ticker =>
-          fetch(`/api/stock?ticker=${ticker}`)
-            .then(r => r.json())
-            .then(data => ({ ticker, price: data.currentPrice, changePct: data.priceChangePct }))
-            .catch(() => ({ ticker, price: null, changePct: null }))
-        )
-      ).then(results => {
-        const priceMap = {};
-        const changeMap = {};
-        results.forEach(r => {
-          if (r.price !== null) priceMap[r.ticker] = r.price;
-          if (r.changePct !== null && r.changePct !== undefined) changeMap[r.ticker] = r.changePct;
-        });
-        setPrices(prev => ({ ...prev, ...priceMap }));
-        setDayChanges(prev => ({ ...prev, ...changeMap }));
-        setPricesLoading(false);
+  const fetchQuotes = (tickers, { refresh = false } = {}) => {
+    if (tickers.length === 0) return;
+    setPricesLoading(true);
+    Promise.all(
+      tickers.map(ticker =>
+        fetch(`/api/stock?ticker=${ticker}${refresh ? '&refresh=true' : ''}`)
+          .then(r => r.json())
+          .then(data => ({ ticker, price: data.currentPrice, changePct: data.priceChangePct }))
+          .catch(() => ({ ticker, price: null, changePct: null }))
+      )
+    ).then(results => {
+      const priceMap = {};
+      const changeMap = {};
+      results.forEach(r => {
+        if (r.price !== null) priceMap[r.ticker] = r.price;
+        if (r.changePct !== null && r.changePct !== undefined) changeMap[r.ticker] = r.changePct;
       });
-    }
+      setPrices(prev => ({ ...prev, ...priceMap }));
+      setDayChanges(prev => ({ ...prev, ...changeMap }));
+      setPricesLoading(false);
+    });
+  };
+
+  useEffect(() => {
+    fetchQuotes(quoteTickers);
+  }, [quoteTickers]);
+
+  // Keep holding/watchlist prices reasonably live — mirrors the movers/market/filings poll above.
+  useEffect(() => {
+    if (quoteTickers.length === 0) return;
+    const interval = setInterval(() => fetchQuotes(quoteTickers, { refresh: true }), 60000);
+    return () => clearInterval(interval);
   }, [quoteTickers]);
 
   // Uniform display holdings: [{ ticker, shares, avgPrice, pie }]
@@ -564,6 +574,28 @@ export default function WorkspaceHome() {
       return b.value - a.value;
     });
   }, [displayHoldings, prices]);
+
+  // Record a daily portfolio snapshot from Home too — not just /portfolio — so the growth
+  // chart keeps accumulating points even for users who only ever look at the dashboard.
+  const homeTotals = useMemo(() => {
+    let cost = 0, value = 0;
+    displayHoldings.forEach(item => {
+      const currentPrice = prices[item.ticker];
+      cost += item.shares * item.avgPrice;
+      value += item.shares * (currentPrice ?? item.avgPrice);
+    });
+    return { cost, value };
+  }, [displayHoldings, prices]);
+
+  const homePricesReady = displayHoldings.length > 0 && displayHoldings.every(item => prices[item.ticker] != null);
+
+  useEffect(() => {
+    if (!isSignedIn || !homePricesReady || homeTotals.value === 0) return;
+    fetch('/api/portfolio/snapshot', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ value: homeTotals.value, cost: homeTotals.cost }),
+    }).catch(() => {});
+  }, [isSignedIn, homePricesReady, homeTotals.value, homeTotals.cost]);
 
   const savePortfolio = (newPort) => {
     setPortfolio(newPort);

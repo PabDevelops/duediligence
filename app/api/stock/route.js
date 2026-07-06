@@ -20,6 +20,25 @@ async function fetchYahooQuote(ticker) {
   let high52 = meta.fiftyTwoWeekHigh ?? null;
   let low52 = meta.fiftyTwoWeekLow ?? null;
 
+  // Yahoo's chart-meta payload also carries the current pre/post-market quote when the
+  // market is closed — marketState tells us which (if either) actually applies right now.
+  const marketState = meta.marketState || null; // 'PRE' | 'REGULAR' | 'POST' | 'POSTPOST' | 'CLOSED'
+  let extendedPrice = null;
+  let extendedChange = null;
+  let extendedChangePct = null;
+  let extendedSession = null;
+  if (marketState === 'PRE' && meta.preMarketPrice != null) {
+    extendedPrice = meta.preMarketPrice;
+    extendedChange = meta.preMarketChange ?? null;
+    extendedChangePct = meta.preMarketChangePercent ?? null;
+    extendedSession = 'pre';
+  } else if ((marketState === 'POST' || marketState === 'POSTPOST') && meta.postMarketPrice != null) {
+    extendedPrice = meta.postMarketPrice;
+    extendedChange = meta.postMarketChange ?? null;
+    extendedChangePct = meta.postMarketChangePercent ?? null;
+    extendedSession = 'post';
+  }
+
   // GBp = pence sterling, not pounds — normalize to GBP so it matches our currency selector.
   if (currency === 'GBp') {
     currency = 'GBP';
@@ -27,6 +46,7 @@ async function fetchYahooQuote(ticker) {
     if (prevClose != null) prevClose /= 100;
     if (high52 != null) high52 /= 100;
     if (low52 != null) low52 /= 100;
+    if (extendedPrice != null) extendedPrice /= 100;
   }
 
   return {
@@ -39,6 +59,10 @@ async function fetchYahooQuote(ticker) {
     priceChangePct: prevClose ? +(((price - prevClose) / prevClose) * 100).toFixed(2) : null,
     high52,
     low52,
+    extendedHoursSession: extendedSession,
+    extendedHoursPrice: extendedPrice,
+    extendedHoursChange: extendedChange != null ? +Number(extendedChange).toFixed(4) : null,
+    extendedHoursChangePct: extendedChangePct != null ? +Number(extendedChangePct).toFixed(2) : null,
   };
 }
 
@@ -129,6 +153,10 @@ export async function GET(request) {
         currency: yh.currency,
         finnhubFallback: true,
         internationalSource: 'yahoo',
+        extendedHoursSession: yh.extendedHoursSession,
+        extendedHoursPrice: yh.extendedHoursPrice,
+        extendedHoursChange: yh.extendedHoursChange,
+        extendedHoursChangePct: yh.extendedHoursChangePct,
       };
 
       try {
@@ -140,10 +168,11 @@ export async function GET(request) {
 
     if (!company) {
       // Fallback a Finnhub para stocks no en SEC EDGAR
-      const [fhRes, fhBasicRes, fhProfileRes] = await Promise.all([
+      const [fhRes, fhBasicRes, fhProfileRes, yhExtendedNoSec] = await Promise.all([
         fetch(`https://finnhub.io/api/v1/quote?symbol=${ticker}&token=${FH_KEY}`),
         fetch(`https://finnhub.io/api/v1/stock/metric?symbol=${ticker}&metric=all&token=${FH_KEY}`),
         fetch(`https://finnhub.io/api/v1/stock/profile2?symbol=${ticker}&token=${FH_KEY}`),
+        fetchYahooQuote(ticker).catch(() => null),
       ]);
 
       const fh = await fhRes.json();
@@ -153,7 +182,7 @@ export async function GET(request) {
       if (!fhProfile.name) {
         // Finnhub's profile2 is company-oriented and often comes back empty for ETFs/funds —
         // Yahoo's chart endpoint covers those fine, so try it before giving up.
-        const yh = await fetchYahooQuote(ticker).catch(() => null);
+        const yh = yhExtendedNoSec;
         if (!yh) return Response.json({ error: 'Ticker no encontrado' }, { status: 404 });
 
         const yhResult = {
@@ -173,6 +202,8 @@ export async function GET(request) {
           capexHistory: [], operatingCFHistory: [], investingCFHistory: [], financingCFHistory: [],
           epsCagr: null, epsHistory: [], analystTarget: null,
           currency: yh.currency, finnhubFallback: true, internationalSource: 'yahoo',
+          extendedHoursSession: yh.extendedHoursSession, extendedHoursPrice: yh.extendedHoursPrice,
+          extendedHoursChange: yh.extendedHoursChange, extendedHoursChangePct: yh.extendedHoursChangePct,
         };
 
         try {
@@ -229,6 +260,10 @@ export async function GET(request) {
         epsCagr: null, epsHistory: [],
         analystTarget: null,
         finnhubFallback: true,
+        extendedHoursSession: yhExtendedNoSec?.extendedHoursSession ?? null,
+        extendedHoursPrice: yhExtendedNoSec?.extendedHoursPrice ?? null,
+        extendedHoursChange: yhExtendedNoSec?.extendedHoursChange ?? null,
+        extendedHoursChangePct: yhExtendedNoSec?.extendedHoursChangePct ?? null,
       };
 
       try {
@@ -404,10 +439,13 @@ const roic        = investedCapital > 0 && oiVal !== null ? +((oiVal / investedC
       ? +(((sharesLatest - sharesOldest) / sharesOldest) * 100).toFixed(1)
       : null;
 
-    const [fhRes, fhBasicRes, fhProfileRes] = await Promise.all([
+    const [fhRes, fhBasicRes, fhProfileRes, yhExtended] = await Promise.all([
       fetch(`https://finnhub.io/api/v1/quote?symbol=${ticker}&token=${FH_KEY}`),
       fetch(`https://finnhub.io/api/v1/stock/metric?symbol=${ticker}&metric=all&token=${FH_KEY}`),
       fetch(`https://finnhub.io/api/v1/stock/profile2?symbol=${ticker}&token=${FH_KEY}`),
+      // Finnhub's free /quote never includes pre/post-market — Yahoo's chart-meta does,
+      // so we grab it in parallel purely for the extendedHours* fields below.
+      fetchYahooQuote(ticker).catch(() => null),
     ]);
 
     const fh = await fhRes.json();
@@ -498,6 +536,10 @@ const sharesForCalc = sharesValAdj || sharesFinnhub;
       capexHistory, operatingCFHistory, investingCFHistory, financingCFHistory,
       epsCagr, epsHistory,
       currentPrice, priceChange, priceChangePct, prevClose,
+      extendedHoursSession: yhExtended?.extendedHoursSession ?? null,
+      extendedHoursPrice: yhExtended?.extendedHoursPrice ?? null,
+      extendedHoursChange: yhExtended?.extendedHoursChange ?? null,
+      extendedHoursChangePct: yhExtended?.extendedHoursChangePct ?? null,
       eps: epsCalc, pe: peCalc,
       marketCap: marketCapFinal,
       pfcf: marketCapFinal && fcfVal && fcfVal > 0 ? +(marketCapFinal / fcfVal).toFixed(1) : null,

@@ -621,6 +621,13 @@ export default function WorkspacePortfolio() {
 
   useEffect(load, [isSignedIn]);
 
+  // Keep holding prices reasonably live — reload isn't the only way to see a move.
+  useEffect(() => {
+    if (!isSignedIn) return;
+    const interval = setInterval(load, 60000);
+    return () => clearInterval(interval);
+  }, [isSignedIn]);
+
   const existingPies = useMemo(() => [...new Set(holdings.map(h => h.pie).filter(Boolean))].sort(), [holdings]);
 
   // Lots can be entered in whatever currency the user actually paid in (see AddHoldingModal).

@@ -383,11 +383,24 @@ export default function StockPage({ params }) {
                 </div>
                 <h1 style={{ fontSize: '22px', fontWeight: 800, letterSpacing: '-0.5px', marginBottom: '10px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', lineHeight: 1.2, color: 'var(--ws-text)' }}>{data.name}</h1>
                 {price && (
-                  <div style={{ display: 'flex', alignItems: 'baseline', gap: '12px' }}>
+                  <div style={{ display: 'flex', alignItems: 'baseline', gap: '12px', flexWrap: 'wrap' }}>
                     <span style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: '28px', fontWeight: 700, letterSpacing: '-1px', color: 'var(--ws-text)' }}>${price.toFixed(2)}</span>
                     <span style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: '13px', fontWeight: 700, color: change >= 0 ? 'var(--ws-accent)' : 'var(--ws-red)' }}>
                       {change >= 0 ? '+' : ''}{changePct?.toFixed(2)}%
                     </span>
+                    {data.extendedHoursPrice != null && (
+                      <span style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: '11px', color: 'var(--ws-text-3)', display: 'flex', alignItems: 'baseline', gap: '5px' }}>
+                        <span style={{ letterSpacing: '1px', fontWeight: 700 }}>
+                          {data.extendedHoursSession === 'pre' ? 'PRE' : 'AFTER'}
+                        </span>
+                        <span style={{ color: 'var(--ws-text)' }}>${data.extendedHoursPrice.toFixed(2)}</span>
+                        {data.extendedHoursChangePct != null && (
+                          <span style={{ color: data.extendedHoursChangePct >= 0 ? 'var(--ws-accent)' : 'var(--ws-red)', fontWeight: 700 }}>
+                            {data.extendedHoursChangePct >= 0 ? '+' : ''}{data.extendedHoursChangePct.toFixed(2)}%
+                          </span>
+                        )}
+                      </span>
+                    )}
                   </div>
                 )}
               </div>
