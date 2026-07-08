@@ -55,7 +55,7 @@ export default function Home() {
     {
       title: "Spot inflection points",
       tagline: "Evaluate growth, margins, and allocation trends",
-      desc: "Filter and rank over 8,000+ equities in seconds. Compare margins, free cash flow yields, debt-to-equity ratios, and dilution profiles side-by-side using classical models.",
+      desc: "Filter and rank thousands of global equities in seconds. Compare margins, free cash flow yields, debt-to-equity ratios, and dilution profiles side-by-side using classical models.",
       mockup: (
         <WindowChrome title="terminal.traqcker.com/screener — Quantitative Universe Filter">
           <Shot src="/screenshots/screener.png" alt="Quantitative stock screener grid" />
@@ -248,7 +248,7 @@ export default function Home() {
               <h3 style={{ fontSize: '24px', fontWeight: 800, color: 'var(--text)', marginBottom: '8px' }}>Direct SEC Financials</h3>
               <p style={{ fontSize: '13px', color: 'var(--text-3)', fontFamily: MONO, marginBottom: '20px' }}>Quantitative stock screening & modeling</p>
               <p style={{ fontSize: '14px', color: 'var(--text-2)', lineHeight: 1.6, marginBottom: '24px' }}>
-                Filter over 8,000+ equities instantly. Compute margins, cash conversions, debt profiles, and Benjamin Graham intrinsic values directly from filings.
+                Filter thousands of global equities instantly. Compute margins, cash conversions, debt profiles, and Benjamin Graham intrinsic values directly from filings.
               </p>
             </div>
             <a href="/pricing" style={{
@@ -412,7 +412,7 @@ export default function Home() {
               {
                 step: '04',
                 title: 'Screen the entire market',
-                desc: 'Filter and rank 8,000+ equities by margin, free cash flow yield, debt profile, or dilution to find setups worth a closer look.',
+                desc: 'Filter and rank thousands of global equities by margin, free cash flow yield, debt profile, or dilution to find setups worth a closer look.',
                 src: '/screenshots/screener.png',
                 alt: 'Traqcker quantitative stock screener',
                 windowTitle: 'terminal.traqcker.com/screener — Quantitative Universe Filter'

@@ -34,7 +34,7 @@ const bentoTiles = [
     span: 1,
     badge: 'SCREENER',
     title: 'Quantitative Universe Filter',
-    desc: 'Rank 8,000+ equities by margin, FCF yield, debt profile, and dilution in seconds.',
+    desc: 'Rank thousands of global equities by margin, FCF yield, debt profile, and dilution in seconds.',
     src: '/screenshots/screener.png',
     alt: 'Quantitative stock screener'
   },

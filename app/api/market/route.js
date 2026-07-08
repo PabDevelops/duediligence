@@ -1,10 +1,22 @@
-export async function GET() {
+export async function GET(request) {
+  const { searchParams } = new URL(request.url);
+  const extended = searchParams.get('extended') === 'true';
+
   const symbols = [
     { symbol: '^GSPC', label: 'S&P 500' },
     { symbol: '^IXIC', label: 'NASDAQ' },
     { symbol: '^DJI', label: 'DOW JONES' },
     { symbol: '^RUT', label: 'RUSSELL 2000' },
     { symbol: '^VIX', label: 'VIX' },
+    // Only fetched for callers that ask for them (the Explore page's "Global Markets"
+    // panel) so the existing Home dashboard indices widget is unaffected.
+    ...(extended ? [
+      { symbol: 'GC=F', label: 'Gold' },
+      { symbol: 'SI=F', label: 'Silver' },
+      { symbol: 'CL=F', label: 'Crude Oil' },
+      { symbol: 'NG=F', label: 'Natural Gas' },
+      { symbol: '^N225', label: 'Japan 225' },
+    ] : []),
   ];
 
   try {

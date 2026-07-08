@@ -1,8 +1,9 @@
 'use client';
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { useUser } from '../../components/AuthProvider';
 import Sparkline from '../../components/Sparkline';
+import html2canvas from 'html2canvas';
 
 // Utility formatters
 const fmt = (val) => {
@@ -14,13 +15,6 @@ const fmt = (val) => {
 };
 const fmtP = (v) => v !== null && v !== undefined ? `${v.toFixed(1)}%` : '—';
 const fmtN = (v, d = 1) => v !== null && v !== undefined ? v.toFixed(d) : '—';
-
-const scoreColor = (s) => {
-  if (s === null || s === undefined) return 'var(--ws-text-3)';
-  if (s >= 70) return 'var(--ws-accent)';
-  if (s >= 40) return 'var(--ws-text)';
-  return 'var(--ws-red)';
-};
 
 // Compact Market Breadth & Sentiment Component
 const SentimentBreadth = ({ vixMarket, sp500Change, advanceDeclineRatio }) => {
@@ -282,6 +276,8 @@ export default function MarketRadar() {
   const [spotlightData, setSpotlightData] = useState(null);
   const [loadingSpotlight, setLoadingSpotlight] = useState(false);
   const [spotlightSparkline, setSpotlightSparkline] = useState(null);
+  const [spotlightImgLoading, setSpotlightImgLoading] = useState(false);
+  const spotlightCaptureRef = useRef(null);
 
   // Search state
   const [searchQuery, setSearchQuery] = useState('');
@@ -425,9 +421,16 @@ export default function MarketRadar() {
   }, [movers]);
 
   // Compute local Traqcker Score 100 for Spotlight details
-  const spotlightScore = useMemo(() => {
+  const spotlightQuality = useMemo(() => {
     if (!spotlightData) return null;
     const d = spotlightData;
+    // A recent IPO or thinly-covered ticker has no SEC/Finnhub fundamentals at all — every
+    // input below would default to its neutral midpoint, producing a plausible-looking but
+    // entirely made-up score. Same guard as the stock detail page's Quality Score.
+    const hasFundamentals = d.revVal != null || d.niVal != null || d.marketCap != null
+      || d.roic != null || d.grossMargin != null || (d.revHistory?.length ?? 0) > 0;
+    if (!hasFundamentals) return null;
+
     const sector = (d.sector || '').toLowerCase();
     const isFinancial = sector.includes('bank') || sector.includes('insurance') || sector.includes('financial');
     const isTech = sector.includes('tech') || sector.includes('software') || sector.includes('semi');
@@ -455,7 +458,14 @@ export default function MarketRadar() {
     const gqs = Math.min(5, revGrowthScore * 0.6 + (2.5 + trendBonus * 2) * 0.4);
 
     const finalNote = (cbs * 0.45 + oppo * 0.30 + gqs * 0.25);
-    return Math.round((finalNote / 5) * 100);
+    const score100 = Math.round((finalNote / 5) * 100);
+
+    let verdict, verdictColor;
+    if (score100 >= 70) { verdict = 'Solid & steady'; verdictColor = 'var(--ws-accent)'; }
+    else if (score100 >= 40) { verdict = 'Mixed signals'; verdictColor = 'var(--ws-text-2)'; }
+    else { verdict = 'Needs caution'; verdictColor = 'var(--ws-red)'; }
+
+    return { score100, verdict, verdictColor };
   }, [spotlightData]);
 
   // Calculate VIX market
@@ -877,21 +887,28 @@ export default function MarketRadar() {
                 )}
               </div>
 
-              {/* Traqcker Score Circular HUD */}
+              {/* Quality Score — same block-bar treatment as the stock detail page */}
               <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', padding: '10px 0', borderBottom: '1px solid var(--ws-border)', borderTop: '1px solid var(--ws-border)' }}>
-                <div style={{ fontSize: '9px', fontWeight: 800, color: 'var(--ws-text-3)', letterSpacing: '1.5px', marginBottom: '8px' }}>TRAQCKER QUALITY RATIO</div>
-                <div style={{ position: 'relative', width: '100px', height: '100px' }}>
-                  <svg width="100" height="100" viewBox="0 0 100 100" style={{ transform: 'rotate(-90deg)' }}>
-                    <circle cx="50" cy="50" r="42" fill="none" stroke="var(--ws-bg-2)" strokeWidth="6" />
-                    <circle cx="50" cy="50" r="42" fill="none" stroke={scoreColor(spotlightScore)} strokeWidth="6"
-                      strokeLinecap="round" strokeDasharray="263.89"
-                      strokeDashoffset={263.89 - (263.89 * (spotlightScore || 0) / 100)} />
-                  </svg>
-                  <div style={{ position: 'absolute', inset: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
-                    <div style={{ fontWeight: 900, fontSize: '22px', color: scoreColor(spotlightScore) }}>{spotlightScore || '—'}</div>
-                    <div style={{ fontSize: '8px', color: 'var(--ws-text-3)', marginTop: '1px' }}>/ 100</div>
+                <div style={{ fontSize: '9px', fontWeight: 800, color: 'var(--ws-text-3)', letterSpacing: '1.5px', marginBottom: '8px' }}>QUALITY SCORE</div>
+                {!spotlightQuality ? (
+                  <div style={{ fontSize: '10px', color: 'var(--ws-text-3)', textAlign: 'center', maxWidth: '160px', lineHeight: 1.5 }}>
+                    No fundamentals reported yet.
                   </div>
-                </div>
+                ) : (
+                  <>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                      <span style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: '13px', color: spotlightQuality.verdictColor, letterSpacing: '1.5px', lineHeight: 1 }}>
+                        {'█'.repeat(Math.round(spotlightQuality.score100 / 10))}{'░'.repeat(10 - Math.round(spotlightQuality.score100 / 10))}
+                      </span>
+                      <span style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: '22px', fontWeight: 700, color: spotlightQuality.verdictColor, lineHeight: 1 }}>
+                        {spotlightQuality.score100}
+                      </span>
+                    </div>
+                    <div style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: '10px', fontWeight: 700, color: spotlightQuality.verdictColor, letterSpacing: '1px', marginTop: '4px' }}>
+                      {spotlightQuality.verdict.toUpperCase()}
+                    </div>
+                  </>
+                )}
               </div>
 
               {/* Metrics Table */}

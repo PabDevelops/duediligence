@@ -454,7 +454,29 @@ export async function GET(request) {
       return Response.json(result);
     }
 
-    if (!company) {
+    let hasSecFacts = false;
+    let facts = null;
+    let cik = null;
+
+    if (company) {
+      cik = String(company.cik_str).padStart(10, '0');
+      try {
+        const factsRes = await fetch(
+          `https://data.sec.gov/api/xbrl/companyfacts/CIK${cik}.json`,
+          { headers: { 'User-Agent': 'DueDiligenceApp contact@example.com' } }
+        );
+        if (factsRes.ok) {
+          facts = await factsRes.json();
+          if (facts?.facts) {
+            hasSecFacts = true;
+          }
+        }
+      } catch (err) {
+        console.warn(`Failed to fetch SEC facts for CIK ${cik}, falling back to Finnhub/Yahoo:`, err);
+      }
+    }
+
+    if (!company || !hasSecFacts) {
       // Fallback a Finnhub para stocks no en SEC EDGAR
       const [fhRes, fhBasicRes, fhProfileRes] = await Promise.all([
         fetch(`https://finnhub.io/api/v1/quote?symbol=${ticker}&token=${FH_KEY}`),
@@ -575,13 +597,6 @@ export async function GET(request) {
       return Response.json(result);
     }
 
-    const cik = String(company.cik_str).padStart(10, '0');
-
-    const factsRes = await fetch(
-      `https://data.sec.gov/api/xbrl/companyfacts/CIK${cik}.json`,
-      { headers: { 'User-Agent': 'DueDiligenceApp contact@example.com' } }
-    );
-    const facts = await factsRes.json();
     const usgaap = facts.facts?.['us-gaap'] || {};
 
     const getMetric = (keys) => {

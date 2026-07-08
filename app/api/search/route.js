@@ -1,5 +1,6 @@
 import { supabase } from '../../../lib/supabase';
 import { rateLimit, getClientIp } from '../../../lib/rateLimit';
+import { getSecTickerDirectory } from '../../../lib/secTickers';
 
 export async function GET(request) {
   const ip = getClientIp(request);
@@ -28,9 +29,10 @@ export async function GET(request) {
       .ilike('data->>name', `%${q}%`)
       .limit(limit);
 
-    const [tickerResult, nameResult] = await Promise.all([
+    const [tickerResult, nameResult, secDirectory] = await Promise.all([
       tickerQuery,
-      nameQuery
+      nameQuery,
+      getSecTickerDirectory().catch(() => []),
     ]);
 
     // Combine results, avoid duplicates
@@ -51,6 +53,33 @@ export async function GET(request) {
         });
       }
       if (results.length >= limit) break;
+    }
+
+    // Fill remaining slots from the full SEC universe so search isn't limited to
+    // tickers someone has already looked up before. These have no live price yet —
+    // /api/stock fetches it the first time the result is opened.
+    if (results.length < limit) {
+      const qUpper = q.toUpperCase();
+      const qLower = q.toLowerCase();
+
+      const addMatches = (matchFn) => {
+        for (const c of secDirectory) {
+          if (results.length >= limit) return;
+          if (uniqueTickers.has(c.ticker) || !matchFn(c)) continue;
+          uniqueTickers.add(c.ticker);
+          results.push({
+            ticker: c.ticker,
+            name: c.name,
+            sector: null,
+            exchange: 'US',
+            currentPrice: null,
+            priceChangePct: null,
+          });
+        }
+      };
+
+      addMatches((c) => c.ticker.startsWith(qUpper));
+      addMatches((c) => c.name.toLowerCase().includes(qLower));
     }
 
     return Response.json({ results });

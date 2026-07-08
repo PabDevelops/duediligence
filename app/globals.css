@@ -484,6 +484,20 @@ html, body {
     flex-direction: column;
     gap: 16px;
   }
+  .stock-hero-left {
+    /* In row layout the 320px flex-basis caps width; in the column layout .stock-hero
+       switches to on mobile, flex-basis instead sizes height, so without an explicit
+       width the name's ellipsis has nothing to clip against and overflows the screen. */
+    width: 100%;
+    min-width: 0;
+  }
+  .stock-tab-nav {
+    padding: 0 2px;
+  }
+  .stock-tab-nav button {
+    padding: 8px 12px !important;
+    font-size: 10px !important;
+  }
   .stock-hero-chart {
     border-left: none;
     border-top: 1px solid var(--ws-border);

@@ -61,7 +61,7 @@ export default function StartTrial() {
             {[
               'Full financial statements',
               'Detailed valuation ratios',
-              'Stock screener (8,000+ stocks)',
+              'Stock screener (thousands of global equities)',
               'Compare up to 3 stocks',
               'Vote history & accuracy tracking',
             ].map(f => (

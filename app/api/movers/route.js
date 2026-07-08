@@ -25,6 +25,7 @@ export async function GET() {
       ticker: r.ticker,
       name: r.data.name,
       sector: r.data.sector,
+      exchange: r.data.exchange,
       currentPrice: r.data.currentPrice,
       priceChangePct: r.data.priceChangePct,
       roic: r.data.roic,
@@ -71,11 +72,11 @@ export async function GET() {
     const bigCapMovers = withScore
       .filter(s => s.marketCap != null && s.marketCap >= BIG_CAP_THRESHOLD && s.priceChangePct != null)
       .sort((a, b) => Math.abs(b.priceChangePct) - Math.abs(a.priceChangePct))
-      .slice(0, 20);
+      .slice(0, 40);
 
     return Response.json({
-      gainers: sorted(withScore, 'priceChangePct').slice(0, 20),
-      losers: sorted(withScore, 'priceChangePct', 'asc').slice(0, 20),
+      gainers: sorted(withScore, 'priceChangePct').slice(0, 40),
+      losers: sorted(withScore, 'priceChangePct', 'asc').slice(0, 40),
       topRoic: sorted(withScore, 'roic', 'desc', 200).slice(0, 10),
       topFcfYield: sorted(withScore, 'fcfYield', 'desc', 50).slice(0, 10),
       topRevGrowth: sorted(withScore, 'revGrowth', 'desc', 300).slice(0, 10),

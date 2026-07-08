@@ -71,7 +71,7 @@ export default function Pricing() {
               {[
                 'Full terminal access — screener, radar, portfolio, calendar',
                 'Full financial statements & detailed valuation ratios',
-                'Stock screener (8,000+ stocks)',
+                'Stock screener (thousands of global equities)',
                 'Compare up to 3 stocks',
                 'Traq AI research assistant',
                 'Vote history & accuracy tracking',

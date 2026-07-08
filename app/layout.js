@@ -8,16 +8,16 @@ import { Analytics } from '@vercel/analytics/react';
 
 export const metadata = {
   metadataBase: new URL('https://traqcker.com'),
-  title: "Traqcker — Stock Analysis in Seconds",
-  description: "Know if a stock is worth it in seconds. Easy score, fair value, and community votes for 8,000+ US stocks. Free.",
+  title: "Traqcker — Professional Investment Analysis",
+  description: "Professional fundamental analysis powered by direct company filings. SEC EDGAR source verification, normalized multi-currency portfolios, intrinsic valuation modeling, and community intelligence.",
   icons: {
     icon: '/favicon.png',
     apple: '/apple-touch-icon.png',
     other: [{ rel: 'icon', url: '/icon-512.png', sizes: '512x512' }],
   },
   openGraph: {
-    title: "Traqcker — Know if a stock is worth it. In seconds.",
-    description: "Easy score, fair value check, and community Buy/Hold/Sell votes for 8,000+ US stocks. Free forever.",
+    title: "Traqcker — Professional Investment Analysis",
+    description: "Professional investment analysis powered by direct company filings. SEC EDGAR source verification, normalized multi-currency portfolios, intrinsic valuation modeling, and community intelligence.",
     url: "https://traqcker.com",
     siteName: "Traqcker",
     images: [
@@ -31,8 +31,8 @@ export const metadata = {
   },
   twitter: {
     card: "summary_large_image",
-    title: "Traqcker — Know if a stock is worth it. In seconds.",
-    description: "Easy score, fair value check, and community votes for 8,000+ US stocks. Free.",
+    title: "Traqcker — Professional Investment Analysis",
+    description: "Professional investment analysis powered by direct company filings. SEC EDGAR source verification, normalized multi-currency portfolios, intrinsic valuation modeling, and community intelligence.",
     images: ["https://traqcker.com/og-screenshot.png"],
   },
 };

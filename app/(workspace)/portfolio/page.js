@@ -2,7 +2,7 @@
 import { useState, useEffect, useMemo, useRef } from 'react';
 import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer, LineChart, Line, XAxis, YAxis, CartesianGrid } from 'recharts';
 import { useUser } from '../../components/AuthProvider';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import Sparkline from '../../components/Sparkline';
 import MarketStatusDot from '../../components/workspace/MarketStatusDot';
@@ -635,6 +635,7 @@ function AllocationChart({ title, data }) {
 export default function WorkspacePortfolio() {
   const { isSignedIn } = useUser();
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [holdings, setHoldings] = useState([]);
   const [stocks, setStocks] = useState({});
   const [sparklines, setSparklines] = useState({});
@@ -654,6 +655,16 @@ export default function WorkspacePortfolio() {
     const saved = localStorage.getItem('portfolio_currency');
     if (saved && CURRENCIES[saved]) setCurrency(saved);
   }, []);
+
+  // Deep link from other pages (e.g. /etfs) that want to open the buy modal directly,
+  // via /portfolio?buy=TICKER. Strip the param once consumed so a refresh doesn't reopen it.
+  useEffect(() => {
+    const buyParam = searchParams.get('buy');
+    if (buyParam) {
+      setBuyTicker(buyParam.toUpperCase());
+      router.replace('/portfolio');
+    }
+  }, [searchParams, router]);
 
   useEffect(() => {
     // frankfurter.app moved to frankfurter.dev (old domain 301-redirects) — pointing directly
@@ -839,14 +850,15 @@ export default function WorkspacePortfolio() {
             <div style={{ fontSize: '13px', color: 'var(--ws-text-2)' }}>Track your holdings and performance.</div>
           </div>
           {isSignedIn && (
-            <div style={{ display: 'flex', gap: '8px' }}>
-              <div style={{ display: 'flex', border: '1px solid var(--ws-border)', overflow: 'hidden' }}>
+            <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+              <div style={{ display: 'flex', border: '1px solid var(--ws-border)', overflow: 'hidden', flexShrink: 0 }}>
                 {Object.keys(CURRENCIES).map(c => (
                   <button key={c} onClick={() => changeCurrency(c)}
                     style={{
                       height: '32px', padding: '0 10px', fontSize: '11px', fontWeight: 700, border: 'none', cursor: 'pointer',
                       background: currency === c ? 'var(--ws-accent)' : 'var(--ws-bg-1)',
                       color: currency === c ? 'var(--ws-bg-1)' : 'var(--ws-text-2)',
+                      flexShrink: 0,
                     }}>
                     {c}
                   </button>

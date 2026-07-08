@@ -91,8 +91,21 @@ export async function GET(req) {
       }
     }
 
-    // No analyst data either — return equal split
-    return Response.json({ percentages: { BUY: 33, HOLD: 34, SELL: 33 }, userVote, total: 0, source: 'none' });
+    // No analyst coverage — fall back to whatever real community votes exist, even
+    // below the "trust community over analysts" threshold, rather than hiding them.
+    if (userTotal > 0) {
+      const counts = { BUY: 0, HOLD: 0, SELL: 0 };
+      votes.forEach(v => counts[v.vote]++);
+      const percentages = {
+        BUY: Math.round((counts.BUY / userTotal) * 100),
+        HOLD: Math.round((counts.HOLD / userTotal) * 100),
+        SELL: Math.round((counts.SELL / userTotal) * 100),
+      };
+      return Response.json({ percentages, userVote, total: userTotal, source: 'community' });
+    }
+
+    // No community votes, no analyst data either — nothing to show a split for.
+    return Response.json({ percentages: { BUY: 0, HOLD: 0, SELL: 0 }, userVote, total: 0, source: 'none' });
   } catch (error) {
     console.error('votes GET error:', error);
     return Response.json({ error: 'Error fetching votes' }, { status: 500 });

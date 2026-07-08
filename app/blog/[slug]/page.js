@@ -133,8 +133,8 @@ export default function BlogPost({ params }) {
 
         <div className="glass" style={{ padding: '24px', marginTop: '40px', textAlign: 'center' }}>
           <div style={{ fontSize: '16px', fontWeight: 800, marginBottom: '6px' }}>Want to see the numbers, not just the theory?</div>
-          <div style={{ color: 'var(--text-3)', fontSize: '14px', marginBottom: '16px' }}>Search any of 8,000+ US stocks and get the quality score, fair value, and financials free.</div>
-          <a href="/" className="btn-primary">Try Traqcker free →</a>
+          <div style={{ color: 'var(--text-3)', fontSize: '14px', marginBottom: '16px' }}>Search thousands of global equities and get the quality score, fair value, and financial statements.</div>
+          <a href="/pricing" className="btn-primary">Start Traqcker Pro Trial →</a>
         </div>
 
         <div style={{ marginTop: '20px' }}>

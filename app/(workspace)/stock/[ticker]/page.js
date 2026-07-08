@@ -306,7 +306,15 @@ export default function StockPage({ params }) {
   const change = data.priceChange;
   const changePct = data.priceChangePct;
 
+  // Recent IPOs (and thinly-covered tickers) have no SEC/Finnhub fundamentals at all —
+  // computing a Quality Score or "Numbers, Simplified" bars in that case just produces a
+  // plausible-looking but entirely made-up result, since every input defaults to a neutral
+  // midpoint. Show price-only instead of a wall of fabricated/N/A metrics.
+  const hasFundamentals = data.revVal != null || data.niVal != null || data.marketCap != null
+    || data.roic != null || data.grossMargin != null || (data.revHistory?.length ?? 0) > 0;
+
   const easyMode = (() => {
+    if (!hasFundamentals) return null;
     const sector = (data.sector || '').toLowerCase();
     const isFinancial = sector.includes('bank') || sector.includes('insurance') || sector.includes('financial');
     const isTech = sector.includes('tech') || sector.includes('software') || sector.includes('semi');
@@ -428,6 +436,12 @@ export default function StockPage({ params }) {
             {/* Right: terminal score block */}
             <div className="stock-hero-score" style={{ alignItems: 'flex-start', gap: '10px' }}>
               <div style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: '9px', letterSpacing: '2px', color: 'var(--ws-text-3)', fontWeight: 700 }}>QUALITY SCORE</div>
+              {!easyMode ? (
+                <div style={{ fontSize: '11px', color: 'var(--ws-text-3)', maxWidth: '200px', lineHeight: 1.6, borderLeft: '2px solid var(--ws-border)', paddingLeft: '10px', marginTop: '2px' }}>
+                  No fundamentals reported yet — likely a recent IPO or thin data coverage. Price and chart are still live.
+                </div>
+              ) : (
+              <>
               <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
                 <span style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: '16px', color: easyMode.verdictColor, letterSpacing: '2px', lineHeight: 1 }}>
                   {'█'.repeat(Math.round(easyMode.score100 / 10))}{'░'.repeat(10 - Math.round(easyMode.score100 / 10))}
@@ -442,6 +456,8 @@ export default function StockPage({ params }) {
               <div style={{ fontSize: '11px', color: 'var(--ws-text-3)', maxWidth: '200px', lineHeight: 1.6, borderLeft: '2px solid var(--ws-border)', paddingLeft: '10px', marginTop: '2px' }}>
                 {easyMode.summary}
               </div>
+              </>
+              )}
             </div>
           </div>
         </div>
@@ -450,7 +466,7 @@ export default function StockPage({ params }) {
       <div style={{ padding: '0 0 40px' }}>
 
         {/* TERMINAL TAB NAV */}
-        <div style={{ display: 'flex', borderBottom: '1px solid var(--ws-border)', marginBottom: '24px' }}>
+        <div className="stock-tab-nav" style={{ display: 'flex', borderBottom: '1px solid var(--ws-border)', marginBottom: '24px', overflowX: 'auto', WebkitOverflowScrolling: 'touch' }}>
           {NAV.map(n => (
             <button key={n.key} onClick={() => { setTab(n.key); window.scrollTo({ top: 0, behavior: 'smooth' }); }}
               style={{
@@ -466,6 +482,8 @@ export default function StockPage({ params }) {
                 cursor: 'pointer',
                 transition: 'all 0.15s',
                 marginBottom: '-1px',
+                flexShrink: 0,
+                whiteSpace: 'nowrap',
               }}>
               {n.label}{n.pro && !isPro && !checkingPro ? ' [PRO]' : ''}
             </button>
@@ -522,34 +540,61 @@ export default function StockPage({ params }) {
                     );
                   })}
                 </div>
-                <div style={{ display: 'flex', height: '10px', overflow: 'hidden', marginBottom: '8px' }}>
-                  <div style={{ background: 'var(--ws-accent)', width: `${voteConsensus.BUY}%` }} />
-                  <div style={{ background: 'var(--ws-text-3)', width: `${voteConsensus.HOLD}%` }} />
-                  <div style={{ background: 'var(--ws-red)', width: `${voteConsensus.SELL}%` }} />
-                </div>
-                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '11px', color: 'var(--ws-text-3)', fontWeight: 600 }}>
-                  <span style={{ color: 'var(--ws-accent)' }}>● {voteConsensus.BUY}% Buy</span>
-                  <span style={{ color: 'var(--ws-text-2)' }}>● {voteConsensus.HOLD}% Hold</span>
-                  <span style={{ color: 'var(--ws-red)' }}>● {voteConsensus.SELL}% Sell</span>
-                </div>
-                {voteConsensus.source !== 'none' && (
-                  <div style={{ marginTop: '6px', fontSize: '10px', color: 'var(--ws-text-3)', textAlign: 'center' }}>
-                    {voteConsensus.source === 'analysts'
-                      ? `Analyst consensus · ${voteConsensus.total} analysts`
-                      : `${voteConsensus.total} ${voteConsensus.total === 1 ? 'person' : 'people'} voted`}
+                {voteConsensus.source === 'none' ? (
+                  <div style={{ fontSize: '11px', color: 'var(--ws-text-3)', textAlign: 'center', padding: '8px 0' }}>
+                    No votes or analyst coverage yet — be the first to weigh in.
                   </div>
+                ) : (
+                  <>
+                    <div style={{ display: 'flex', height: '10px', overflow: 'hidden', marginBottom: '8px' }}>
+                      <div style={{ background: 'var(--ws-accent)', width: `${voteConsensus.BUY}%` }} />
+                      <div style={{ background: 'var(--ws-text-3)', width: `${voteConsensus.HOLD}%` }} />
+                      <div style={{ background: 'var(--ws-red)', width: `${voteConsensus.SELL}%` }} />
+                    </div>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '11px', color: 'var(--ws-text-3)', fontWeight: 600 }}>
+                      <span style={{ color: 'var(--ws-accent)' }}>● {voteConsensus.BUY}% Buy</span>
+                      <span style={{ color: 'var(--ws-text-2)' }}>● {voteConsensus.HOLD}% Hold</span>
+                      <span style={{ color: 'var(--ws-red)' }}>● {voteConsensus.SELL}% Sell</span>
+                    </div>
+                    <div style={{ marginTop: '6px', fontSize: '10px', color: 'var(--ws-text-3)', textAlign: 'center' }}>
+                      {voteConsensus.source === 'analysts'
+                        ? `Analyst consensus · ${voteConsensus.total} analysts`
+                        : `${voteConsensus.total} ${voteConsensus.total === 1 ? 'person' : 'people'} voted`}
+                    </div>
+                  </>
                 )}
               </div>
 
               {/* Numbers, Simplified */}
+              {hasFundamentals && (
               <div>
                 <div style={{ color: 'var(--ws-text-3)', fontSize: '10px', fontFamily: "'JetBrains Mono', monospace", letterSpacing: '1.5px', marginBottom: '10px', fontWeight: 700 }}>THE NUMBERS, SIMPLIFIED</div>
                 <div style={{ background: 'var(--ws-bg-1)', border: '1px solid var(--ws-border)', padding: '18px 20px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
                   {[
-                    { label: 'Revenue is growing', value: data.revGrowth != null ? `${data.revGrowth > 0 ? '+' : ''}${data.revGrowth}% / yr` : 'N/A', pct: data.revGrowth != null ? Math.max(4, Math.min(100, 50 + data.revGrowth * 2)) : 0, color: data.revGrowth > 5 ? 'var(--ws-accent)' : data.revGrowth > 0 ? 'var(--ws-text-2)' : 'var(--ws-red)' },
-                    { label: 'Keeps a healthy slice of profit', value: data.opMargin != null ? `${data.opMargin}% margin` : 'N/A', pct: data.opMargin != null ? Math.max(4, Math.min(100, data.opMargin * 2.5)) : 0, color: data.opMargin > 15 ? 'var(--ws-accent)' : data.opMargin > 5 ? 'var(--ws-text-2)' : 'var(--ws-red)' },
-                    { label: 'Generates real cash, not just paper profit', value: data.fcfVal > 0 ? 'Strong' : data.fcfVal < 0 ? 'Negative' : 'N/A', pct: data.fcfVal > 0 ? 85 : data.fcfVal < 0 ? 15 : 0, color: data.fcfVal > 0 ? 'var(--ws-accent)' : 'var(--ws-red)' },
-                    { label: data.debtToEquity > 1.5 ? 'Carries notable debt — worth watching' : 'Debt levels look manageable', value: data.debtToEquity != null ? `${data.debtToEquity.toFixed(2)}x equity` : 'N/A', pct: data.debtToEquity != null ? Math.max(4, Math.min(100, 100 - data.debtToEquity * 30)) : 0, color: data.debtToEquity < 1 ? 'var(--ws-accent)' : data.debtToEquity < 2 ? 'var(--ws-text-2)' : 'var(--ws-red)' },
+                    {
+                      label: 'Revenue is growing',
+                      value: data.revGrowth != null ? `${data.revGrowth > 0 ? '+' : ''}${data.revGrowth}% / yr` : 'N/A',
+                      pct: data.revGrowth != null ? Math.max(4, Math.min(100, 50 + data.revGrowth * 2)) : 0,
+                      color: data.revGrowth == null ? 'var(--ws-text-3)' : data.revGrowth > 5 ? 'var(--ws-accent)' : data.revGrowth > 0 ? 'var(--ws-text-2)' : 'var(--ws-red)',
+                    },
+                    {
+                      label: 'Keeps a healthy slice of profit',
+                      value: data.opMargin != null ? `${data.opMargin}% margin` : 'N/A',
+                      pct: data.opMargin != null ? Math.max(4, Math.min(100, data.opMargin * 2.5)) : 0,
+                      color: data.opMargin == null ? 'var(--ws-text-3)' : data.opMargin > 15 ? 'var(--ws-accent)' : data.opMargin > 5 ? 'var(--ws-text-2)' : 'var(--ws-red)',
+                    },
+                    {
+                      label: 'Generates real cash, not just paper profit',
+                      value: data.fcfVal > 0 ? 'Strong' : data.fcfVal < 0 ? 'Negative' : 'N/A',
+                      pct: data.fcfVal > 0 ? 85 : data.fcfVal < 0 ? 15 : 0,
+                      color: data.fcfVal == null ? 'var(--ws-text-3)' : data.fcfVal > 0 ? 'var(--ws-accent)' : 'var(--ws-red)',
+                    },
+                    {
+                      label: data.debtToEquity == null ? 'Debt levels unavailable' : data.debtToEquity < 0 ? 'Negative equity — high risk' : data.debtToEquity > 1.5 ? 'Carries notable debt — worth watching' : 'Debt levels look manageable',
+                      value: data.debtToEquity != null ? `${data.debtToEquity.toFixed(2)}x equity` : 'N/A',
+                      pct: data.debtToEquity != null ? Math.max(4, Math.min(100, 100 - data.debtToEquity * 30)) : 0,
+                      color: data.debtToEquity == null ? 'var(--ws-text-3)' : data.debtToEquity < 0 ? 'var(--ws-red)' : data.debtToEquity < 1 ? 'var(--ws-accent)' : data.debtToEquity < 2 ? 'var(--ws-text-2)' : 'var(--ws-red)',
+                    },
                   ].map((m, i) => (
                     <div key={i} style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
                       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', gap: '8px' }}>
@@ -563,6 +608,7 @@ export default function StockPage({ params }) {
                   ))}
                 </div>
               </div>
+              )}
 
               {/* NEWS */}
               {news.length > 0 && (
