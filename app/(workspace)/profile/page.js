@@ -214,12 +214,11 @@ export default function WorkspaceProfile() {
   const cardStyle = {
     background: 'var(--ws-bg-1)',
     border: '1px solid var(--ws-border)',
-    borderRadius: '10px',
     padding: '20px',
     display: 'flex',
     flexDirection: 'column',
     gap: '16px',
-    boxShadow: '0 2px 8px rgba(0,0,0,0.01)',
+    boxShadow: '0 1px 3px rgba(0,0,0,0.01)',
   };
 
   const labelStyle = {
@@ -235,7 +234,6 @@ export default function WorkspaceProfile() {
     padding: '8px 12px',
     background: 'var(--ws-bg-2)',
     border: '1px solid var(--ws-border)',
-    borderRadius: '6px',
     color: 'var(--ws-text)',
     outline: 'none',
     fontSize: '13px',
@@ -248,7 +246,6 @@ export default function WorkspaceProfile() {
     fontWeight: 700,
     background: 'var(--ws-accent)',
     border: 'none',
-    borderRadius: '6px',
     color: '#fff',
     cursor: 'pointer',
     textAlign: 'center',
@@ -262,7 +259,6 @@ export default function WorkspaceProfile() {
       <div style={{
         background: 'var(--ws-bg-1)',
         border: '1px solid var(--ws-border)',
-        borderRadius: '12px',
         padding: '24px',
         display: 'flex',
         alignItems: 'center',
@@ -271,7 +267,7 @@ export default function WorkspaceProfile() {
         gap: '24px',
         position: 'relative',
         overflow: 'hidden',
-        boxShadow: '0 4px 20px rgba(0, 0, 0, 0.02)'
+        boxShadow: '0 1px 3px rgba(0, 0, 0, 0.01)'
       }}>
         {/* Background Glow */}
         <div style={{
@@ -290,7 +286,6 @@ export default function WorkspaceProfile() {
           <div style={{
             width: '64px',
             height: '64px',
-            borderRadius: '50%',
             background: 'linear-gradient(135deg, #a78bfa, #60a5fa)',
             color: '#fff',
             fontSize: '26px',
@@ -298,7 +293,6 @@ export default function WorkspaceProfile() {
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            boxShadow: '0 4px 12px rgba(96, 165, 250, 0.2)',
             border: '2px solid var(--ws-bg-1)'
           }}>
             {user?.email?.[0]?.toUpperCase() || '?'}
@@ -315,7 +309,6 @@ export default function WorkspaceProfile() {
                 fontSize: '9px',
                 fontWeight: 800,
                 padding: '2px 8px',
-                borderRadius: '20px',
                 textTransform: 'uppercase',
                 letterSpacing: '0.5px'
               }}>
@@ -337,7 +330,6 @@ export default function WorkspaceProfile() {
             <div key={i} style={{
               background: 'var(--ws-bg-2)',
               border: '1px solid var(--ws-border)',
-              borderRadius: '8px',
               padding: '10px 18px',
               minWidth: '120px',
               textAlign: 'center',
@@ -351,7 +343,7 @@ export default function WorkspaceProfile() {
             </div>
           ))}
           <button onClick={signOut}
-            style={{ padding: '0 16px', height: '44px', alignSelf: 'center', border: '1px solid var(--ws-border)', background: 'var(--ws-bg-1)', borderRadius: '8px', color: 'var(--ws-red)', cursor: 'pointer', fontSize: '12px', fontWeight: 700, transition: 'all 0.15s ease' }}
+            style={{ padding: '0 16px', height: '44px', alignSelf: 'center', border: '1px solid var(--ws-border)', background: 'var(--ws-bg-1)', color: 'var(--ws-red)', cursor: 'pointer', fontSize: '12px', fontWeight: 700, transition: 'all 0.15s ease' }}
             onMouseEnter={e => { e.currentTarget.style.borderColor = 'var(--ws-red)'; e.currentTarget.style.background = 'rgba(239, 68, 68, 0.05)'; }}
             onMouseLeave={e => { e.currentTarget.style.borderColor = 'var(--ws-border)'; e.currentTarget.style.background = 'var(--ws-bg-1)'; }}>
             Sign Out
@@ -401,7 +393,6 @@ export default function WorkspaceProfile() {
               <div style={{
                 padding: '10px 12px',
                 fontSize: '12px',
-                borderRadius: '6px',
                 border: `1px solid ${profileMsg.type === 'success' ? 'var(--ws-accent)' : 'var(--ws-red)'}`,
                 background: profileMsg.type === 'success' ? 'var(--ws-accent-dim)' : 'rgba(239, 68, 68, 0.05)',
                 color: profileMsg.type === 'success' ? 'var(--ws-accent)' : 'var(--ws-red)',
@@ -433,7 +424,6 @@ export default function WorkspaceProfile() {
               <div style={{
                 padding: '10px 12px',
                 fontSize: '12px',
-                borderRadius: '6px',
                 border: `1px solid ${securityMsg.type === 'success' ? 'var(--ws-accent)' : 'var(--ws-red)'}`,
                 background: securityMsg.type === 'success' ? 'var(--ws-accent-dim)' : 'rgba(239, 68, 68, 0.05)',
                 color: securityMsg.type === 'success' ? 'var(--ws-accent)' : 'var(--ws-red)',
@@ -480,15 +470,14 @@ export default function WorkspaceProfile() {
                       style={{
                         width: '28px',
                         height: '28px',
-                        borderRadius: '50%',
                         background: color.hex,
                         border: `2px solid ${isActive ? 'var(--ws-text)' : 'transparent'}`,
                         cursor: 'pointer',
-                        transform: isActive ? 'scale(1.15)' : 'scale(1)',
+                        transform: isActive ? 'scale(1.1)' : 'scale(1)',
                         transition: 'transform 0.15s ease',
                         boxShadow: isActive ? '0 0 10px rgba(0,0,0,0.15)' : 'none',
                       }}
-                      onMouseEnter={e => e.currentTarget.style.transform = 'scale(1.15)'}
+                      onMouseEnter={e => e.currentTarget.style.transform = 'scale(1.1)'}
                       onMouseLeave={e => { if (!isActive) e.currentTarget.style.transform = 'scale(1)'; }}
                     />
                   );
@@ -499,7 +488,7 @@ export default function WorkspaceProfile() {
             {/* Font size picker */}
             <div style={{ marginTop: '6px' }}>
               <div style={{ fontSize: '11px', color: 'var(--ws-text-2)', fontWeight: 600, marginBottom: '8px' }}>Base Font Size</div>
-              <div style={{ display: 'flex', border: '1px solid var(--ws-border)', borderRadius: '6px', overflow: 'hidden', width: 'fit-content' }}>
+              <div style={{ display: 'flex', border: '1px solid var(--ws-border)', overflow: 'hidden', width: 'fit-content' }}>
                 {[
                   { id: 'compact', label: 'Compact' },
                   { id: 'normal', label: 'Default' },
@@ -526,33 +515,26 @@ export default function WorkspaceProfile() {
             </div>
 
             {/* Scanlines visual toggler */}
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: '6px', padding: '10px 12px', background: 'var(--ws-bg-2)', border: '1px solid var(--ws-border)', borderRadius: '6px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: '6px', padding: '10px 12px', background: 'var(--ws-bg-2)', border: '1px solid var(--ws-border)' }}>
               <div>
                 <div style={{ fontSize: '12px', fontWeight: 700, color: 'var(--ws-text)' }}>CRT Scanline Overlay</div>
                 <div style={{ fontSize: '10px', color: 'var(--ws-text-3)', marginTop: '2px' }}>Render retro CRT monitor lines across interface</div>
               </div>
-              <label style={{ position: 'relative', display: 'inline-block', width: '36px', height: '20px', cursor: 'pointer' }}>
-                <input type="checkbox" checked={scanlines} onChange={toggleScanlines} style={{ opacity: 0, width: 0, height: 0 }} />
-                <span style={{
-                  position: 'absolute',
-                  inset: 0,
-                  background: scanlines ? 'var(--ws-accent)' : 'var(--ws-border)',
-                  borderRadius: '34px',
-                  transition: 'background-color 0.2s'
-                }}>
-                  <span style={{
-                    position: 'absolute',
-                    content: '""',
-                    height: '14px',
-                    width: '14px',
-                    left: scanlines ? '18px' : '3px',
-                    bottom: '3px',
-                    background: '#fff',
-                    borderRadius: '50%',
-                    transition: 'left 0.2s'
-                  }} />
-                </span>
-              </label>
+              <button 
+                onClick={toggleScanlines}
+                style={{
+                  padding: '6px 14px',
+                  fontSize: '11px',
+                  fontWeight: 700,
+                  border: '1px solid var(--ws-border)',
+                  background: scanlines ? 'var(--ws-accent)' : 'var(--ws-bg-1)',
+                  color: scanlines ? '#fff' : 'var(--ws-text-2)',
+                  cursor: 'pointer',
+                  transition: 'all 0.15s ease'
+                }}
+              >
+                {scanlines ? '[X] ENABLED' : '[ ] DISABLED'}
+              </button>
             </div>
           </div>
 
@@ -592,7 +574,7 @@ export default function WorkspaceProfile() {
             </div>
 
             <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '8px', padding: '10px 12px', background: 'var(--ws-bg-1)', border: '1px solid var(--ws-border)', borderRadius: '6px' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '8px', padding: '10px 12px', background: 'var(--ws-bg-1)', border: '1px solid var(--ws-border)' }}>
                 <div>
                   <div style={{ fontSize: '12px', fontWeight: 700, color: 'var(--ws-text)' }}>Clear Portfolio Data</div>
                   <div style={{ fontSize: '10px', color: 'var(--ws-text-3)', marginTop: '2px' }}>Wipe all manual and uploaded holdings</div>
@@ -600,7 +582,7 @@ export default function WorkspaceProfile() {
                 <button onClick={clearPortfolio} style={{ ...btnStyle, background: 'var(--ws-red)' }}>Clear</button>
               </div>
 
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '8px', padding: '10px 12px', background: 'var(--ws-bg-1)', border: '1px solid var(--ws-border)', borderRadius: '6px' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '8px', padding: '10px 12px', background: 'var(--ws-bg-1)', border: '1px solid var(--ws-border)' }}>
                 <div>
                   <div style={{ fontSize: '12px', fontWeight: 700, color: 'var(--ws-text)' }}>Clear Watchlist Data</div>
                   <div style={{ fontSize: '10px', color: 'var(--ws-text-3)', marginTop: '2px' }}>Wipe all watchlisted assets</div>
