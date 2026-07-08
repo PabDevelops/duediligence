@@ -1,6 +1,9 @@
 import { getUserId } from '../../../lib/auth';
 import { supabase } from '../../../lib/supabase';
 
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
+
 export async function GET() {
   const userId = await getUserId();
   if (!userId) return Response.json({ error: 'Not authenticated' }, { status: 401 });

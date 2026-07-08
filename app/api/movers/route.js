@@ -1,5 +1,8 @@
 import { supabase } from '../../../lib/supabase';
 
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
+
 // Tickers only get re-fetched when someone actually views them (no bulk daily cron), so
 // stock_cache rows sit at wildly different ages. Without this filter, "today's movers"
 // would mix a % change from 5 minutes ago with one from last week. 24h matches the same
