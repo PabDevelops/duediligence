@@ -126,7 +126,7 @@ function Card({ title, subtitle, rightElement, dragProps, children }) {
         background: 'rgba(0, 0, 0, 0.01)',
         cursor: dragProps ? 'grab' : 'default'
       }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+        <div className="flex items-center gap-2">
           {dragProps && (
             <span style={{ color: 'var(--ws-text-3)', fontSize: '13px', marginRight: '4px', userSelect: 'none' }}>
               ⋮⋮
@@ -137,7 +137,7 @@ function Card({ title, subtitle, rightElement, dragProps, children }) {
               {title}
             </div>
             {subtitle && (
-              <div style={{ fontSize: '10px', color: 'var(--ws-text-3)', marginTop: '2px' }}>
+              <div className="text-[10px] text-ws-text-3 mt-0.5">
                 {subtitle}
               </div>
             )}
@@ -163,11 +163,11 @@ const CURRENCIES = { USD: '$', EUR: '€', GBP: '£' };
 const MOVER_TABS = [
   {
     key: 'topRoic', label: 'High ROIC',
-    renderValue: (s) => <span style={{ fontSize: '12px', fontWeight: 700, color: 'var(--ws-text)' }}>{s.roic?.toFixed(1)}% ROIC</span>
+    renderValue: (s) => <span className="text-xs font-bold text-ws-text">{s.roic?.toFixed(1)}% ROIC</span>
   },
   {
     key: 'topFcfYield', label: 'FCF Yield',
-    renderValue: (s) => <span style={{ fontSize: '12px', fontWeight: 700, color: 'var(--ws-text)' }}>{s.fcfYield?.toFixed(1)}%</span>
+    renderValue: (s) => <span className="text-xs font-bold text-ws-text">{s.fcfYield?.toFixed(1)}%</span>
   },
   {
     key: 'topRevGrowth', label: 'Rev Growth',
@@ -875,7 +875,7 @@ export default function WorkspaceHome() {
     if (indicesLoading) {
       return (
         <Card title="Major Indices Overview" subtitle="Key market benchmarks & volatility index.">
-          <div style={{ padding: '30px', textAlign: 'center', color: 'var(--ws-text-3)', fontSize: '12px' }}>
+          <div className="p-[30px] text-center text-ws-text-3 text-xs">
             Loading market benchmarks...
           </div>
         </Card>
@@ -885,7 +885,7 @@ export default function WorkspaceHome() {
     if (indices.length === 0) {
       return (
         <Card title="Major Indices Overview" subtitle="Key market benchmarks & volatility index.">
-          <div style={{ padding: '30px', textAlign: 'center', color: 'var(--ws-text-3)', fontSize: '12px' }}>
+          <div className="p-[30px] text-center text-ws-text-3 text-xs">
             Indices data currently unavailable.
           </div>
         </Card>
@@ -1021,7 +1021,7 @@ export default function WorkspaceHome() {
 
             {/* Quick teaser stats — a starting point for the week's research, not a verdict */}
             {sotwStats && (
-              <div className="sotw-teaser-stats" style={{ display: 'flex', gap: '10px' }}>
+              <div className="sotw-teaser-stats" className="flex gap-2.5">
                 {[
                   { label: 'Sector', value: sotwStats.sector || '—' },
                   {
@@ -1034,7 +1034,7 @@ export default function WorkspaceHome() {
                   { label: 'P/E', value: sotwStats.pe != null ? sotwStats.pe.toFixed(1) : '—' }
                 ].map(stat => (
                   <div key={stat.label} style={{ flex: 1, background: 'var(--ws-bg-2)', border: '1px solid var(--ws-border)', padding: '8px 10px' }}>
-                    <div style={{ fontSize: '9px', color: 'var(--ws-text-3)', fontWeight: 700, textTransform: 'uppercase' }}>{stat.label}</div>
+                    <div className="text-[9px] text-ws-text-3 font-bold uppercase">{stat.label}</div>
                     <div style={{ fontSize: '13px', fontWeight: 700, color: 'var(--ws-text)', marginTop: '2px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{stat.value}</div>
                   </div>
                 ))}
@@ -1069,7 +1069,7 @@ export default function WorkspaceHome() {
                   })}
                 </div>
               ) : (
-                <div style={{ display: 'flex', gap: '10px' }}>
+                <div className="flex gap-2.5">
                   {['BUY', 'HOLD', 'SELL'].map(v => {
                     const hoverCol = v === 'BUY' ? '#10b981' : v === 'SELL' ? 'var(--ws-red)' : 'var(--ws-text)';
                     return (
@@ -1162,21 +1162,21 @@ export default function WorkspaceHome() {
         }}
       >
         {activeWorkspaceTab === 'watchlist' ? (
-          <div style={{ display: 'flex', flexDirection: 'column' }}>
+          <div className="flex flex-col">
             {watchlist.length === 0 ? (
-              <div style={{ padding: '40px 20px', textAlign: 'center', color: 'var(--ws-text-3)', fontSize: '13px' }}>
+              <div className="px-5 py-10 text-center text-ws-text-3 text-[13px]">
                 Your watchlist is empty. Go to a stock page and save it.
               </div>
             ) : (
-              <div style={{ overflowX: 'auto' }}>
-                <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '12px' }}>
+              <div className="overflow-x-auto">
+                <table className="w-full border-collapse text-xs">
                   <thead>
-                    <tr style={{ borderBottom: '1px solid var(--ws-border)', background: 'rgba(0,0,0,0.01)' }}>
-                      <th style={{ padding: '10px 18px', textAlign: 'left', fontWeight: 600, color: 'var(--ws-text-3)', fontSize: '10px' }}>TICKER</th>
-                      <th style={{ padding: '10px 18px', textAlign: 'right', fontWeight: 600, color: 'var(--ws-text-3)', fontSize: '10px' }}>PRICE</th>
-                      <th style={{ padding: '10px 18px', textAlign: 'right', fontWeight: 600, color: 'var(--ws-text-3)', fontSize: '10px' }}>TODAY</th>
-                      <th style={{ padding: '10px 18px', textAlign: 'left', fontWeight: 600, color: 'var(--ws-text-3)', fontSize: '10px' }}>ADDED</th>
-                      <th style={{ padding: '10px 18px' }} />
+                    <tr className="border-b border-ws-border bg-black/[0.01]">
+                      <th className="px-[18px] py-2.5 text-left font-semibold text-ws-text-3 text-[10px]">TICKER</th>
+                      <th className="px-[18px] py-2.5 text-right font-semibold text-ws-text-3 text-[10px]">PRICE</th>
+                      <th className="px-[18px] py-2.5 text-right font-semibold text-ws-text-3 text-[10px]">TODAY</th>
+                      <th className="px-[18px] py-2.5 text-left font-semibold text-ws-text-3 text-[10px]">ADDED</th>
+                      <th className="px-[18px] py-2.5" />
                     </tr>
                   </thead>
                   <tbody>
@@ -1186,14 +1186,14 @@ export default function WorkspaceHome() {
                       const hasChange = changePct != null;
                       return (
                         <tr key={item.ticker} onClick={() => router.push(`/stock/${item.ticker}`)}
-                          style={{ borderBottom: '1px solid var(--ws-border)', cursor: 'pointer', transition: 'background 0.15s' }}
+                          className="border-b border-ws-border cursor-pointer transition-[background] duration-150"
                           onMouseEnter={e => e.currentTarget.style.background = 'var(--ws-bg-2)'}
                           onMouseLeave={e => e.currentTarget.style.background = 'transparent'}>
-                          <td style={{ padding: '10px 18px', display: 'flex', alignItems: 'center', gap: '8px', fontWeight: 600, color: 'var(--ws-text)' }}>
+                          <td className="px-[18px] py-2.5 flex items-center gap-2 font-semibold text-ws-text">
                             <StockLogo ticker={item.ticker} name={item.ticker} size={20} />
                             {item.ticker}
                           </td>
-                          <td style={{ padding: '10px 18px', textAlign: 'right', fontWeight: 600, color: 'var(--ws-text)' }}>
+                          <td className="px-[18px] py-2.5 text-right font-semibold text-ws-text">
                             {price != null ? formatCurrency(price, CURRENCIES[stockDetails[item.ticker]?.currency] || stockDetails[item.ticker]?.currency) : '—'}
                           </td>
                           <td style={{ padding: '10px 18px', textAlign: 'right', fontWeight: 700, color: hasChange ? (changePct >= 0 ? '#10b981' : 'var(--ws-red)') : 'var(--ws-text-3)' }}>
@@ -1202,7 +1202,7 @@ export default function WorkspaceHome() {
                           <td style={{ padding: '10px 18px', color: 'var(--ws-text-3)' }}>
                             {new Date(item.created_at).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}
                           </td>
-                          <td style={{ padding: '10px 18px', textAlign: 'right', fontWeight: 600, color: 'var(--ws-accent)' }}>
+                          <td className="px-[18px] py-2.5 text-right font-semibold text-ws-accent">
                             →
                           </td>
                         </tr>
@@ -1214,20 +1214,20 @@ export default function WorkspaceHome() {
             )}
           </div>
         ) : (
-          <div style={{ display: 'flex', flexDirection: 'column' }}>
+          <div className="flex flex-col">
             {recentViewed.length === 0 ? (
-              <div style={{ padding: '40px 20px', textAlign: 'center', color: 'var(--ws-text-3)', fontSize: '13px' }}>
+              <div className="px-5 py-10 text-center text-ws-text-3 text-[13px]">
                 No recently viewed stocks. Tickers will appear here as you search.
               </div>
             ) : (
-              <div style={{ overflowX: 'auto' }}>
-                <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '12px' }}>
+              <div className="overflow-x-auto">
+                <table className="w-full border-collapse text-xs">
                   <thead>
-                    <tr style={{ borderBottom: '1px solid var(--ws-border)', background: 'rgba(0,0,0,0.01)' }}>
-                      <th style={{ padding: '10px 18px', textAlign: 'left', fontWeight: 600, color: 'var(--ws-text-3)', fontSize: '10px' }}>TICKER</th>
-                      <th style={{ padding: '10px 18px', textAlign: 'right', fontWeight: 600, color: 'var(--ws-text-3)', fontSize: '10px' }}>PRICE</th>
-                      <th style={{ padding: '10px 18px', textAlign: 'right', fontWeight: 600, color: 'var(--ws-text-3)', fontSize: '10px' }}>TODAY</th>
-                      <th style={{ padding: '10px 18px' }} />
+                    <tr className="border-b border-ws-border bg-black/[0.01]">
+                      <th className="px-[18px] py-2.5 text-left font-semibold text-ws-text-3 text-[10px]">TICKER</th>
+                      <th className="px-[18px] py-2.5 text-right font-semibold text-ws-text-3 text-[10px]">PRICE</th>
+                      <th className="px-[18px] py-2.5 text-right font-semibold text-ws-text-3 text-[10px]">TODAY</th>
+                      <th className="px-[18px] py-2.5" />
                     </tr>
                   </thead>
                   <tbody>
@@ -1237,20 +1237,20 @@ export default function WorkspaceHome() {
                       const hasChange = changePct != null;
                       return (
                         <tr key={ticker} onClick={() => router.push(`/stock/${ticker}`)}
-                          style={{ borderBottom: '1px solid var(--ws-border)', cursor: 'pointer', transition: 'background 0.15s' }}
+                          className="border-b border-ws-border cursor-pointer transition-[background] duration-150"
                           onMouseEnter={e => e.currentTarget.style.background = 'var(--ws-bg-2)'}
                           onMouseLeave={e => e.currentTarget.style.background = 'transparent'}>
-                          <td style={{ padding: '10px 18px', display: 'flex', alignItems: 'center', gap: '8px', fontWeight: 600, color: 'var(--ws-text)' }}>
+                          <td className="px-[18px] py-2.5 flex items-center gap-2 font-semibold text-ws-text">
                             <StockLogo ticker={ticker} name={ticker} size={20} />
                             {ticker}
                           </td>
-                          <td style={{ padding: '10px 18px', textAlign: 'right', fontWeight: 600, color: 'var(--ws-text)' }}>
+                          <td className="px-[18px] py-2.5 text-right font-semibold text-ws-text">
                             {price != null ? formatCurrency(price, CURRENCIES[stockDetails[ticker]?.currency] || stockDetails[ticker]?.currency) : '—'}
                           </td>
                           <td style={{ padding: '10px 18px', textAlign: 'right', fontWeight: 700, color: hasChange ? (changePct >= 0 ? '#10b981' : 'var(--ws-red)') : 'var(--ws-text-3)' }}>
                             {hasChange ? `${changePct >= 0 ? '+' : ''}${changePct.toFixed(2)}%` : '—'}
                           </td>
-                          <td style={{ padding: '10px 18px', textAlign: 'right', fontWeight: 600, color: 'var(--ws-accent)' }}>
+                          <td className="px-[18px] py-2.5 text-right font-semibold text-ws-accent">
                             →
                           </td>
                         </tr>
@@ -1335,7 +1335,7 @@ export default function WorkspaceHome() {
         title="Equity Portfolio"
         subtitle={isSignedIn ? "Real-time holdings synced with your database." : "Track your mock trades & performance."}
         rightElement={
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+          <div className="flex items-center gap-2">
             <div style={{ display: 'flex', border: '1px solid var(--ws-border)', borderRadius: '6px', overflow: 'hidden' }}>
               {Object.keys(CURRENCIES).map(c => (
                 <button key={c} onClick={() => changeCurrency(c)}
@@ -1423,7 +1423,7 @@ export default function WorkspaceHome() {
             border: '1px solid var(--ws-border)'
           }}>
             <div className="home-portfolio-summary-item">
-              <div style={{ fontSize: '10px', color: 'var(--ws-text-3)', fontWeight: 700, textTransform: 'uppercase' }}>
+              <div className="text-[10px] text-ws-text-3 font-bold uppercase">
                 Portfolio Value
               </div>
               <div style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: '17px', fontWeight: 800, color: 'var(--ws-text)', marginTop: '2px' }}>
@@ -1431,7 +1431,7 @@ export default function WorkspaceHome() {
               </div>
             </div>
             <div className="home-portfolio-summary-item">
-              <div style={{ fontSize: '10px', color: 'var(--ws-text-3)', fontWeight: 700, textTransform: 'uppercase' }}>
+              <div className="text-[10px] text-ws-text-3 font-bold uppercase">
                 Today
               </div>
               <div style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: '12px', fontWeight: 700, color: todayPositive ? '#10b981' : 'var(--ws-red)', marginTop: '4px' }}>
@@ -1439,7 +1439,7 @@ export default function WorkspaceHome() {
               </div>
             </div>
             <div className="home-portfolio-summary-item">
-              <div style={{ fontSize: '10px', color: 'var(--ws-text-3)', fontWeight: 700, textTransform: 'uppercase' }}>
+              <div className="text-[10px] text-ws-text-3 font-bold uppercase">
                 Total Return
               </div>
               <div style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: '12px', fontWeight: 700, color: positive ? '#10b981' : 'var(--ws-red)', marginTop: '4px' }}>
@@ -1455,18 +1455,18 @@ export default function WorkspaceHome() {
                 No active holdings. Click "+ Add Trade" to track positions!
               </div>
             ) : (
-              <div style={{ overflowX: 'auto' }}>
+              <div className="overflow-x-auto">
                 <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '11px' }}>
                   <thead>
                     <tr style={{ background: 'rgba(0,0,0,0.01)', borderBottom: '1px solid var(--ws-border)' }}>
                       <th style={{ padding: '8px 12px', textAlign: 'left', fontWeight: 600, color: 'var(--ws-text-3)', fontSize: '9px' }}>POSITION</th>
-                      <th style={{ padding: '8px 12px', textAlign: 'right', fontWeight: 600, color: 'var(--ws-text-3)', fontSize: '9px' }}>SHARES</th>
-                      <th style={{ padding: '8px 12px', textAlign: 'right', fontWeight: 600, color: 'var(--ws-text-3)', fontSize: '9px' }}>AVG COST</th>
-                      <th style={{ padding: '8px 12px', textAlign: 'right', fontWeight: 600, color: 'var(--ws-text-3)', fontSize: '9px' }}>PRICE</th>
-                      <th style={{ padding: '8px 12px', textAlign: 'right', fontWeight: 600, color: 'var(--ws-text-3)', fontSize: '9px' }}>TODAY</th>
-                      <th style={{ padding: '8px 12px', textAlign: 'right', fontWeight: 600, color: 'var(--ws-text-3)', fontSize: '9px' }}>VALUE</th>
-                      <th style={{ padding: '8px 12px', textAlign: 'right', fontWeight: 600, color: 'var(--ws-text-3)', fontSize: '9px' }}>RETURN</th>
-                      <th style={{ padding: '8px 12px' }} />
+                      <th className="px-3 py-2 text-right font-semibold text-ws-text-3 text-[9px]">SHARES</th>
+                      <th className="px-3 py-2 text-right font-semibold text-ws-text-3 text-[9px]">AVG COST</th>
+                      <th className="px-3 py-2 text-right font-semibold text-ws-text-3 text-[9px]">PRICE</th>
+                      <th className="px-3 py-2 text-right font-semibold text-ws-text-3 text-[9px]">TODAY</th>
+                      <th className="px-3 py-2 text-right font-semibold text-ws-text-3 text-[9px]">VALUE</th>
+                      <th className="px-3 py-2 text-right font-semibold text-ws-text-3 text-[9px]">RETURN</th>
+                      <th className="px-3 py-2" />
                     </tr>
                   </thead>
                   <tbody>
@@ -1481,8 +1481,8 @@ export default function WorkspaceHome() {
                           onMouseEnter={e => e.currentTarget.style.background = 'var(--ws-bg-2)'}
                           onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
                         >
-                          <td style={{ padding: '8px 12px' }}>
-                            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                          <td className="px-3 py-2">
+                            <div className="flex items-center gap-2">
                               <StockLogo ticker={item.ticker} name={item.ticker} size={22} />
                               <div style={{ minWidth: 0 }}>
                                 <div style={{ fontWeight: 800, color: 'var(--ws-text)', display: 'flex', alignItems: 'center', gap: '6px' }}>
@@ -1495,11 +1495,11 @@ export default function WorkspaceHome() {
                               </div>
                             </div>
                           </td>
-                          <td style={{ padding: '8px 12px', textAlign: 'right', color: 'var(--ws-text-2)' }}>{item.shares}</td>
+                          <td className="px-3 py-2 text-right text-ws-text-2">{item.shares}</td>
                           {/* Avg cost / price stay in their native trading currency (USD here) — only
                               aggregate value/gain figures convert to the selected reporting currency,
                               same behavior as the dedicated /portfolio page. */}
-                          <td style={{ padding: '8px 12px', textAlign: 'right', color: 'var(--ws-text-2)' }}>{formatCurrency(item.avgPrice, CURRENCIES[item.costCurrency] || item.costCurrency)}</td>
+                          <td className="px-3 py-2 text-right text-ws-text-2">{formatCurrency(item.avgPrice, CURRENCIES[item.costCurrency] || item.costCurrency)}</td>
                           <td style={{ padding: '8px 12px', textAlign: 'right', color: 'var(--ws-text)', fontWeight: 600 }}>{formatCurrency(item.currentPrice, CURRENCIES[item.priceCurrency] || item.priceCurrency)}</td>
                           <td style={{ padding: '8px 12px', textAlign: 'right', fontWeight: 700, color: hasChange ? (changePositive ? '#10b981' : 'var(--ws-red)') : 'var(--ws-text-3)' }}>
                             {hasChange ? `${changePositive ? '+' : ''}${item.changePct.toFixed(2)}%` : '—'}
@@ -1612,7 +1612,7 @@ export default function WorkspaceHome() {
               <div style={{ fontSize: '11px', fontWeight: 700, color: 'var(--ws-text)' }}>New Transaction</div>
               <div className="home-portfolio-trade-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '8px' }}>
                 <div>
-                  <label style={{ fontSize: '9px', color: 'var(--ws-text-3)', fontWeight: 700, textTransform: 'uppercase' }}>Ticker</label>
+                  <label className="text-[9px] text-ws-text-3 font-bold uppercase">Ticker</label>
                   <input
                     type="text"
                     value={txTicker}
@@ -1634,7 +1634,7 @@ export default function WorkspaceHome() {
                   />
                 </div>
                 <div>
-                  <label style={{ fontSize: '9px', color: 'var(--ws-text-3)', fontWeight: 700, textTransform: 'uppercase' }}>Shares</label>
+                  <label className="text-[9px] text-ws-text-3 font-bold uppercase">Shares</label>
                   <input
                     type="number"
                     step="any"
@@ -1700,7 +1700,7 @@ export default function WorkspaceHome() {
                   />
                 </div>
                 <div>
-                  <label style={{ fontSize: '9px', color: 'var(--ws-text-3)', fontWeight: 700, textTransform: 'uppercase' }}>Pie (Optional)</label>
+                  <label className="text-[9px] text-ws-text-3 font-bold uppercase">Pie (Optional)</label>
                   <input
                     type="text"
                     value={txPie}
@@ -1777,7 +1777,7 @@ export default function WorkspaceHome() {
           }
         }}
       >
-        <div style={{ display: 'flex', flexDirection: 'column' }}>
+        <div className="flex flex-col">
           {earnings.slice(0, 6).map((e, index) => (
             <div key={e.ticker + e.date + index} onClick={() => router.push(`/stock/${e.ticker}`)}
               style={{
@@ -1794,8 +1794,8 @@ export default function WorkspaceHome() {
             >
               <StockLogo ticker={e.ticker} name={e.ticker} size={22} />
               <div style={{ minWidth: 0, flex: 1 }}>
-                <div style={{ fontSize: '12px', fontWeight: 700, color: 'var(--ws-text)' }}>{e.ticker}</div>
-                <div style={{ fontSize: '10px', color: 'var(--ws-text-3)', marginTop: '2px' }}>
+                <div className="text-xs font-bold text-ws-text">{e.ticker}</div>
+                <div className="text-[10px] text-ws-text-3 mt-0.5">
                   {new Date(e.date).toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric' })}
                 </div>
               </div>
@@ -1845,7 +1845,7 @@ export default function WorkspaceHome() {
         }}
       >
         {/* Widget Tabs */}
-        <div style={{ display: 'flex', borderBottom: '1px solid var(--ws-border)', background: 'rgba(0,0,0,0.01)' }}>
+        <div className="flex border-b border-ws-border bg-black/[0.01]">
           {MOVER_TABS.map(({ key, label }) => (
             <button key={key} onClick={() => setActiveMoverTab(key)}
               style={{
@@ -1868,7 +1868,7 @@ export default function WorkspaceHome() {
         </div>
 
         {/* Tab contents */}
-        <div style={{ display: 'flex', flexDirection: 'column' }}>
+        <div className="flex flex-col">
           {movers ? (
             (() => {
               const activeTab = MOVER_TABS.find(t => t.key === activeMoverTab);
@@ -1890,7 +1890,7 @@ export default function WorkspaceHome() {
                   <div style={{ display: 'flex', alignItems: 'center', gap: '10px', minWidth: 0 }}>
                     <StockLogo ticker={s.ticker} name={s.name} size={20} />
                     <div>
-                      <div style={{ fontSize: '12px', fontWeight: 700, color: 'var(--ws-text)' }}>{s.ticker}</div>
+                      <div className="text-xs font-bold text-ws-text">{s.ticker}</div>
                       <div style={{ fontSize: '10px', color: 'var(--ws-text-3)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: '140px', marginTop: '2px' }}>{s.name}</div>
                     </div>
                   </div>
@@ -1899,7 +1899,7 @@ export default function WorkspaceHome() {
               ));
             })()
           ) : (
-            <div style={{ padding: '30px', textAlign: 'center', color: 'var(--ws-text-3)', fontSize: '12px' }}>Loading market data…</div>
+            <div className="p-[30px] text-center text-ws-text-3 text-xs">Loading market data…</div>
           )}
         </div>
       </Card>
@@ -1927,7 +1927,7 @@ export default function WorkspaceHome() {
         }}
       >
         {/* Widget Tabs */}
-        <div style={{ display: 'flex', borderBottom: '1px solid var(--ws-border)', background: 'rgba(0,0,0,0.01)' }}>
+        <div className="flex border-b border-ws-border bg-black/[0.01]">
           {['all', 'holdings'].map(tabKey => (
             <button key={tabKey} onClick={() => setNewsTab(tabKey)}
               style={{
@@ -1950,11 +1950,11 @@ export default function WorkspaceHome() {
         </div>
 
         {activeLoading ? (
-          <div style={{ padding: '30px', textAlign: 'center', color: 'var(--ws-text-3)', fontSize: '12px' }}>
+          <div className="p-[30px] text-center text-ws-text-3 text-xs">
             Loading {newsTab === 'holdings' ? 'holdings' : 'market'} news...
           </div>
         ) : activeFeed.length === 0 ? (
-          <div style={{ padding: '30px', textAlign: 'center', color: 'var(--ws-text-3)', fontSize: '12px' }}>
+          <div className="p-[30px] text-center text-ws-text-3 text-xs">
             {newsTab === 'holdings'
               ? (newsTickers.length === 0
                 ? 'Add positions or watchlist tickers to see news about them here.'
@@ -2137,7 +2137,7 @@ export default function WorkspaceHome() {
                 {/* Layout Mode Presets — desktop only, mobile always uses one fixed column */}
                 {!isMobile && (
                 <div>
-                  <div style={{ fontSize: '10px', fontWeight: 700, color: 'var(--ws-text-3)', textTransform: 'uppercase', marginBottom: '8px', letterSpacing: '0.5px' }}>
+                  <div className="text-[10px] font-bold text-ws-text-3 uppercase mb-2 tracking-[0.5px]">
                     Dashboard Layout
                   </div>
                   <div style={{ display: 'flex', gap: '6px' }}>
@@ -2199,7 +2199,7 @@ export default function WorkspaceHome() {
               <div className="home-config-popup-col-2">
                 {/* Active Widgets Checkboxes */}
                 <div>
-                  <div style={{ fontSize: '10px', fontWeight: 700, color: 'var(--ws-text-3)', textTransform: 'uppercase', marginBottom: '8px', letterSpacing: '0.5px' }}>
+                  <div className="text-[10px] font-bold text-ws-text-3 uppercase mb-2 tracking-[0.5px]">
                     Active Widgets
                   </div>
                   <div className="home-config-popup-widgets-list">

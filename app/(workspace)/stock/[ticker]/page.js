@@ -20,16 +20,6 @@ const fmtN = (v, d = 2) => sharedFmtN(v, d, 'N/A');
 const CURRENCY_SYMBOLS = { USD: '$', EUR: '€', GBP: '£', JPY: '¥', CNY: '¥', CHF: 'CHF ', CAD: 'C$', AUD: 'A$', HKD: 'HK$', INR: '₹', KRW: '₩', SEK: 'kr', NOK: 'kr', DKK: 'kr' };
 const curSym = (code) => !code || code === 'USD' ? '$' : (CURRENCY_SYMBOLS[code] || `${code} `);
 
-const S = {
-  card: { background: 'var(--ws-bg-1)', border: '1px solid var(--ws-border)', padding: '16px', marginBottom: '1px' },
-  label: { color: 'var(--ws-text-3)', fontSize: '10px', letterSpacing: '2px', marginBottom: '4px' },
-  val: { fontSize: '22px', fontWeight: 600, marginBottom: '2px' },
-  section: { color: 'var(--ws-text-3)', fontSize: '10px', letterSpacing: '2px', borderBottom: '1px solid var(--ws-border)', paddingBottom: '6px', marginBottom: '12px', marginTop: '24px' },
-  table: { width: '100%', borderCollapse: 'collapse', fontSize: '12px' },
-  tr: { borderBottom: '1px solid var(--ws-border)' },
-  td: { padding: '6px 0', color: 'var(--ws-text-3)' },
-  tdVal: { padding: '6px 0', textAlign: 'right', color: 'var(--ws-text)' },
-};
 
 const NAV = [
     { key: 'overview', label: 'OVERVIEW' },
@@ -248,8 +238,8 @@ export default function StockPage({ params }) {
         <div style={{ background: 'var(--ws-bg-2)', borderBottom: '1px solid var(--ws-border)', padding: '7px 16px' }}>
           <span style={{ fontSize: '10px', color: 'var(--ws-accent)', letterSpacing: '1px' }}>$ traq {ticker}</span>
         </div>
-        <div style={{ padding: '24px' }}>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+        <div className="p-6">
+          <div className="flex flex-col gap-2">
             {['CONNECTING TO SEC EDGAR...', 'FETCHING FINANCIALS...', 'COMPUTING QUALITY SCORE...'].map((line, i) => (
               <div key={i} style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
                 <span style={{ color: 'var(--ws-accent)', fontSize: '11px' }}>▶</span>
@@ -258,7 +248,7 @@ export default function StockPage({ params }) {
             ))}
             <div style={{ marginTop: '8px', display: 'flex', alignItems: 'center', gap: '10px' }}>
               <span style={{ color: 'var(--ws-text-3)', fontSize: '11px' }}>█░░░░░░░░░</span>
-              <span style={{ color: 'var(--ws-text-3)', fontSize: '10px', letterSpacing: '1px' }}>LOADING {ticker}...</span>
+              <span className="text-ws-text-3 text-[10px] tracking-[1px]">LOADING {ticker}...</span>
             </div>
           </div>
         </div>
@@ -276,7 +266,7 @@ export default function StockPage({ params }) {
           <div style={{ display: 'flex', gap: '8px', alignItems: 'flex-start' }}>
             <span style={{ color: 'var(--ws-red)', fontSize: '11px', marginTop: '1px' }}>✗</span>
             <span style={{ color: 'var(--ws-text-3)', fontSize: '11px', letterSpacing: '0.5px', lineHeight: 1.7 }}>
-              TICKER <strong style={{ color: 'var(--ws-text)' }}>{ticker}</strong> NOT FOUND IN SEC EDGAR OR FINNHUB.{'\n'}
+              TICKER <strong className="text-ws-text">{ticker}</strong> NOT FOUND IN SEC EDGAR OR FINNHUB.{'\n'}
               CHECK THE SYMBOL AND TRY AGAIN.
             </span>
           </div>
@@ -376,7 +366,7 @@ export default function StockPage({ params }) {
   })();
 
   return (
-    <div style={{ padding: '24px' }}>
+    <div className="p-6">
 
       <OnboardingBanner />
 
@@ -592,7 +582,7 @@ export default function StockPage({ params }) {
                       color: data.debtToEquity == null ? 'var(--ws-text-3)' : data.debtToEquity < 0 ? 'var(--ws-red)' : data.debtToEquity < 1 ? 'var(--ws-accent)' : data.debtToEquity < 2 ? 'var(--ws-text-2)' : 'var(--ws-red)',
                     },
                   ].map((m, i) => (
-                    <div key={i} style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                    <div key={i} className="flex flex-col gap-2">
                       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', gap: '8px' }}>
                         <span style={{ fontSize: '13px', color: 'var(--ws-text-2)', lineHeight: 1.3 }}>{m.label}</span>
                         <span style={{ fontSize: '12px', fontWeight: 700, flexShrink: 0, color: m.color }}>{m.value}</span>
@@ -662,7 +652,7 @@ export default function StockPage({ params }) {
                 const LIMIT = 240;
                 const short = data.description.slice(0, LIMIT);
                 return (
-                  <div style={{ background: 'var(--ws-bg-1)', border: '1px solid var(--ws-border)', padding: '16px 18px' }}>
+                  <div className="bg-ws-bg-1 border border-ws-border px-[18px] py-4">
                     <div style={{ fontSize: '10px', color: 'var(--ws-text-3)', fontFamily: "'JetBrains Mono', monospace", letterSpacing: '1.5px', fontWeight: 700, marginBottom: '8px' }}>ABOUT</div>
                     <div style={{ color: 'var(--ws-text-2)', fontSize: '12px', lineHeight: 1.75 }}>
                       {expanded ? data.description : `${short}${data.description.length > LIMIT ? '…' : ''}`}
@@ -679,7 +669,7 @@ export default function StockPage({ params }) {
 
               {/* Fair value */}
               {fairValue && (
-                <div style={{ background: 'var(--ws-bg-1)', border: '1px solid var(--ws-border)', padding: '16px 18px' }}>
+                <div className="bg-ws-bg-1 border border-ws-border px-[18px] py-4">
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: '12px' }}>
                     <div style={{ fontWeight: 700, fontSize: '13px', color: 'var(--ws-text)' }}>Fair value</div>
                     <div style={{ fontSize: '11px', fontWeight: 600, letterSpacing: '1px', color: fairValue.tagColor, padding: '3px 8px', backgroundColor: 'var(--ws-bg-2)' }}>{fairValue.tag}</div>
@@ -692,9 +682,9 @@ export default function StockPage({ params }) {
                   </div>
                   <div style={{ marginTop: '12px', fontSize: '12px', color: 'var(--ws-text-2)', lineHeight: 1.6 }}>
                     {fairValue.negative ? (
-                      <>Negative earnings — no positive estimate. Price: <b style={{ color: 'var(--ws-text)' }}>{curSym(data.currency)}{price?.toFixed(2)}</b></>
+                      <>Negative earnings — no positive estimate. Price: <b className="text-ws-text">{curSym(data.currency)}{price?.toFixed(2)}</b></>
                     ) : (
-                      <>Price: <b style={{ color: 'var(--ws-text)' }}>{curSym(data.currency)}{price?.toFixed(2)}</b> · Estimate: <b style={{ color: 'var(--ws-text)' }}>{curSym(data.currency)}{fairValue.estimate.toFixed(2)}</b></>
+                      <>Price: <b className="text-ws-text">{curSym(data.currency)}{price?.toFixed(2)}</b> · Estimate: <b className="text-ws-text">{curSym(data.currency)}{fairValue.estimate.toFixed(2)}</b></>
                     )}
                   </div>
                 </div>
@@ -702,7 +692,7 @@ export default function StockPage({ params }) {
 
               {/* Upcoming Event */}
               {(!loadingEvent || upcomingEvent) && (
-                <div style={{ background: 'var(--ws-bg-1)', border: '1px solid var(--ws-border)', padding: '16px 18px' }}>
+                <div className="bg-ws-bg-1 border border-ws-border px-[18px] py-4">
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
                     <div style={{ fontSize: '10px', color: 'var(--ws-text-3)', fontFamily: "'JetBrains Mono', monospace", letterSpacing: '1.5px', fontWeight: 700 }}>UPCOMING EVENT</div>
                     {upcomingEvent && (() => {
@@ -747,13 +737,13 @@ export default function StockPage({ params }) {
                         <span>
                           {new Date(upcomingEvent.date + 'T00:00:00').toLocaleDateString('en-US', { weekday: 'long', month: 'short', day: 'numeric', year: 'numeric' })}
                         </span>
-                        <span style={{ color: 'var(--ws-text-3)' }}> · </span>
+                        <span className="text-ws-text-3"> · </span>
                         <span>
                           {upcomingEvent.hour === 'bmo' ? 'Before Open' : upcomingEvent.hour === 'amc' ? 'After Close' : 'Time TBD'}
                         </span>
                         {upcomingEvent.epsEstimate != null && (
                           <>
-                            <span style={{ color: 'var(--ws-text-3)' }}> · </span>
+                            <span className="text-ws-text-3"> · </span>
                             <span>Est. EPS: ${upcomingEvent.epsEstimate.toFixed(2)}</span>
                           </>
                         )}
@@ -778,7 +768,7 @@ export default function StockPage({ params }) {
               )}
 
               {/* Share */}
-              <div style={{ background: 'var(--ws-bg-1)', border: '1px solid var(--ws-border)', padding: '16px 18px' }}>
+              <div className="bg-ws-bg-1 border border-ws-border px-[18px] py-4">
                 <div style={{ fontSize: '10px', color: 'var(--ws-text-3)', fontFamily: "'JetBrains Mono', monospace", letterSpacing: '1.5px', fontWeight: 700, marginBottom: '12px' }}>SHARE</div>
                  <ShareCardComponent
                   ticker={ticker}
@@ -802,7 +792,7 @@ export default function StockPage({ params }) {
               </div>
 
               {/* Actions */}
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+              <div className="flex flex-col gap-2">
                 <a href={data.cik ? `https://www.sec.gov/cgi-bin/browse-edgar?action=getcompany&CIK=${data.cik}&type=10-K` : `https://www.sec.gov/cgi-bin/browse-edgar?action=getcompany&company=${encodeURIComponent(data.name)}&type=10-K&dateb=&owner=include&count=10&search_text=&action=getcompany`}
                   target="_blank" rel="noopener noreferrer"
                   style={{ textAlign: 'center', fontSize: '12px', padding: '10px 8px', background: 'var(--ws-bg-1)', border: '1px solid var(--ws-border)', color: 'var(--ws-text)', textDecoration: 'none' }}>
@@ -958,7 +948,7 @@ export default function StockPage({ params }) {
           </div>
         </div>
 
-          <div style={{ color: 'var(--ws-text-3)', fontSize: '10px', letterSpacing: '2px', borderBottom: '1px solid var(--ws-border)', paddingBottom: '6px', marginBottom: '12px' }}>CORE BUSINESS BREAKDOWN</div>
+          <div className="text-ws-text-3 text-[10px] tracking-[2px] border-b border-ws-border pb-1.5 mb-3">CORE BUSINESS BREAKDOWN</div>
           <div className="grid-4" style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '1px', background: 'var(--ws-border)', marginBottom: '24px' }}>
             {[
               { label: 'ROIC', val: fmtP(data.roic), score: roicScore, desc: `Threshold: ${(roicThreshold * 100).toFixed(0)}% for ${data.sector || 'this sector'}` },
@@ -966,33 +956,33 @@ export default function StockPage({ params }) {
               { label: 'OP. MARGIN', val: fmtP(data.opMargin), score: omScore, desc: `Threshold: ${(omThreshold * 100).toFixed(0)}% for ${data.sector || 'this sector'}` },
               { label: 'DEBT/EQUITY', val: fmtN(data.debtToEquity), score: deScore, desc: 'Lower is better' },
             ].map(m => (
-              <div key={m.label} style={{ background: 'var(--ws-bg-1)', padding: '16px' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
-                  <span style={{ color: 'var(--ws-text-3)', fontSize: '10px', letterSpacing: '1px' }}>{m.label}</span>
+              <div key={m.label} className="bg-ws-bg-1 p-4">
+                <div className="flex justify-between mb-2">
+                  <span className="text-ws-text-3 text-[10px] tracking-[1px]">{m.label}</span>
                   <span style={{ color: scoreColor(m.score), fontSize: '10px' }}>{m.score.toFixed(1)}/5</span>
                 </div>
                 <div style={{ fontSize: '28px', fontWeight: 600, color: scoreColor(m.score), marginBottom: '4px' }}>{m.val}</div>
-                <div style={{ color: 'var(--ws-text-3)', fontSize: '10px' }}>{m.desc}</div>
+                <div className="text-ws-text-3 text-[10px]">{m.desc}</div>
               </div>
             ))}
           </div>
 
-          <div style={{ color: 'var(--ws-text-3)', fontSize: '10px', letterSpacing: '2px', borderBottom: '1px solid var(--ws-border)', paddingBottom: '6px', marginBottom: '12px' }}>OPPORTUNITY BREAKDOWN</div>
+          <div className="text-ws-text-3 text-[10px] tracking-[2px] border-b border-ws-border pb-1.5 mb-3">OPPORTUNITY BREAKDOWN</div>
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '1px', background: 'var(--ws-border)', marginBottom: '24px' }}>
             {[
               { label: 'P/FCF', val: fmtN(data.pfcf), score: pfcfScore, desc: data.pfcf < 20 ? 'Attractive entry' : data.pfcf < 35 ? 'Fair valuation' : 'Expensive' },
               { label: 'FCF YIELD', val: data.fcfYield ? `${data.fcfYield}%` : 'N/A', score: fcfYieldScore, desc: data.fcfYield > 5 ? 'Strong yield' : data.fcfYield > 2 ? 'Moderate yield' : 'Low yield' },
             ].map(m => (
-              <div key={m.label} style={{ background: 'var(--ws-bg-1)', padding: '16px' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
-                  <span style={{ color: 'var(--ws-text-3)', fontSize: '10px', letterSpacing: '1px' }}>{m.label}</span>
+              <div key={m.label} className="bg-ws-bg-1 p-4">
+                <div className="flex justify-between mb-2">
+                  <span className="text-ws-text-3 text-[10px] tracking-[1px]">{m.label}</span>
                   <span style={{ color: scoreColor(m.score), fontSize: '10px' }}>{m.score.toFixed(1)}/5</span>
                 </div>
                 <div style={{ fontSize: '28px', fontWeight: 600, color: scoreColor(m.score), marginBottom: '4px' }}>{m.val}</div>
-                <div style={{ color: 'var(--ws-text-3)', fontSize: '10px' }}>{m.desc}</div>
+                <div className="text-ws-text-3 text-[10px]">{m.desc}</div>
               </div>
             ))}
-            <div style={{ background: 'var(--ws-bg-1)', padding: '16px' }}>
+            <div className="bg-ws-bg-1 p-4">
               <div style={{ color: 'var(--ws-text-3)', fontSize: '10px', letterSpacing: '1px', marginBottom: '8px' }}>52W RANGE</div>
               {data.high52 && data.low52 && data.currentPrice ? (() => {
                 const pct = Math.round(((data.currentPrice - data.low52) / (data.high52 - data.low52)) * 100);
@@ -1012,20 +1002,20 @@ export default function StockPage({ params }) {
                     </div>
                   </>
                 );
-              })() : <div style={{ color: 'var(--ws-text-3)', fontSize: '10px' }}>N/A</div>}
+              })() : <div className="text-ws-text-3 text-[10px]">N/A</div>}
             </div>
           </div>
 
-          <div style={{ color: 'var(--ws-text-3)', fontSize: '10px', letterSpacing: '2px', borderBottom: '1px solid var(--ws-border)', paddingBottom: '6px', marginBottom: '12px' }}>GROWTH QUALITY BREAKDOWN</div>
+          <div className="text-ws-text-3 text-[10px] tracking-[2px] border-b border-ws-border pb-1.5 mb-3">GROWTH QUALITY BREAKDOWN</div>
           <div className="grid-3" style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '1px', background: 'var(--ws-border)', marginBottom: '24px' }}>
             {[
               { label: 'REVENUE GROWTH', val: data.revGrowth !== null ? `${data.revGrowth > 0 ? '+' : ''}${data.revGrowth}%` : 'N/A', score: revGrowthScore, chart: revChart },
               { label: 'FCF TREND', val: fcfTrend === 1 ? 'IMPROVING' : fcfTrend === 0 ? 'DECLINING' : 'N/A', score: fcfTrend === 1 ? 4 : fcfTrend === 0 ? 2 : 2.5, chart: fcfChart, color: 'var(--ws-text-2)' },
               { label: 'MARGIN TREND', val: marginTrend === 1 ? 'EXPANDING' : marginTrend === 0 ? 'COMPRESSING' : 'N/A', score: marginTrend === 1 ? 4 : marginTrend === 0 ? 2 : 2.5, chart: marginChart, isLine: true },
             ].map(m => (
-              <div key={m.label} style={{ background: 'var(--ws-bg-1)', padding: '16px' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
-                  <span style={{ color: 'var(--ws-text-3)', fontSize: '10px', letterSpacing: '1px' }}>{m.label}</span>
+              <div key={m.label} className="bg-ws-bg-1 p-4">
+                <div className="flex justify-between mb-2">
+                  <span className="text-ws-text-3 text-[10px] tracking-[1px]">{m.label}</span>
                   <span style={{ color: scoreColor(m.score), fontSize: '10px' }}>{m.score.toFixed(1)}/5</span>
                 </div>
                 <div style={{ fontSize: '22px', fontWeight: 600, color: scoreColor(m.score), marginBottom: '8px' }}>{m.val}</div>
@@ -1034,7 +1024,7 @@ export default function StockPage({ params }) {
             ))}
           </div>
 
-          <div style={{ color: 'var(--ws-text-3)', fontSize: '10px', letterSpacing: '1px' }}>
+          <div className="text-ws-text-3 text-[10px] tracking-[1px]">
             SECTOR-ADJUSTED THRESHOLDS · CBS = ROIC×40% + GROSS MARGIN×25% + OP MARGIN×25% + D/E×10% · OPPO = P/FCF×55% + FCF YIELD×45% · GQS = REV GROWTH×60% + TREND×40%
           </div>
         </>
@@ -1059,9 +1049,9 @@ export default function StockPage({ params }) {
               <div style={{ marginBottom: '16px' }}>
   <div className="grid-4" style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '10px' }}>
 
-    <div style={{ background: 'var(--ws-bg-1)', border: '1px solid var(--ws-border)', padding: '16px' }}>
-      <div style={{ color: 'var(--ws-text-3)', fontSize: '10px', letterSpacing: '2px', marginBottom: '12px' }}>VALUATION</div>
-      <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '11px' }}>
+    <div className="bg-ws-bg-1 border border-ws-border p-4">
+      <div className="text-ws-text-3 text-[10px] tracking-[2px] mb-3">VALUATION</div>
+      <table className="w-full border-collapse text-[11px]">
         <tbody>
           {[
             { label: 'Market Cap', val: fmt(data.marketCap) },
@@ -1072,8 +1062,8 @@ export default function StockPage({ params }) {
             { label: 'FCF Yield', val: data.fcfYield ? `${data.fcfYield}%` : 'N/A', color: data.fcfYield > 5 ? 'var(--ws-accent)' : data.fcfYield > 0 ? 'var(--ws-text-2)' : 'var(--ws-red)' },
             { label: 'Div. Yield', val: data.dividendYield ? `${(+data.dividendYield).toFixed(2)}%` : '—' },
           ].map(r => (
-            <tr key={r.label} style={{ borderBottom: '1px solid var(--ws-border)' }}>
-              <td style={{ padding: '4px 0', color: 'var(--ws-text-3)', fontSize: '10px' }}>{r.label}</td>
+            <tr key={r.label} className="border-b border-ws-border">
+              <td className="py-1 text-ws-text-3 text-[10px]">{r.label}</td>
               <td style={{ padding: '4px 0', textAlign: 'right', color: r.color || 'var(--ws-text)', fontSize: '11px', fontWeight: 500 }}>{r.val}</td>
             </tr>
           ))}
@@ -1081,9 +1071,9 @@ export default function StockPage({ params }) {
       </table>
     </div>
 
-    <div style={{ background: 'var(--ws-bg-1)', border: '1px solid var(--ws-border)', padding: '16px' }}>
-      <div style={{ color: 'var(--ws-text-3)', fontSize: '10px', letterSpacing: '2px', marginBottom: '12px' }}>PROFITABILITY</div>
-      <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '11px' }}>
+    <div className="bg-ws-bg-1 border border-ws-border p-4">
+      <div className="text-ws-text-3 text-[10px] tracking-[2px] mb-3">PROFITABILITY</div>
+      <table className="w-full border-collapse text-[11px]">
         <tbody>
           {[
             { label: 'Gross Margin', val: fmtP(data.grossMargin), color: data.grossMargin > 50 ? 'var(--ws-accent)' : data.grossMargin > 30 ? 'var(--ws-text-2)' : 'var(--ws-red)' },
@@ -1095,8 +1085,8 @@ export default function StockPage({ params }) {
             { label: 'SBC', val: fmt(data.sbcVal) },
             { label: 'Dividends Paid', val: fmt(data.dividendsPaidVal) },
           ].map(r => (
-            <tr key={r.label} style={{ borderBottom: '1px solid var(--ws-border)' }}>
-              <td style={{ padding: '4px 0', color: 'var(--ws-text-3)', fontSize: '10px' }}>{r.label}</td>
+            <tr key={r.label} className="border-b border-ws-border">
+              <td className="py-1 text-ws-text-3 text-[10px]">{r.label}</td>
               <td style={{ padding: '4px 0', textAlign: 'right', color: r.color || 'var(--ws-text)', fontSize: '11px', fontWeight: 500 }}>{r.val}</td>
             </tr>
           ))}
@@ -1104,9 +1094,9 @@ export default function StockPage({ params }) {
       </table>
     </div>
 
-    <div style={{ background: 'var(--ws-bg-1)', border: '1px solid var(--ws-border)', padding: '16px' }}>
-      <div style={{ color: 'var(--ws-text-3)', fontSize: '10px', letterSpacing: '2px', marginBottom: '12px' }}>BALANCE SHEET</div>
-      <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '11px' }}>
+    <div className="bg-ws-bg-1 border border-ws-border p-4">
+      <div className="text-ws-text-3 text-[10px] tracking-[2px] mb-3">BALANCE SHEET</div>
+      <table className="w-full border-collapse text-[11px]">
         <tbody>
           {[
             { label: 'Total Assets', val: fmt(data.assetsVal) },
@@ -1118,8 +1108,8 @@ export default function StockPage({ params }) {
             { label: 'D/E Ratio', val: fmtN(data.debtToEquity), color: data.debtToEquity < 1 ? 'var(--ws-accent)' : data.debtToEquity < 2 ? 'var(--ws-text-2)' : 'var(--ws-red)' },
             { label: 'Current Ratio', val: data.currentAssetsVal && data.currentLiabilitiesVal ? fmtN(data.currentAssetsVal / data.currentLiabilitiesVal) : 'N/A', color: data.currentAssetsVal / data.currentLiabilitiesVal > 2 ? 'var(--ws-accent)' : data.currentAssetsVal / data.currentLiabilitiesVal > 1 ? 'var(--ws-text-2)' : 'var(--ws-red)' },
           ].map(r => (
-            <tr key={r.label} style={{ borderBottom: '1px solid var(--ws-border)' }}>
-              <td style={{ padding: '4px 0', color: 'var(--ws-text-3)', fontSize: '10px' }}>{r.label}</td>
+            <tr key={r.label} className="border-b border-ws-border">
+              <td className="py-1 text-ws-text-3 text-[10px]">{r.label}</td>
               <td style={{ padding: '4px 0', textAlign: 'right', color: r.color || 'var(--ws-text)', fontSize: '11px', fontWeight: 500 }}>{r.val}</td>
             </tr>
           ))}
@@ -1127,9 +1117,9 @@ export default function StockPage({ params }) {
       </table>
     </div>
 
-    <div style={{ background: 'var(--ws-bg-1)', border: '1px solid var(--ws-border)', padding: '16px' }}>
-      <div style={{ color: 'var(--ws-text-3)', fontSize: '10px', letterSpacing: '2px', marginBottom: '12px' }}>EFFICIENCY</div>
-      <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '11px' }}>
+    <div className="bg-ws-bg-1 border border-ws-border p-4">
+      <div className="text-ws-text-3 text-[10px] tracking-[2px] mb-3">EFFICIENCY</div>
+      <table className="w-full border-collapse text-[11px]">
         <tbody>
           {[
             { label: 'Cash Conv. Cycle', val: data.ccc != null ? `${data.ccc}d` : 'N/A', color: data.ccc != null && data.ccc < 30 ? 'var(--ws-accent)' : data.ccc != null && data.ccc < 60 ? 'var(--ws-text-2)' : data.ccc != null ? 'var(--ws-red)' : 'var(--ws-text-3)' },
@@ -1138,8 +1128,8 @@ export default function StockPage({ params }) {
             { label: 'DIO', val: data.dio != null ? `${data.dio}d` : 'N/A' },
             { label: 'DPO', val: data.dpo != null ? `${data.dpo}d` : 'N/A' },
           ].map(r => (
-            <tr key={r.label} style={{ borderBottom: '1px solid var(--ws-border)' }}>
-              <td style={{ padding: '4px 0', color: 'var(--ws-text-3)', fontSize: '10px' }}>{r.label}</td>
+            <tr key={r.label} className="border-b border-ws-border">
+              <td className="py-1 text-ws-text-3 text-[10px]">{r.label}</td>
               <td style={{ padding: '4px 0', textAlign: 'right', color: r.color || 'var(--ws-text)', fontSize: '11px', fontWeight: 500 }}>{r.val}</td>
             </tr>
           ))}
@@ -1151,8 +1141,8 @@ export default function StockPage({ params }) {
 </div>
 
 <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '10px', marginBottom: '16px' }}>
-  <div style={{ background: 'var(--ws-bg-1)', border: '1px solid var(--ws-border)', padding: '16px' }}>
-    <div style={{ color: 'var(--ws-text-3)', fontSize: '10px', letterSpacing: '2px', marginBottom: '12px' }}>PER SHARE & MARKET DATA</div>
+  <div className="bg-ws-bg-1 border border-ws-border p-4">
+    <div className="text-ws-text-3 text-[10px] tracking-[2px] mb-3">PER SHARE & MARKET DATA</div>
     <div className="per-share-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: '10px' }}>
       {[
         { label: 'EPS (TTM)', val: data.eps ? `${curSym(data.currency)}${data.eps}` : 'N/A' },
@@ -1162,7 +1152,7 @@ export default function StockPage({ params }) {
         { label: '52W Low', val: data.low52 ? `${curSym(data.currency)}${data.low52}` : 'N/A' },
       ].map(r => (
         <div key={r.label} style={{ background: 'var(--ws-bg-2)', padding: '12px' }}>
-          <div style={{ color: 'var(--ws-text-3)', fontSize: '10px', letterSpacing: '1px', marginBottom: '6px' }}>{r.label}</div>
+          <div className="text-ws-text-3 text-[10px] tracking-[1px] mb-1.5">{r.label}</div>
           <div style={{ color: 'var(--ws-text)', fontSize: '13px', fontWeight: 600 }}>{r.val}</div>
         </div>
       ))}
@@ -1176,7 +1166,7 @@ export default function StockPage({ params }) {
                 </div>
               </div>
 
-              <div style={{ color: 'var(--ws-text-3)', fontSize: '10px', letterSpacing: '2px', borderBottom: '1px solid var(--ws-border)', paddingBottom: '6px', marginBottom: '12px' }}>PROFITABILITY & RETURNS</div>
+              <div className="text-ws-text-3 text-[10px] tracking-[2px] border-b border-ws-border pb-1.5 mb-3">PROFITABILITY & RETURNS</div>
               <div className="grid-4" style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '10px', marginBottom: '16px' }}>
                 {[
                   { label: 'REVENUE (TTM)', val: fmt(data.revVal), sub: data.revGrowth !== null ? `${data.revGrowth > 0 ? '+' : ''}${data.revGrowth}% YOY` : null, good: data.revGrowth > 0 },
@@ -1185,14 +1175,14 @@ export default function StockPage({ params }) {
                   { label: 'ROE', val: fmtP(data.roe), sub: data.roe > 15 ? 'STRONG RETURN' : 'MODERATE RETURN', good: data.roe > 15 },
                 ].map(m => (
                   <div key={m.label} style={{ background: 'var(--ws-bg-1)', border: '1px solid var(--ws-border)', padding: '14px' }}>
-                    <div style={{ color: 'var(--ws-text-3)', fontSize: '10px', letterSpacing: '1px', marginBottom: '6px' }}>{m.label}</div>
+                    <div className="text-ws-text-3 text-[10px] tracking-[1px] mb-1.5">{m.label}</div>
                     <div style={{ fontSize: '20px', fontWeight: 600, marginBottom: '4px', color: 'var(--ws-text)' }}>{m.val}</div>
                     {m.sub && <div style={{ color: m.good ? 'var(--ws-accent)' : 'var(--ws-red)', fontSize: '10px', letterSpacing: '0.5px' }}>{m.sub}</div>}
                   </div>
                 ))}
               </div>
 
-              <div style={{ color: 'var(--ws-text-3)', fontSize: '10px', letterSpacing: '2px', borderBottom: '1px solid var(--ws-border)', paddingBottom: '6px', marginBottom: '12px' }}>CASH FLOW & BALANCE SHEET</div>
+              <div className="text-ws-text-3 text-[10px] tracking-[2px] border-b border-ws-border pb-1.5 mb-3">CASH FLOW & BALANCE SHEET</div>
               <div className="grid-4" style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '10px', marginBottom: '16px' }}>
                 {[
                   { label: 'FREE CASH FLOW', val: fmt(data.fcfVal), sub: data.fcfVal > 0 ? 'POSITIVE FCF' : 'NEGATIVE FCF', good: data.fcfVal > 0 },
@@ -1201,7 +1191,7 @@ export default function StockPage({ params }) {
                   { label: 'CASH & EQUIV.', val: fmt(data.cashVal), sub: null },
                 ].map(m => (
                   <div key={m.label} style={{ background: 'var(--ws-bg-1)', border: '1px solid var(--ws-border)', padding: '14px' }}>
-                    <div style={{ color: 'var(--ws-text-3)', fontSize: '10px', letterSpacing: '1px', marginBottom: '6px' }}>{m.label}</div>
+                    <div className="text-ws-text-3 text-[10px] tracking-[1px] mb-1.5">{m.label}</div>
                     <div style={{ fontSize: '20px', fontWeight: 600, marginBottom: '4px', color: 'var(--ws-text)' }}>{m.val}</div>
                     {m.sub && <div style={{ color: m.good ? 'var(--ws-accent)' : 'var(--ws-red)', fontSize: '10px', letterSpacing: '0.5px' }}>{m.sub}</div>}
                   </div>
@@ -1213,8 +1203,8 @@ export default function StockPage({ params }) {
                   { title: 'REVENUE', chart: revChart, color: 'var(--ws-text-2)', type: 'line' },
                   { title: 'FREE CASH FLOW', chart: fcfChart, color: 'var(--ws-accent)', type: 'line' },
                 ].map(({ title, chart, color, type }) => (
-                  <div key={title} style={{ background: 'var(--ws-bg-1)', border: '1px solid var(--ws-border)', padding: '16px' }}>
-                    <div style={{ color: 'var(--ws-text-3)', fontSize: '10px', letterSpacing: '2px', marginBottom: '12px' }}>{title}</div>
+                  <div key={title} className="bg-ws-bg-1 border border-ws-border p-4">
+                    <div className="text-ws-text-3 text-[10px] tracking-[2px] mb-3">{title}</div>
                     <MiniLine data={chart} color={color} />
                   </div>
                 ))}
@@ -1246,11 +1236,11 @@ export default function StockPage({ params }) {
         return Math.abs(v) >= 1e9 ? `$${(v/1e9).toFixed(1)}B` : Math.abs(v) >= 1e6 ? `$${(v/1e6).toFixed(0)}M` : `$${v.toLocaleString()}`;
       };
       return (
-        <div style={{ overflowX: 'auto' }}>
+        <div className="overflow-x-auto">
           <div style={{ color: 'var(--ws-text-3)', fontSize: '10px', letterSpacing: '1px', marginBottom: '8px' }}>All values in USD · Source: SEC EDGAR</div>
-          <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '11px', minWidth: '700px' }}>
+          <table className="w-full border-collapse text-[11px] min-w-[700px]">
             <thead>
-              <tr style={{ borderBottom: '1px solid var(--ws-border)' }}>
+              <tr className="border-b border-ws-border">
                 <th style={{ padding: '8px 0', textAlign: 'left', fontWeight: 400, fontSize: '10px', letterSpacing: '1px', color: 'var(--ws-text-3)', width: '180px' }}>METRIC</th>
                 {years.map(y => <th key={y} style={{ padding: '8px 12px', textAlign: 'right', fontWeight: 400, fontSize: '10px', color: 'var(--ws-text-3)' }}>{y}</th>)}
                 <th style={{ padding: '8px 12px', textAlign: 'right', fontWeight: 600, fontSize: '10px', color: 'var(--ws-accent)' }}>TTM</th>
@@ -1258,7 +1248,7 @@ export default function StockPage({ params }) {
             </thead>
             <tbody>
               {rows.map((row, i) => {
-                if (row.divider) return <tr key={i}><td colSpan={years.length + 2} style={{ padding: '4px 0', borderBottom: '1px solid var(--ws-border)' }} /></tr>;
+                if (row.divider) return <tr key={i}><td colSpan={years.length + 2} className="py-1 border-b border-ws-border" /></tr>;
                 return (
                   <tr key={i} style={{ borderBottom: '1px solid var(--ws-border)', background: i % 2 === 0 ? 'transparent' : 'var(--ws-bg-1)' }}>
                     <td style={{ padding: '6px 0', paddingLeft: row.indent ? '16px' : '0', color: row.bold ? 'var(--ws-text)' : 'var(--ws-text-3)', fontWeight: row.bold ? 600 : 400, fontSize: '11px' }}>{row.label}</td>
@@ -1303,7 +1293,7 @@ export default function StockPage({ params }) {
       return (
         <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '11px', maxWidth: '500px' }}>
           <thead>
-            <tr style={{ borderBottom: '1px solid var(--ws-border)' }}>
+            <tr className="border-b border-ws-border">
               <th style={{ padding: '8px 0', textAlign: 'left', fontWeight: 400, fontSize: '10px', color: 'var(--ws-text-3)' }}>METRIC</th>
               <th style={{ padding: '8px 12px', textAlign: 'right', fontWeight: 600, fontSize: '10px', color: 'var(--ws-accent)' }}>TTM</th>
             </tr>
@@ -1312,7 +1302,7 @@ export default function StockPage({ params }) {
             {rows.map((row, i) => {
               if (row.section) return <tr key={i}><td colSpan={2} style={{ padding: '10px 0 4px', color: 'var(--ws-accent)', fontSize: '10px', letterSpacing: '2px', borderBottom: '1px solid var(--ws-border)' }}>{row.label}</td></tr>;
               return (
-                <tr key={i} style={{ borderBottom: '1px solid var(--ws-border)' }}>
+                <tr key={i} className="border-b border-ws-border">
                   <td style={{ padding: '6px 0', color: row.bold ? 'var(--ws-text)' : 'var(--ws-text-3)', fontWeight: row.bold ? 600 : 400 }}>{row.label}</td>
                   <td style={{ padding: '6px 12px', textAlign: 'right', color: row.color || (row.green ? 'var(--ws-accent)' : row.neg ? 'var(--ws-red)' : 'var(--ws-text)'), fontWeight: row.bold ? 600 : 400 }}>{fmtV(row.val, row)}</td>
                 </tr>
@@ -1340,10 +1330,10 @@ export default function StockPage({ params }) {
         return Math.abs(v) >= 1e9 ? `$${(v/1e9).toFixed(1)}B` : Math.abs(v) >= 1e6 ? `$${(v/1e6).toFixed(0)}M` : `$${v.toLocaleString()}`;
       };
       return (
-        <div style={{ overflowX: 'auto' }}>
-          <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '11px', minWidth: '700px' }}>
+        <div className="overflow-x-auto">
+          <table className="w-full border-collapse text-[11px] min-w-[700px]">
             <thead>
-              <tr style={{ borderBottom: '1px solid var(--ws-border)' }}>
+              <tr className="border-b border-ws-border">
                 <th style={{ padding: '8px 0', textAlign: 'left', fontWeight: 400, fontSize: '10px', color: 'var(--ws-text-3)', width: '200px' }}>METRIC</th>
                 {years.map(y => <th key={y} style={{ padding: '8px 12px', textAlign: 'right', fontWeight: 400, fontSize: '10px', color: 'var(--ws-text-3)' }}>{y}</th>)}
                 <th style={{ padding: '8px 12px', textAlign: 'right', fontWeight: 600, fontSize: '10px', color: 'var(--ws-accent)' }}>TTM</th>
@@ -1351,7 +1341,7 @@ export default function StockPage({ params }) {
             </thead>
             <tbody>
               {rows.map((row, i) => {
-                if (row.divider) return <tr key={i}><td colSpan={years.length + 2} style={{ padding: '4px 0', borderBottom: '1px solid var(--ws-border)' }} /></tr>;
+                if (row.divider) return <tr key={i}><td colSpan={years.length + 2} className="py-1 border-b border-ws-border" /></tr>;
                 return (
                   <tr key={i} style={{ borderBottom: '1px solid var(--ws-border)', background: i % 2 === 0 ? 'transparent' : 'var(--ws-bg-1)' }}>
                     <td style={{ padding: '6px 0', paddingLeft: row.indent ? '16px' : '0', color: row.bold ? 'var(--ws-text)' : 'var(--ws-text-3)', fontWeight: row.bold ? 600 : 400 }}>{row.label}</td>
@@ -1379,15 +1369,15 @@ export default function StockPage({ params }) {
         {/* DCF TAB */}
         {tab === 'dcf' && (
           <div>
-            <div style={S.section}>GRAHAM INTRINSIC VALUE — V = EPS × (8.5 + 2g)</div>
+            <div className="text-ws-text-3 text-[10px] tracking-[2px] border-b border-ws-border pb-1.5 mb-3 mt-6">GRAHAM INTRINSIC VALUE — V = EPS × (8.5 + 2g)</div>
 
             {data.eps ? (
               <>
                 <div style={{ background: 'var(--ws-bg-1)', border: '1px solid var(--ws-border)', padding: '16px', marginBottom: '24px', fontSize: '11px', color: 'var(--ws-text-2)', lineHeight: 1.8 }}>
                   <span style={{ color: 'var(--ws-accent)' }}>V = EPS × (8.5 + 2g) × (4.4/5.5)</span> &nbsp;·&nbsp;
-                  EPS: <span style={{ color: 'var(--ws-text)' }}>{curSym(data.currency)}{data.eps}</span> &nbsp;·&nbsp;
-                  5Y EPS CAGR (g): <span style={{ color: 'var(--ws-text)' }}>{data.epsCagr !== null ? `${data.epsCagr}%` : 'N/A'}</span> &nbsp;·&nbsp;
-                  <span style={{ color: 'var(--ws-text-3)' }}>Benjamin Graham formula · Not investment advice</span>
+                  EPS: <span className="text-ws-text">{curSym(data.currency)}{data.eps}</span> &nbsp;·&nbsp;
+                  5Y EPS CAGR (g): <span className="text-ws-text">{data.epsCagr !== null ? `${data.epsCagr}%` : 'N/A'}</span> &nbsp;·&nbsp;
+                  <span className="text-ws-text-3">Benjamin Graham formula · Not investment advice</span>
                 </div>
 
                 <div className="grid-3" style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '1px', background: 'var(--ws-border)', marginBottom: '24px' }}>
@@ -1402,7 +1392,7 @@ export default function StockPage({ params }) {
                     const underval = price ? intrinsic > price : null;
                     return (
                       <div key={scenario.label} style={{ background: 'var(--ws-bg-1)', padding: '20px' }}>
-                        <div style={{ color: 'var(--ws-text-3)', fontSize: '10px', letterSpacing: '2px', marginBottom: '12px' }}>{scenario.label}</div>
+                        <div className="text-ws-text-3 text-[10px] tracking-[2px] mb-3">{scenario.label}</div>
                         <div style={{ color: 'var(--ws-text-3)', fontSize: '10px', marginBottom: '4px' }}>g = {g}%</div>
                         <div style={{ fontSize: '32px', fontWeight: 600, color: underval ? 'var(--ws-accent)' : 'var(--ws-red)', marginBottom: '4px', letterSpacing: '-1px' }}>
                           {curSym(data.currency)}{intrinsic}
@@ -1423,7 +1413,7 @@ export default function StockPage({ params }) {
                   })}
                 </div>
 
-                <div style={{ color: 'var(--ws-text-3)', fontSize: '10px', letterSpacing: '1px' }}>
+                <div className="text-ws-text-3 text-[10px] tracking-[1px]">
                   GRAHAM FORMULA (1962) · EPS FROM SEC EDGAR & FINNHUB · GROWTH FROM SEC EDGAR · NOT INVESTMENT ADVICE
                 </div>
               </>

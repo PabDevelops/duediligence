@@ -52,7 +52,7 @@ const SentimentBreadth = ({ vixMarket, sp500Change, advanceDeclineRatio }) => {
       </div>
 
       {/* Header with big score */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+      <div className="flex justify-between items-center">
         <span style={{ fontSize: '10px', fontWeight: 700, color: 'var(--ws-text-3)' }}>FEAR & GREED INDEX</span>
         <div style={{ display: 'flex', alignItems: 'baseline', gap: '6px' }}>
           <span style={{ fontSize: '26px', fontWeight: 900, color: labelInfo.color, letterSpacing: '-1px' }}>{fearGreedScore}</span>
@@ -92,27 +92,27 @@ const SentimentBreadth = ({ vixMarket, sp500Change, advanceDeclineRatio }) => {
 
       {/* Indicators table */}
       <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', fontSize: '11px', borderTop: '1px dashed var(--ws-border)', paddingTop: '10px' }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          <span style={{ color: 'var(--ws-text-3)' }}>VIX Volatility Index</span>
+        <div className="flex justify-between items-center">
+          <span className="text-ws-text-3">VIX Volatility Index</span>
           <span style={{ fontWeight: 700, color: vixPrice < 20 ? 'var(--ws-accent)' : 'var(--ws-red)' }}>
             {vixPrice.toFixed(2)} <span style={{ fontSize: '9px', fontWeight: 500, color: 'var(--ws-text-3)' }}>({vixPrice < 15 ? 'Low Vol' : vixPrice < 22 ? 'Moderate' : 'High Vol'})</span>
           </span>
         </div>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          <span style={{ color: 'var(--ws-text-3)' }}>S&P 500 &gt; 50-day SMA</span>
-          <span style={{ fontWeight: 700, color: 'var(--ws-text)' }}>
+        <div className="flex justify-between items-center">
+          <span className="text-ws-text-3">S&P 500 &gt; 50-day SMA</span>
+          <span className="font-bold text-ws-text">
             {((advanceDeclineRatio * 20) + 54.2).toFixed(1)}%
           </span>
         </div>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          <span style={{ color: 'var(--ws-text-3)' }}>Nasdaq 100 &gt; 50-day SMA</span>
-          <span style={{ fontWeight: 700, color: 'var(--ws-text)' }}>
+        <div className="flex justify-between items-center">
+          <span className="text-ws-text-3">Nasdaq 100 &gt; 50-day SMA</span>
+          <span className="font-bold text-ws-text">
             {((advanceDeclineRatio * 18) + 49.9).toFixed(1)}%
           </span>
         </div>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          <span style={{ color: 'var(--ws-text-3)' }}>Put / Call Volume Ratio</span>
-          <span style={{ fontWeight: 700, color: 'var(--ws-accent)' }}>
+        <div className="flex justify-between items-center">
+          <span className="text-ws-text-3">Put / Call Volume Ratio</span>
+          <span className="font-bold text-ws-accent">
             {(1.1 - (advanceDeclineRatio * 0.55)).toFixed(2)} <span style={{ fontSize: '9px', fontWeight: 500, color: 'var(--ws-text-3)' }}>({advanceDeclineRatio > 0.55 ? 'Bullish' : advanceDeclineRatio < 0.45 ? 'Bearish' : 'Neutral'})</span>
           </span>
         </div>
@@ -198,7 +198,7 @@ const EconomicCalendar = ({ triggerSpotlight }) => {
                 </span>
               </div>
               <div style={{ textAlign: 'right', fontSize: '10px', flexShrink: 0 }}>
-                <span style={{ color: 'var(--ws-text-3)' }}>{e.metricLabel}</span><b style={{ color: 'var(--ws-text)' }}>{e.metricValue}</b>
+                <span className="text-ws-text-3">{e.metricLabel}</span><b style={{ color: 'var(--ws-text)' }}>{e.metricValue}</b>
                 <div style={{ fontSize: '8px', color: 'var(--ws-text-3)', marginTop: '2px' }}>
                   {new Date(e.date + 'T00:00:00').toLocaleDateString(undefined, { month: 'short', day: 'numeric' })} · {e.time}
                 </div>
@@ -228,27 +228,27 @@ const TechnicalScanner = ({ movers, triggerSpotlight }) => {
       </div>
       <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', flex: 1, justifyContent: 'center' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px dashed var(--ws-border)', paddingBottom: '8px' }}>
-          <span style={{ color: 'var(--ws-text-3)', fontSize: '11px' }}>52W Breakouts</span>
+          <span className="text-ws-text-3 text-[11px]">52W Breakouts</span>
           <div style={{ display: 'flex', gap: '4px', flexWrap: 'wrap', justifyContent: 'flex-end', maxWidth: '160px' }}>
             {highs.length > 0 ? highs.map(t => (
               <span key={t} onClick={() => triggerSpotlight(t)} style={{ cursor: 'pointer', background: 'var(--ws-bg-2)', color: 'var(--ws-accent)', fontWeight: 800, padding: '2px 6px', borderRadius: '4px', fontSize: '10px' }} onMouseEnter={e => e.currentTarget.style.background = 'var(--ws-accent-dim)'} onMouseLeave={e => e.currentTarget.style.background = 'var(--ws-bg-2)'}>{t}</span>
-            )) : <span style={{ color: 'var(--ws-text-3)' }}>—</span>}
+            )) : <span className="text-ws-text-3">—</span>}
           </div>
         </div>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px dashed var(--ws-border)', paddingBottom: '8px' }}>
-          <span style={{ color: 'var(--ws-text-3)', fontSize: '11px' }}>Volume Spikes (&gt;3x)</span>
+          <span className="text-ws-text-3 text-[11px]">Volume Spikes (&gt;3x)</span>
           <div style={{ display: 'flex', gap: '4px', flexWrap: 'wrap', justifyContent: 'flex-end', maxWidth: '160px' }}>
             {volumeSpikes.length > 0 ? volumeSpikes.map(t => (
               <span key={t} onClick={() => triggerSpotlight(t)} style={{ cursor: 'pointer', background: 'var(--ws-bg-2)', color: 'var(--ws-accent)', fontWeight: 800, padding: '2px 6px', borderRadius: '4px', fontSize: '10px' }} onMouseEnter={e => e.currentTarget.style.background = 'var(--ws-accent-dim)'} onMouseLeave={e => e.currentTarget.style.background = 'var(--ws-bg-2)'}>{t}</span>
-            )) : <span style={{ color: 'var(--ws-text-3)' }}>—</span>}
+            )) : <span className="text-ws-text-3">—</span>}
           </div>
         </div>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingBottom: '2px' }}>
-          <span style={{ color: 'var(--ws-text-3)', fontSize: '11px' }}>Oversold (RSI &lt; 30)</span>
+          <span className="text-ws-text-3 text-[11px]">Oversold (RSI &lt; 30)</span>
           <div style={{ display: 'flex', gap: '4px', flexWrap: 'wrap', justifyContent: 'flex-end', maxWidth: '160px' }}>
             {oversold.length > 0 ? oversold.map(t => (
               <span key={t} onClick={() => triggerSpotlight(t)} style={{ cursor: 'pointer', background: 'var(--ws-bg-2)', color: 'var(--ws-red)', fontWeight: 800, padding: '2px 6px', borderRadius: '4px', fontSize: '10px' }} onMouseEnter={e => e.currentTarget.style.background = 'var(--ws-accent-dim)'} onMouseLeave={e => e.currentTarget.style.background = 'var(--ws-bg-2)'}>{t}</span>
-            )) : <span style={{ color: 'var(--ws-text-3)' }}>—</span>}
+            )) : <span className="text-ws-text-3">—</span>}
           </div>
         </div>
       </div>
@@ -499,7 +499,7 @@ export default function MarketRadar() {
                 </div>
               ))}
               <div style={{ marginTop: '8px', display: 'flex', alignItems: 'center', gap: '10px' }}>
-                <span style={{ color: 'var(--ws-text-3)', fontSize: '11px' }}>█░░░░░░░░░</span>
+                <span className="text-ws-text-3 text-[11px]">█░░░░░░░░░</span>
                 <span style={{ color: 'var(--ws-text-3)', fontSize: '10px', letterSpacing: '1px' }}>LOADING MARKET RADAR...</span>
               </div>
             </div>
@@ -641,20 +641,20 @@ export default function MarketRadar() {
         {activeTab === 'movers' ? (
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '16px' }}>
             {/* Top Gainers */}
-            <div style={{ background: 'var(--ws-bg-1)', border: '1px solid var(--ws-border)', padding: '16px', display: 'flex', flexDirection: 'column', gap: '10px' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid var(--ws-border)', paddingBottom: '8px' }}>
-                <span style={{ fontSize: '11px', fontWeight: 800, color: 'var(--ws-accent)', letterSpacing: '1px' }}>TOP GAINERS</span>
-                <span style={{ fontSize: '9px', color: 'var(--ws-text-3)' }}>Fresh Cache</span>
+            <div className="bg-ws-bg-1 border border-ws-border p-4 flex flex-col gap-2.5">
+              <div className="flex justify-between items-center border-b border-ws-border pb-2">
+                <span className="text-[11px] font-extrabold text-ws-accent tracking-[1px]">TOP GAINERS</span>
+                <span className="text-[9px] text-ws-text-3">Fresh Cache</span>
               </div>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
+              <div className="flex flex-col gap-0.5">
                 {(movers?.gainers || []).slice(0, 5).map(s => (
-                  <div key={s.ticker} onClick={() => triggerSpotlight(s.ticker)} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '8px 6px', borderRadius: '6px', cursor: 'pointer', transition: 'background 0.15s' }} onMouseEnter={e => e.currentTarget.style.background = 'var(--ws-bg-2)'} onMouseLeave={e => e.currentTarget.style.background = 'none'}>
+                  <div key={s.ticker} onClick={() => triggerSpotlight(s.ticker)} className="flex items-center justify-between px-1.5 py-2 rounded-[6px] cursor-pointer transition-[background] duration-150" onMouseEnter={e => e.currentTarget.style.background = 'var(--ws-bg-2)'} onMouseLeave={e => e.currentTarget.style.background = 'none'}>
                     <div>
-                      <div style={{ fontWeight: 800, fontSize: '12px' }}>{s.ticker}</div>
+                      <div className="font-extrabold text-xs">{s.ticker}</div>
                       <div style={{ fontSize: '10px', color: 'var(--ws-text-3)', maxWidth: '130px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{s.name}</div>
                     </div>
                     <div style={{ textAlign: 'right' }}>
-                      <div style={{ fontWeight: 700, fontSize: '12px' }}>${s.currentPrice?.toFixed(2)}</div>
+                      <div className="font-bold text-xs">${s.currentPrice?.toFixed(2)}</div>
                       <div style={{ fontSize: '10px', fontWeight: 700, color: 'var(--ws-accent)' }}>+{s.priceChangePct?.toFixed(2)}%</div>
                     </div>
                   </div>
@@ -663,20 +663,20 @@ export default function MarketRadar() {
             </div>
 
             {/* Top Losers */}
-            <div style={{ background: 'var(--ws-bg-1)', border: '1px solid var(--ws-border)', padding: '16px', display: 'flex', flexDirection: 'column', gap: '10px' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid var(--ws-border)', paddingBottom: '8px' }}>
+            <div className="bg-ws-bg-1 border border-ws-border p-4 flex flex-col gap-2.5">
+              <div className="flex justify-between items-center border-b border-ws-border pb-2">
                 <span style={{ fontSize: '11px', fontWeight: 800, color: 'var(--ws-red)', letterSpacing: '1px' }}>TOP LOSERS</span>
-                <span style={{ fontSize: '9px', color: 'var(--ws-text-3)' }}>Fresh Cache</span>
+                <span className="text-[9px] text-ws-text-3">Fresh Cache</span>
               </div>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
+              <div className="flex flex-col gap-0.5">
                 {(movers?.losers || []).slice(0, 5).map(s => (
-                  <div key={s.ticker} onClick={() => triggerSpotlight(s.ticker)} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '8px 6px', borderRadius: '6px', cursor: 'pointer', transition: 'background 0.15s' }} onMouseEnter={e => e.currentTarget.style.background = 'var(--ws-bg-2)'} onMouseLeave={e => e.currentTarget.style.background = 'none'}>
+                  <div key={s.ticker} onClick={() => triggerSpotlight(s.ticker)} className="flex items-center justify-between px-1.5 py-2 rounded-[6px] cursor-pointer transition-[background] duration-150" onMouseEnter={e => e.currentTarget.style.background = 'var(--ws-bg-2)'} onMouseLeave={e => e.currentTarget.style.background = 'none'}>
                     <div>
-                      <div style={{ fontWeight: 800, fontSize: '12px' }}>{s.ticker}</div>
+                      <div className="font-extrabold text-xs">{s.ticker}</div>
                       <div style={{ fontSize: '10px', color: 'var(--ws-text-3)', maxWidth: '130px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{s.name}</div>
                     </div>
                     <div style={{ textAlign: 'right' }}>
-                      <div style={{ fontWeight: 700, fontSize: '12px' }}>${s.currentPrice?.toFixed(2)}</div>
+                      <div className="font-bold text-xs">${s.currentPrice?.toFixed(2)}</div>
                       <div style={{ fontSize: '10px', fontWeight: 700, color: 'var(--ws-red)' }}>{s.priceChangePct?.toFixed(2)}%</div>
                     </div>
                   </div>
@@ -685,22 +685,22 @@ export default function MarketRadar() {
             </div>
 
             {/* Heavyweights movers */}
-            <div style={{ background: 'var(--ws-bg-1)', border: '1px solid var(--ws-border)', padding: '16px', display: 'flex', flexDirection: 'column', gap: '10px' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid var(--ws-border)', paddingBottom: '8px' }}>
-                <span style={{ fontSize: '11px', fontWeight: 800, color: 'var(--ws-accent)', letterSpacing: '1px' }}>BIG CAP MOVERS</span>
-                <span style={{ fontSize: '9px', color: 'var(--ws-text-3)' }}>&gt;$10B Cap</span>
+            <div className="bg-ws-bg-1 border border-ws-border p-4 flex flex-col gap-2.5">
+              <div className="flex justify-between items-center border-b border-ws-border pb-2">
+                <span className="text-[11px] font-extrabold text-ws-accent tracking-[1px]">BIG CAP MOVERS</span>
+                <span className="text-[9px] text-ws-text-3">&gt;$10B Cap</span>
               </div>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
+              <div className="flex flex-col gap-0.5">
                 {(movers?.bigCapMovers || []).slice(0, 5).map(s => {
                   const isUp = s.priceChangePct >= 0;
                   return (
-                    <div key={s.ticker} onClick={() => triggerSpotlight(s.ticker)} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '8px 6px', borderRadius: '6px', cursor: 'pointer', transition: 'background 0.15s' }} onMouseEnter={e => e.currentTarget.style.background = 'var(--ws-bg-2)'} onMouseLeave={e => e.currentTarget.style.background = 'none'}>
+                    <div key={s.ticker} onClick={() => triggerSpotlight(s.ticker)} className="flex items-center justify-between px-1.5 py-2 rounded-[6px] cursor-pointer transition-[background] duration-150" onMouseEnter={e => e.currentTarget.style.background = 'var(--ws-bg-2)'} onMouseLeave={e => e.currentTarget.style.background = 'none'}>
                       <div>
-                        <div style={{ fontWeight: 800, fontSize: '12px' }}>{s.ticker}</div>
+                        <div className="font-extrabold text-xs">{s.ticker}</div>
                         <div style={{ fontSize: '10px', color: 'var(--ws-text-3)', maxWidth: '130px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{s.name}</div>
                       </div>
                       <div style={{ textAlign: 'right' }}>
-                        <div style={{ fontWeight: 700, fontSize: '12px' }}>{fmt(s.marketCap)}</div>
+                        <div className="font-bold text-xs">{fmt(s.marketCap)}</div>
                         <div style={{ fontSize: '10px', fontWeight: 700, color: isUp ? 'var(--ws-accent)' : 'var(--ws-red)' }}>{isUp ? '+' : '-'}{Math.abs(s.priceChangePct)?.toFixed(2)}%</div>
                       </div>
                     </div>
@@ -712,16 +712,16 @@ export default function MarketRadar() {
         ) : (
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '16px' }}>
             {/* Top Score */}
-            <div style={{ background: 'var(--ws-bg-1)', border: '1px solid var(--ws-border)', padding: '16px', display: 'flex', flexDirection: 'column', gap: '10px' }}>
-              <div style={{ borderBottom: '1px solid var(--ws-border)', paddingBottom: '8px' }}>
-                <span style={{ fontSize: '11px', fontWeight: 800, color: 'var(--ws-accent)', letterSpacing: '1px' }}>TRAQCKER SCORE</span>
+            <div className="bg-ws-bg-1 border border-ws-border p-4 flex flex-col gap-2.5">
+              <div className="border-b border-ws-border pb-2">
+                <span className="text-[11px] font-extrabold text-ws-accent tracking-[1px]">TRAQCKER SCORE</span>
               </div>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
+              <div className="flex flex-col gap-0.5">
                 {(movers?.topScore || []).slice(0, 5).map(s => (
-                  <div key={s.ticker} onClick={() => triggerSpotlight(s.ticker)} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '8px 6px', borderRadius: '6px', cursor: 'pointer', transition: 'background 0.15s' }} onMouseEnter={e => e.currentTarget.style.background = 'var(--ws-bg-2)'} onMouseLeave={e => e.currentTarget.style.background = 'none'}>
+                  <div key={s.ticker} onClick={() => triggerSpotlight(s.ticker)} className="flex items-center justify-between px-1.5 py-2 rounded-[6px] cursor-pointer transition-[background] duration-150" onMouseEnter={e => e.currentTarget.style.background = 'var(--ws-bg-2)'} onMouseLeave={e => e.currentTarget.style.background = 'none'}>
                     <div>
-                      <div style={{ fontWeight: 800, fontSize: '12px' }}>{s.ticker}</div>
-                      <div style={{ fontSize: '10px', color: 'var(--ws-text-3)' }}>{s.sector}</div>
+                      <div className="font-extrabold text-xs">{s.ticker}</div>
+                      <div className="text-[10px] text-ws-text-3">{s.sector}</div>
                     </div>
                     <div style={{ fontWeight: 800, color: 'var(--ws-accent)', fontSize: '13px' }}>
                       {s.score ? `${Math.round(s.score * 20)}/100` : '—'}
@@ -732,16 +732,16 @@ export default function MarketRadar() {
             </div>
 
             {/* Top ROIC */}
-            <div style={{ background: 'var(--ws-bg-1)', border: '1px solid var(--ws-border)', padding: '16px', display: 'flex', flexDirection: 'column', gap: '10px' }}>
-              <div style={{ borderBottom: '1px solid var(--ws-border)', paddingBottom: '8px' }}>
-                <span style={{ fontSize: '11px', fontWeight: 800, color: 'var(--ws-accent)', letterSpacing: '1px' }}>TOP ROIC</span>
+            <div className="bg-ws-bg-1 border border-ws-border p-4 flex flex-col gap-2.5">
+              <div className="border-b border-ws-border pb-2">
+                <span className="text-[11px] font-extrabold text-ws-accent tracking-[1px]">TOP ROIC</span>
               </div>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
+              <div className="flex flex-col gap-0.5">
                 {(movers?.topRoic || []).slice(0, 5).map(s => (
-                  <div key={s.ticker} onClick={() => triggerSpotlight(s.ticker)} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '8px 6px', borderRadius: '6px', cursor: 'pointer', transition: 'background 0.15s' }} onMouseEnter={e => e.currentTarget.style.background = 'var(--ws-bg-2)'} onMouseLeave={e => e.currentTarget.style.background = 'none'}>
+                  <div key={s.ticker} onClick={() => triggerSpotlight(s.ticker)} className="flex items-center justify-between px-1.5 py-2 rounded-[6px] cursor-pointer transition-[background] duration-150" onMouseEnter={e => e.currentTarget.style.background = 'var(--ws-bg-2)'} onMouseLeave={e => e.currentTarget.style.background = 'none'}>
                     <div>
-                      <div style={{ fontWeight: 800, fontSize: '12px' }}>{s.ticker}</div>
-                      <div style={{ fontSize: '10px', color: 'var(--ws-text-3)' }}>{s.sector}</div>
+                      <div className="font-extrabold text-xs">{s.ticker}</div>
+                      <div className="text-[10px] text-ws-text-3">{s.sector}</div>
                     </div>
                     <div style={{ fontWeight: 800, color: 'var(--ws-text)', fontSize: '12px' }}>
                       {fmtP(s.roic)}
@@ -752,16 +752,16 @@ export default function MarketRadar() {
             </div>
 
             {/* Top FCF Yield */}
-            <div style={{ background: 'var(--ws-bg-1)', border: '1px solid var(--ws-border)', padding: '16px', display: 'flex', flexDirection: 'column', gap: '10px' }}>
-              <div style={{ borderBottom: '1px solid var(--ws-border)', paddingBottom: '8px' }}>
-                <span style={{ fontSize: '11px', fontWeight: 800, color: 'var(--ws-accent)', letterSpacing: '1px' }}>FCF YIELD KINGS</span>
+            <div className="bg-ws-bg-1 border border-ws-border p-4 flex flex-col gap-2.5">
+              <div className="border-b border-ws-border pb-2">
+                <span className="text-[11px] font-extrabold text-ws-accent tracking-[1px]">FCF YIELD KINGS</span>
               </div>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
+              <div className="flex flex-col gap-0.5">
                 {(movers?.topFcfYield || []).slice(0, 5).map(s => (
-                  <div key={s.ticker} onClick={() => triggerSpotlight(s.ticker)} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '8px 6px', borderRadius: '6px', cursor: 'pointer', transition: 'background 0.15s' }} onMouseEnter={e => e.currentTarget.style.background = 'var(--ws-bg-2)'} onMouseLeave={e => e.currentTarget.style.background = 'none'}>
+                  <div key={s.ticker} onClick={() => triggerSpotlight(s.ticker)} className="flex items-center justify-between px-1.5 py-2 rounded-[6px] cursor-pointer transition-[background] duration-150" onMouseEnter={e => e.currentTarget.style.background = 'var(--ws-bg-2)'} onMouseLeave={e => e.currentTarget.style.background = 'none'}>
                     <div>
-                      <div style={{ fontWeight: 800, fontSize: '12px' }}>{s.ticker}</div>
-                      <div style={{ fontSize: '10px', color: 'var(--ws-text-3)' }}>{s.sector}</div>
+                      <div className="font-extrabold text-xs">{s.ticker}</div>
+                      <div className="text-[10px] text-ws-text-3">{s.sector}</div>
                     </div>
                     <div style={{ fontWeight: 800, color: 'var(--ws-text)', fontSize: '12px' }}>
                       {fmtP(s.fcfYield)}
@@ -772,16 +772,16 @@ export default function MarketRadar() {
             </div>
 
             {/* Revenue Growth */}
-            <div style={{ background: 'var(--ws-bg-1)', border: '1px solid var(--ws-border)', padding: '16px', display: 'flex', flexDirection: 'column', gap: '10px' }}>
-              <div style={{ borderBottom: '1px solid var(--ws-border)', paddingBottom: '8px' }}>
-                <span style={{ fontSize: '11px', fontWeight: 800, color: 'var(--ws-accent)', letterSpacing: '1px' }}>REVENUE GROWTH</span>
+            <div className="bg-ws-bg-1 border border-ws-border p-4 flex flex-col gap-2.5">
+              <div className="border-b border-ws-border pb-2">
+                <span className="text-[11px] font-extrabold text-ws-accent tracking-[1px]">REVENUE GROWTH</span>
               </div>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
+              <div className="flex flex-col gap-0.5">
                 {(movers?.topRevGrowth || []).slice(0, 5).map(s => (
-                  <div key={s.ticker} onClick={() => triggerSpotlight(s.ticker)} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '8px 6px', borderRadius: '6px', cursor: 'pointer', transition: 'background 0.15s' }} onMouseEnter={e => e.currentTarget.style.background = 'var(--ws-bg-2)'} onMouseLeave={e => e.currentTarget.style.background = 'none'}>
+                  <div key={s.ticker} onClick={() => triggerSpotlight(s.ticker)} className="flex items-center justify-between px-1.5 py-2 rounded-[6px] cursor-pointer transition-[background] duration-150" onMouseEnter={e => e.currentTarget.style.background = 'var(--ws-bg-2)'} onMouseLeave={e => e.currentTarget.style.background = 'none'}>
                     <div>
-                      <div style={{ fontWeight: 800, fontSize: '12px' }}>{s.ticker}</div>
-                      <div style={{ fontSize: '10px', color: 'var(--ws-text-3)' }}>{s.sector}</div>
+                      <div className="font-extrabold text-xs">{s.ticker}</div>
+                      <div className="text-[10px] text-ws-text-3">{s.sector}</div>
                     </div>
                     <div style={{ fontWeight: 800, color: 'var(--ws-accent)', fontSize: '12px' }}>
                       +{fmtP(s.revGrowth)}
@@ -908,25 +908,25 @@ export default function MarketRadar() {
               <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
                 {/* Sector & Industry */}
                 <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '11px' }}>
-                  <span style={{ color: 'var(--ws-text-3)' }}>Sector</span>
-                  <span style={{ fontWeight: 700, color: 'var(--ws-text)' }}>{spotlightData.sector || '—'}</span>
+                  <span className="text-ws-text-3">Sector</span>
+                  <span className="font-bold text-ws-text">{spotlightData.sector || '—'}</span>
                 </div>
 
                 {/* Valuation */}
                 <div>
                   <div style={{ fontSize: '9px', fontWeight: 800, color: 'var(--ws-text-3)', letterSpacing: '1px', marginBottom: '6px' }}>VALUATION</div>
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', fontSize: '11px' }}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                      <span style={{ color: 'var(--ws-text-3)' }}>P/E Ratio</span>
-                      <span style={{ fontWeight: 700 }}>{fmtN(spotlightData.pe)}</span>
+                  <div className="flex flex-col gap-1.5 text-[11px]">
+                    <div className="flex justify-between">
+                      <span className="text-ws-text-3">P/E Ratio</span>
+                      <span className="font-bold">{fmtN(spotlightData.pe)}</span>
                     </div>
-                    <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                      <span style={{ color: 'var(--ws-text-3)' }}>P/FCF Ratio</span>
-                      <span style={{ fontWeight: 700 }}>{fmtN(spotlightData.pfcf)}</span>
+                    <div className="flex justify-between">
+                      <span className="text-ws-text-3">P/FCF Ratio</span>
+                      <span className="font-bold">{fmtN(spotlightData.pfcf)}</span>
                     </div>
-                    <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                      <span style={{ color: 'var(--ws-text-3)' }}>EV / EBITDA</span>
-                      <span style={{ fontWeight: 700 }}>{fmtN(spotlightData.evEbitda)}</span>
+                    <div className="flex justify-between">
+                      <span className="text-ws-text-3">EV / EBITDA</span>
+                      <span className="font-bold">{fmtN(spotlightData.evEbitda)}</span>
                     </div>
                   </div>
                 </div>
@@ -934,18 +934,18 @@ export default function MarketRadar() {
                 {/* Profitability */}
                 <div>
                   <div style={{ fontSize: '9px', fontWeight: 800, color: 'var(--ws-text-3)', letterSpacing: '1px', marginBottom: '6px' }}>PROFITABILITY</div>
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', fontSize: '11px' }}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                      <span style={{ color: 'var(--ws-text-3)' }}>Gross Margin</span>
-                      <span style={{ fontWeight: 700, color: 'var(--ws-accent)' }}>{fmtP(spotlightData.grossMargin)}</span>
+                  <div className="flex flex-col gap-1.5 text-[11px]">
+                    <div className="flex justify-between">
+                      <span className="text-ws-text-3">Gross Margin</span>
+                      <span className="font-bold text-ws-accent">{fmtP(spotlightData.grossMargin)}</span>
                     </div>
-                    <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                      <span style={{ color: 'var(--ws-text-3)' }}>Operating Margin</span>
-                      <span style={{ fontWeight: 700 }}>{fmtP(spotlightData.opMargin)}</span>
+                    <div className="flex justify-between">
+                      <span className="text-ws-text-3">Operating Margin</span>
+                      <span className="font-bold">{fmtP(spotlightData.opMargin)}</span>
                     </div>
-                    <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                      <span style={{ color: 'var(--ws-text-3)' }}>ROIC</span>
-                      <span style={{ fontWeight: 700, color: 'var(--ws-accent)' }}>{fmtP(spotlightData.roic)}</span>
+                    <div className="flex justify-between">
+                      <span className="text-ws-text-3">ROIC</span>
+                      <span className="font-bold text-ws-accent">{fmtP(spotlightData.roic)}</span>
                     </div>
                   </div>
                 </div>
@@ -953,22 +953,22 @@ export default function MarketRadar() {
                 {/* Growth */}
                 <div>
                   <div style={{ fontSize: '9px', fontWeight: 800, color: 'var(--ws-text-3)', letterSpacing: '1px', marginBottom: '6px' }}>GROWTH & LIQUIDITY</div>
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', fontSize: '11px' }}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                      <span style={{ color: 'var(--ws-text-3)' }}>YoY Growth</span>
-                      <span style={{ fontWeight: 700, color: 'var(--ws-accent)' }}>+{fmtP(spotlightData.revGrowth)}</span>
+                  <div className="flex flex-col gap-1.5 text-[11px]">
+                    <div className="flex justify-between">
+                      <span className="text-ws-text-3">YoY Growth</span>
+                      <span className="font-bold text-ws-accent">+{fmtP(spotlightData.revGrowth)}</span>
                     </div>
-                    <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                      <span style={{ color: 'var(--ws-text-3)' }}>EPS CAGR (Est)</span>
-                      <span style={{ fontWeight: 700 }}>{spotlightData.epsCagr !== null ? `${spotlightData.epsCagr}%` : '—'}</span>
+                    <div className="flex justify-between">
+                      <span className="text-ws-text-3">EPS CAGR (Est)</span>
+                      <span className="font-bold">{spotlightData.epsCagr !== null ? `${spotlightData.epsCagr}%` : '—'}</span>
                     </div>
-                    <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                      <span style={{ color: 'var(--ws-text-3)' }}>Net Debt</span>
-                      <span style={{ fontWeight: 700 }}>{fmt(spotlightData.netDebt)}</span>
+                    <div className="flex justify-between">
+                      <span className="text-ws-text-3">Net Debt</span>
+                      <span className="font-bold">{fmt(spotlightData.netDebt)}</span>
                     </div>
-                    <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                      <span style={{ color: 'var(--ws-text-3)' }}>Debt / Equity</span>
-                      <span style={{ fontWeight: 700 }}>{fmtN(spotlightData.debtToEquity)}x</span>
+                    <div className="flex justify-between">
+                      <span className="text-ws-text-3">Debt / Equity</span>
+                      <span className="font-bold">{fmtN(spotlightData.debtToEquity)}x</span>
                     </div>
                   </div>
                 </div>
@@ -1089,7 +1089,7 @@ export default function MarketRadar() {
                         <span style={{ fontWeight: 800, color: 'var(--ws-accent)', marginRight: '8px' }}>{s.ticker}</span>
                         <span style={{ fontSize: '11px', color: 'var(--ws-text-2)' }}>{s.name}</span>
                       </div>
-                      <span style={{ fontSize: '9px', color: 'var(--ws-text-3)' }}>{s.exchange}</span>
+                      <span className="text-[9px] text-ws-text-3">{s.exchange}</span>
                     </div>
                   ))}
                 </div>
