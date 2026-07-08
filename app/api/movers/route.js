@@ -15,7 +15,6 @@ export async function GET() {
       .from('stock_cache')
       .select('ticker, data, updated_at')
       .neq('ticker', 'INHD')
-      .neq('ticker', 'INNO')
       .not('data->currentPrice', 'is', null)
       .not('data->priceChangePct', 'is', null);
 

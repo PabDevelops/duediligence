@@ -13,7 +13,6 @@ export async function GET() {
       .from('stock_cache')
       .select('ticker, data, updated_at')
       .neq('ticker', 'INHD')
-      .neq('ticker', 'INNO')
       .order('updated_at', { ascending: false });
 
     if (error) throw error;

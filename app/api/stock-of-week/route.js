@@ -69,7 +69,6 @@ export async function GET() {
       .from('stock_cache')
       .select('ticker, data', { count: 'exact' })
       .neq('ticker', 'INHD')
-      .neq('ticker', 'INNO')
       .order('updated_at', { ascending: false })
       .limit(500);
 
