@@ -8,41 +8,17 @@ import html2canvas from 'html2canvas';
 // Utility formatters
 import { fmt, fmtP as fmtPercent, fmtN } from '../../../lib/formatters';
 import { useTickerSearch } from '../../../lib/hooks/useTickerSearch';
+import { computeFearGreedScore, getFearGreedLabel } from '../../../lib/sentiment';
 const fmtP = (v) => fmtPercent(v, { decimals: 1 });
 
 // Compact Market Breadth & Sentiment Component
 const SentimentBreadth = ({ vixMarket, sp500Change, advanceDeclineRatio }) => {
   const vixPrice = vixMarket?.price || 13.45;
 
-  const fearGreedScore = useMemo(() => {
-    let score = 50;
-    // VIX contribution
-    if (vixPrice) {
-      if (vixPrice < 12) score += 20;
-      else if (vixPrice < 15) score += 10;
-      else if (vixPrice < 20) score += 0;
-      else if (vixPrice < 25) score -= 10;
-      else if (vixPrice < 30) score -= 20;
-      else score -= 30;
-    }
-    // S&P 500 trend contribution
-    if (sp500Change) {
-      score += sp500Change * 4;
-    }
-    // Breadth contribution
-    if (advanceDeclineRatio) {
-      score += (advanceDeclineRatio - 0.5) * 50;
-    }
-    return Math.min(100, Math.max(0, Math.round(score)));
-  }, [vixPrice, sp500Change, advanceDeclineRatio]);
-
-  const getFearGreedLabel = (score) => {
-    if (score <= 25) return { text: 'EXTREME FEAR', color: 'var(--ws-red)' };
-    if (score <= 45) return { text: 'FEAR', color: 'var(--ws-text-2)' };
-    if (score <= 55) return { text: 'NEUTRAL', color: 'var(--ws-text-2)' };
-    if (score <= 75) return { text: 'GREED', color: 'var(--ws-accent)' };
-    return { text: 'EXTREME GREED', color: 'var(--ws-accent)' };
-  };
+  const fearGreedScore = useMemo(
+    () => computeFearGreedScore(vixPrice, sp500Change, advanceDeclineRatio),
+    [vixPrice, sp500Change, advanceDeclineRatio]
+  );
 
   const labelInfo = getFearGreedLabel(fearGreedScore);
 

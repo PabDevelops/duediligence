@@ -5,6 +5,7 @@ import StockChart from '../../components/StockChart';
 import MarketStatusDot from '../../components/workspace/MarketStatusDot';
 import { useUser } from '../../components/AuthProvider';
 import { useStockData } from '../../../lib/hooks/useStockData';
+import { parseAUM, parsePercent } from '../../../lib/formatters';
 
 const CURRENCY_SYMBOLS = { USD: '$', EUR: '€', GBP: '£', JPY: '¥', CNY: '¥', CHF: 'CHF ', CAD: 'C$', AUD: 'A$', HKD: 'HK$', INR: '₹', KRW: '₩', SEK: 'kr', NOK: 'kr', DKK: 'kr' };
 const curSym = (code) => !code || code === 'USD' ? '$' : (CURRENCY_SYMBOLS[code] || `${code} `);
@@ -169,16 +170,6 @@ export default function ETFsPage() {
       setSortField(field);
       setSortAsc(false);
     }
-  };
-
-  const parseAUM = (aumStr) => {
-    if (!aumStr || aumStr === 'See Prospectus') return 0;
-    return parseFloat(aumStr.replace(/[$\$,B]/g, '')) || 0;
-  };
-
-  const parsePercent = (pctStr) => {
-    if (!pctStr || pctStr === 'See Prospectus') return 0;
-    return parseFloat(pctStr.replace(/%/g, '')) || 0;
   };
 
   const filteredETFs = useMemo(() => {

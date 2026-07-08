@@ -6,6 +6,7 @@ import { PieChart, Pie, Cell, ResponsiveContainer } from 'recharts';
 import MarketStatusDot from '../../components/workspace/MarketStatusDot';
 import { formatPriceWithSymbol as formatCurrency } from '../../../lib/formatters';
 import { useCurrencyRates } from '../../../lib/hooks/useCurrencyRates';
+import { distributeMasonryColumns } from '../../../lib/homeLayout';
 import StockLogo from '../../components/workspace/StockLogo';
 
 // Premium SVG Gear Icon
@@ -84,21 +85,6 @@ function NewsImage({ src, alt, ticker, large }) {
       )}
     </div>
   );
-}
-
-// Pinterest-style masonry: greedily assigns each item to whichever column is
-// currently shortest (by estimated height), so columns stay balanced and the
-// full container width is always used regardless of how many items there are.
-function distributeMasonryColumns(items, columnCount) {
-  const columns = Array.from({ length: columnCount }, () => []);
-  const heights = new Array(columnCount).fill(0);
-  items.forEach((item, index) => {
-    const shortest = heights.indexOf(Math.min(...heights));
-    const estHeight = (index === 0 ? 260 : 140) + Math.ceil((item.title || '').length / 28) * 18 + 70;
-    columns[shortest].push({ item, index });
-    heights[shortest] += estHeight;
-  });
-  return columns;
 }
 
 // Reusable card wrapper with drag handles and modern shadows

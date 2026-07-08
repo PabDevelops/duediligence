@@ -3,16 +3,15 @@ import { useState, useEffect, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import { useUser } from '../../components/AuthProvider';
 import StockLogo from '../../components/workspace/StockLogo';
+import { toKey, startOfMonth, endOfMonth, shiftMonth } from '../../../lib/calendarDates';
 
 const MONTH_NAMES = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
 const DAY_NAMES = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 
-const toKey = (d) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
-
 export default function WorkspaceCalendar() {
   const router = useRouter();
   const { isSignedIn } = useUser();
-  const [cursor, setCursor] = useState(() => { const d = new Date(); d.setDate(1); return d; });
+  const [cursor, setCursor] = useState(() => startOfMonth(new Date()));
   const [earnings, setEarnings] = useState(null);
   const [ipos, setIpos] = useState([]);
   
@@ -26,8 +25,8 @@ export default function WorkspaceCalendar() {
 
   // Fetch Calendar Data (Earnings & IPOs)
   const fetchCalendarData = () => {
-    const from = toKey(new Date(cursor.getFullYear(), cursor.getMonth(), 1));
-    const to = toKey(new Date(cursor.getFullYear(), cursor.getMonth() + 1, 0));
+    const from = toKey(startOfMonth(cursor));
+    const to = toKey(endOfMonth(cursor));
     setEarnings(null);
     fetch(`/api/earnings?from=${from}&to=${to}`)
       .then(r => r.json())
@@ -187,7 +186,7 @@ export default function WorkspaceCalendar() {
           
           {/* Month controls */}
           <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-            <button onClick={() => setCursor(c => new Date(c.getFullYear(), c.getMonth() - 1, 1))}
+            <button onClick={() => setCursor(c => shiftMonth(c, -1))}
               className="ctrl-btn"
               style={{ width: '32px', height: '32px', border: '1px solid var(--ws-border)', background: 'var(--ws-bg-1)', color: 'var(--ws-text)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', borderRadius: '4px', transition: 'all 0.15s ease' }}>
               ‹
@@ -195,12 +194,12 @@ export default function WorkspaceCalendar() {
             <div style={{ fontSize: '14px', fontWeight: 700, color: 'var(--ws-text)', width: '150px', textAlign: 'center', letterSpacing: '0.3px' }}>
               {MONTH_NAMES[cursor.getMonth()]} {cursor.getFullYear()}
             </div>
-            <button onClick={() => setCursor(c => new Date(c.getFullYear(), c.getMonth() + 1, 1))}
+            <button onClick={() => setCursor(c => shiftMonth(c, 1))}
               className="ctrl-btn"
               style={{ width: '32px', height: '32px', border: '1px solid var(--ws-border)', background: 'var(--ws-bg-1)', color: 'var(--ws-text)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', borderRadius: '4px', transition: 'all 0.15s ease' }}>
               ›
             </button>
-            <button onClick={() => { const d = new Date(); d.setDate(1); setCursor(d); setSelectedDate(null); }}
+            <button onClick={() => { setCursor(startOfMonth(new Date())); setSelectedDate(null); }}
               className="ctrl-btn"
               style={{ padding: '0 14px', height: '32px', border: '1px solid var(--ws-border)', background: 'var(--ws-bg-1)', color: 'var(--ws-text-2)', fontSize: '12px', fontWeight: 600, cursor: 'pointer', borderRadius: '4px', transition: 'all 0.15s ease' }}>
               Today
