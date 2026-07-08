@@ -24,6 +24,9 @@ export default function WorkspaceProfile() {
   const [valuations, setValuations] = useState([]);
   const [newValuation, setNewValuation] = useState({ ticker: '', method: 'DCF Model', fairValue: '' });
 
+  // 4. Subscription State
+  const [isPro, setIsPro] = useState(false);
+
 
 
   // Load prices cache
@@ -98,7 +101,13 @@ export default function WorkspaceProfile() {
       localStorage.setItem('traqcker_ledger_valuations', JSON.stringify(initialValuations));
     }
 
-    setLoading(false);
+    fetch('/api/subscription')
+      .then(r => r.json())
+      .then(d => setIsPro(d.isPro || false))
+      .catch(() => {})
+      .finally(() => {
+        setLoading(false);
+      });
   }, [isSignedIn, isLoaded]);
 
   // Form Submit Handlers
@@ -224,21 +233,121 @@ export default function WorkspaceProfile() {
   return (
     <div style={{ padding: '24px', display: 'flex', flexDirection: 'column', gap: '20px', height: '100%', boxSizing: 'border-box' }}>
 
-      {/* Terminal title bar */}
-      <div style={{ border: '1px solid var(--ws-border)', background: 'var(--ws-bg-1)', overflow: 'hidden' }}>
-        <div style={{ background: 'var(--ws-bg-2)', borderBottom: '1px solid var(--ws-border)', padding: '7px 16px' }}>
-          <span style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: '11px', color: 'var(--ws-accent)', fontWeight: 700, letterSpacing: '1px' }}>
-            $ traq profile
-          </span>
-        </div>
-      </div>
+      {/* Premium User Profile Header Card */}
+      <div style={{
+        background: 'var(--ws-bg-1)',
+        border: '1px solid var(--ws-border)',
+        borderRadius: '12px',
+        padding: '24px',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        flexWrap: 'wrap',
+        gap: '24px',
+        position: 'relative',
+        overflow: 'hidden',
+        boxShadow: '0 4px 20px rgba(0, 0, 0, 0.02)'
+      }}>
+        {/* Background Subtle Gradient Glow */}
+        <div style={{
+          position: 'absolute',
+          top: '-10%',
+          right: '-5%',
+          width: '300px',
+          height: '300px',
+          background: 'radial-gradient(circle, var(--ws-accent-dim) 0%, transparent 70%)',
+          pointerEvents: 'none',
+          opacity: 0.3
+        }} />
 
-      {/* Title */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', borderBottom: '1px solid var(--ws-border)', paddingBottom: '14px' }}>
-        <div>
-          <div style={{ fontSize: '10px', fontFamily: "'JetBrains Mono', monospace", color: 'var(--ws-accent)', letterSpacing: '1.5px', marginBottom: '6px', fontWeight: 700 }}>WORKSPACE CONSOLE</div>
-          <h1 style={{ fontSize: '22px', fontWeight: 800, color: 'var(--ws-text)', marginBottom: '4px', letterSpacing: '-0.5px' }}>TRADING LEDGER</h1>
-          <p style={{ color: 'var(--ws-text-3)', fontSize: '11px' }}>Institutional-grade multi-ledger dashboard</p>
+        {/* Left Side: Avatar + Details */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '20px', zIndex: 1 }}>
+          <div style={{
+            width: '60px',
+            height: '60px',
+            borderRadius: '50%',
+            background: 'linear-gradient(135deg, #a78bfa, #60a5fa)',
+            color: '#fff',
+            fontSize: '24px',
+            fontWeight: 800,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            boxShadow: '0 4px 12px rgba(96, 165, 250, 0.2)',
+            border: '2px solid var(--ws-bg-1)'
+          }}>
+            {user?.email?.[0]?.toUpperCase() || '?'}
+          </div>
+          <div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap' }}>
+              <span style={{ fontSize: '18px', fontWeight: 800, color: 'var(--ws-text)' }}>
+                {user?.email || 'Guest User'}
+              </span>
+              <span style={{
+                background: isPro ? 'var(--ws-accent-dim)' : 'var(--ws-bg-2)',
+                color: isPro ? 'var(--ws-accent)' : 'var(--ws-text-3)',
+                border: `1px solid ${isPro ? 'var(--ws-accent)' : 'var(--ws-border)'}`,
+                fontSize: '9px',
+                fontWeight: 800,
+                padding: '2px 8px',
+                borderRadius: '20px',
+                textTransform: 'uppercase',
+                letterSpacing: '0.5px'
+              }}>
+                {isPro ? '★ Pro Member' : 'Free Account'}
+              </span>
+            </div>
+            <div style={{ fontSize: '11px', color: 'var(--ws-text-3)', marginTop: '4px' }}>
+              Member since {user?.created_at ? new Date(user.created_at).toLocaleDateString(undefined, { year: 'numeric', month: 'long', day: 'numeric' }) : '—'}
+            </div>
+            {!isPro && (
+              <a href="/pricing" style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '4px',
+                fontSize: '10px',
+                fontWeight: 700,
+                color: 'var(--ws-accent)',
+                textDecoration: 'none',
+                marginTop: '6px',
+                background: 'var(--ws-accent-dim)',
+                padding: '2px 8px',
+                borderRadius: '4px',
+                transition: 'opacity 0.2s'
+              }}
+              onMouseEnter={e => e.currentTarget.style.opacity = 0.8}
+              onMouseLeave={e => e.currentTarget.style.opacity = 1}
+              >
+                Upgrade to Pro →
+              </a>
+            )}
+          </div>
+        </div>
+
+        {/* Right Side: Key Stats Counters */}
+        <div style={{ display: 'flex', gap: '16px', zIndex: 1, flexWrap: 'wrap' }}>
+          {[
+            { label: 'THESIS JOURNAL', count: thesisNotes.length, color: 'var(--ws-accent)' },
+            { label: 'VALUATIONS', count: valuations.length, color: '#a78bfa' },
+            { label: 'BACKTEST RUNS', count: btResult ? 1 : 0, color: '#f59e0b' }
+          ].map((stat, i) => (
+            <div key={i} style={{
+              background: 'var(--ws-bg-2)',
+              border: '1px solid var(--ws-border)',
+              borderRadius: '8px',
+              padding: '10px 18px',
+              minWidth: '110px',
+              textAlign: 'center',
+              boxShadow: '0 2px 4px rgba(0,0,0,0.01)'
+            }}>
+              <div style={{ fontSize: '8px', fontWeight: 700, color: 'var(--ws-text-3)', letterSpacing: '1px', textTransform: 'uppercase', marginBottom: '4px' }}>
+                {stat.label}
+              </div>
+              <div style={{ fontSize: '18px', fontWeight: 800, color: stat.color, fontFamily: "'JetBrains Mono', monospace" }}>
+                {stat.count}
+              </div>
+            </div>
+          ))}
         </div>
       </div>
 
