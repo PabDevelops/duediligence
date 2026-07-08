@@ -96,11 +96,17 @@ html[data-ws-theme="dark"] .workspace {
   transition: background-color 0.2s ease, border-color 0.2s ease, color 0.2s ease;
 }
 
-* {
-  box-sizing: border-box;
-  margin: 0;
-
-  padding: 0;
+/* Wrapped in Tailwind's `base` layer (not left bare) so Tailwind utility
+   classes — which live in `@layer utilities`, declared after `base` — can
+   still override this reset. Unlayered CSS always wins over layered CSS
+   regardless of specificity, so leaving this bare silently zeroed out
+   every padding/margin utility class added after Fase 1. */
+@layer base {
+  * {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+  }
 }
 
 html {
