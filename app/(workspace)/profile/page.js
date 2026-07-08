@@ -65,18 +65,29 @@ export default function WorkspaceProfile() {
     }
     setApiToken(token);
 
-    // Fetch subscription, holdings, and watchlist stats
-    Promise.all([
-      fetch('/api/subscription').then(r => r.json()),
-      supabase.from('portfolio_holdings').select('id', { count: 'exact' }).eq('user_id', user.id),
-      supabase.from('watchlists').select('ticker', { count: 'exact' }).eq('user_id', user.id)
-    ])
-      .then(([subData, portResult, wlResult]) => {
-        setIsPro(subData.isPro || false);
-        setHoldingsCount(portResult.count || 0);
-        setWatchlistCount(wlResult.count || 0);
+    // Fetch subscription status
+    fetch('/api/subscription')
+      .then(r => r.json())
+      .then(data => {
+        setIsPro(data?.isPro || false);
       })
-      .catch((e) => console.error('Error fetching dashboard stats:', e))
+      .catch(err => console.error('Error fetching subscription status:', err));
+
+    // Fetch portfolio holdings
+    fetch('/api/portfolio')
+      .then(r => r.json())
+      .then(data => {
+        setHoldingsCount((data?.holdings || []).length);
+      })
+      .catch(err => console.error('Error fetching portfolio holdings:', err));
+
+    // Fetch watchlist tickers
+    fetch('/api/watchlist')
+      .then(r => r.json())
+      .then(data => {
+        setWatchlistCount((data?.tickers || []).length);
+      })
+      .catch(err => console.error('Error fetching watchlist:', err))
       .finally(() => setLoading(false));
 
   }, [isSignedIn, isLoaded]);
