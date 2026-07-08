@@ -68,6 +68,7 @@ export async function GET() {
     const { data: allStocksRaw, error: cacheError, count } = await supabase
       .from('stock_cache')
       .select('ticker, data', { count: 'exact' })
+      .neq('ticker', 'INHD')
       .neq('ticker', 'INNO')
       .order('updated_at', { ascending: false })
       .limit(500);

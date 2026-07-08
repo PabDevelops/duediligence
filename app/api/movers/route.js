@@ -14,6 +14,7 @@ export async function GET() {
     const { data: rows } = await supabase
       .from('stock_cache')
       .select('ticker, data, updated_at')
+      .neq('ticker', 'INHD')
       .neq('ticker', 'INNO')
       .not('data->currentPrice', 'is', null)
       .not('data->priceChangePct', 'is', null);
