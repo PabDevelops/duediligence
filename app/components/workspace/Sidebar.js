@@ -264,24 +264,24 @@ export default function Sidebar({ theme, onToggleTheme }) {
         </div>
 
         {/* Settings */}
-        <Link href="/settings"
+        <Link href="/profile"
           style={{
             padding: '8px 12px', borderRadius: 'var(--ws-radius)', textDecoration: 'none',
-            fontSize: '13px', color: path === '/settings' ? 'var(--ws-text)' : 'var(--ws-text-2)',
-            background: path === '/settings' ? 'var(--ws-bg-2)' : 'transparent',
-            fontWeight: path === '/settings' ? 600 : 400,
+            fontSize: '13px', color: path === '/profile' ? 'var(--ws-text)' : 'var(--ws-text-2)',
+            background: path === '/profile' ? 'var(--ws-bg-2)' : 'transparent',
+            fontWeight: path === '/profile' ? 600 : 400,
             display: 'flex', alignItems: 'center', gap: '10px', cursor: 'pointer', transition: 'all 0.15s ease',
           }}
-          onMouseEnter={(e) => { if (path !== '/settings') { e.currentTarget.style.background = 'var(--ws-bg-2)'; e.currentTarget.style.color = 'var(--ws-text)'; } }}
-          onMouseLeave={(e) => { if (path !== '/settings') { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = 'var(--ws-text-2)'; } }}
+          onMouseEnter={(e) => { if (path !== '/profile') { e.currentTarget.style.background = 'var(--ws-bg-2)'; e.currentTarget.style.color = 'var(--ws-text)'; } }}
+          onMouseLeave={(e) => { if (path !== '/profile') { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = 'var(--ws-text-2)'; } }}
         >
-          <span style={{ display: 'flex', alignItems: 'center', flexShrink: 0, opacity: path === '/settings' ? 1 : 0.75 }}>
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke={path === '/settings' ? 'var(--ws-accent)' : 'currentColor'} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          <span style={{ display: 'flex', alignItems: 'center', flexShrink: 0, opacity: path === '/profile' ? 1 : 0.75 }}>
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke={path === '/profile' ? 'var(--ws-accent)' : 'currentColor'} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
               <circle cx="12" cy="12" r="3" />
               <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z" />
             </svg>
           </span>
-          <span style={{ flex: 1, minWidth: 0 }}>Settings</span>
+          <span style={{ flex: 1, minWidth: 0 }}>Profile & Settings</span>
         </Link>
 
         {/* User + Theme row */}

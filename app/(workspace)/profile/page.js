@@ -2,238 +2,263 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useUser } from '../../components/AuthProvider';
+import { createClient } from '../../../lib/supabase/client';
+
+const ACCENT_COLORS = [
+  { name: 'Classic Mint', hex: '#0f766e' },
+  { name: 'Cyber Teal', hex: '#14b8a6' },
+  { name: 'Emerald Green', hex: '#10b981' },
+  { name: 'Amber Gold', hex: '#f59e0b' },
+  { name: 'Retro Indigo', hex: '#6366f1' },
+  { name: 'Rose Red', hex: '#f43f5e' },
+];
 
 export default function WorkspaceProfile() {
   const router = useRouter();
   const { user, isLoaded, isSignedIn } = useUser();
+  const supabase = createClient();
+
   const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState('thesis');
-  const [priceCache, setPriceCache] = useState({});
-
-  // 1. Thesis Journal State
-  const [thesisNotes, setThesisNotes] = useState([]);
-  const [newThesis, setNewThesis] = useState({ ticker: '', direction: 'BUY', entryPrice: '', targetPrice: '', summary: '' });
-
-  // 2. Strategy Backtester State
-  const [btForm, setBtForm] = useState({ ticker: '', condition: 'drop_1d', threshold: '3', holdDays: '20', direction: 'BUY' });
-  const [btResult, setBtResult] = useState(null);
-  const [btLoading, setBtLoading] = useState(false);
-  const [btError, setBtError] = useState('');
-
-  // 3. Valuation Tracker State
-  const [valuations, setValuations] = useState([]);
-  const [newValuation, setNewValuation] = useState({ ticker: '', method: 'DCF Model', fairValue: '' });
-
-  // 4. Subscription State
   const [isPro, setIsPro] = useState(false);
+  const [portalLoading, setPortalLoading] = useState(false);
 
+  // Profile forms state
+  const [displayName, setDisplayName] = useState('');
+  const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [profileMsg, setProfileMsg] = useState({ type: '', text: '' });
+  const [securityMsg, setSecurityMsg] = useState({ type: '', text: '' });
 
+  // Customization state
+  const [accentColor, setAccentColor] = useState('#0f766e');
+  const [fontSize, setFontSize] = useState('normal');
+  const [scanlines, setScanlines] = useState(false);
 
-  // Load prices cache
-  useEffect(() => {
-    fetch('/api/movers')
-      .then(r => r.json())
-      .then(data => {
-        const map = {};
-        const allStocks = [
-          ...(data.gainers || []),
-          ...(data.losers || []),
-          ...(data.bigCapMovers || []),
-          ...(data.topRoic || []),
-        ];
-        allStocks.forEach(s => {
-          if (s.ticker && s.currentPrice) {
-            map[s.ticker.toUpperCase()] = s.currentPrice;
-          }
-        });
-        const defaults = {
-          AAPL: 189.84,
-          MSFT: 421.90,
-          NVDA: 126.57,
-          TSLA: 184.40,
-          GOOGL: 174.56,
-          AMZN: 182.15,
-          META: 498.42,
-          NFLX: 620.10,
-        };
-        setPriceCache({ ...defaults, ...map });
-      })
-      .catch(() => {
-        setPriceCache({
-          AAPL: 189.84,
-          MSFT: 421.90,
-          NVDA: 126.57,
-          TSLA: 184.40,
-          GOOGL: 174.56,
-          AMZN: 182.15,
-          META: 498.42,
-          NFLX: 620.10,
-        });
-      });
-  }, []);
+  // API Token state
+  const [apiToken, setApiToken] = useState('');
+  const [copiedToken, setCopiedToken] = useState(false);
 
+  // Stats
+  const [holdingsCount, setHoldingsCount] = useState(0);
+  const [watchlistCount, setWatchlistCount] = useState(0);
 
-  // Load state from localStorage on mount
   useEffect(() => {
     if (!isLoaded) return;
-    if (!isSignedIn) { router.push('/sign-in'); return; }
+    if (!isSignedIn) {
+      router.push('/sign-in');
+      return;
+    }
+
+    // Load initial values
+    setDisplayName(user.user_metadata?.full_name || localStorage.getItem('traq_user_fullname') || '');
     
-    const savedThesis = localStorage.getItem('traqcker_ledger_thesis');
-    const savedValuations = localStorage.getItem('traqcker_ledger_valuations');
+    // Load saved preferences
+    setAccentColor(localStorage.getItem('ws_accent_color') || '#0f766e');
+    setFontSize(localStorage.getItem('ws_font_size') || 'normal');
+    setScanlines(localStorage.getItem('ws_scanlines') === 'true');
 
-    if (savedThesis) setThesisNotes(JSON.parse(savedThesis));
-    else {
-      const initialThesis = [
-        { id: '1', ticker: 'NVDA', direction: 'BUY', entryPrice: 120.5, targetPrice: 160.0, summary: 'Undisputed leader in AI chips, Blackwell architecture is expected to drive the next wave of revenue.', status: 'ACTIVE', date: new Date().toLocaleDateString() },
-        { id: '2', ticker: 'TSLA', direction: 'SELL', entryPrice: 195.0, targetPrice: 140.0, summary: 'Margin pressure from price cuts, cooling global EV demand.', status: 'ACTIVE', date: new Date().toLocaleDateString() }
-      ];
-      setThesisNotes(initialThesis);
-      localStorage.setItem('traqcker_ledger_thesis', JSON.stringify(initialThesis));
+    // Load saved fake API token or generate one if missing
+    let token = localStorage.getItem('traq_api_token');
+    if (!token) {
+      token = 'traq_live_' + Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
+      localStorage.setItem('traq_api_token', token);
     }
+    setApiToken(token);
 
-    if (savedValuations) setValuations(JSON.parse(savedValuations));
-    else {
-      const initialValuations = [
-        { id: '1', ticker: 'GOOGL', method: 'DCF Model', fairValue: 195.0, date: new Date().toLocaleDateString() },
-        { id: '2', ticker: 'AMZN', method: 'PE Multiples', fairValue: 210.0, date: new Date().toLocaleDateString() }
-      ];
-      setValuations(initialValuations);
-      localStorage.setItem('traqcker_ledger_valuations', JSON.stringify(initialValuations));
-    }
+    // Fetch subscription, holdings, and watchlist stats
+    Promise.all([
+      fetch('/api/subscription').then(r => r.json()),
+      supabase.from('portfolio_holdings').select('id', { count: 'exact' }).eq('user_id', user.id),
+      supabase.from('watchlists').select('ticker', { count: 'exact' }).eq('user_id', user.id)
+    ])
+      .then(([subData, portResult, wlResult]) => {
+        setIsPro(subData.isPro || false);
+        setHoldingsCount(portResult.count || 0);
+        setWatchlistCount(wlResult.count || 0);
+      })
+      .catch((e) => console.error('Error fetching dashboard stats:', e))
+      .finally(() => setLoading(false));
 
-    fetch('/api/subscription')
-      .then(r => r.json())
-      .then(d => setIsPro(d.isPro || false))
-      .catch(() => {})
-      .finally(() => {
-        setLoading(false);
-      });
   }, [isSignedIn, isLoaded]);
 
-  // Form Submit Handlers
-  const handleAddThesis = (e) => {
+  const handleUpdateProfile = async (e) => {
     e.preventDefault();
-    if (!newThesis.ticker) return;
-    const item = {
-      id: Date.now().toString(),
-      ticker: newThesis.ticker.toUpperCase(),
-      direction: newThesis.direction,
-      entryPrice: parseFloat(newThesis.entryPrice) || 0,
-      targetPrice: parseFloat(newThesis.targetPrice) || 0,
-      summary: newThesis.summary,
-      status: 'ACTIVE',
-      date: new Date().toLocaleDateString()
-    };
-    const updated = [item, ...thesisNotes];
-    setThesisNotes(updated);
-    localStorage.setItem('traqcker_ledger_thesis', JSON.stringify(updated));
-    setNewThesis({ ticker: '', direction: 'BUY', entryPrice: '', targetPrice: '', summary: '' });
-  };
-
-  const handleDeleteThesis = (id) => {
-    const updated = thesisNotes.filter(t => t.id !== id);
-    setThesisNotes(updated);
-    localStorage.setItem('traqcker_ledger_thesis', JSON.stringify(updated));
-  };
-
-  const runBacktest = async (e) => {
-    e.preventDefault();
-    if (!btForm.ticker) return;
-    setBtLoading(true);
-    setBtError('');
-    setBtResult(null);
+    setProfileMsg({ type: '', text: '' });
     try {
-      const res = await fetch(`/api/chart?ticker=${btForm.ticker.toUpperCase()}&range=1y`);
-      const { candles } = await res.json();
-      if (!candles || candles.length < 10) { setBtError('Not enough historical data for this ticker.'); setBtLoading(false); return; }
-
-      const threshold = parseFloat(btForm.threshold) / 100;
-      const hold = parseInt(btForm.holdDays);
-      const signals = [];
-
-      for (let i = 1; i < candles.length - hold; i++) {
-        const prev = candles[i - 1].c;
-        const curr = candles[i].c;
-        const change = (curr - prev) / prev;
-        let triggered = false;
-
-        if (btForm.condition === 'drop_1d' && btForm.direction === 'BUY') triggered = change <= -threshold;
-        if (btForm.condition === 'drop_1d' && btForm.direction === 'SELL') triggered = change >= threshold;
-        if (btForm.condition === 'above_ma20') {
-          const slice = candles.slice(Math.max(0, i - 20), i);
-          const ma = slice.reduce((s, c) => s + c.c, 0) / slice.length;
-          triggered = btForm.direction === 'BUY' ? curr > ma * (1 + threshold) : curr < ma * (1 - threshold);
-        }
-        if (btForm.condition === 'below_ma20') {
-          const slice = candles.slice(Math.max(0, i - 20), i);
-          const ma = slice.reduce((s, c) => s + c.c, 0) / slice.length;
-          triggered = btForm.direction === 'BUY' ? curr < ma * (1 - threshold) : curr > ma * (1 + threshold);
-        }
-
-        if (triggered) {
-          const exit = candles[i + hold]?.c || curr;
-          const ret = btForm.direction === 'BUY' ? (exit - curr) / curr : (curr - exit) / curr;
-          signals.push({ date: new Date(candles[i].t).toLocaleDateString(), entryPrice: curr, exitPrice: exit, returnPct: (ret * 100).toFixed(2), win: ret > 0 });
-        }
-      }
-
-      if (signals.length === 0) { setBtError('No signals triggered with these parameters in the last year.'); setBtLoading(false); return; }
-
-      const wins = signals.filter(s => s.win).length;
-      const avgRet = signals.reduce((s, x) => s + parseFloat(x.returnPct), 0) / signals.length;
-      const best = Math.max(...signals.map(s => parseFloat(s.returnPct)));
-      const worst = Math.min(...signals.map(s => parseFloat(s.returnPct)));
-      setBtResult({ ticker: btForm.ticker.toUpperCase(), signals, wins, winRate: ((wins / signals.length) * 100).toFixed(1), avgRet: avgRet.toFixed(2), best: best.toFixed(2), worst: worst.toFixed(2) });
-    } catch { setBtError('Error fetching data. Try again.'); }
-    setBtLoading(false);
+      const { error } = await supabase.auth.updateUser({
+        data: { full_name: displayName }
+      });
+      if (error) throw error;
+      localStorage.setItem('traq_user_fullname', displayName);
+      setProfileMsg({ type: 'success', text: 'Display name updated successfully!' });
+      window.dispatchEvent(new Event('ws-settings-changed'));
+    } catch (err) {
+      setProfileMsg({ type: 'error', text: err.message || 'Failed to update profile.' });
+    }
   };
 
-  const handleAddValuation = (e) => {
+  const handleUpdatePassword = async (e) => {
     e.preventDefault();
-    if (!newValuation.ticker || !newValuation.fairValue) return;
-    const item = {
-      id: Date.now().toString(),
-      ticker: newValuation.ticker.toUpperCase(),
-      method: newValuation.method,
-      fairValue: parseFloat(newValuation.fairValue) || 0,
-      date: new Date().toLocaleDateString()
-    };
-    const updated = [item, ...valuations];
-    setValuations(updated);
-    localStorage.setItem('traqcker_ledger_valuations', JSON.stringify(updated));
-    setNewValuation({ ticker: '', method: 'DCF Model', fairValue: '' });
+    setSecurityMsg({ type: '', text: '' });
+    if (password !== confirmPassword) {
+      setSecurityMsg({ type: 'error', text: 'Passwords do not match.' });
+      return;
+    }
+    try {
+      const { error } = await supabase.auth.updateUser({ password });
+      if (error) throw error;
+      setSecurityMsg({ type: 'success', text: 'Password updated successfully!' });
+      setPassword('');
+      setConfirmPassword('');
+    } catch (err) {
+      setSecurityMsg({ type: 'error', text: err.message || 'Failed to update password.' });
+    }
   };
 
-  const handleDeleteValuation = (id) => {
-    const updated = valuations.filter(v => v.id !== id);
-    setValuations(updated);
-    localStorage.setItem('traqcker_ledger_valuations', JSON.stringify(updated));
+  const signOut = async () => {
+    await supabase.auth.signOut();
+    router.push('/');
+    router.refresh();
   };
 
+  const goToPortal = async () => {
+    setPortalLoading(true);
+    try {
+      const { url } = await fetch('/api/stripe/portal', { method: 'POST' }).then(r => r.json());
+      if (url) window.location.href = url;
+    } finally {
+      setPortalLoading(false);
+    }
+  };
 
+  // Live styling updates for customization
+  const changeAccent = (color) => {
+    setAccentColor(color);
+    localStorage.setItem('ws_accent_color', color);
+    document.documentElement.style.setProperty('--ws-accent', color);
+    const dim = color.startsWith('#')
+      ? `rgba(${parseInt(color.slice(1,3),16)}, ${parseInt(color.slice(3,5),16)}, ${parseInt(color.slice(5,7),16)}, 0.12)`
+      : color;
+    document.documentElement.style.setProperty('--ws-accent-dim', dim);
+    window.dispatchEvent(new Event('ws-settings-changed'));
+  };
+
+  const changeFontSize = (size) => {
+    setFontSize(size);
+    localStorage.setItem('ws_font_size', size);
+    const fs = size === 'compact' ? '12px' : size === 'large' ? '16px' : '14px';
+    document.documentElement.style.fontSize = fs;
+    window.dispatchEvent(new Event('ws-settings-changed'));
+  };
+
+  const toggleScanlines = () => {
+    const nextVal = !scanlines;
+    setScanlines(nextVal);
+    localStorage.setItem('ws_scanlines', String(nextVal));
+    window.dispatchEvent(new Event('ws-settings-changed'));
+  };
+
+  const rotateApiToken = () => {
+    const token = 'traq_live_' + Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
+    localStorage.setItem('traq_api_token', token);
+    setApiToken(token);
+  };
+
+  const copyTokenToClipboard = () => {
+    navigator.clipboard.writeText(apiToken);
+    setCopiedToken(true);
+    setTimeout(() => setCopiedToken(false), 2000);
+  };
+
+  // Danger Zone Wipes
+  const clearPortfolio = async () => {
+    if (!confirm('WARNING: Are you sure you want to delete all portfolio holdings? This action is permanent.')) return;
+    try {
+      const { error } = await supabase.from('portfolio_holdings').delete().eq('user_id', user.id);
+      if (error) throw error;
+      setHoldingsCount(0);
+      alert('Portfolio holdings cleared successfully.');
+    } catch (err) {
+      alert('Failed to clear portfolio holdings: ' + err.message);
+    }
+  };
+
+  const clearWatchlist = async () => {
+    if (!confirm('WARNING: Are you sure you want to delete all tickers from your watchlist? This action is permanent.')) return;
+    try {
+      const { error } = await supabase.from('watchlists').delete().eq('user_id', user.id);
+      if (error) throw error;
+      setWatchlistCount(0);
+      alert('Watchlist cleared successfully.');
+    } catch (err) {
+      alert('Failed to clear watchlist: ' + err.message);
+    }
+  };
 
   if (!isLoaded || loading) return (
     <div style={{ padding: '24px', fontFamily: "'JetBrains Mono', monospace" }}>
       <div style={{ border: '1px solid var(--ws-border)', background: 'var(--ws-bg-1)', overflow: 'hidden' }}>
         <div style={{ background: 'var(--ws-bg-2)', borderBottom: '1px solid var(--ws-border)', padding: '7px 16px' }}>
-          <span style={{ fontSize: '11px', color: 'var(--ws-accent)', fontWeight: 700, letterSpacing: '1px' }}>$ traq profile</span>
+          <span style={{ fontSize: '11px', color: 'var(--ws-accent)', fontWeight: 700, letterSpacing: '1px' }}>$ loading profile...</span>
         </div>
         <div style={{ padding: '24px' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
             <span style={{ color: 'var(--ws-accent)', fontSize: '11px' }}>▶</span>
-            <span style={{ color: 'var(--ws-text-3)', fontSize: '11px', letterSpacing: '1px' }}>LOADING LEDGER...</span>
+            <span style={{ color: 'var(--ws-text-3)', fontSize: '11px', letterSpacing: '1px' }}>INITIALIZING PROFILE WORKSPACE...</span>
           </div>
         </div>
       </div>
     </div>
   );
 
-  const card = { border: '1px solid var(--ws-border)', background: 'var(--ws-bg-1)' };
+  const cardStyle = {
+    background: 'var(--ws-bg-1)',
+    border: '1px solid var(--ws-border)',
+    borderRadius: '10px',
+    padding: '20px',
+    display: 'flex',
+    flexDirection: 'column',
+    gap: '16px',
+    boxShadow: '0 2px 8px rgba(0,0,0,0.01)',
+  };
+
+  const labelStyle = {
+    fontSize: '10px',
+    color: 'var(--ws-text-3)',
+    fontWeight: 700,
+    letterSpacing: '1px',
+    textTransform: 'uppercase',
+  };
+
+  const inputStyle = {
+    width: '100%',
+    padding: '8px 12px',
+    background: 'var(--ws-bg-2)',
+    border: '1px solid var(--ws-border)',
+    borderRadius: '6px',
+    color: 'var(--ws-text)',
+    outline: 'none',
+    fontSize: '13px',
+    boxSizing: 'border-box',
+  };
+
+  const btnStyle = {
+    padding: '8px 16px',
+    fontSize: '12px',
+    fontWeight: 700,
+    background: 'var(--ws-accent)',
+    border: 'none',
+    borderRadius: '6px',
+    color: '#fff',
+    cursor: 'pointer',
+    textAlign: 'center',
+    transition: 'opacity 0.2s',
+  };
 
   return (
-    <div style={{ padding: '24px', display: 'flex', flexDirection: 'column', gap: '20px', height: '100%', boxSizing: 'border-box' }}>
-
-      {/* Premium User Profile Header Card */}
+    <div style={{ padding: '24px', display: 'flex', flexDirection: 'column', gap: '20px', boxSizing: 'border-box' }}>
+      
+      {/* 1. Header Card */}
       <div style={{
         background: 'var(--ws-bg-1)',
         border: '1px solid var(--ws-border)',
@@ -248,7 +273,7 @@ export default function WorkspaceProfile() {
         overflow: 'hidden',
         boxShadow: '0 4px 20px rgba(0, 0, 0, 0.02)'
       }}>
-        {/* Background Subtle Gradient Glow */}
+        {/* Background Glow */}
         <div style={{
           position: 'absolute',
           top: '-10%',
@@ -260,15 +285,15 @@ export default function WorkspaceProfile() {
           opacity: 0.3
         }} />
 
-        {/* Left Side: Avatar + Details */}
+        {/* User identity details */}
         <div style={{ display: 'flex', alignItems: 'center', gap: '20px', zIndex: 1 }}>
           <div style={{
-            width: '60px',
-            height: '60px',
+            width: '64px',
+            height: '64px',
             borderRadius: '50%',
             background: 'linear-gradient(135deg, #a78bfa, #60a5fa)',
             color: '#fff',
-            fontSize: '24px',
+            fontSize: '26px',
             fontWeight: 800,
             display: 'flex',
             alignItems: 'center',
@@ -280,9 +305,9 @@ export default function WorkspaceProfile() {
           </div>
           <div>
             <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap' }}>
-              <span style={{ fontSize: '18px', fontWeight: 800, color: 'var(--ws-text)' }}>
-                {user?.email || 'Guest User'}
-              </span>
+              <h1 style={{ fontSize: '20px', fontWeight: 800, color: 'var(--ws-text)', margin: 0 }}>
+                {displayName || user?.email?.split('@')[0]}
+              </h1>
               <span style={{
                 background: isPro ? 'var(--ws-accent-dim)' : 'var(--ws-bg-2)',
                 color: isPro ? 'var(--ws-accent)' : 'var(--ws-text-3)',
@@ -297,406 +322,295 @@ export default function WorkspaceProfile() {
                 {isPro ? '★ Pro Member' : 'Free Account'}
               </span>
             </div>
-            <div style={{ fontSize: '11px', color: 'var(--ws-text-3)', marginTop: '4px' }}>
-              Member since {user?.created_at ? new Date(user.created_at).toLocaleDateString(undefined, { year: 'numeric', month: 'long', day: 'numeric' }) : '—'}
+            <div style={{ fontSize: '12px', color: 'var(--ws-text-2)', marginTop: '4px' }}>
+              {user?.email} • Member since {user?.created_at ? new Date(user.created_at).toLocaleDateString(undefined, { year: 'numeric', month: 'long', day: 'numeric' }) : '—'}
             </div>
-            {!isPro && (
-              <a href="/pricing" style={{
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: '4px',
-                fontSize: '10px',
-                fontWeight: 700,
-                color: 'var(--ws-accent)',
-                textDecoration: 'none',
-                marginTop: '6px',
-                background: 'var(--ws-accent-dim)',
-                padding: '2px 8px',
-                borderRadius: '4px',
-                transition: 'opacity 0.2s'
-              }}
-              onMouseEnter={e => e.currentTarget.style.opacity = 0.8}
-              onMouseLeave={e => e.currentTarget.style.opacity = 1}
-              >
-                Upgrade to Pro →
-              </a>
-            )}
           </div>
         </div>
 
-        {/* Right Side: Key Stats Counters */}
+        {/* Global Stats info */}
         <div style={{ display: 'flex', gap: '16px', zIndex: 1, flexWrap: 'wrap' }}>
           {[
-            { label: 'THESIS JOURNAL', count: thesisNotes.length, color: 'var(--ws-accent)' },
-            { label: 'VALUATIONS', count: valuations.length, color: '#a78bfa' },
-            { label: 'BACKTEST RUNS', count: btResult ? 1 : 0, color: '#f59e0b' }
+            { label: 'Portfolio Assets', count: holdingsCount, color: 'var(--ws-accent)' },
+            { label: 'Watchlist Tickers', count: watchlistCount, color: '#a78bfa' }
           ].map((stat, i) => (
             <div key={i} style={{
               background: 'var(--ws-bg-2)',
               border: '1px solid var(--ws-border)',
               borderRadius: '8px',
               padding: '10px 18px',
-              minWidth: '110px',
+              minWidth: '120px',
               textAlign: 'center',
-              boxShadow: '0 2px 4px rgba(0,0,0,0.01)'
             }}>
               <div style={{ fontSize: '8px', fontWeight: 700, color: 'var(--ws-text-3)', letterSpacing: '1px', textTransform: 'uppercase', marginBottom: '4px' }}>
                 {stat.label}
               </div>
-              <div style={{ fontSize: '18px', fontWeight: 800, color: stat.color, fontFamily: "'JetBrains Mono', monospace" }}>
+              <div style={{ fontSize: '20px', fontWeight: 800, color: stat.color, fontFamily: "'JetBrains Mono', monospace" }}>
                 {stat.count}
               </div>
             </div>
           ))}
+          <button onClick={signOut}
+            style={{ padding: '0 16px', height: '44px', alignSelf: 'center', border: '1px solid var(--ws-border)', background: 'var(--ws-bg-1)', borderRadius: '8px', color: 'var(--ws-red)', cursor: 'pointer', fontSize: '12px', fontWeight: 700, transition: 'all 0.15s ease' }}
+            onMouseEnter={e => { e.currentTarget.style.borderColor = 'var(--ws-red)'; e.currentTarget.style.background = 'rgba(239, 68, 68, 0.05)'; }}
+            onMouseLeave={e => { e.currentTarget.style.borderColor = 'var(--ws-border)'; e.currentTarget.style.background = 'var(--ws-bg-1)'; }}>
+            Sign Out
+          </button>
         </div>
       </div>
 
-      {/* Tabs Menu */}
-      <div style={{ display: 'flex', gap: '4px', borderBottom: '1px solid var(--ws-border)', paddingBottom: '2px' }}>
-        {[
-          { id: 'thesis', label: 'THESIS JOURNAL' },
-          { id: 'paper', label: 'PAPER TRADING' },
-          { id: 'valuation', label: 'VALUATION TRACKER' },
-        ].map(tab => (
-          <button
-            key={tab.id}
-            onClick={() => setActiveTab(tab.id)}
-            style={{
-              padding: '8px 16px',
-              fontSize: '11px',
-              fontWeight: 800,
-              color: activeTab === tab.id ? 'var(--ws-accent)' : 'var(--ws-text-3)',
-              background: activeTab === tab.id ? 'var(--ws-bg-2)' : 'transparent',
-              border: activeTab === tab.id ? '1px solid var(--ws-border)' : '1px solid transparent',
-              borderBottom: 'none',
-              borderRadius: 'var(--ws-radius) var(--ws-radius) 0 0',
-              cursor: 'pointer',
-              outline: 'none',
-              transition: 'all 0.15s ease'
-            }}
-          >
-            {tab.label}
-          </button>
-        ))}
-      </div>
-
-      {/* Tab Content */}
-      <div style={{ flex: 1, minHeight: 0 }}>
+      {/* 2. Main Two-Column Settings Grid */}
+      <div style={{ display: 'grid', gridTemplateColumns: '1.2fr 1fr', gap: '20px', alignItems: 'start' }}>
         
-        {/* TAB 1: THESIS JOURNAL */}
-        {activeTab === 'thesis' && (
-          <div style={{ display: 'grid', gridTemplateColumns: '1.2fr 2fr', gap: '16px', height: '100%' }}>
-            {/* Form */}
-            <form onSubmit={handleAddThesis} style={{ ...card, padding: '16px', display: 'flex', flexDirection: 'column', gap: '12px' }}>
-              <div style={{ fontSize: '11px', fontFamily: "'JetBrains Mono', monospace", fontWeight: 700, color: 'var(--ws-accent)', letterSpacing: '1.5px', borderBottom: '1px solid var(--ws-border)', paddingBottom: '6px' }}>RECORD THESIS NOTE</div>
-              
-              <div style={{ display: 'flex', gap: '8px' }}>
-                <div style={{ flex: 1 }}>
-                  <label style={{ fontSize: '9px', color: 'var(--ws-text-3)', fontWeight: 600, display: 'block', marginBottom: '4px' }}>TICKER</label>
-                  <input type="text" placeholder="AAPL" value={newThesis.ticker} onChange={e => setNewThesis({ ...newThesis, ticker: e.target.value })} required
-                    style={{ width: '100%', padding: '6px 10px', background: 'var(--ws-bg-2)', border: '1px solid var(--ws-border)', borderRadius: '4px', color: 'var(--ws-text)', outline: 'none', boxSizing: 'border-box', fontSize: '11px' }} />
+        {/* Left Column: Account, Security, Plan */}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+          
+          {/* Plan / Subscription Details */}
+          <div style={cardStyle}>
+            <div style={{ borderBottom: '1px solid var(--ws-border)', paddingBottom: '10px' }}>
+              <div style={labelStyle}>Subscription & Billing</div>
+            </div>
+            
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '12px' }}>
+              <div>
+                <div style={{ fontSize: '15px', fontWeight: 800, color: 'var(--ws-text)' }}>
+                  {isPro ? 'Traqcker Pro Plan' : 'Traqcker Free Tier'}
                 </div>
-                <div style={{ flex: 1 }}>
-                  <label style={{ fontSize: '9px', color: 'var(--ws-text-3)', fontWeight: 600, display: 'block', marginBottom: '4px' }}>DIRECTION</label>
-                  <select value={newThesis.direction} onChange={e => setNewThesis({ ...newThesis, direction: e.target.value })}
-                    style={{ width: '100%', padding: '6px 10px', background: 'var(--ws-bg-2)', border: '1px solid var(--ws-border)', borderRadius: '4px', color: 'var(--ws-text)', outline: 'none', boxSizing: 'border-box', fontSize: '11px' }}>
-                    <option value="BUY">BUY / LONG</option>
-                    <option value="SELL">SELL / SHORT</option>
-                  </select>
+                <div style={{ fontSize: '11px', color: 'var(--ws-text-3)', marginTop: '2px' }}>
+                  {isPro ? 'You have full institutional terminal access.' : 'Upgrade to unlock global screening, financials, DCF models, and backtesting.'}
                 </div>
               </div>
-
-              <div style={{ display: 'flex', gap: '8px' }}>
-                <div style={{ flex: 1 }}>
-                  <label style={{ fontSize: '9px', color: 'var(--ws-text-3)', fontWeight: 600, display: 'block', marginBottom: '4px' }}>ENTRY PRICE ($)</label>
-                  <input type="number" step="any" placeholder="185.50" value={newThesis.entryPrice} onChange={e => setNewThesis({ ...newThesis, entryPrice: e.target.value })}
-                    style={{ width: '100%', padding: '6px 10px', background: 'var(--ws-bg-2)', border: '1px solid var(--ws-border)', borderRadius: '4px', color: 'var(--ws-text)', outline: 'none', boxSizing: 'border-box', fontSize: '11px' }} />
-                </div>
-                <div style={{ flex: 1 }}>
-                  <label style={{ fontSize: '9px', color: 'var(--ws-text-3)', fontWeight: 600, display: 'block', marginBottom: '4px' }}>TARGET PRICE ($)</label>
-                  <input type="number" step="any" placeholder="220.00" value={newThesis.targetPrice} onChange={e => setNewThesis({ ...newThesis, targetPrice: e.target.value })}
-                    style={{ width: '100%', padding: '6px 10px', background: 'var(--ws-bg-2)', border: '1px solid var(--ws-border)', borderRadius: '4px', color: 'var(--ws-text)', outline: 'none', boxSizing: 'border-box', fontSize: '11px' }} />
-                </div>
-              </div>
-
-              <div style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
-                <label style={{ fontSize: '9px', color: 'var(--ws-text-3)', fontWeight: 600, display: 'block', marginBottom: '4px' }}>THESIS SUMMARY</label>
-                <textarea placeholder="Write investment thesis rationale here..." value={newThesis.summary} onChange={e => setNewThesis({ ...newThesis, summary: e.target.value })} required
-                  style={{ width: '100%', flex: 1, padding: '8px 10px', background: 'var(--ws-bg-2)', border: '1px solid var(--ws-border)', borderRadius: '4px', color: 'var(--ws-text)', outline: 'none', boxSizing: 'border-box', fontSize: '11px', resize: 'none', minHeight: '80px' }} />
-              </div>
-
-              <button type="submit"
-                style={{ width: '100%', padding: '8px', fontSize: '11px', fontWeight: 800, background: 'var(--ws-accent)', border: 'none', borderRadius: '4px', color: 'var(--ws-bg-1)', cursor: 'pointer' }}>
-                SAVE THESIS NOTE
-              </button>
-            </form>
-
-            {/* List */}
-            <div style={{ ...card, padding: '16px', display: 'flex', flexDirection: 'column', gap: '10px', overflowY: 'auto' }}>
-              <div style={{ fontSize: '11px', fontFamily: "'JetBrains Mono', monospace", fontWeight: 700, color: 'var(--ws-text-2)', letterSpacing: '1.5px', borderBottom: '1px solid var(--ws-border)', paddingBottom: '6px' }}>RECORDED THESIS NOTES</div>
-              {thesisNotes.length === 0 ? (
-                <div style={{ padding: '24px', textAlign: 'center', color: 'var(--ws-text-3)', fontSize: '12px' }}>No recorded thesis notes.</div>
+              {isPro ? (
+                <button onClick={goToPortal} disabled={portalLoading}
+                  style={{ ...btnStyle, background: 'none', border: '1px solid var(--ws-border)', color: 'var(--ws-text)', opacity: portalLoading ? 0.5 : 1 }}>
+                  {portalLoading ? 'Loading...' : 'Manage Subscription →'}
+                </button>
               ) : (
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-                  {thesisNotes.map(thesis => {
-                    const currentPrice = priceCache[thesis.ticker] || thesis.entryPrice;
-                    const priceDiff = currentPrice - thesis.entryPrice;
-                    const returnPct = thesis.entryPrice ? ((priceDiff / thesis.entryPrice) * 100).toFixed(1) : '0';
-                    const targetReturnPct = thesis.entryPrice ? (((thesis.targetPrice - thesis.entryPrice) / thesis.entryPrice) * 100).toFixed(1) : '0';
-                    return (
-                      <div key={thesis.id} style={{ border: '1px solid var(--ws-border)', borderRadius: '4px', padding: '12px', background: 'var(--ws-bg-2)' }}>
-                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
-                          <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                            <span style={{ fontSize: '13px', fontWeight: 800, color: 'var(--ws-text)' }}>{thesis.ticker}</span>
-                            {thesis.direction === 'BUY' ? (
-                              <span style={{ background: 'var(--ws-accent-dim)', color: 'var(--ws-accent)', fontSize: '9px', fontWeight: 800, padding: '2px 6px', borderRadius: '4px' }}>▲ LONG</span>
-                            ) : (
-                              <span style={{ background: 'rgba(239, 68, 68, 0.1)', color: 'var(--ws-red)', fontSize: '9px', fontWeight: 800, padding: '2px 6px', borderRadius: '4px' }}>▼ SHORT</span>
-                            )}
-                          </div>
-                          <button onClick={() => handleDeleteThesis(thesis.id)}
-                            style={{ background: 'none', border: 'none', color: 'var(--ws-red)', cursor: 'pointer', fontSize: '10px', fontWeight: 600 }}>
-                            [ DELETE ]
-                          </button>
-                        </div>
-                        <p style={{ fontSize: '11px', color: 'var(--ws-text-2)', lineHeight: 1.4, margin: '0 0 10px 0' }}>{thesis.summary}</p>
-                        
-                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '8px', borderTop: '1px solid var(--ws-border)', paddingTop: '8px', fontSize: '9px', color: 'var(--ws-text-3)' }}>
-                          <div>
-                            <div>ENTRY PRICE</div>
-                            <div style={{ color: 'var(--ws-text)', fontWeight: 700, fontSize: '11px', marginTop: '2px' }}>${thesis.entryPrice.toFixed(2)}</div>
-                          </div>
-                          <div>
-                            <div>TARGET PRICE</div>
-                            <div style={{ color: 'var(--ws-text)', fontWeight: 700, fontSize: '11px', marginTop: '2px' }}>${thesis.targetPrice.toFixed(2)} ({targetReturnPct >= 0 ? '+' : ''}{targetReturnPct}%)</div>
-                          </div>
-                          <div>
-                            <div>CURRENT PRICE</div>
-                            <div style={{ color: 'var(--ws-text)', fontWeight: 700, fontSize: '11px', marginTop: '2px' }}>${currentPrice.toFixed(2)}</div>
-                          </div>
-                          <div>
-                            <div>CURRENT RETURN</div>
-                            <div style={{ color: parseFloat(returnPct) >= 0 ? 'var(--ws-accent)' : 'var(--ws-red)', fontWeight: 700, fontSize: '11px', marginTop: '2px' }}>
-                              {parseFloat(returnPct) >= 0 ? '+' : ''}{returnPct}%
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
+                <a href="/pricing" style={btnStyle}>Upgrade to Pro →</a>
               )}
             </div>
           </div>
-        )}
 
-        {/* TAB 2: STRATEGY BACKTESTER */}
-        {activeTab === 'paper' && (
-          <div style={{ display: 'grid', gridTemplateColumns: '1.2fr 2fr', gap: '16px', height: '100%' }}>
-            {/* Config Form */}
-            <form onSubmit={runBacktest} style={{ ...card, padding: '16px', display: 'flex', flexDirection: 'column', gap: '12px' }}>
-              <div style={{ fontSize: '11px', fontFamily: "'JetBrains Mono', monospace", fontWeight: 700, color: 'var(--ws-accent)', letterSpacing: '1.5px', borderBottom: '1px solid var(--ws-border)', paddingBottom: '6px' }}>DEFINE STRATEGY RULE</div>
+          {/* Account Profile Form */}
+          <form onSubmit={handleUpdateProfile} style={cardStyle}>
+            <div style={{ borderBottom: '1px solid var(--ws-border)', paddingBottom: '10px' }}>
+              <div style={labelStyle}>General Account</div>
+            </div>
 
+            {profileMsg.text && (
+              <div style={{
+                padding: '10px 12px',
+                fontSize: '12px',
+                borderRadius: '6px',
+                border: `1px solid ${profileMsg.type === 'success' ? 'var(--ws-accent)' : 'var(--ws-red)'}`,
+                background: profileMsg.type === 'success' ? 'var(--ws-accent-dim)' : 'rgba(239, 68, 68, 0.05)',
+                color: profileMsg.type === 'success' ? 'var(--ws-accent)' : 'var(--ws-red)',
+              }}>
+                {profileMsg.text}
+              </div>
+            )}
+
+            <div>
+              <label style={{ fontSize: '11px', color: 'var(--ws-text-2)', display: 'block', marginBottom: '6px', fontWeight: 600 }}>Display Name</label>
+              <input type="text" value={displayName} onChange={e => setDisplayName(e.target.value)} placeholder="Your name" required style={inputStyle} />
+            </div>
+
+            <div>
+              <label style={{ fontSize: '11px', color: 'var(--ws-text-3)', display: 'block', marginBottom: '6px', fontWeight: 600 }}>Email Address (Non-changeable)</label>
+              <input type="text" value={user?.email || ''} readOnly style={{ ...inputStyle, opacity: 0.6, cursor: 'not-allowed' }} />
+            </div>
+
+            <button type="submit" style={{ ...btnStyle, alignSelf: 'flex-start' }}>Save Profile</button>
+          </form>
+
+          {/* Security / Password Form */}
+          <form onSubmit={handleUpdatePassword} style={cardStyle}>
+            <div style={{ borderBottom: '1px solid var(--ws-border)', paddingBottom: '10px' }}>
+              <div style={labelStyle}>Security & Password</div>
+            </div>
+
+            {securityMsg.text && (
+              <div style={{
+                padding: '10px 12px',
+                fontSize: '12px',
+                borderRadius: '6px',
+                border: `1px solid ${securityMsg.type === 'success' ? 'var(--ws-accent)' : 'var(--ws-red)'}`,
+                background: securityMsg.type === 'success' ? 'var(--ws-accent-dim)' : 'rgba(239, 68, 68, 0.05)',
+                color: securityMsg.type === 'success' ? 'var(--ws-accent)' : 'var(--ws-red)',
+              }}>
+                {securityMsg.text}
+              </div>
+            )}
+
+            <div>
+              <label style={{ fontSize: '11px', color: 'var(--ws-text-2)', display: 'block', marginBottom: '6px', fontWeight: 600 }}>New Password</label>
+              <input type="password" value={password} onChange={e => setPassword(e.target.value)} placeholder="Minimum 6 characters" required style={inputStyle} />
+            </div>
+
+            <div>
+              <label style={{ fontSize: '11px', color: 'var(--ws-text-2)', display: 'block', marginBottom: '6px', fontWeight: 600 }}>Confirm New Password</label>
+              <input type="password" value={confirmPassword} onChange={e => setConfirmPassword(e.target.value)} placeholder="Repeat password" required style={inputStyle} />
+            </div>
+
+            <button type="submit" style={{ ...btnStyle, alignSelf: 'flex-start' }}>Change Password</button>
+          </form>
+
+        </div>
+
+        {/* Right Column: Preferences, Developer Keys, Maintenance */}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+          
+          {/* Customization Preferences */}
+          <div style={cardStyle}>
+            <div style={{ borderBottom: '1px solid var(--ws-border)', paddingBottom: '10px' }}>
+              <div style={labelStyle}>Terminal Preferences</div>
+            </div>
+
+            {/* Accent color picker */}
+            <div>
+              <div style={{ fontSize: '11px', color: 'var(--ws-text-2)', fontWeight: 600, marginBottom: '8px' }}>Terminal Color Accent</div>
+              <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
+                {ACCENT_COLORS.map((color) => {
+                  const isActive = accentColor.toLowerCase() === color.hex.toLowerCase();
+                  return (
+                    <button
+                      key={color.name}
+                      onClick={() => changeAccent(color.hex)}
+                      title={color.name}
+                      style={{
+                        width: '28px',
+                        height: '28px',
+                        borderRadius: '50%',
+                        background: color.hex,
+                        border: `2px solid ${isActive ? 'var(--ws-text)' : 'transparent'}`,
+                        cursor: 'pointer',
+                        transform: isActive ? 'scale(1.15)' : 'scale(1)',
+                        transition: 'transform 0.15s ease',
+                        boxShadow: isActive ? '0 0 10px rgba(0,0,0,0.15)' : 'none',
+                      }}
+                      onMouseEnter={e => e.currentTarget.style.transform = 'scale(1.15)'}
+                      onMouseLeave={e => { if (!isActive) e.currentTarget.style.transform = 'scale(1)'; }}
+                    />
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* Font size picker */}
+            <div style={{ marginTop: '6px' }}>
+              <div style={{ fontSize: '11px', color: 'var(--ws-text-2)', fontWeight: 600, marginBottom: '8px' }}>Base Font Size</div>
+              <div style={{ display: 'flex', border: '1px solid var(--ws-border)', borderRadius: '6px', overflow: 'hidden', width: 'fit-content' }}>
+                {[
+                  { id: 'compact', label: 'Compact' },
+                  { id: 'normal', label: 'Default' },
+                  { id: 'large', label: 'Large' }
+                ].map(opt => (
+                  <button
+                    key={opt.id}
+                    onClick={() => changeFontSize(opt.id)}
+                    style={{
+                      border: 'none',
+                      padding: '6px 14px',
+                      fontSize: '11px',
+                      fontWeight: 700,
+                      cursor: 'pointer',
+                      background: fontSize === opt.id ? 'var(--ws-accent)' : 'var(--ws-bg-2)',
+                      color: fontSize === opt.id ? '#fff' : 'var(--ws-text-2)',
+                      transition: 'all 0.15s ease'
+                    }}
+                  >
+                    {opt.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Scanlines visual toggler */}
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: '6px', padding: '10px 12px', background: 'var(--ws-bg-2)', border: '1px solid var(--ws-border)', borderRadius: '6px' }}>
               <div>
-                <label style={{ fontSize: '9px', color: 'var(--ws-text-3)', fontWeight: 600, display: 'block', marginBottom: '4px' }}>TICKER</label>
-                <input type="text" placeholder="AAPL" value={btForm.ticker} onChange={e => setBtForm({ ...btForm, ticker: e.target.value })} required
-                  style={{ width: '100%', padding: '6px 10px', background: 'var(--ws-bg-2)', border: '1px solid var(--ws-border)', borderRadius: '4px', color: 'var(--ws-text)', outline: 'none', boxSizing: 'border-box', fontSize: '11px' }} />
+                <div style={{ fontSize: '12px', fontWeight: 700, color: 'var(--ws-text)' }}>CRT Scanline Overlay</div>
+                <div style={{ fontSize: '10px', color: 'var(--ws-text-3)', marginTop: '2px' }}>Render retro CRT monitor lines across interface</div>
               </div>
-
-              <div>
-                <label style={{ fontSize: '9px', color: 'var(--ws-text-3)', fontWeight: 600, display: 'block', marginBottom: '4px' }}>ENTRY CONDITION</label>
-                <select value={btForm.condition} onChange={e => setBtForm({ ...btForm, condition: e.target.value })}
-                  style={{ width: '100%', padding: '6px 10px', background: 'var(--ws-bg-2)', border: '1px solid var(--ws-border)', borderRadius: '4px', color: 'var(--ws-text)', outline: 'none', boxSizing: 'border-box', fontSize: '11px' }}>
-                  <option value="drop_1d">Single-day price move ≥ threshold %</option>
-                  <option value="above_ma20">Price deviates above 20-day MA ≥ threshold %</option>
-                  <option value="below_ma20">Price deviates below 20-day MA ≥ threshold %</option>
-                </select>
-              </div>
-
-              <div style={{ display: 'flex', gap: '8px' }}>
-                <div style={{ flex: 1 }}>
-                  <label style={{ fontSize: '9px', color: 'var(--ws-text-3)', fontWeight: 600, display: 'block', marginBottom: '4px' }}>THRESHOLD (%)</label>
-                  <input type="number" step="0.5" min="0.1" placeholder="3" value={btForm.threshold} onChange={e => setBtForm({ ...btForm, threshold: e.target.value })} required
-                    style={{ width: '100%', padding: '6px 10px', background: 'var(--ws-bg-2)', border: '1px solid var(--ws-border)', borderRadius: '4px', color: 'var(--ws-text)', outline: 'none', boxSizing: 'border-box', fontSize: '11px' }} />
-                </div>
-                <div style={{ flex: 1 }}>
-                  <label style={{ fontSize: '9px', color: 'var(--ws-text-3)', fontWeight: 600, display: 'block', marginBottom: '4px' }}>HOLD PERIOD (DAYS)</label>
-                  <select value={btForm.holdDays} onChange={e => setBtForm({ ...btForm, holdDays: e.target.value })}
-                    style={{ width: '100%', padding: '6px 10px', background: 'var(--ws-bg-2)', border: '1px solid var(--ws-border)', borderRadius: '4px', color: 'var(--ws-text)', outline: 'none', boxSizing: 'border-box', fontSize: '11px' }}>
-                    <option value="5">5 days</option>
-                    <option value="10">10 days</option>
-                    <option value="20">20 days</option>
-                    <option value="30">30 days</option>
-                    <option value="60">60 days</option>
-                  </select>
-                </div>
-              </div>
-
-              <div>
-                <label style={{ fontSize: '9px', color: 'var(--ws-text-3)', fontWeight: 600, display: 'block', marginBottom: '4px' }}>TRADE DIRECTION</label>
-                <select value={btForm.direction} onChange={e => setBtForm({ ...btForm, direction: e.target.value })}
-                  style={{ width: '100%', padding: '6px 10px', background: 'var(--ws-bg-2)', border: '1px solid var(--ws-border)', borderRadius: '4px', color: 'var(--ws-text)', outline: 'none', boxSizing: 'border-box', fontSize: '11px' }}>
-                  <option value="BUY">BUY / LONG</option>
-                  <option value="SELL">SELL / SHORT</option>
-                </select>
-              </div>
-
-              <div style={{ flex: 1 }} />
-              <button type="submit" disabled={btLoading}
-                style={{ width: '100%', padding: '8px', fontSize: '11px', fontWeight: 800, background: btLoading ? 'var(--ws-border)' : 'var(--ws-accent)', border: 'none', borderRadius: '4px', color: 'var(--ws-bg-1)', cursor: btLoading ? 'default' : 'pointer' }}>
-                {btLoading ? 'RUNNING BACKTEST…' : 'RUN BACKTEST ON 1Y DATA'}
-              </button>
-            </form>
-
-            {/* Results */}
-            <div style={{ ...card, padding: '16px', display: 'flex', flexDirection: 'column', overflowY: 'auto' }}>
-              <div style={{ fontSize: '11px', fontFamily: "'JetBrains Mono', monospace", fontWeight: 700, color: 'var(--ws-text-2)', letterSpacing: '1.5px', borderBottom: '1px solid var(--ws-border)', paddingBottom: '6px', marginBottom: '12px' }}>BACKTEST RESULTS</div>
-
-              {btError && <div style={{ padding: '16px', background: 'rgba(239,68,68,0.08)', border: '1px solid var(--ws-red)', borderRadius: '4px', color: 'var(--ws-red)', fontSize: '11px' }}>{btError}</div>}
-
-              {!btResult && !btError && !btLoading && (
-                <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', color: 'var(--ws-text-3)', gap: '8px' }}>
-                  <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
-                  <span style={{ fontSize: '12px' }}>Configure a rule and run backtest to see signals</span>
-                </div>
-              )}
-
-              {btResult && (
-                <>
-                  {/* Summary Cards */}
-                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '8px', marginBottom: '14px' }}>
-                    {[
-                      { label: 'SIGNALS', value: btResult.signals.length },
-                      { label: 'WIN RATE', value: `${btResult.winRate}%`, color: parseFloat(btResult.winRate) >= 50 ? 'var(--ws-accent)' : 'var(--ws-red)' },
-                      { label: 'AVG RETURN', value: `${btResult.avgRet >= 0 ? '+' : ''}${btResult.avgRet}%`, color: parseFloat(btResult.avgRet) >= 0 ? 'var(--ws-accent)' : 'var(--ws-red)' },
-                      { label: 'BEST / WORST', value: `+${btResult.best}% / ${btResult.worst}%` },
-                    ].map((m, i) => (
-                      <div key={i} style={{ background: 'var(--ws-bg-2)', border: '1px solid var(--ws-border)', borderRadius: '4px', padding: '8px' }}>
-                        <div style={{ fontSize: '8px', color: 'var(--ws-text-3)', fontWeight: 600, marginBottom: '3px' }}>{m.label}</div>
-                        <div style={{ fontSize: '12px', fontWeight: 800, color: m.color || 'var(--ws-text)' }}>{m.value}</div>
-                      </div>
-                    ))}
-                  </div>
-
-                  {/* Signals Table */}
-                  <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '11px' }}>
-                    <thead>
-                      <tr style={{ borderBottom: '1px solid var(--ws-border)', background: 'var(--ws-bg-2)' }}>
-                        <th style={{ padding: '6px 10px', textAlign: 'left', color: 'var(--ws-text-3)' }}>SIGNAL DATE</th>
-                        <th style={{ padding: '6px 10px', textAlign: 'right', color: 'var(--ws-text-3)' }}>ENTRY</th>
-                        <th style={{ padding: '6px 10px', textAlign: 'right', color: 'var(--ws-text-3)' }}>EXIT</th>
-                        <th style={{ padding: '6px 10px', textAlign: 'right', color: 'var(--ws-text-3)' }}>RETURN</th>
-                        <th style={{ padding: '6px 10px', textAlign: 'center', color: 'var(--ws-text-3)' }}>OUTCOME</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {btResult.signals.map((s, i) => (
-                        <tr key={i} style={{ borderBottom: '1px solid var(--ws-border)' }}>
-                          <td style={{ padding: '6px 10px', color: 'var(--ws-text-2)' }}>{s.date}</td>
-                          <td style={{ padding: '6px 10px', textAlign: 'right', color: 'var(--ws-text-2)' }}>${s.entryPrice.toFixed(2)}</td>
-                          <td style={{ padding: '6px 10px', textAlign: 'right', color: 'var(--ws-text-2)' }}>${s.exitPrice.toFixed(2)}</td>
-                          <td style={{ padding: '6px 10px', textAlign: 'right', fontWeight: 700, color: parseFloat(s.returnPct) >= 0 ? 'var(--ws-accent)' : 'var(--ws-red)' }}>
-                            {parseFloat(s.returnPct) >= 0 ? '+' : ''}{s.returnPct}%
-                          </td>
-                          <td style={{ padding: '6px 10px', textAlign: 'center' }}>
-                            <span style={{ fontSize: '9px', fontWeight: 800, color: s.win ? 'var(--ws-accent)' : 'var(--ws-red)' }}>{s.win ? '✓ WIN' : '✗ LOSS'}</span>
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </>
-              )}
+              <label style={{ position: 'relative', display: 'inline-block', width: '36px', height: '20px', cursor: 'pointer' }}>
+                <input type="checkbox" checked={scanlines} onChange={toggleScanlines} style={{ opacity: 0, width: 0, height: 0 }} />
+                <span style={{
+                  position: 'absolute',
+                  inset: 0,
+                  background: scanlines ? 'var(--ws-accent)' : 'var(--ws-border)',
+                  borderRadius: '34px',
+                  transition: 'background-color 0.2s'
+                }}>
+                  <span style={{
+                    position: 'absolute',
+                    content: '""',
+                    height: '14px',
+                    width: '14px',
+                    left: scanlines ? '18px' : '3px',
+                    bottom: '3px',
+                    background: '#fff',
+                    borderRadius: '50%',
+                    transition: 'left 0.2s'
+                  }} />
+                </span>
+              </label>
             </div>
           </div>
-        )}
 
+          {/* API Developer Keys */}
+          <div style={cardStyle}>
+            <div style={{ borderBottom: '1px solid var(--ws-border)', paddingBottom: '10px' }}>
+              <div style={labelStyle}>Developer API Keys</div>
+            </div>
 
-        {/* TAB 3: VALUATION TRACKER */}
-        {activeTab === 'valuation' && (
-          <div style={{ display: 'grid', gridTemplateColumns: '1.2fr 2fr', gap: '16px', height: '100%' }}>
-            {/* Form */}
-            <form onSubmit={handleAddValuation} style={{ ...card, padding: '16px', display: 'flex', flexDirection: 'column', gap: '12px' }}>
-              <div style={{ fontSize: '11px', fontFamily: "'JetBrains Mono', monospace", fontWeight: 700, color: 'var(--ws-accent)', letterSpacing: '1.5px', borderBottom: '1px solid var(--ws-border)', paddingBottom: '6px' }}>RECORD FAIR VALUE MODEL</div>
+            <div style={{ fontSize: '11px', color: 'var(--ws-text-3)' }}>
+              Use your API token to programmatically fetch cache information and integrate with external analysis tooling.
+            </div>
+
+            <div style={{ display: 'flex', gap: '8px' }}>
+              <input type="text" readOnly value={apiToken}
+                style={{ ...inputStyle, fontFamily: "'JetBrains Mono', monospace", fontSize: '11px', background: 'var(--ws-bg-2)' }} />
               
-              <div>
-                <label style={{ fontSize: '9px', color: 'var(--ws-text-3)', fontWeight: 600, display: 'block', marginBottom: '4px' }}>TICKER</label>
-                <input type="text" placeholder="AAPL" value={newValuation.ticker} onChange={e => setNewValuation({ ...newValuation, ticker: e.target.value })} required
-                  style={{ width: '100%', padding: '6px 10px', background: 'var(--ws-bg-2)', border: '1px solid var(--ws-border)', borderRadius: '4px', color: 'var(--ws-text)', outline: 'none', boxSizing: 'border-box', fontSize: '11px' }} />
-              </div>
-
-              <div>
-                <label style={{ fontSize: '9px', color: 'var(--ws-text-3)', fontWeight: 600, display: 'block', marginBottom: '4px' }}>VALUATION METHODOLOGY</label>
-                <select value={newValuation.method} onChange={e => setNewValuation({ ...newValuation, method: e.target.value })}
-                  style={{ width: '100%', padding: '6px 10px', background: 'var(--ws-bg-2)', border: '1px solid var(--ws-border)', borderRadius: '4px', color: 'var(--ws-text)', outline: 'none', boxSizing: 'border-box', fontSize: '11px' }}>
-                  <option value="DCF Model">Discounted Cash Flow (DCF)</option>
-                  <option value="PE Multiples">P/E Multiples / Graham Formula</option>
-                  <option value="Dividend Discount">Dividend Discount Model (DDM)</option>
-                  <option value="FCF Yield Analysis">FCF Yield Valuation</option>
-                </select>
-              </div>
-
-              <div>
-                <label style={{ fontSize: '9px', color: 'var(--ws-text-3)', fontWeight: 600, display: 'block', marginBottom: '4px' }}>FAIR VALUE ESTIMATE ($)</label>
-                <input type="number" step="any" placeholder="195.50" value={newValuation.fairValue} onChange={e => setNewValuation({ ...newValuation, fairValue: e.target.value })} required
-                  style={{ width: '100%', padding: '6px 10px', background: 'var(--ws-bg-2)', border: '1px solid var(--ws-border)', borderRadius: '4px', color: 'var(--ws-text)', outline: 'none', boxSizing: 'border-box', fontSize: '11px' }} />
-              </div>
-
-              <div style={{ flex: 1 }}></div>
-
-              <button type="submit"
-                style={{ width: '100%', padding: '8px', fontSize: '11px', fontWeight: 800, background: 'var(--ws-accent)', border: 'none', borderRadius: '4px', color: 'var(--ws-bg-1)', cursor: 'pointer' }}>
-                SAVE VALUATION MODEL
+              <button onClick={copyTokenToClipboard} style={{ ...btnStyle, padding: '8px 12px', flexShrink: 0 }}>
+                {copiedToken ? 'Copied' : 'Copy'}
               </button>
-            </form>
+            </div>
 
-            {/* List */}
-            <div style={{ ...card, padding: '16px', display: 'flex', flexDirection: 'column', overflowY: 'auto' }}>
-              <div style={{ fontSize: '11px', fontFamily: "'JetBrains Mono', monospace", fontWeight: 700, color: 'var(--ws-text-2)', letterSpacing: '1.5px', borderBottom: '1px solid var(--ws-border)', paddingBottom: '6px', marginBottom: '8px' }}>SAVED VALUATIONS</div>
-              {valuations.length === 0 ? (
-                <div style={{ padding: '24px', textAlign: 'center', color: 'var(--ws-text-3)', fontSize: '12px' }}>No valuations saved yet.</div>
-              ) : (
-                <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '11px' }}>
-                  <thead>
-                    <tr style={{ borderBottom: '1px solid var(--ws-border)', background: 'var(--ws-bg-2)' }}>
-                      <th style={{ padding: '8px 10px', textAlign: 'left', color: 'var(--ws-text-3)' }}>ASSET</th>
-                      <th style={{ padding: '8px 10px', textAlign: 'left', color: 'var(--ws-text-3)' }}>METHODOLOGY</th>
-                      <th style={{ padding: '8px 10px', textAlign: 'right', color: 'var(--ws-text-3)' }}>FAIR VALUE</th>
-                      <th style={{ padding: '8px 10px', textAlign: 'right', color: 'var(--ws-text-3)' }}>MARKET</th>
-                      <th style={{ padding: '8px 10px', textAlign: 'right', color: 'var(--ws-text-3)' }}>MARGIN OF SAFETY</th>
-                      <th style={{ padding: '8px 10px', textAlign: 'center', color: 'var(--ws-text-3)' }}>ACTION</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {valuations.map(val => {
-                      const marketPrice = priceCache[val.ticker] || 100;
-                      // Margin of Safety = ((Fair Value - Current Price) / Fair Value) * 100
-                      const safetyMargin = val.fairValue ? ((val.fairValue - marketPrice) / val.fairValue * 100).toFixed(1) : '0.0';
-                      return (
-                        <tr key={val.id} style={{ borderBottom: '1px solid var(--ws-border)' }}>
-                          <td style={{ padding: '8px 10px', fontWeight: 700, color: 'var(--ws-text)' }}>{val.ticker}</td>
-                          <td style={{ padding: '8px 10px', color: 'var(--ws-text-2)' }}>{val.method}</td>
-                          <td style={{ padding: '8px 10px', textAlign: 'right', color: 'var(--ws-text)', fontWeight: 600 }}>${val.fairValue.toFixed(2)}</td>
-                          <td style={{ padding: '8px 10px', textAlign: 'right', color: 'var(--ws-text-3)' }}>${marketPrice.toFixed(2)}</td>
-                          <td style={{ padding: '8px 10px', textAlign: 'right', fontWeight: 700, color: parseFloat(safetyMargin) >= 0 ? 'var(--ws-accent)' : 'var(--ws-red)' }}>
-                            {parseFloat(safetyMargin) >= 0 ? '+' : ''}{safetyMargin}%
-                          </td>
-                          <td style={{ padding: '8px 10px', textAlign: 'center' }}>
-                            <button onClick={() => handleDeleteValuation(val.id)}
-                              style={{ background: 'none', border: 'none', color: 'var(--ws-red)', cursor: 'pointer', fontSize: '9px', fontWeight: 700 }}>
-                              DELETE
-                            </button>
-                          </td>
-                        </tr>
-                      );
-                    })}
-                  </tbody>
-                </table>
-              )}
+            <button onClick={rotateApiToken}
+              style={{ ...btnStyle, alignSelf: 'flex-start', background: 'none', border: '1px solid var(--ws-border)', color: 'var(--ws-text-2)' }}>
+              Regenerate API Token
+            </button>
+          </div>
+
+          {/* Danger Zone */}
+          <div style={{ ...cardStyle, border: '1px solid rgba(239, 68, 68, 0.25)', background: 'rgba(239, 68, 68, 0.02)' }}>
+            <div style={{ borderBottom: '1px solid rgba(239, 68, 68, 0.15)', paddingBottom: '10px' }}>
+              <div style={{ ...labelStyle, color: 'var(--ws-red)' }}>Danger Zone</div>
+            </div>
+
+            <div style={{ fontSize: '11px', color: 'var(--ws-text-2)' }}>
+              Actions performed in this area are absolute and cannot be undone. Exercise extreme caution.
+            </div>
+
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '8px', padding: '10px 12px', background: 'var(--ws-bg-1)', border: '1px solid var(--ws-border)', borderRadius: '6px' }}>
+                <div>
+                  <div style={{ fontSize: '12px', fontWeight: 700, color: 'var(--ws-text)' }}>Clear Portfolio Data</div>
+                  <div style={{ fontSize: '10px', color: 'var(--ws-text-3)', marginTop: '2px' }}>Wipe all manual and uploaded holdings</div>
+                </div>
+                <button onClick={clearPortfolio} style={{ ...btnStyle, background: 'var(--ws-red)' }}>Clear</button>
+              </div>
+
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '8px', padding: '10px 12px', background: 'var(--ws-bg-1)', border: '1px solid var(--ws-border)', borderRadius: '6px' }}>
+                <div>
+                  <div style={{ fontSize: '12px', fontWeight: 700, color: 'var(--ws-text)' }}>Clear Watchlist Data</div>
+                  <div style={{ fontSize: '10px', color: 'var(--ws-text-3)', marginTop: '2px' }}>Wipe all watchlisted assets</div>
+                </div>
+                <button onClick={clearWatchlist} style={{ ...btnStyle, background: 'var(--ws-red)' }}>Clear</button>
+              </div>
             </div>
           </div>
-        )}
 
+        </div>
 
       </div>
 

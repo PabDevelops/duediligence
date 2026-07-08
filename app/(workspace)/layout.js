@@ -37,6 +37,7 @@ export default function WorkspaceLayout({ children }) {
   const [access, setAccess] = useState('checking'); // checking | denied | granted
   const [theme, setTheme] = useState('light');
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [scanlines, setScanlines] = useState(false);
 
   useEffect(() => {
     if (!isLoaded) return;
@@ -50,9 +51,31 @@ export default function WorkspaceLayout({ children }) {
   }, [isLoaded, isSignedIn]);
 
   useEffect(() => {
-    const savedTheme = localStorage.getItem('ws_theme') || 'light';
-    setTheme(savedTheme);
-    document.documentElement.setAttribute('data-ws-theme', savedTheme);
+    const handleSettingsChanged = () => {
+      const savedTheme = localStorage.getItem('ws_theme') || 'light';
+      setTheme(savedTheme);
+      document.documentElement.setAttribute('data-ws-theme', savedTheme);
+
+      const savedAccent = localStorage.getItem('ws_accent_color');
+      if (savedAccent) {
+        document.documentElement.style.setProperty('--ws-accent', savedAccent);
+        const dim = savedAccent.startsWith('#')
+          ? `rgba(${parseInt(savedAccent.slice(1,3),16)}, ${parseInt(savedAccent.slice(3,5),16)}, ${parseInt(savedAccent.slice(5,7),16)}, 0.12)`
+          : savedAccent;
+        document.documentElement.style.setProperty('--ws-accent-dim', dim);
+      }
+
+      const savedSize = localStorage.getItem('ws_font_size') || 'normal';
+      const fs = savedSize === 'compact' ? '12px' : savedSize === 'large' ? '16px' : '14px';
+      document.documentElement.style.fontSize = fs;
+
+      const savedScan = localStorage.getItem('ws_scanlines') === 'true';
+      setScanlines(savedScan);
+    };
+
+    handleSettingsChanged();
+    window.addEventListener('ws-settings-changed', handleSettingsChanged);
+    return () => window.removeEventListener('ws-settings-changed', handleSettingsChanged);
   }, []);
 
   // Auto-close sidebar drawer when navigating
@@ -74,6 +97,20 @@ export default function WorkspaceLayout({ children }) {
 
   return (
     <div className={`workspace ${theme}`} style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh', position: 'relative' }}>
+      {scanlines && (
+        <div style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          width: '100vw',
+          height: '100vh',
+          background: 'linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.12) 50%)',
+          backgroundSize: '100% 4px',
+          zIndex: 999999,
+          pointerEvents: 'none',
+          opacity: 0.85
+        }} />
+      )}
       
       {/* MOBILE TOP BAR (only visible < 1024px) */}
       <div className="ws-mobile-header" style={{
