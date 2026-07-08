@@ -4,6 +4,7 @@ import { useUser } from '../../components/AuthProvider';
 import { useRouter } from 'next/navigation';
 import StockChart from '../../components/StockChart';
 import { fmt, formatPrice as formatCurrency } from '../../../lib/formatters';
+import { useStockData } from '../../../lib/hooks/useStockData';
 
 import StockLogo from '../../components/workspace/StockLogo';
 
@@ -37,8 +38,7 @@ export default function WatchlistPage() {
   const [tickers, setTickers] = useState([]);
   const [loadingWatchlist, setLoadingWatchlist] = useState(true);
   const [activeTicker, setActiveTicker] = useState(null);
-  const [selectedStockData, setSelectedStockData] = useState(null);
-  const [loadingStock, setLoadingStock] = useState(false);
+  const { data: selectedStockData, loading: loadingStock } = useStockData(activeTicker);
   const [news, setNews] = useState([]);
   const [loadingNews, setLoadingNews] = useState(false);
 
@@ -82,24 +82,6 @@ export default function WatchlistPage() {
       setLoadingWatchlist(false);
     }
   }, [isSignedIn]);
-
-  // Fetch selected stock fundamentals
-  useEffect(() => {
-    if (!activeTicker) {
-      setSelectedStockData(null);
-      return;
-    }
-    setLoadingStock(true);
-    fetch(`/api/stock?ticker=${activeTicker}`)
-      .then(r => r.json())
-      .then(d => {
-        if (!d.error) {
-          setSelectedStockData(d);
-        }
-      })
-      .catch(() => {})
-      .finally(() => setLoadingStock(false));
-  }, [activeTicker]);
 
   // Fetch news for active stock
   useEffect(() => {

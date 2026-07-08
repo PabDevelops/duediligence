@@ -7,6 +7,7 @@ import html2canvas from 'html2canvas';
 
 // Utility formatters
 import { fmt, fmtP as fmtPercent, fmtN } from '../../../lib/formatters';
+import { useTickerSearch } from '../../../lib/hooks/useTickerSearch';
 const fmtP = (v) => fmtPercent(v, { decimals: 1 });
 
 // Compact Market Breadth & Sentiment Component
@@ -274,7 +275,7 @@ export default function MarketRadar() {
 
   // Search state
   const [searchQuery, setSearchQuery] = useState('');
-  const [suggestions, setSuggestions] = useState([]);
+  const { suggestions } = useTickerSearch(searchQuery);
   const [showSuggestions, setShowSuggestions] = useState(false);
 
   // Tab control
@@ -309,23 +310,6 @@ export default function MarketRadar() {
     }
   }, [isSignedIn]);
 
-  // Search logic
-  useEffect(() => {
-    if (searchQuery.trim().length < 1) {
-      setSuggestions([]);
-      return;
-    }
-    const timeout = setTimeout(async () => {
-      try {
-        const res = await fetch(`/api/search?q=${searchQuery}`);
-        const data = await res.json();
-        setSuggestions(data.results || []);
-      } catch (err) {
-        console.error(err);
-      }
-    }, 200);
-    return () => clearTimeout(timeout);
-  }, [searchQuery]);
 
   // Trigger spotlight on select
   const triggerSpotlight = async (ticker) => {

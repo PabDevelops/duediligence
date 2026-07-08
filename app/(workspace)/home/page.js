@@ -5,6 +5,7 @@ import { useUser } from '../../components/AuthProvider';
 import { PieChart, Pie, Cell, ResponsiveContainer } from 'recharts';
 import MarketStatusDot from '../../components/workspace/MarketStatusDot';
 import { formatPriceWithSymbol as formatCurrency } from '../../../lib/formatters';
+import { useCurrencyRates } from '../../../lib/hooks/useCurrencyRates';
 import StockLogo from '../../components/workspace/StockLogo';
 
 // Premium SVG Gear Icon
@@ -231,30 +232,16 @@ export default function WorkspaceHome() {
   const [txCurrency, setTxCurrency] = useState('USD');
   const [portfolioTab, setPortfolioTab] = useState('pies'); // Default to 'pies' view for cleaner collapsed list
   const [currency, setCurrency] = useState('USD');
-  // Approximate fallback rates in case the live fetch fails (network/CORS) — overwritten below when it succeeds.
-  const [fxRates, setFxRates] = useState({ EUR: 0.92, GBP: 0.79 });
+  const { rates: fxRates, toUSD } = useCurrencyRates();
 
   useEffect(() => {
     const saved = localStorage.getItem('portfolio_currency');
     if (saved && CURRENCIES[saved]) setCurrency(saved);
   }, []);
 
-  useEffect(() => {
-    fetch('https://api.frankfurter.dev/v1/latest?from=USD&to=EUR,GBP')
-      .then(r => r.json())
-      .then(d => { if (d.rates && d.rates.EUR && d.rates.GBP) setFxRates(d.rates); })
-      .catch(() => {});
-  }, []);
-
   const changeCurrency = (c) => { setCurrency(c); localStorage.setItem('portfolio_currency', c); };
   const fxRate = currency === 'USD' ? 1 : (fxRates[currency] || 1);
   const currencySymbol = CURRENCIES[currency];
-
-  const toUSD = (amount, ccy) => {
-    if (!ccy || ccy === 'USD' || amount === null || amount === undefined) return amount;
-    const r = fxRates[ccy];
-    return r ? amount / r : amount;
-  };
 
   // Widget States
   const [sotw, setSotw] = useState(null);

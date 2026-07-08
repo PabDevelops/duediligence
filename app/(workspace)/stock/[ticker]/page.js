@@ -11,6 +11,7 @@ import AchievementToast from '../../../components/AchievementToast';
 import MarketStatusDot from '../../../components/workspace/MarketStatusDot';
 import { useUser } from '../../../components/AuthProvider';
 import { fmt as sharedFmt, fmtP as sharedFmtP, fmtN as sharedFmtN } from '../../../../lib/formatters';
+import { useStockData } from '../../../../lib/hooks/useStockData';
 
 // This page shows 'N/A' for missing values instead of the shared '—' fallback.
 const fmt = (val) => sharedFmt(val, 'N/A');
@@ -88,9 +89,7 @@ const ScoreBox = ({ score, size = 48 }) => {
 export default function StockPage({ params }) {
   const { ticker: rawTicker } = use(params);
   const ticker = rawTicker.toUpperCase();
-  const [data, setData] = useState(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
+  const { data, error, loading } = useStockData(ticker);
   const [tab, setTab] = useState('overview');
   const [answers, setAnswers] = useState({});
   const [finTab, setFinTab] = useState('snapshot');
@@ -144,12 +143,6 @@ export default function StockPage({ params }) {
   }, [isSignedIn, user?.id, ticker]);
 
   useEffect(() => {
-    fetch(`/api/stock?ticker=${ticker}`)
-      .then(r => r.json())
-      .then(d => { if (d.error) { setError(d.error); return; } setData(d); })
-      .catch(() => setError('Connection error'))
-      .finally(() => setLoading(false));
-
     fetch(`/api/sparkline?ticker=${ticker}`)
       .then(r => r.json())
       .then(d => setSparklineData(d.candles || null))

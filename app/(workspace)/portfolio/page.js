@@ -8,6 +8,8 @@ import Sparkline from '../../components/Sparkline';
 import MarketStatusDot from '../../components/workspace/MarketStatusDot';
 
 import { formatCurrency } from '../../../lib/formatters';
+import { useTickerSearch } from '../../../lib/hooks/useTickerSearch';
+import { useCurrencyRates } from '../../../lib/hooks/useCurrencyRates';
 const fmt = (val) => formatCurrency(val, '$');
 
 const CURRENCIES = { USD: '$', EUR: '€', GBP: '£' };
@@ -188,7 +190,6 @@ function ImportCsvModal({ onClose, onImported, defaultCurrency }) {
 function AddHoldingModal({ onClose, onAdded, existingPies, defaultCurrency, editLot, presetTicker }) {
   const isEdit = !!editLot;
   const [query, setQuery] = useState(editLot?.ticker || presetTicker || '');
-  const [suggestions, setSuggestions] = useState([]);
   const [selected, setSelected] = useState(
     editLot ? { ticker: editLot.ticker, name: editLot.ticker } :
     presetTicker ? { ticker: presetTicker, name: presetTicker } : null
@@ -215,18 +216,11 @@ function AddHoldingModal({ onClose, onAdded, existingPies, defaultCurrency, edit
     }
   }, [presetTicker, editLot]);
 
-  useEffect(() => {
-    if (selected || query.length < 1) { setSuggestions([]); return; }
-    const t = setTimeout(() => {
-      fetch(`/api/search?q=${query}`).then(r => r.json()).then(d => setSuggestions(d.results || [])).catch(() => {});
-    }, 200);
-    return () => clearTimeout(t);
-  }, [query, selected]);
+  const { suggestions } = useTickerSearch(query, { enabled: !selected });
 
   const pickTicker = (s) => {
     setSelected(s);
     setQuery(s.ticker);
-    setSuggestions([]);
     fetch(`/api/stock?ticker=${s.ticker}`).then(r => r.json()).then(setPreview).catch(() => {});
     if (!costBasis) inputRef.current?.blur();
   };
@@ -242,7 +236,6 @@ function AddHoldingModal({ onClose, onAdded, existingPies, defaultCurrency, edit
       if (!res.ok || !data.name) { setManualLookupState('not_found'); return; }
       setSelected({ ticker: query, name: data.name, international: true });
       setPreview(data);
-      setSuggestions([]);
       setManualLookupState('idle');
     } catch {
       setManualLookupState('not_found');
@@ -633,8 +626,7 @@ export default function WorkspacePortfolio() {
   const [sellPosition, setSellPosition] = useState(null);
   const [snapshots, setSnapshots] = useState([]);
   const [currency, setCurrency] = useState('USD');
-  // Approximate fallback rates in case the live fetch fails (network/CORS) — overwritten below when it succeeds.
-  const [rates, setRates] = useState({ EUR: 0.92, GBP: 0.79 });
+  const { rates, toUSD } = useCurrencyRates();
 
   useEffect(() => {
     const saved = localStorage.getItem('portfolio_currency');
@@ -650,18 +642,6 @@ export default function WorkspacePortfolio() {
       router.replace('/portfolio');
     }
   }, [searchParams, router]);
-
-  useEffect(() => {
-    // frankfurter.app moved to frankfurter.dev (old domain 301-redirects) — pointing directly
-    // at the new one avoids relying on a redirect actually being followed.
-    fetch('https://api.frankfurter.dev/v1/latest?from=USD&to=EUR,GBP')
-      .then(r => r.json())
-      .then(d => {
-        if (d.rates && d.rates.EUR && d.rates.GBP) setRates(d.rates);
-        else console.warn('FX rates response missing EUR/GBP, using fallback:', d);
-      })
-      .catch(e => console.warn('FX rates fetch failed, using fallback rates:', e));
-  }, []);
 
   const changeCurrency = (c) => { setCurrency(c); localStorage.setItem('portfolio_currency', c); };
   const rate = currency === 'USD' ? 1 : (rates[currency] || 1);
@@ -701,15 +681,6 @@ export default function WorkspacePortfolio() {
   }, [isSignedIn]);
 
   const existingPies = useMemo(() => [...new Set(holdings.map(h => h.pie).filter(Boolean))].sort(), [holdings]);
-
-  // Lots can be entered in whatever currency the user actually paid in (see AddHoldingModal).
-  // We normalize every lot's cost to USD here, same base as the live market price, so gain/loss
-  // math is always apples-to-apples — then the currency toggle just re-converts for display.
-  const toUSD = (amount, ccy) => {
-    if (!ccy || ccy === 'USD') return amount;
-    const r = rates[ccy];
-    return r ? amount / r : amount;
-  };
 
   const positions = useMemo(() => {
     const byTicker = {};

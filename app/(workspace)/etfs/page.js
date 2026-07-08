@@ -4,6 +4,7 @@ import { useRouter } from 'next/navigation';
 import StockChart from '../../components/StockChart';
 import MarketStatusDot from '../../components/workspace/MarketStatusDot';
 import { useUser } from '../../components/AuthProvider';
+import { useStockData } from '../../../lib/hooks/useStockData';
 
 const CURRENCY_SYMBOLS = { USD: '$', EUR: '€', GBP: '£', JPY: '¥', CNY: '¥', CHF: 'CHF ', CAD: 'C$', AUD: 'A$', HKD: 'HK$', INR: '₹', KRW: '₩', SEK: 'kr', NOK: 'kr', DKK: 'kr' };
 const curSym = (code) => !code || code === 'USD' ? '$' : (CURRENCY_SYMBOLS[code] || `${code} `);
@@ -55,44 +56,33 @@ export default function ETFsPage() {
     setCurrentPage(1);
   }, [activeTab, sortField, sortAsc]);
 
-  // Load real-time price info for selected ticker
+  // Load real-time price info for selected ticker. loadingPrice/priceError/
+  // livePriceData are also written to directly by handleSearchSubmit below
+  // (adding a custom ticker reuses the same loading/error UI), so this stays
+  // synced into that shared state rather than exposing the hook's own.
+  const { data: rawPriceData, error: fetchError, loading: fetchLoading } = useStockData(selectedTicker);
   useEffect(() => {
-    let active = true;
-    setLoadingPrice(true);
-    setPriceError(null);
-    fetch(`/api/stock?ticker=${selectedTicker}`)
-      .then(res => res.json())
-      .then(d => {
-        if (!active) return;
-        if (d.error) {
-          setPriceError(d.error);
-          setLivePriceData(null);
-        } else {
-          setLivePriceData({
-            name: d.name,
-            ticker: selectedTicker,
-            exchange: d.exchange,
-            currentPrice: d.currentPrice,
-            priceChange: d.priceChange,
-            priceChangePct: d.priceChangePct,
-            currency: d.currency,
-          });
-        }
-      })
-      .catch(() => {
-        if (active) {
-          setPriceError('Failed to fetch pricing');
-          setLivePriceData(null);
-        }
-      })
-      .finally(() => {
-        if (active) setLoadingPrice(false);
+    setLoadingPrice(fetchLoading);
+  }, [fetchLoading]);
+  useEffect(() => {
+    if (fetchError) {
+      setPriceError(fetchError);
+      setLivePriceData(null);
+      return;
+    }
+    if (rawPriceData) {
+      setPriceError(null);
+      setLivePriceData({
+        name: rawPriceData.name,
+        ticker: selectedTicker,
+        exchange: rawPriceData.exchange,
+        currentPrice: rawPriceData.currentPrice,
+        priceChange: rawPriceData.priceChange,
+        priceChangePct: rawPriceData.priceChangePct,
+        currency: rawPriceData.currency,
       });
-
-    return () => {
-      active = false;
-    };
-  }, [selectedTicker]);
+    }
+  }, [rawPriceData, fetchError, selectedTicker]);
 
   // Check whether the selected ETF is already on the user's watchlist
   useEffect(() => {

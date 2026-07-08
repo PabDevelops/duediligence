@@ -1,6 +1,7 @@
 'use client';
 import { useState, useEffect, useRef } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
+import { useTickerSearch } from '../../../lib/hooks/useTickerSearch';
 
 function StockCard({ s, onClick }) {
   const [imgError, setImgError] = useState(false);
@@ -74,27 +75,25 @@ export default function SearchPage() {
   const searchParams = useSearchParams();
   const initialQ = searchParams.get('q') || '';
   const [q, setQ] = useState(initialQ);
-  const [results, setResults] = useState([]);
-  const [loading, setLoading] = useState(false);
+  const { suggestions: results, loading } = useTickerSearch(q, { limit: 24 });
   const [searched, setSearched] = useState(false);
+  const wasLoading = useRef(false);
   const inputRef = useRef(null);
 
   useEffect(() => {
     inputRef.current?.focus();
   }, []);
 
+  // Mirrors the original fetch-then-flag behavior: `searched` flips true only
+  // once a search actually completes (loading true -> false), and resets
+  // immediately when the query is cleared.
   useEffect(() => {
-    if (q.trim().length < 1) { setResults([]); setSearched(false); return; }
-    setLoading(true);
-    const timeout = setTimeout(() => {
-      fetch(`/api/search?q=${encodeURIComponent(q.trim())}&limit=24`)
-        .then(r => r.json())
-        .then(d => { setResults(d.results || []); setSearched(true); })
-        .catch(() => setResults([]))
-        .finally(() => setLoading(false));
-    }, 200);
-    return () => clearTimeout(timeout);
+    if (q.trim().length < 1) setSearched(false);
   }, [q]);
+  useEffect(() => {
+    if (wasLoading.current && !loading) setSearched(true);
+    wasLoading.current = loading;
+  }, [loading]);
 
   const goToTicker = (ticker) => router.push(`/stock/${ticker}`);
 
