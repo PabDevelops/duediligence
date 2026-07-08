@@ -201,7 +201,7 @@ export default function WatchlistPage() {
             <span style={{ color: 'var(--ws-accent)', fontSize: '14px' }}>★</span>
             <span style={{ fontSize: '12px', fontWeight: 800, color: 'var(--ws-text)', letterSpacing: '1px', fontFamily: 'JetBrains Mono, monospace' }}>WATCHLIST</span>
           </div>
-          <span style={{ fontSize: '10px', color: 'var(--ws-text-3)', fontFamily: 'JetBrains Mono, monospace' }}>
+          <span className="text-[10px] text-ws-text-3" style={{ fontFamily: 'JetBrains Mono, monospace' }}>
             {tickers.length} TICKERS
           </span>
         </div>
@@ -230,7 +230,7 @@ export default function WatchlistPage() {
         {/* LIST */}
         <div style={{ flex: 1, overflowY: 'auto' }}>
           {loadingWatchlist ? (
-            <div style={{ padding: '40px 16px', textAlign: 'center', color: 'var(--ws-text-3)', fontSize: '11px', fontFamily: 'JetBrains Mono, monospace' }}>
+            <div className="text-center text-ws-text-3 text-[11px] px-4 py-10" style={{ fontFamily: 'JetBrains Mono, monospace' }}>
               LOADING...
             </div>
           ) : tickers.length === 0 ? (
@@ -351,7 +351,7 @@ export default function WatchlistPage() {
                     { label: 'SECTOR', value: selectedStockData.sector || '—' },
                   ].map((metric) => (
                     <div key={metric.label} style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid var(--ws-border)', paddingBottom: '6px' }}>
-                      <span style={{ fontSize: '10px', color: 'var(--ws-text-3)', fontFamily: 'JetBrains Mono, monospace' }}>
+                      <span className="text-[10px] text-ws-text-3" style={{ fontFamily: 'JetBrains Mono, monospace' }}>
                         {metric.label}
                       </span>
                       <span style={{ fontSize: '12px', fontWeight: 700, color: 'var(--ws-text)', fontFamily: 'JetBrains Mono, monospace' }}>
@@ -379,15 +379,15 @@ export default function WatchlistPage() {
 
         <div style={{ flex: 1, overflowY: 'auto' }}>
           {!activeTicker ? (
-            <div style={{ padding: '40px 16px', textAlign: 'center', color: 'var(--ws-text-3)', fontSize: '11px', fontFamily: 'JetBrains Mono, monospace' }}>
+            <div className="text-center text-ws-text-3 text-[11px] px-4 py-10" style={{ fontFamily: 'JetBrains Mono, monospace' }}>
               SELECT TICKER
             </div>
           ) : loadingNews ? (
-            <div style={{ padding: '40px 16px', textAlign: 'center', color: 'var(--ws-text-3)', fontSize: '11px', fontFamily: 'JetBrains Mono, monospace' }}>
+            <div className="text-center text-ws-text-3 text-[11px] px-4 py-10" style={{ fontFamily: 'JetBrains Mono, monospace' }}>
               LOADING HEADLINES...
             </div>
           ) : news.length === 0 ? (
-            <div style={{ padding: '40px 16px', textAlign: 'center', color: 'var(--ws-text-3)', fontSize: '11px', fontFamily: 'JetBrains Mono, monospace' }}>
+            <div className="text-center text-ws-text-3 text-[11px] px-4 py-10" style={{ fontFamily: 'JetBrains Mono, monospace' }}>
               NO NEWS AVAILABLE
             </div>
           ) : (

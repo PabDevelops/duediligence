@@ -107,7 +107,7 @@ function ImportCsvModal({ onClose, onImported, defaultCurrency }) {
   };
 
   return (
-    <div onClick={onClose} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.35)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 200 }}>
+    <div onClick={onClose} className="fixed inset-0 bg-black/35 flex items-center justify-center z-[200]">
       <div onClick={e => e.stopPropagation()} style={{ width: '480px', maxWidth: '92vw', maxHeight: '80vh', overflowY: 'auto', background: 'var(--ws-bg-1)', border: '1px solid var(--ws-border)', borderRadius: '12px', padding: '22px', boxShadow: '0 12px 40px rgba(0,0,0,0.18)' }}>
         <div style={{ fontSize: '15px', fontWeight: 700, color: 'var(--ws-text)', marginBottom: '4px' }}>Import from CSV</div>
         <div style={{ fontSize: '12px', color: 'var(--ws-text-3)', marginBottom: '12px' }}>
@@ -276,7 +276,7 @@ function AddHoldingModal({ onClose, onAdded, existingPies, defaultCurrency, edit
   const inputStyle = { width: '100%', height: '36px', padding: '0 12px', fontSize: '13px', border: '1px solid var(--ws-border)', background: 'var(--ws-bg)', color: 'var(--ws-text)', outline: 'none' };
 
   return (
-    <div onClick={onClose} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.35)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 200 }}>
+    <div onClick={onClose} className="fixed inset-0 bg-black/35 flex items-center justify-center z-[200]">
       <div onClick={e => e.stopPropagation()} style={{ width: '420px', maxWidth: '92vw', background: 'var(--ws-bg-1)', border: '1px solid var(--ws-border)', borderRadius: '12px', padding: '22px', boxShadow: '0 12px 40px rgba(0,0,0,0.18)' }}>
         <div style={{ fontSize: '15px', fontWeight: 700, color: 'var(--ws-text)', marginBottom: '4px' }}>
           {isEdit ? `Edit ${editLot.ticker} lot` : presetTicker ? `Buy ${presetTicker}` : 'Add holding'}
@@ -285,7 +285,7 @@ function AddHoldingModal({ onClose, onAdded, existingPies, defaultCurrency, edit
           {isEdit ? 'Update shares, cost, or date for this entry.' : presetTicker ? `Add a purchase of ${presetTicker} directly to your holdings.` : 'Search a ticker, then enter shares and cost.'}
         </div>
 
-        <form onSubmit={submit} style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+        <form onSubmit={submit} className="flex flex-col gap-3">
           {!isEdit && (
           <>
           <div style={{ position: 'relative' }}>
@@ -401,7 +401,7 @@ function AddHoldingModal({ onClose, onAdded, existingPies, defaultCurrency, edit
             <div style={{ padding: '8px 12px', border: '1px solid var(--ws-red)', color: 'var(--ws-red)', fontSize: '12px' }}>{error}</div>
           )}
 
-          <div style={{ display: 'flex', gap: '8px', marginTop: '6px' }}>
+          <div className="flex gap-2 mt-1.5">
             <button type="button" onClick={onClose}
               className="ws-btn-secondary"
               style={{ flex: 1, height: '38px' }}>
@@ -444,11 +444,11 @@ function SellModal({ position, onClose, onSold }) {
   };
 
   return (
-    <div onClick={onClose} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.35)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 200 }}>
+    <div onClick={onClose} className="fixed inset-0 bg-black/35 flex items-center justify-center z-[200]">
       <div onClick={e => e.stopPropagation()} style={{ width: '360px', maxWidth: '92vw', background: 'var(--ws-bg-1)', border: '1px solid var(--ws-border)', borderRadius: '12px', padding: '22px', boxShadow: '0 12px 40px rgba(0,0,0,0.18)' }}>
         <div style={{ fontSize: '15px', fontWeight: 700, color: 'var(--ws-text)', marginBottom: '4px' }}>Sell {position.ticker}</div>
         <div style={{ fontSize: '12px', color: 'var(--ws-text-3)', marginBottom: '16px' }}>You hold {position.shares.toLocaleString(undefined, { maximumFractionDigits: 4 })} shares. Reduces from your oldest lots first.</div>
-        <form onSubmit={submit} style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+        <form onSubmit={submit} className="flex flex-col gap-3">
           <div>
             <div className="ws-label" style={{ marginBottom: '4px' }}>SHARES TO SELL</div>
             <input type="number" step="any" min="0" max={position.shares} value={shares} onChange={e => setShares(e.target.value)} className="ws-input" autoFocus required />
@@ -460,7 +460,7 @@ function SellModal({ position, onClose, onSold }) {
           {error && (
             <div style={{ padding: '8px 12px', border: '1px solid var(--ws-red)', color: 'var(--ws-red)', fontSize: '12px' }}>{error}</div>
           )}
-          <div style={{ display: 'flex', gap: '8px', marginTop: '6px' }}>
+          <div className="flex gap-2 mt-1.5">
             <button type="button" onClick={onClose}
               className="ws-btn-secondary"
               style={{ flex: 1, height: '38px' }}>
@@ -507,7 +507,7 @@ function GrowthChart({ snapshots, currentValue, currentCost, rate, symbol }) {
 
   if (data.length < 2) {
     return (
-      <div style={{ border: '1px solid var(--ws-border)', padding: '16px' }}>
+      <div className="border border-ws-border p-4">
         <div style={{ fontSize: '11px', fontFamily: "'JetBrains Mono', monospace", fontWeight: 700, color: 'var(--ws-text-3)', letterSpacing: '1.5px', marginBottom: '8px' }}>PORTFOLIO GROWTH</div>
         <div style={{ fontSize: '12px', color: 'var(--ws-text-3)', padding: '20px 0', textAlign: 'center' }}>
           Come back tomorrow to start seeing your growth chart — we snapshot your portfolio value daily.
@@ -537,7 +537,7 @@ function GrowthChart({ snapshots, currentValue, currentCost, rate, symbol }) {
   const limitedHistory = !!target && new Date(data[0].date + 'T00:00:00') > target;
 
   return (
-    <div style={{ border: '1px solid var(--ws-border)', padding: '16px' }}>
+    <div className="border border-ws-border p-4">
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '10px', marginBottom: '12px' }}>
         <div>
           <div style={{ fontSize: '11px', fontFamily: "'JetBrains Mono', monospace", fontWeight: 700, color: 'var(--ws-text-3)', letterSpacing: '1.5px', marginBottom: '6px' }}>PORTFOLIO GROWTH</div>
@@ -550,7 +550,7 @@ function GrowthChart({ snapshots, currentValue, currentCost, rate, symbol }) {
             </div>
           )}
         </div>
-        <div style={{ display: 'flex', border: '1px solid var(--ws-border)', overflow: 'hidden', flexShrink: 0 }}>
+        <div className="flex border border-ws-border overflow-hidden shrink-0">
           {GROWTH_PERIODS.map(p => (
             <button key={p} onClick={() => setPeriod(p)}
               style={{ height: '28px', padding: '0 10px', fontSize: '10px', fontWeight: 700, border: 'none', cursor: 'pointer',
@@ -590,7 +590,7 @@ function GrowthChart({ snapshots, currentValue, currentCost, rate, symbol }) {
 function AllocationChart({ title, data }) {
   if (data.length === 0) return null;
   return (
-    <div style={{ border: '1px solid var(--ws-border)', padding: '16px' }}>
+    <div className="border border-ws-border p-4">
       <div style={{ fontSize: '11px', fontFamily: "'JetBrains Mono', monospace", fontWeight: 700, color: 'var(--ws-text-3)', letterSpacing: '1.5px', marginBottom: '8px' }}>{title}</div>
       <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
         <div style={{ width: '120px', height: '120px', flexShrink: 0 }}>
@@ -824,7 +824,7 @@ export default function WorkspacePortfolio() {
   return (
     <div style={{ padding: '24px' }}>
       <div style={{ border: '1px solid var(--ws-border)', background: 'var(--ws-bg-1)', marginBottom: '20px', overflow: 'hidden' }}>
-        <div style={{ background: 'var(--ws-bg-2)', borderBottom: '1px solid var(--ws-border)', padding: '7px 16px' }}>
+        <div className="bg-ws-bg-2 border-b border-ws-border px-4 py-[7px]">
           <span style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: '11px', color: 'var(--ws-accent)', fontWeight: 700, letterSpacing: '1px' }}>
             $ traq portfolio
           </span>
@@ -836,7 +836,7 @@ export default function WorkspacePortfolio() {
           </div>
           {isSignedIn && (
             <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
-              <div style={{ display: 'flex', border: '1px solid var(--ws-border)', overflow: 'hidden', flexShrink: 0 }}>
+              <div className="flex border border-ws-border overflow-hidden shrink-0">
                 {Object.keys(CURRENCIES).map(c => (
                   <button key={c} onClick={() => changeCurrency(c)}
                     style={{
@@ -865,7 +865,7 @@ export default function WorkspacePortfolio() {
       </div>
 
       {!isSignedIn ? (
-        <div style={{ border: '1px solid var(--ws-border)', padding: '48px', textAlign: 'center' }}>
+        <div className="border border-ws-border p-12 text-center">
           <div style={{ color: 'var(--ws-text-2)', fontSize: '14px', marginBottom: '16px' }}>Sign in to track your portfolio</div>
           <Link href="/sign-in" className="ws-btn" style={{ padding: '9px 20px', textDecoration: 'none' }}>Sign in →</Link>
         </div>
@@ -876,7 +876,7 @@ export default function WorkspacePortfolio() {
           Couldn't load your portfolio: {loadError}
         </div>
       ) : positions.length === 0 ? (
-        <div style={{ border: '1px solid var(--ws-border)', padding: '48px', textAlign: 'center' }}>
+        <div className="border border-ws-border p-12 text-center">
           <div style={{ color: 'var(--ws-text)', fontSize: '14px', fontWeight: 600, marginBottom: '6px' }}>No holdings yet</div>
           <div style={{ color: 'var(--ws-text-3)', fontSize: '12px', marginBottom: '16px' }}>Add your first position to start tracking.</div>
           <button onClick={() => setShowModal(true)}
@@ -888,15 +888,15 @@ export default function WorkspacePortfolio() {
       ) : (
         <>
           <div className="portfolio-overview-grid">
-            <div style={{ border: '1px solid var(--ws-border)', padding: '14px' }}>
+            <div className="border border-ws-border p-3.5">
               <div style={{ fontSize: '10px', color: 'var(--ws-text-3)', letterSpacing: '0.5px', marginBottom: '4px' }}>MARKET VALUE</div>
               <div style={{ fontSize: '20px', fontWeight: 700, color: 'var(--ws-text)' }}>{fmtC(totals.value)}</div>
             </div>
-            <div style={{ border: '1px solid var(--ws-border)', padding: '14px' }}>
+            <div className="border border-ws-border p-3.5">
               <div style={{ fontSize: '10px', color: 'var(--ws-text-3)', letterSpacing: '0.5px', marginBottom: '4px' }}>COST BASIS</div>
               <div style={{ fontSize: '20px', fontWeight: 700, color: 'var(--ws-text)' }}>{fmtC(totals.cost)}</div>
             </div>
-            <div style={{ border: '1px solid var(--ws-border)', padding: '14px' }}>
+            <div className="border border-ws-border p-3.5">
               <div style={{ fontSize: '10px', color: 'var(--ws-text-3)', letterSpacing: '0.5px', marginBottom: '4px' }}>TOTAL GAIN/LOSS</div>
               <div style={{ fontSize: '20px', fontWeight: 700, color: totals.gain >= 0 ? 'var(--ws-accent)' : 'var(--ws-red)' }}>
                 {totals.gain >= 0 ? '+' : ''}{fmtC(totals.gain)} ({totals.gainPct >= 0 ? '+' : ''}{totals.gainPct.toFixed(1)}%)
@@ -947,7 +947,7 @@ export default function WorkspacePortfolio() {
                             onMouseEnter={e => e.currentTarget.style.background = 'var(--ws-bg-2)'}
                             onMouseLeave={e => e.currentTarget.style.background = 'var(--ws-bg-1)'}>
                             <td className="sticky-col" style={{ padding: '10px 12px' }}>
-                              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                              <div className="flex items-center gap-2">
                                 <StockLogo ticker={p.ticker} size={24} />
                                 <div>
                                   <div style={{ fontWeight: 600, color: 'var(--ws-text)', display: 'flex', alignItems: 'center', gap: '6px' }}>
