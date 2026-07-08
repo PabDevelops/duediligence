@@ -488,7 +488,7 @@ export default function MarketRadar() {
       <div style={{ padding: '24px', fontFamily: "'JetBrains Mono', monospace" }}>
         <div style={{ border: '1px solid var(--ws-border)', background: 'var(--ws-bg-1)', overflow: 'hidden' }}>
           <div style={{ background: 'var(--ws-bg-2)', borderBottom: '1px solid var(--ws-border)', padding: '7px 16px' }}>
-            <span style={{ fontSize: '11px', color: 'var(--ws-accent)', fontWeight: 700, letterSpacing: '1px' }}>$ traq compare</span>
+            <span style={{ fontSize: '11px', color: 'var(--ws-accent)', fontWeight: 700, letterSpacing: '1px' }}>$ traq radar</span>
           </div>
           <div style={{ padding: '24px' }}>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
@@ -519,7 +519,7 @@ export default function MarketRadar() {
         <div style={{ border: '1px solid var(--ws-border)', background: 'var(--ws-bg-1)', overflow: 'hidden' }}>
           <div style={{ background: 'var(--ws-bg-2)', borderBottom: '1px solid var(--ws-border)', padding: '7px 16px' }}>
             <span style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: '11px', color: 'var(--ws-accent)', fontWeight: 700, letterSpacing: '1px' }}>
-              $ traq compare
+              $ traq radar
             </span>
           </div>
         </div>
