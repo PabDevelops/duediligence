@@ -70,23 +70,24 @@ function StockLogo({ ticker, name, size = 32 }) {
 
 // Smart news image — renders normally, hides container if image is a logo (wide ratio)
 function NewsImage({ src, alt, ticker, large }) {
-  const containerRef = useRef(null);
+  const [hasError, setHasError] = useState(false);
+  const [isLogo, setIsLogo] = useState(false);
+
+  if (!src || hasError || isLogo) return null;
 
   const handleLoad = (e) => {
     const img = e.currentTarget;
-    const ratio = img.naturalWidth / img.naturalHeight;
-    // Logos are banner-shaped (> 2.5:1). Real thumbnails: 16:9=1.77, 4:3=1.33, 1:1=1
-    if (ratio > 2.5 && containerRef.current) {
-      containerRef.current.style.display = 'none';
+    if (img.naturalWidth && img.naturalHeight) {
+      const ratio = img.naturalWidth / img.naturalHeight;
+      // Logos are banner-shaped (> 2.5:1). Real thumbnails: 16:9=1.77, 4:3=1.33, 1:1=1
+      if (ratio > 2.5) {
+        setIsLogo(true);
+      }
     }
   };
 
-  const handleError = () => {
-    if (containerRef.current) containerRef.current.style.display = 'none';
-  };
-
   return (
-    <div ref={containerRef} style={{ position: 'relative', overflow: 'hidden', borderBottom: '1px solid var(--ws-border)' }}>
+    <div style={{ position: 'relative', overflow: 'hidden', borderBottom: '1px solid var(--ws-border)' }}>
       <img
         src={src}
         alt={alt}
@@ -94,7 +95,7 @@ function NewsImage({ src, alt, ticker, large }) {
           ? { width: '100%', height: '260px', objectFit: 'cover', display: 'block' }
           : { width: '100%', height: 'auto', display: 'block' }}
         onLoad={handleLoad}
-        onError={handleError}
+        onError={() => setHasError(true)}
       />
       {ticker && (
         <div style={{
