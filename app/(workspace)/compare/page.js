@@ -11,6 +11,7 @@ import { useTickerSearch } from '../../../lib/hooks/useTickerSearch';
 import SentimentBreadth from '../../components/workspace/compare/SentimentBreadth';
 import EconomicCalendar from '../../components/workspace/compare/EconomicCalendar';
 import TechnicalScanner from '../../components/workspace/compare/TechnicalScanner';
+import InsiderActivity from '../../components/workspace/compare/InsiderActivity';
 const fmtP = (v) => fmtPercent(v, { decimals: 1 });
 
 export default function MarketRadar() {
@@ -269,6 +270,7 @@ export default function MarketRadar() {
           <SentimentBreadth vixMarket={vixMarket} sp500Change={sp500Change} advanceDeclineRatio={advanceDeclineRatio} />
           <EconomicCalendar triggerSpotlight={triggerSpotlight} />
           <TechnicalScanner movers={movers} triggerSpotlight={triggerSpotlight} />
+          <InsiderActivity movers={movers} triggerSpotlight={triggerSpotlight} />
         </div>
 
         {/* Markets Indices Tracker */}

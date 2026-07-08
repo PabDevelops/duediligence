@@ -1,5 +1,5 @@
 'use client';
-import { useState, useEffect, use } from 'react';
+import { useState, useEffect, useMemo, use } from 'react';
 import { BarChart, Bar, LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell } from 'recharts';
 import PriceChart from './chart';
 import StockChart from '../../../components/StockChart';
@@ -34,6 +34,7 @@ const NAV = [
     { key: 'quality', label: 'QUALITY' },
     { key: 'financials', label: 'FINANCIALS' },
     { key: 'dcf', label: 'DCF' },
+    { key: 'insiders', label: 'INSIDERS' },
   ];
 
 const QUESTIONS = [
@@ -98,6 +99,13 @@ export default function StockPage({ params }) {
   const ticker = rawTicker.toUpperCase();
   const { data, error, loading } = useStockData(ticker);
   const [tab, setTab] = useState('overview');
+  const [insiderTrades, setInsiderTrades] = useState(null);
+  const [insiderLoading, setInsiderLoading] = useState(false);
+  const [insiderChart, setInsiderChart] = useState(null);
+  const [insiderDateFilter, setInsiderDateFilter] = useState('ALL');
+  const [insiderTypeFilter, setInsiderTypeFilter] = useState('ALL');
+  const [insiderRoleFilter, setInsiderRoleFilter] = useState('ALL');
+  const [selectedInsiderName, setSelectedInsiderName] = useState(null);
   const [answers, setAnswers] = useState({});
   const [finTab, setFinTab] = useState('snapshot');
   const [evidence, setEvidence] = useState({});
@@ -138,6 +146,82 @@ export default function StockPage({ params }) {
   useEffect(() => {
     fetch(`/api/filings?tickers=${ticker}`).then(r => r.json()).then(d => setNews(d.holdingsNews || [])).catch(() => {});
   }, [ticker]);
+
+  useEffect(() => {
+    if (tab !== 'insiders' || insiderTrades !== null) return;
+    setInsiderLoading(true);
+    fetch(`/api/insider-trades?ticker=${ticker}&limit=25`)
+      .then(r => r.json())
+      .then(d => setInsiderTrades(d.transactions || []))
+      .catch(() => setInsiderTrades([]))
+      .finally(() => setInsiderLoading(false));
+
+    fetch(`/api/sparkline?ticker=${ticker}&range=1y`)
+      .then(r => r.json())
+      .then(d => setInsiderChart(d.candles || []))
+      .catch(() => setInsiderChart([]));
+  }, [tab, ticker, insiderTrades]);
+
+  // Filters apply to both the table and the summary metrics so they stay consistent.
+  const filteredInsiderTrades = useMemo(() => {
+    if (!insiderTrades) return [];
+    let rows = insiderTrades;
+    if (insiderDateFilter === '30D') {
+      const cutoff = new Date();
+      cutoff.setDate(cutoff.getDate() - 30);
+      const cutoffStr = cutoff.toISOString().slice(0, 10);
+      rows = rows.filter(t => t.date >= cutoffStr);
+    }
+    if (insiderTypeFilter !== 'ALL') rows = rows.filter(t => t.type === insiderTypeFilter);
+    if (insiderRoleFilter === 'EXEC') rows = rows.filter(t => t.isOfficer);
+    if (insiderRoleFilter === 'OWNER10') rows = rows.filter(t => t.isTenPercentOwner);
+    if (selectedInsiderName) rows = rows.filter(t => t.insider === selectedInsiderName);
+    return rows;
+  }, [insiderTrades, insiderDateFilter, insiderTypeFilter, insiderRoleFilter, selectedInsiderName]);
+
+  // Sentiment metrics only count genuine open-market buys/sells (code P/S) — option
+  // exercises, tax withholding, and gifts move shares but don't reflect a bet on the stock.
+  const insiderSummary = useMemo(() => {
+    const openMarket = filteredInsiderTrades.filter(t => t.isOpenMarket && t.value != null);
+    if (openMarket.length === 0) return null;
+
+    const netShares = openMarket.reduce((s, t) => s + (t.type === 'BUY' ? t.shares : -t.shares), 0);
+    const netValue = openMarket.reduce((s, t) => s + (t.type === 'BUY' ? t.value : -t.value), 0);
+    const totalValue = openMarket.reduce((s, t) => s + t.value, 0);
+
+    const bySellerValue = {};
+    const byBuyerValue = {};
+    openMarket.forEach(t => {
+      const bucket = t.type === 'SELL' ? bySellerValue : byBuyerValue;
+      bucket[t.insider] = (bucket[t.insider] || 0) + t.value;
+    });
+    const topOf = (obj) => Object.entries(obj).sort((a, b) => b[1] - a[1])[0] || null;
+    const largestSeller = topOf(bySellerValue);
+    const largestBuyer = topOf(byBuyerValue);
+
+    const ratio = totalValue > 0 ? netValue / totalValue : 0;
+    const signal = ratio > 0.2
+      ? { label: 'BULLISH', color: 'var(--ws-accent)' }
+      : ratio < -0.2
+        ? { label: 'BEARISH', color: 'var(--ws-red)' }
+        : { label: 'MIXED', color: 'var(--ws-text-2)' };
+
+    return { netShares, netValue, largestSeller, largestBuyer, signal };
+  }, [filteredInsiderTrades]);
+
+  const insiderChartData = useMemo(() => {
+    if (!insiderChart?.length) return [];
+    const rows = insiderChart.filter(c => c.date).map(c => ({ date: c.date, price: c.c }));
+    const dateIndex = new Map(rows.map((r, i) => [r.date, i]));
+    filteredInsiderTrades.forEach(t => {
+      let idx = dateIndex.get(t.date);
+      if (idx === undefined) idx = rows.findIndex(r => r.date >= t.date);
+      if (idx === undefined || idx === -1) return;
+      if (t.type === 'BUY') rows[idx].buy = rows[idx].price;
+      else rows[idx].sell = rows[idx].price;
+    });
+    return rows;
+  }, [insiderChart, filteredInsiderTrades]);
 
   useEffect(() => {
     if (isSignedIn && user?.id) {
@@ -1353,6 +1437,197 @@ export default function StockPage({ params }) {
                 <div style={{ color: 'var(--ws-text-3)', fontSize: '11px' }}>Graham formula requires EPS data from Alpha Vantage.</div>
               </div>
             )}
+          </div>
+        )}
+
+        {/* INSIDERS TAB — Form 3/4/5 buy/sell activity, SEC EDGAR primary / Finnhub fallback */}
+        {tab === 'insiders' && (
+          <div>
+            <div className="text-ws-text-3 text-[10px] tracking-[2px] border-b border-ws-border pb-1.5 mb-3 mt-6">
+              INSIDER TRANSACTIONS — LAST REPORTED FORM 4 FILINGS
+            </div>
+
+            {insiderLoading ? (
+              <div style={{ background: 'var(--ws-bg-1)', border: '1px solid var(--ws-border)', padding: '40px', textAlign: 'center', color: 'var(--ws-text-3)', fontSize: '11px' }}>
+                LOADING INSIDER ACTIVITY…
+              </div>
+            ) : !insiderTrades || insiderTrades.length === 0 ? (
+              <div style={{ background: 'var(--ws-bg-1)', border: '1px solid var(--ws-border)', padding: '40px', textAlign: 'center' }}>
+                <div style={{ color: 'var(--ws-accent)', fontSize: '24px', fontWeight: 600, letterSpacing: '4px', marginBottom: '8px' }}>N/A</div>
+                <div style={{ color: 'var(--ws-text-2)', fontSize: '12px', marginBottom: '4px' }}>NO INSIDER DATA AVAILABLE</div>
+                <div style={{ color: 'var(--ws-text-3)', fontSize: '11px' }}>No reported Form 3/4/5 filings for this ticker.</div>
+              </div>
+            ) : (
+              <>
+                {/* Summary metrics — computed from genuine open-market buys/sells only */}
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '12px', marginBottom: '16px' }}>
+                  <div style={{ background: 'var(--ws-bg-1)', border: '1px solid var(--ws-border)', padding: '14px' }}>
+                    <div style={{ fontSize: '9px', fontWeight: 800, color: 'var(--ws-text-3)', letterSpacing: '1px', marginBottom: '8px' }}>NET OPEN-MARKET BUYING</div>
+                    {insiderSummary ? (
+                      <>
+                        <div style={{ fontSize: '18px', fontWeight: 800, color: insiderSummary.netValue >= 0 ? 'var(--ws-accent)' : 'var(--ws-red)' }}>
+                          {insiderSummary.netValue >= 0 ? '+' : '-'}{fmt(Math.abs(insiderSummary.netValue))}
+                        </div>
+                        <div style={{ fontSize: '10px', color: 'var(--ws-text-3)', marginTop: '2px' }}>
+                          {insiderSummary.netShares >= 0 ? '+' : ''}{insiderSummary.netShares.toLocaleString()} shares
+                        </div>
+                      </>
+                    ) : <div style={{ fontSize: '11px', color: 'var(--ws-text-3)' }}>No open-market trades</div>}
+                  </div>
+
+                  <div style={{ background: 'var(--ws-bg-1)', border: '1px solid var(--ws-border)', padding: '14px' }}>
+                    <div style={{ fontSize: '9px', fontWeight: 800, color: 'var(--ws-text-3)', letterSpacing: '1px', marginBottom: '8px' }}>SIGNAL</div>
+                    {insiderSummary ? (
+                      <div style={{ fontSize: '18px', fontWeight: 800, color: insiderSummary.signal.color, letterSpacing: '1px' }}>
+                        {insiderSummary.signal.label}
+                      </div>
+                    ) : <div style={{ fontSize: '11px', color: 'var(--ws-text-3)' }}>—</div>}
+                  </div>
+
+                  <div style={{ background: 'var(--ws-bg-1)', border: '1px solid var(--ws-border)', padding: '14px' }}>
+                    <div style={{ fontSize: '9px', fontWeight: 800, color: 'var(--ws-text-3)', letterSpacing: '1px', marginBottom: '8px' }}>LARGEST SELLER</div>
+                    {insiderSummary?.largestSeller ? (
+                      <>
+                        <div style={{ fontSize: '13px', fontWeight: 700 }}>{insiderSummary.largestSeller[0]}</div>
+                        <div style={{ fontSize: '13px', fontWeight: 800, color: 'var(--ws-red)', marginTop: '2px' }}>-{fmt(insiderSummary.largestSeller[1])}</div>
+                      </>
+                    ) : <div style={{ fontSize: '11px', color: 'var(--ws-text-3)' }}>—</div>}
+                  </div>
+
+                  <div style={{ background: 'var(--ws-bg-1)', border: '1px solid var(--ws-border)', padding: '14px' }}>
+                    <div style={{ fontSize: '9px', fontWeight: 800, color: 'var(--ws-text-3)', letterSpacing: '1px', marginBottom: '8px' }}>LARGEST BUYER</div>
+                    {insiderSummary?.largestBuyer ? (
+                      <>
+                        <div style={{ fontSize: '13px', fontWeight: 700 }}>{insiderSummary.largestBuyer[0]}</div>
+                        <div style={{ fontSize: '13px', fontWeight: 800, color: 'var(--ws-accent)', marginTop: '2px' }}>+{fmt(insiderSummary.largestBuyer[1])}</div>
+                      </>
+                    ) : <div style={{ fontSize: '11px', color: 'var(--ws-text-3)' }}>—</div>}
+                  </div>
+                </div>
+
+                {/* Price vs insider activity */}
+                {insiderChartData.length > 1 && (
+                  <div style={{ background: 'var(--ws-bg-1)', border: '1px solid var(--ws-border)', padding: '14px', marginBottom: '16px' }}>
+                    <div style={{ fontSize: '9px', fontWeight: 800, color: 'var(--ws-text-3)', letterSpacing: '1px', marginBottom: '4px' }}>PRICE VS INSIDER ACTIVITY (1Y)</div>
+                    <ResponsiveContainer width="100%" height={160}>
+                      <LineChart data={insiderChartData} margin={{ top: 10, right: 10, bottom: 0, left: 0 }}>
+                        <XAxis dataKey="date" tick={{ fill: 'var(--ws-text-3)', fontSize: 9 }} axisLine={false} tickLine={false} minTickGap={40} />
+                        <YAxis hide domain={['dataMin', 'dataMax']} />
+                        <Tooltip contentStyle={{ background: 'var(--ws-bg-1)', border: '1px solid var(--ws-border)', fontSize: 10 }} />
+                        <Line type="monotone" dataKey="price" stroke="var(--ws-text-3)" strokeWidth={1.25} dot={false} />
+                        <Line dataKey="buy" stroke="none" dot={{ r: 4, fill: 'var(--ws-accent)' }} isAnimationActive={false} />
+                        <Line dataKey="sell" stroke="none" dot={{ r: 4, fill: 'var(--ws-red)' }} isAnimationActive={false} />
+                      </LineChart>
+                    </ResponsiveContainer>
+                  </div>
+                )}
+
+                {/* Filters */}
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', marginBottom: '14px', alignItems: 'center' }}>
+                  {[
+                    { key: 'ALL', label: 'All time', state: insiderDateFilter, set: setInsiderDateFilter, val: 'ALL' },
+                    { key: '30D', label: 'Last 30 days', state: insiderDateFilter, set: setInsiderDateFilter, val: '30D' },
+                  ].map(f => (
+                    <button key={f.label} onClick={() => f.set(f.val)}
+                      style={{ padding: '6px 12px', fontSize: '10px', fontWeight: 700, letterSpacing: '0.5px', border: '1px solid var(--ws-border)', background: f.state === f.val ? 'var(--ws-text)' : 'var(--ws-bg-1)', color: f.state === f.val ? 'var(--ws-bg)' : 'var(--ws-text-2)', cursor: 'pointer' }}>
+                      {f.label}
+                    </button>
+                  ))}
+                  <span style={{ width: '1px', height: '16px', background: 'var(--ws-border)' }} />
+                  {[
+                    { label: 'All types', val: 'ALL' },
+                    { label: 'Buys', val: 'BUY' },
+                    { label: 'Sells', val: 'SELL' },
+                  ].map(f => (
+                    <button key={f.label} onClick={() => setInsiderTypeFilter(f.val)}
+                      style={{ padding: '6px 12px', fontSize: '10px', fontWeight: 700, letterSpacing: '0.5px', border: '1px solid var(--ws-border)', background: insiderTypeFilter === f.val ? 'var(--ws-text)' : 'var(--ws-bg-1)', color: insiderTypeFilter === f.val ? 'var(--ws-bg)' : 'var(--ws-text-2)', cursor: 'pointer' }}>
+                      {f.label}
+                    </button>
+                  ))}
+                  <span style={{ width: '1px', height: '16px', background: 'var(--ws-border)' }} />
+                  {[
+                    { label: 'All roles', val: 'ALL' },
+                    { label: 'Only executives', val: 'EXEC' },
+                    { label: 'Owners >10%', val: 'OWNER10' },
+                  ].map(f => (
+                    <button key={f.label} onClick={() => setInsiderRoleFilter(f.val)}
+                      style={{ padding: '6px 12px', fontSize: '10px', fontWeight: 700, letterSpacing: '0.5px', border: '1px solid var(--ws-border)', background: insiderRoleFilter === f.val ? 'var(--ws-text)' : 'var(--ws-bg-1)', color: insiderRoleFilter === f.val ? 'var(--ws-bg)' : 'var(--ws-text-2)', cursor: 'pointer' }}>
+                      {f.label}
+                    </button>
+                  ))}
+                  {selectedInsiderName && (
+                    <button onClick={() => setSelectedInsiderName(null)}
+                      style={{ padding: '6px 12px', fontSize: '10px', fontWeight: 700, border: '1px solid var(--ws-accent)', background: 'var(--ws-bg-1)', color: 'var(--ws-accent)', cursor: 'pointer' }}>
+                      {selectedInsiderName} ✕
+                    </button>
+                  )}
+                </div>
+
+                {filteredInsiderTrades.length === 0 ? (
+                  <div style={{ background: 'var(--ws-bg-1)', border: '1px solid var(--ws-border)', padding: '30px', textAlign: 'center', color: 'var(--ws-text-3)', fontSize: '11px' }}>
+                    No transactions match this filter.
+                  </div>
+                ) : (
+                  <div style={{ background: 'var(--ws-bg-1)', border: '1px solid var(--ws-border)', overflowX: 'auto' }}>
+                    <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '12px' }}>
+                      <thead>
+                        <tr style={{ borderBottom: '1px solid var(--ws-border)' }}>
+                          {['DATE', 'INSIDER', 'TYPE', 'SHARES', 'PRICE', 'VALUE', 'OWNERSHIP'].map(h => (
+                            <th key={h} style={{ textAlign: h === 'INSIDER' ? 'left' : 'right', padding: '10px 14px', color: 'var(--ws-text-3)', fontSize: '10px', letterSpacing: '1px', fontWeight: 700, whiteSpace: 'nowrap' }}>
+                              {h}
+                            </th>
+                          ))}
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {filteredInsiderTrades.slice(0, 40).map((t, i) => {
+                          const isBuy = t.type === 'BUY';
+                          const isCeoCfo = t.role && /chief executive|chief financial|\bceo\b|\bcfo\b/i.test(t.role);
+                          const isLargeSell = !isBuy && t.value != null && t.value > 1_000_000;
+                          const highlightValue = (isBuy && isCeoCfo) || isLargeSell;
+                          const ownershipPct = t.sharesOwnedAfter && data.sharesOutstanding
+                            ? (t.sharesOwnedAfter / data.sharesOutstanding) * 100 : null;
+
+                          return (
+                            <tr key={i} style={{ borderBottom: '1px solid var(--ws-border)' }}>
+                              <td style={{ padding: '9px 14px', color: 'var(--ws-text-2)', whiteSpace: 'nowrap' }}>{t.date}</td>
+                              <td style={{ padding: '9px 14px', textAlign: 'left' }}>
+                                <span
+                                  onClick={() => setSelectedInsiderName(t.insider)}
+                                  style={{ fontWeight: 700, cursor: 'pointer' }}
+                                  onMouseEnter={e => e.currentTarget.style.textDecoration = 'underline'}
+                                  onMouseLeave={e => e.currentTarget.style.textDecoration = 'none'}
+                                >
+                                  {t.insider}
+                                </span>
+                                {t.role && <div style={{ fontSize: '10px', color: 'var(--ws-text-3)', marginTop: '1px' }}>{t.role}{isCeoCfo ? ' ★' : ''}</div>}
+                              </td>
+                              <td style={{ padding: '9px 14px', textAlign: 'right', whiteSpace: 'nowrap' }}>
+                                <span style={{ fontWeight: 800, color: isBuy ? '#059669' : '#dc2626' }}>
+                                  {isBuy ? '▲ BUY' : '▼ SELL'}
+                                </span>
+                              </td>
+                              <td style={{ padding: '9px 14px', textAlign: 'right', whiteSpace: 'nowrap' }}>{t.shares.toLocaleString()}</td>
+                              <td style={{ padding: '9px 14px', textAlign: 'right', whiteSpace: 'nowrap' }}>{t.price ? `${curSym(data.currency)}${t.price.toFixed(2)}` : '—'}</td>
+                              <td style={{ padding: '9px 14px', textAlign: 'right', whiteSpace: 'nowrap', fontWeight: highlightValue ? 800 : 600, color: highlightValue ? (isBuy ? '#059669' : '#dc2626') : 'var(--ws-text)' }}>
+                                {t.value ? fmt(t.value) : '—'}
+                              </td>
+                              <td style={{ padding: '9px 14px', textAlign: 'right', whiteSpace: 'nowrap', color: 'var(--ws-text-3)' }}>
+                                {ownershipPct != null ? `${ownershipPct.toFixed(2)}%` : '—'}
+                              </td>
+                            </tr>
+                          );
+                        })}
+                      </tbody>
+                    </table>
+                  </div>
+                )}
+              </>
+            )}
+
+            <div className="text-ws-text-3 text-[10px] tracking-[1px]" style={{ marginTop: '16px' }}>
+              SOURCE: SEC EDGAR FORM 4 (PRIMARY) · FINNHUB (FALLBACK FOR NON-SEC TICKERS) · ★ = OFFICER TITLE MATCHES CEO/CFO · NOT INVESTMENT ADVICE
+            </div>
           </div>
         )}
 
