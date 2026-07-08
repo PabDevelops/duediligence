@@ -147,7 +147,8 @@ export default function WorkspaceCalendar() {
   // Stats Counters
   const stats = useMemo(() => {
     const totalEarnings = (earnings || []).length;
-    const totalIpos = ipos.length;
+    const todayStr = toKey(new Date());
+    const totalIpos = ipos.filter(i => i.date >= todayStr).length;
     const watchlistMatch = allEventsThisMonth.filter(e => watchlistTickers.has(e.ticker)).length;
     return { totalEarnings, totalIpos, watchlistMatch };
   }, [earnings, ipos, allEventsThisMonth, watchlistTickers]);
