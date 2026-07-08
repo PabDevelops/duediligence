@@ -50,27 +50,9 @@ export default function WorkspaceLayout({ children }) {
   }, [isLoaded, isSignedIn]);
 
   useEffect(() => {
-    const savedTheme = localStorage.getItem('ws_theme');
-    let activeTheme = 'light';
-    if (savedTheme) {
-      activeTheme = savedTheme;
-    } else {
-      const systemPrefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-      activeTheme = systemPrefersDark ? 'dark' : 'light';
-    }
-    setTheme(activeTheme);
-    document.documentElement.setAttribute('data-ws-theme', activeTheme);
-
-    const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
-    const handleSystemThemeChange = (e) => {
-      if (!localStorage.getItem('ws_theme')) {
-        const nextTheme = e.matches ? 'dark' : 'light';
-        setTheme(nextTheme);
-        document.documentElement.setAttribute('data-ws-theme', nextTheme);
-      }
-    };
-    mediaQuery.addEventListener('change', handleSystemThemeChange);
-    return () => mediaQuery.removeEventListener('change', handleSystemThemeChange);
+    const savedTheme = localStorage.getItem('ws_theme') || 'light';
+    setTheme(savedTheme);
+    document.documentElement.setAttribute('data-ws-theme', savedTheme);
   }, []);
 
   // Auto-close sidebar drawer when navigating

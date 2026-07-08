@@ -47,7 +47,7 @@ export default function RootLayout({ children }) {
     <AuthProvider>
       <html lang="en" suppressHydrationWarning>
         <head>
-          <script dangerouslySetInnerHTML={{ __html: `(function(){try{var t=localStorage.getItem('ws_theme')||(window.matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light');document.documentElement.setAttribute('data-ws-theme',t)}catch(e){}})()` }} />
+          <script dangerouslySetInnerHTML={{ __html: `(function(){try{var t=localStorage.getItem('ws_theme')||'light';document.documentElement.setAttribute('data-ws-theme',t)}catch(e){}})()` }} />
         </head>
         <body suppressHydrationWarning>
           <TrialGate />
