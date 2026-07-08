@@ -4,6 +4,8 @@ import { useRouter } from 'next/navigation';
 import { useUser } from '../../components/AuthProvider';
 import { PieChart, Pie, Cell, ResponsiveContainer } from 'recharts';
 import MarketStatusDot from '../../components/workspace/MarketStatusDot';
+import { formatPriceWithSymbol as formatCurrency } from '../../../lib/formatters';
+import StockLogo from '../../components/workspace/StockLogo';
 
 // Premium SVG Gear Icon
 function GearIcon({ style }) {
@@ -27,47 +29,6 @@ function GearIcon({ style }) {
 }
 
 // Helper component for loading corporate logo avatars
-function StockLogo({ ticker, name, size = 32 }) {
-  const [error, setError] = useState(false);
-  if (error || !ticker) {
-    return (
-      <div style={{
-        width: size,
-        height: size,
-        borderRadius: '6px',
-        background: 'var(--ws-bg-2)',
-        border: '1px solid var(--ws-border)',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        fontSize: size > 24 ? '11px' : '9px',
-        fontWeight: 700,
-        color: 'var(--ws-accent)',
-        flexShrink: 0
-      }}>
-        {ticker.slice(0, 2)}
-      </div>
-    );
-  }
-  return (
-    <img
-      src={`https://img.logo.dev/ticker/${ticker.toUpperCase()}?token=pk_B4aaLZF6S4G1YbCgqZq2Ug`}
-      alt={name || ticker}
-      style={{
-        width: size,
-        height: size,
-        borderRadius: '6px',
-        border: '1px solid var(--ws-border)',
-        objectFit: 'contain',
-        background: '#fff',
-        padding: '2px',
-        flexShrink: 0
-      }}
-      onError={() => setError(true)}
-    />
-  );
-}
-
 // Smart news image — renders normally, hides container if image is a logo (wide ratio)
 function NewsImage({ src, alt, ticker, large }) {
   const [hasError, setHasError] = useState(false);
@@ -194,11 +155,6 @@ function Card({ title, subtitle, rightElement, dragProps, children }) {
 // Same set + localStorage key as the dedicated /portfolio page, so the display
 // currency preference stays in sync between that page and this dashboard widget.
 const CURRENCIES = { USD: '$', EUR: '€', GBP: '£' };
-
-const formatCurrency = (val, symbol = '$') => {
-  if (val === null || val === undefined) return '—';
-  return `${symbol}${val.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
-};
 
 // "Movers" (gainers) dropped from here — it's now covered by the header marquee's
 // dropdown, so this widget focuses on the proprietary quality metrics that live

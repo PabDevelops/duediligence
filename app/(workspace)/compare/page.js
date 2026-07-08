@@ -6,15 +6,8 @@ import Sparkline from '../../components/Sparkline';
 import html2canvas from 'html2canvas';
 
 // Utility formatters
-const fmt = (val) => {
-  if (val === null || val === undefined) return '—';
-  if (Math.abs(val) >= 1e12) return `$${(val / 1e12).toFixed(1)}T`;
-  if (Math.abs(val) >= 1e9) return `$${(val / 1e9).toFixed(1)}B`;
-  if (Math.abs(val) >= 1e6) return `$${(val / 1e6).toFixed(0)}M`;
-  return `$${val.toLocaleString()}`;
-};
-const fmtP = (v) => v !== null && v !== undefined ? `${v.toFixed(1)}%` : '—';
-const fmtN = (v, d = 1) => v !== null && v !== undefined ? v.toFixed(d) : '—';
+import { fmt, fmtP as fmtPercent, fmtN } from '../../../lib/formatters';
+const fmtP = (v) => fmtPercent(v, { decimals: 1 });
 
 // Compact Market Breadth & Sentiment Component
 const SentimentBreadth = ({ vixMarket, sp500Change, advanceDeclineRatio }) => {

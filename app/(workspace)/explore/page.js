@@ -2,6 +2,7 @@
 import { useState, useEffect, useMemo, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { useUser } from '../../components/AuthProvider';
+import StockLogo from '../../components/workspace/StockLogo';
 
 const MOVER_CATEGORIES = [
   { id: 'gainers', label: 'Top Gainers' },
@@ -55,25 +56,6 @@ const SCREEN_CATEGORIES = [
 
 const MOVER_IDS = new Set(MOVER_CATEGORIES.map((c) => c.id));
 const SCREEN_IDS = new Set(SCREEN_CATEGORIES.map((c) => c.id));
-
-function StockLogo({ ticker, size = 22 }) {
-  const [error, setError] = useState(false);
-  if (error || !ticker) {
-    return (
-      <div style={{ width: size, height: size, borderRadius: '6px', background: 'var(--ws-bg-2)', border: '1px solid var(--ws-border)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '9px', fontWeight: 700, color: 'var(--ws-accent)', flexShrink: 0 }}>
-        {ticker.slice(0, 2)}
-      </div>
-    );
-  }
-  return (
-    <img
-      src={`https://img.logo.dev/ticker/${ticker.toUpperCase()}?token=pk_B4aaLZF6S4G1YbCgqZq2Ug`}
-      alt={ticker}
-      style={{ width: size, height: size, borderRadius: '6px', border: '1px solid var(--ws-border)', objectFit: 'contain', background: '#fff', flexShrink: 0 }}
-      onError={() => setError(true)}
-    />
-  );
-}
 
 export default function ExplorePage() {
   const router = useRouter();

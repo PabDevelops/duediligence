@@ -3,21 +3,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { useUser } from '../../components/AuthProvider';
 import { useRouter } from 'next/navigation';
 import StockChart from '../../components/StockChart';
-
-const fmt = (val) => {
-  if (val === null || val === undefined) return '—';
-  if (Math.abs(val) >= 1e12) return `$${(val / 1e12).toFixed(1)}T`;
-  if (Math.abs(val) >= 1e9) return `$${(val / 1e9).toFixed(1)}B`;
-  if (Math.abs(val) >= 1e6) return `$${(val / 1e6).toFixed(0)}M`;
-  return `$${val.toLocaleString()}`;
-};
-
-const formatCurrency = (val, currency = 'USD') => {
-  if (val === null || val === undefined) return '—';
-  const symbols = { USD: '$', EUR: '€', GBP: '£', JPY: '¥' };
-  const sym = symbols[currency] || `${currency} `;
-  return `${sym}${val.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
-};
+import { fmt, formatPrice as formatCurrency } from '../../../lib/formatters';
 
 import StockLogo from '../../components/workspace/StockLogo';
 

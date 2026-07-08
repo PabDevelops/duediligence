@@ -10,16 +10,12 @@ import ShareCardComponent from '../../../components/ShareCard';
 import AchievementToast from '../../../components/AchievementToast';
 import MarketStatusDot from '../../../components/workspace/MarketStatusDot';
 import { useUser } from '../../../components/AuthProvider';
+import { fmt as sharedFmt, fmtP as sharedFmtP, fmtN as sharedFmtN } from '../../../../lib/formatters';
 
-const fmt = (val) => {
-  if (val === null || val === undefined) return 'N/A';
-  if (Math.abs(val) >= 1e12) return `$${(val / 1e12).toFixed(1)}T`;
-  if (Math.abs(val) >= 1e9) return `$${(val / 1e9).toFixed(1)}B`;
-  if (Math.abs(val) >= 1e6) return `$${(val / 1e6).toFixed(0)}M`;
-  return `$${val.toLocaleString()}`;
-};
-const fmtP = (v) => v !== null && v !== undefined ? `${v}%` : 'N/A';
-const fmtN = (v, d = 2) => v !== null && v !== undefined ? v.toFixed(d) : 'N/A';
+// This page shows 'N/A' for missing values instead of the shared '—' fallback.
+const fmt = (val) => sharedFmt(val, 'N/A');
+const fmtP = (v) => sharedFmtP(v, { fallback: 'N/A' });
+const fmtN = (v, d = 2) => sharedFmtN(v, d, 'N/A');
 
 const CURRENCY_SYMBOLS = { USD: '$', EUR: '€', GBP: '£', JPY: '¥', CNY: '¥', CHF: 'CHF ', CAD: 'C$', AUD: 'A$', HKD: 'HK$', INR: '₹', KRW: '₩', SEK: 'kr', NOK: 'kr', DKK: 'kr' };
 const curSym = (code) => !code || code === 'USD' ? '$' : (CURRENCY_SYMBOLS[code] || `${code} `);

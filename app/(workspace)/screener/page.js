@@ -3,16 +3,7 @@ import { useState, useEffect, useRef, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import { useUser } from '../../components/AuthProvider';
 import Sparkline from '../../components/Sparkline';
-
-const fmt = (val) => {
-  if (val === null || val === undefined) return '—';
-  if (Math.abs(val) >= 1e12) return `$${(val / 1e12).toFixed(1)}T`;
-  if (Math.abs(val) >= 1e9) return `$${(val / 1e9).toFixed(1)}B`;
-  if (Math.abs(val) >= 1e6) return `$${(val / 1e6).toFixed(0)}M`;
-  return `$${val.toLocaleString()}`;
-};
-const fmtP = (v) => v !== null && v !== undefined ? `${v}%` : '—';
-const fmtN = (v, d = 1) => v !== null && v !== undefined ? v.toFixed(d) : '—';
+import { fmt, fmtP, fmtN } from '../../../lib/formatters';
 
 const MOCK_GUEST_STOCKS = [
   { ticker: 'AAPL', name: 'Apple Inc.', sector: 'Technology', currentPrice: 175.50, marketCap: 2750000000000, pe: 28.2, revGrowth: 8.5, opMargin: 30.2, fcfYield: 4.8, roe: 145.4, grossMargin: 44.3, netDebt: 65000000000, eps: 6.13 },

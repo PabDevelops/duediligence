@@ -2,27 +2,12 @@
 import { useState, useEffect, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import { useUser } from '../../components/AuthProvider';
+import StockLogo from '../../components/workspace/StockLogo';
 
 const MONTH_NAMES = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
 const DAY_NAMES = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 
 const toKey = (d) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
-
-function StockLogo({ ticker, size = 20 }) {
-  const [error, setError] = useState(false);
-  if (error || !ticker) {
-    return (
-      <div style={{ width: size, height: size, borderRadius: '4px', background: 'var(--ws-bg-2)', border: '1px solid var(--ws-border)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '8px', fontWeight: 700, color: 'var(--ws-accent)', flexShrink: 0 }}>
-        {ticker?.slice(0, 2)}
-      </div>
-    );
-  }
-  return (
-    <img src={`https://img.logo.dev/ticker/${ticker.toUpperCase()}?token=pk_B4aaLZF6S4G1YbCgqZq2Ug`} alt={ticker}
-      style={{ width: size, height: size, borderRadius: '4px', border: '1px solid var(--ws-border)', objectFit: 'contain', background: '#fff', padding: '1.5px', flexShrink: 0 }}
-      onError={() => setError(true)} />
-  );
-}
 
 export default function WorkspaceCalendar() {
   const router = useRouter();

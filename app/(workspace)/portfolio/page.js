@@ -7,14 +7,7 @@ import Link from 'next/link';
 import Sparkline from '../../components/Sparkline';
 import MarketStatusDot from '../../components/workspace/MarketStatusDot';
 
-const formatCurrency = (val, symbol = '$') => {
-  if (val === null || val === undefined) return '—';
-  const abs = Math.abs(val);
-  if (abs >= 1e12) return `${symbol}${(val / 1e12).toFixed(1)}T`;
-  if (abs >= 1e9) return `${symbol}${(val / 1e9).toFixed(1)}B`;
-  if (abs >= 1e6) return `${symbol}${(val / 1e6).toFixed(0)}M`;
-  return `${symbol}${val.toLocaleString(undefined, { maximumFractionDigits: 2 })}`;
-};
+import { formatCurrency } from '../../../lib/formatters';
 const fmt = (val) => formatCurrency(val, '$');
 
 const CURRENCIES = { USD: '$', EUR: '€', GBP: '£' };
