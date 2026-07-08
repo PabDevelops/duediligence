@@ -352,7 +352,7 @@ export default function WatchlistPage() {
           ) : (
             tickers.map((t) => {
               const active = t.ticker === activeTicker;
-              const priceChange = t.change_percent ?? 0;
+              const priceChange = t.priceChangePct ?? 0;
               const isPositive = priceChange >= 0;
 
               return (
@@ -372,7 +372,7 @@ export default function WatchlistPage() {
                   <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexShrink: 0 }}>
                     <div style={{ textAlign: 'right' }}>
                       <div style={{ fontWeight: 700, fontSize: '11px', color: 'var(--ws-text)', fontFamily: 'JetBrains Mono, monospace' }}>
-                        {formatCurrency(t.price, t.currency || 'USD')}
+                        {formatCurrency(t.currentPrice, t.currency || 'USD')}
                       </div>
                       <div style={{ fontWeight: 700, fontSize: '10px', color: isPositive ? 'var(--ws-accent)' : 'var(--ws-red)', fontFamily: 'JetBrains Mono, monospace' }}>
                         {isPositive ? '+' : ''}{priceChange.toFixed(2)}%
@@ -426,10 +426,10 @@ export default function WatchlistPage() {
               {activeStock && (
                 <div style={{ textAlign: 'right' }}>
                   <div style={{ fontSize: '20px', fontWeight: 800, color: 'var(--ws-text)', fontFamily: 'JetBrains Mono, monospace' }}>
-                    {formatCurrency(activeStock.price, activeStock.currency || 'USD')}
+                    {formatCurrency(activeStock.currentPrice, activeStock.currency || 'USD')}
                   </div>
-                  <div style={{ fontSize: '12px', fontWeight: 700, color: (activeStock.change_percent ?? 0) >= 0 ? 'var(--ws-accent)' : 'var(--ws-red)', fontFamily: 'JetBrains Mono, monospace' }}>
-                    {(activeStock.change_percent ?? 0) >= 0 ? '+' : ''}{(activeStock.change_percent ?? 0).toFixed(2)}%
+                  <div style={{ fontSize: '12px', fontWeight: 700, color: (activeStock.priceChangePct ?? 0) >= 0 ? 'var(--ws-accent)' : 'var(--ws-red)', fontFamily: 'JetBrains Mono, monospace' }}>
+                    {(activeStock.priceChangePct ?? 0) >= 0 ? '+' : ''}{(activeStock.priceChangePct ?? 0).toFixed(2)}%
                   </div>
                 </div>
               )}

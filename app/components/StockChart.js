@@ -3,13 +3,12 @@ import { useState, useEffect, useRef } from 'react';
 
 const RANGES = [
   { label: '1D', value: '1d' },
-  { label: '5D', value: '5d' },
-  { label: '15D', value: '15d' },
+  { label: '1W', value: '1w' },
   { label: '1M', value: '1m' },
-  { label: '6M', value: '6m' },
+  { label: '3M', value: '3m' },
   { label: '1Y', value: '1y' },
-  { label: '3Y', value: '3y' },
-  { label: '5Y', value: '5y' },
+  { label: 'YTD', value: 'ytd' },
+  { label: 'MAX', value: 'max' },
 ];
 
 const CURRENCY_SYMBOLS = { USD: '$', EUR: '€', GBP: '£', JPY: '¥', CNY: '¥', CHF: 'CHF ', CAD: 'C$', AUD: 'A$', HKD: 'HK$', INR: '₹', KRW: '₩', SEK: 'kr', NOK: 'kr', DKK: 'kr' };

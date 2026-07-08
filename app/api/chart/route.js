@@ -7,13 +7,12 @@ export async function GET(request) {
 
   const intervalMap = {
     '1d': { interval: '5m', range: '1d' },
-    '5d': { interval: '15m', range: '5d' },
-    '15d': { interval: '30m', range: '15d' },
+    '1w': { interval: '15m', range: '5d' },
     '1m': { interval: '1d', range: '1mo' },
-    '6m': { interval: '1d', range: '6mo' },
+    '3m': { interval: '1d', range: '3mo' },
     '1y': { interval: '1d', range: '1y' },
-    '3y': { interval: '1wk', range: '3y' },
-    '5y': { interval: '1wk', range: '5y' },
+    'ytd': { interval: '1d', range: 'ytd' },
+    'max': { interval: '1wk', range: 'max' },
   };
 
   const { interval, range: r } = intervalMap[range] || intervalMap['1y'];
