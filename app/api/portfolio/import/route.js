@@ -28,5 +28,19 @@ export async function POST(request) {
   const { error } = await supabase.from('portfolio_holdings').insert(clean);
   if (error) return Response.json({ error: 'Import failed' }, { status: 500 });
 
+  // Auto-add imported tickers to watchlist
+  try {
+    const tickersToWatch = [...new Set(clean.map(r => r.ticker))];
+    if (tickersToWatch.length > 0) {
+      const watchlistRows = tickersToWatch.map(t => ({
+        user_id: userId,
+        ticker: t,
+      }));
+      await supabase.from('watchlists').upsert(watchlistRows);
+    }
+  } catch (err) {
+    console.error('Failed to auto-add imported tickers to watchlist:', err);
+  }
+
   return Response.json({ success: true, imported: clean.length });
 }

@@ -45,6 +45,17 @@ export async function POST(request) {
     console.error('portfolio POST error:', error);
     return Response.json({ error: error.message || 'Failed to add holding' }, { status: 500 });
   }
+
+  // Auto-add to watchlist when added to portfolio
+  try {
+    await supabase.from('watchlists').upsert({
+      user_id: userId,
+      ticker: ticker.toUpperCase(),
+    });
+  } catch (err) {
+    console.error('Failed to auto-add to watchlist:', err);
+  }
+
   return Response.json({ success: true, holding: data });
 }
 
