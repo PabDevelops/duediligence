@@ -36,7 +36,7 @@ export default function Pricing() {
             Try Pro free for 14 days.<br /><span style={{ color: 'var(--accent)' }}>Cancel anytime.</span>
           </h1>
           <p style={{ color: 'var(--text-2)', fontSize: '15px', lineHeight: 1.7 }}>
-            Full financials, screener, and compare tools — card required, no charge until your trial ends.
+            Full financials, screener, and compare tools — 14 days free, no card required to start.
           </p>
         </div>
 

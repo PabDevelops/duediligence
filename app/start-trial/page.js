@@ -1,10 +1,20 @@
 'use client';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import Topbar from '../components/Topbar';
 
 export default function StartTrial() {
+  const router = useRouter();
   const [loading, setLoading] = useState(null);
   const [annual, setAnnual] = useState(true);
+  const [isPro, setIsPro] = useState(false);
+
+  useEffect(() => {
+    fetch('/api/subscription')
+      .then(r => r.json())
+      .then(d => setIsPro(d.isPro))
+      .catch(() => {});
+  }, []);
 
   const checkout = async (priceId) => {
     setLoading(priceId);
@@ -32,7 +42,7 @@ export default function StartTrial() {
             14 days of Pro, <span style={{ color: 'var(--accent)' }}>free.</span>
           </h1>
           <p style={{ color: 'var(--text-2)', fontSize: '15px', lineHeight: 1.7 }}>
-            Full access to financials, screener, compare, and valuation tools. Card required — cancel anytime before the trial ends and you won't be charged.
+            Full access to financials, screener, compare, and valuation tools. No card required to start.
           </p>
         </div>
 
@@ -71,11 +81,17 @@ export default function StartTrial() {
             ))}
           </div>
           <button
-            onClick={() => checkout(annual ? ANNUAL_ID : MONTHLY_ID)}
+            onClick={() => {
+              if (isPro) {
+                router.push('/home');
+              } else {
+                checkout(annual ? ANNUAL_ID : MONTHLY_ID);
+              }
+            }}
             disabled={loading !== null}
             className="btn-primary"
             style={{ width: '100%', padding: '13px', borderRadius: '12px', fontSize: '15px' }}>
-            {loading ? 'Loading...' : 'Start my free trial →'}
+            {loading ? 'Loading...' : isPro ? 'Go to terminal →' : 'Start my free trial →'}
           </button>
         </div>
 
@@ -86,3 +102,4 @@ export default function StartTrial() {
     </div>
   );
 }
+
