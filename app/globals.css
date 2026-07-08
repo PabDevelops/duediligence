@@ -875,3 +875,36 @@ tr:hover td.sticky-col {
     max-height: 120px !important;
   }
 }
+
+/* Workspace Sidebar and Header responsive layout */
+.ws-mobile-header {
+  height: 48px;
+  background: var(--ws-bg-1);
+  border-bottom: 1px solid var(--ws-border);
+  display: none;
+  align-items: center;
+  padding: 0 16px;
+  justify-content: space-between;
+  position: sticky;
+  top: 0;
+  z-index: 1000;
+}
+
+@media (max-width: 1023px) {
+  .ws-mobile-header {
+    display: flex;
+  }
+  .ws-sidebar-slot {
+    position: fixed;
+    left: -240px;
+    top: 0;
+    bottom: 0;
+    height: 100vh;
+    z-index: 9999;
+    transition: left 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+    display: block;
+  }
+  .ws-sidebar-slot.open {
+    left: 0;
+  }
+}

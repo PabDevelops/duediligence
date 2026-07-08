@@ -113,18 +113,7 @@ export default function WorkspaceLayout({ children }) {
       )}
       
       {/* MOBILE TOP BAR (only visible < 1024px) */}
-      <div className="ws-mobile-header" style={{
-        height: '48px',
-        background: 'var(--ws-bg-1)',
-        borderBottom: '1px solid var(--ws-border)',
-        display: 'none', // overridden by media query
-        alignItems: 'center',
-        padding: '0 16px',
-        justifyContent: 'space-between',
-        position: 'sticky',
-        top: 0,
-        zIndex: 1000
-      }}>
+      <div className="ws-mobile-header">
         <button onClick={() => setSidebarOpen(true)} style={{
           background: 'none',
           border: 'none',
@@ -168,27 +157,6 @@ export default function WorkspaceLayout({ children }) {
           <main style={{ flex: 1, maxWidth: '100%', overflowX: 'hidden' }}>{children}</main>
         </div>
       </div>
-
-      <style>{`
-        @media (max-width: 1023px) {
-          .ws-mobile-header {
-            display: flex !important;
-          }
-          .ws-sidebar-slot {
-            position: fixed !important;
-            left: -240px !important;
-            top: 0 !important;
-            bottom: 0 !important;
-            height: 100vh !important;
-            z-index: 9999 !important;
-            transition: left 0.25s cubic-bezier(0.4, 0, 0.2, 1) !important;
-            display: block !important;
-          }
-          .ws-sidebar-slot.open {
-            left: 0 !important;
-          }
-        }
-      `}</style>
     </div>
   );
 }
