@@ -23,21 +23,7 @@ const CURRENCIES = { USD: '$', EUR: '€', GBP: '£' };
 // since it needs 10 visually distinct colors, not just the app's accent/text/border set.
 const PALETTE = ['#4f7a68', '#7c6fe0', '#d99a4e', '#5a9bd4', '#c1666b', '#8fb996', '#b98fc9', '#e0a458', '#6b9080', '#a4a4a4'];
 
-function StockLogo({ ticker, size = 28 }) {
-  const [error, setError] = useState(false);
-  if (error || !ticker) {
-    return (
-      <div style={{ width: size, height: size, borderRadius: '6px', background: 'var(--ws-bg-2)', border: '1px solid var(--ws-border)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '9px', fontWeight: 700, color: 'var(--ws-accent)', flexShrink: 0 }}>
-        {ticker?.slice(0, 2)}
-      </div>
-    );
-  }
-  return (
-    <img src={`https://img.logo.dev/ticker/${ticker.toUpperCase()}?token=pk_B4aaLZF6S4G1YbCgqZq2Ug`} alt={ticker}
-      style={{ width: size, height: size, borderRadius: '6px', border: '1px solid var(--ws-border)', objectFit: 'contain', background: '#fff' /* white backdrop for logo readability across light/dark themes */, padding: '2px', flexShrink: 0 }}
-      onError={() => setError(true)} />
-  );
-}
+import StockLogo from '../../components/workspace/StockLogo';
 
 const COLUMN_ALIASES = {
   ticker: ['ticker', 'symbol'],
@@ -191,11 +177,13 @@ function ImportCsvModal({ onClose, onImported, defaultCurrency }) {
 
         <div style={{ display: 'flex', gap: '8px', marginTop: '16px' }}>
           <button type="button" onClick={onClose}
-            style={{ flex: 1, height: '38px', border: '1px solid var(--ws-border)', background: 'var(--ws-bg)', color: 'var(--ws-text-2)', fontSize: '13px', fontWeight: 600, cursor: 'pointer' }}>
+            className="ws-btn-secondary"
+            style={{ flex: 1, height: '38px' }}>
             Cancel
           </button>
           <button type="button" onClick={doImport} disabled={rows.length === 0 || importing}
-            style={{ flex: 2, height: '38px', border: 'none', background: 'var(--ws-accent)', color: 'var(--ws-bg-1)', fontSize: '13px', fontWeight: 700, cursor: rows.length ? 'pointer' : 'not-allowed', opacity: rows.length ? 1 : 0.5 }}>
+            className="ws-btn"
+            style={{ flex: 2, height: '38px' }}>
             {importing ? 'Importing…' : `Import ${rows.length || ''} holding${rows.length === 1 ? '' : 's'}`}
           </button>
         </div>
@@ -310,7 +298,8 @@ function AddHoldingModal({ onClose, onAdded, existingPies, defaultCurrency, edit
           <div style={{ position: 'relative' }}>
             <input ref={inputRef} value={query} placeholder="Search ticker or company…"
               onChange={e => { setQuery(e.target.value.toUpperCase()); setSelected(null); setPreview(null); setManualLookupState('idle'); }}
-              style={{ ...inputStyle, background: presetTicker ? 'var(--ws-bg-2)' : 'var(--ws-bg)', cursor: presetTicker ? 'not-allowed' : 'text' }}
+              className="ws-input"
+              style={{ background: presetTicker ? 'var(--ws-bg-2)' : 'var(--ws-bg)', cursor: presetTicker ? 'not-allowed' : 'text' }}
               autoComplete="off" required disabled={!!presetTicker} />
             {suggestions.length > 0 && (
               <div style={{ position: 'absolute', top: '40px', left: 0, right: 0, background: 'var(--ws-bg-1)', border: '1px solid var(--ws-border)', boxShadow: '0 8px 24px rgba(0,0,0,0.1)', maxHeight: '220px', overflowY: 'auto', zIndex: 10 }}>
@@ -369,34 +358,34 @@ function AddHoldingModal({ onClose, onAdded, existingPies, defaultCurrency, edit
 
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
             <div>
-              <div style={{ fontSize: '10px', color: 'var(--ws-text-3)', marginBottom: '4px' }}>SHARES</div>
-              <input type="number" step="any" min="0" value={shares} onChange={e => setShares(e.target.value)} style={inputStyle} required />
+              <div className="ws-label" style={{ marginBottom: '4px' }}>SHARES</div>
+              <input type="number" step="any" min="0" value={shares} onChange={e => setShares(e.target.value)} className="ws-input" required />
             </div>
             <div>
-              <div style={{ fontSize: '10px', color: 'var(--ws-text-3)', marginBottom: '4px', display: 'flex', justifyContent: 'space-between' }}>
+              <div className="ws-label" style={{ marginBottom: '4px', display: 'flex', justifyContent: 'space-between' }}>
                 <span>COST PER SHARE</span>
                 <select value={costBasisCurrency} onChange={e => setCostBasisCurrency(e.target.value)}
                   style={{ fontSize: '10px', fontWeight: 700, color: 'var(--ws-accent)', background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}>
                   {Object.keys(CURRENCIES).map(c => <option key={c} value={c}>{c}</option>)}
                 </select>
               </div>
-              <input type="number" step="any" min="0" value={costBasis} onChange={e => setCostBasis(e.target.value)} style={inputStyle} required />
+              <input type="number" step="any" min="0" value={costBasis} onChange={e => setCostBasis(e.target.value)} className="ws-input" required />
               <div style={{ fontSize: '10px', color: 'var(--ws-text-3)', marginTop: '3px' }}>Enter the price exactly as your broker showed it, in {costBasisCurrency}.</div>
             </div>
           </div>
 
           <div>
-            <div style={{ fontSize: '10px', color: 'var(--ws-text-3)', marginBottom: '4px' }}>PURCHASE DATE</div>
-            <input type="date" value={purchaseDate} onChange={e => setPurchaseDate(e.target.value)} style={inputStyle} />
+            <div className="ws-label" style={{ marginBottom: '4px' }}>PURCHASE DATE</div>
+            <input type="date" value={purchaseDate} onChange={e => setPurchaseDate(e.target.value)} className="ws-input" />
           </div>
 
           <div style={{ position: 'relative' }}>
-            <div style={{ fontSize: '10px', color: 'var(--ws-text-3)', marginBottom: '4px' }}>PIE (OPTIONAL) — group into a themed basket</div>
+            <div className="ws-label" style={{ marginBottom: '4px' }}>PIE (OPTIONAL) — group into a themed basket</div>
             <input value={pie} placeholder="e.g. Quantum Computing"
               onChange={e => { setPie(e.target.value); setShowPieSuggestions(true); }}
               onFocus={() => setShowPieSuggestions(true)}
               onBlur={() => setTimeout(() => setShowPieSuggestions(false), 150)}
-              style={inputStyle} autoComplete="off" />
+              className="ws-input" autoComplete="off" />
             {showPieSuggestions && pieSuggestions.length > 0 && (
               <div style={{ position: 'absolute', top: '58px', left: 0, right: 0, background: 'var(--ws-bg-1)', border: '1px solid var(--ws-border)', boxShadow: '0 8px 24px rgba(0,0,0,0.1)', zIndex: 10 }}>
                 {pieSuggestions.map(p => (
@@ -421,11 +410,13 @@ function AddHoldingModal({ onClose, onAdded, existingPies, defaultCurrency, edit
 
           <div style={{ display: 'flex', gap: '8px', marginTop: '6px' }}>
             <button type="button" onClick={onClose}
-              style={{ flex: 1, height: '38px', border: '1px solid var(--ws-border)', background: 'var(--ws-bg)', color: 'var(--ws-text-2)', fontSize: '13px', fontWeight: 600, cursor: 'pointer' }}>
+              className="ws-btn-secondary"
+              style={{ flex: 1, height: '38px' }}>
               Cancel
             </button>
             <button type="submit" disabled={!selected || saving}
-              style={{ flex: 2, height: '38px', border: 'none', background: 'var(--ws-accent)', color: 'var(--ws-bg-1)', fontSize: '13px', fontWeight: 700, cursor: selected ? 'pointer' : 'not-allowed', opacity: selected ? 1 : 0.5 }}>
+              className="ws-btn"
+              style={{ flex: 2, height: '38px' }}>
               {saving ? 'Saving…' : isEdit ? 'Save changes' : 'Add to portfolio'}
             </button>
           </div>
@@ -439,7 +430,6 @@ function SellModal({ position, onClose, onSold }) {
   const [shares, setShares] = useState('');
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState(null);
-  const inputStyle = { width: '100%', height: '36px', padding: '0 12px', fontSize: '13px', border: '1px solid var(--ws-border)', background: 'var(--ws-bg)', color: 'var(--ws-text)', outline: 'none' };
 
   const submit = async (e) => {
     e.preventDefault();
@@ -467,8 +457,8 @@ function SellModal({ position, onClose, onSold }) {
         <div style={{ fontSize: '12px', color: 'var(--ws-text-3)', marginBottom: '16px' }}>You hold {position.shares.toLocaleString(undefined, { maximumFractionDigits: 4 })} shares. Reduces from your oldest lots first.</div>
         <form onSubmit={submit} style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
           <div>
-            <div style={{ fontSize: '10px', color: 'var(--ws-text-3)', marginBottom: '4px' }}>SHARES TO SELL</div>
-            <input type="number" step="any" min="0" max={position.shares} value={shares} onChange={e => setShares(e.target.value)} style={inputStyle} autoFocus required />
+            <div className="ws-label" style={{ marginBottom: '4px' }}>SHARES TO SELL</div>
+            <input type="number" step="any" min="0" max={position.shares} value={shares} onChange={e => setShares(e.target.value)} className="ws-input" autoFocus required />
           </div>
           <button type="button" onClick={() => setShares(String(position.shares))}
             style={{ alignSelf: 'flex-start', fontSize: '11px', fontWeight: 600, color: 'var(--ws-accent)', background: 'var(--ws-accent-dim)', border: 'none', padding: '5px 10px', cursor: 'pointer' }}>
@@ -479,11 +469,13 @@ function SellModal({ position, onClose, onSold }) {
           )}
           <div style={{ display: 'flex', gap: '8px', marginTop: '6px' }}>
             <button type="button" onClick={onClose}
-              style={{ flex: 1, height: '38px', border: '1px solid var(--ws-border)', background: 'var(--ws-bg)', color: 'var(--ws-text-2)', fontSize: '13px', fontWeight: 600, cursor: 'pointer' }}>
+              className="ws-btn-secondary"
+              style={{ flex: 1, height: '38px' }}>
               Cancel
             </button>
             <button type="submit" disabled={saving}
-              style={{ flex: 2, height: '38px', border: 'none', background: 'var(--ws-red)', color: 'var(--ws-bg-1)', fontSize: '13px', fontWeight: 700, cursor: 'pointer' }}>
+              className="ws-btn-danger"
+              style={{ flex: 2, height: '38px' }}>
               {saving ? 'Selling…' : 'Sell'}
             </button>
           </div>
@@ -865,11 +857,13 @@ export default function WorkspacePortfolio() {
                 ))}
               </div>
               <button onClick={() => setShowImport(true)}
-                style={{ height: '34px', padding: '0 14px', fontSize: '12px', fontWeight: 600, background: 'var(--ws-bg-1)', color: 'var(--ws-text-2)', border: '1px solid var(--ws-border)', cursor: 'pointer' }}>
+                className="ws-btn-secondary"
+                style={{ height: '34px', padding: '0 14px' }}>
                 Import CSV
               </button>
               <button onClick={() => setShowModal(true)}
-                style={{ height: '34px', padding: '0 16px', fontSize: '12px', fontWeight: 700, background: 'var(--ws-accent)', color: 'var(--ws-bg-1)', border: 'none', cursor: 'pointer' }}>
+                className="ws-btn"
+                style={{ height: '34px', padding: '0 16px' }}>
                 + Add holding
               </button>
             </div>
@@ -880,7 +874,7 @@ export default function WorkspacePortfolio() {
       {!isSignedIn ? (
         <div style={{ border: '1px solid var(--ws-border)', padding: '48px', textAlign: 'center' }}>
           <div style={{ color: 'var(--ws-text-2)', fontSize: '14px', marginBottom: '16px' }}>Sign in to track your portfolio</div>
-          <Link href="/sign-in" style={{ padding: '9px 20px', fontSize: '13px', fontWeight: 600, background: 'var(--ws-text)', color: 'var(--ws-bg)', textDecoration: 'none' }}>Sign in →</Link>
+          <Link href="/sign-in" className="ws-btn" style={{ padding: '9px 20px', textDecoration: 'none' }}>Sign in →</Link>
         </div>
       ) : loading ? (
         <div style={{ color: 'var(--ws-text-3)', fontSize: '13px', padding: '30px 0' }}>Loading…</div>
@@ -893,7 +887,8 @@ export default function WorkspacePortfolio() {
           <div style={{ color: 'var(--ws-text)', fontSize: '14px', fontWeight: 600, marginBottom: '6px' }}>No holdings yet</div>
           <div style={{ color: 'var(--ws-text-3)', fontSize: '12px', marginBottom: '16px' }}>Add your first position to start tracking.</div>
           <button onClick={() => setShowModal(true)}
-            style={{ padding: '9px 20px', fontSize: '13px', fontWeight: 700, background: 'var(--ws-accent)', color: 'var(--ws-bg-1)', border: 'none', cursor: 'pointer' }}>
+            className="ws-btn"
+            style={{ padding: '9px 20px' }}>
             + Add holding
           </button>
         </div>
@@ -988,11 +983,13 @@ export default function WorkspacePortfolio() {
                             <td style={{ padding: '10px 12px', textAlign: 'right', color: 'var(--ws-text-2)' }}>{allocation.toFixed(1)}%</td>
                              <td style={{ padding: '10px 12px', textAlign: 'right', whiteSpace: 'nowrap' }} onClick={e => e.stopPropagation()}>
                                <button onClick={() => setBuyTicker(p.ticker)} title="Buy shares"
-                                 style={{ background: 'var(--ws-accent)', border: 'none', color: 'var(--ws-bg-1)', cursor: 'pointer', fontSize: '10px', fontWeight: 700, padding: '5px 10px', marginRight: '4px', borderRadius: '4px' }}>
+                                 className="ws-btn"
+                                 style={{ fontSize: '10px', padding: '5px 10px', marginRight: '4px' }}>
                                  Buy
                                </button>
                                <button onClick={() => setSellPosition(p)} title="Sell shares"
-                                 style={{ background: 'none', border: '1px solid var(--ws-border)', color: 'var(--ws-text-2)', cursor: 'pointer', fontSize: '10px', fontWeight: 600, padding: '4px 8px', marginRight: '4px', borderRadius: '4px' }}>
+                                 className="ws-btn-secondary"
+                                 style={{ fontSize: '10px', padding: '4px 8px', marginRight: '4px' }}>
                                  Sell
                                </button>
                                <button onClick={() => setEditLot(lastLot)} title={`Edit last entry: ${lastLot.shares} sh @ ${lastLot.cost_basis} ${lastLot.cost_basis_currency} on ${lastLot.purchase_date}`}

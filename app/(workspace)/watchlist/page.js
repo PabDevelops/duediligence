@@ -19,24 +19,7 @@ const formatCurrency = (val, currency = 'USD') => {
   return `${sym}${val.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 };
 
-function StockLogo({ ticker, size = 20 }) {
-  const [error, setError] = useState(false);
-  if (error || !ticker) {
-    return (
-      <div style={{ width: size, height: size, borderRadius: '2px', background: 'var(--ws-bg-2)', border: '1px solid var(--ws-border)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '9px', fontWeight: 700, color: 'var(--ws-accent)', flexShrink: 0 }}>
-        {ticker.slice(0, 2)}
-      </div>
-    );
-  }
-  return (
-    <img
-      src={`https://img.logo.dev/ticker/${ticker.toUpperCase()}?token=pk_B4aaLZF6S4G1YbCgqZq2Ug`}
-      alt={ticker}
-      style={{ width: size, height: size, borderRadius: '2px', border: '1px solid var(--ws-border)', objectFit: 'contain', background: '#fff', flexShrink: 0 }}
-      onError={() => setError(true)}
-    />
-  );
-}
+import StockLogo from '../../components/workspace/StockLogo';
 
 function NewsRow({ item, isLast }) {
   const [expanded, setExpanded] = useState(false);
@@ -223,91 +206,10 @@ export default function WatchlistPage() {
   }
 
   const activeStock = tickers.find(t => t.ticker === activeTicker);
-
   return (
     <div className="watchlist-container">
-      <style dangerouslySetInnerHTML={{ __html: `
-        .watchlist-container {
-          display: grid;
-          grid-template-columns: 290px 1fr 320px;
-          height: calc(100vh - var(--topbar-height));
-          background: var(--ws-bg-1);
-          overflow: hidden;
-        }
-        .watchlist-left-col {
-          border-right: 1px solid var(--ws-border);
-          display: flex;
-          flex-direction: column;
-          height: 100%;
-          background: var(--ws-bg-1);
-        }
-        .watchlist-center-col {
-          border-right: 1px solid var(--ws-border);
-          display: flex;
-          flex-direction: column;
-          height: 100%;
-          overflow-y: auto;
-          background: var(--ws-bg-1);
-        }
-        .watchlist-right-col {
-          display: flex;
-          flex-direction: column;
-          height: 100%;
-          overflow-y: auto;
-          background: var(--ws-bg-1);
-        }
-        .news-item {
-          padding: 14px;
-          border-bottom: 1px solid var(--ws-border);
-          cursor: pointer;
-          transition: background 0.15s;
-        }
-        .news-item:hover {
-          background: var(--ws-bg-2);
-        }
-        .watchlist-item {
-          display: flex;
-          align-items: center;
-          justify-content: space-between;
-          padding: 12px 16px;
-          border-bottom: 1px solid var(--ws-border);
-          cursor: pointer;
-          transition: background 0.15s;
-        }
-        .watchlist-item:hover {
-          background: var(--ws-bg-2);
-        }
-        .watchlist-item.active {
-          background: var(--ws-accent-dim);
-          border-left: 3px solid var(--ws-accent);
-          padding-left: 13px;
-        }
-        @media (max-width: 1100px) {
-          .watchlist-container {
-            grid-template-columns: 260px 1fr;
-          }
-          .watchlist-right-col {
-            display: none;
-          }
-        }
-        @media (max-width: 768px) {
-          .watchlist-container {
-            grid-template-columns: 1fr;
-          }
-          .watchlist-left-col {
-            display: ${showDetailOnMobile ? 'none' : 'flex'};
-            width: 100%;
-          }
-          .watchlist-center-col {
-            display: ${showDetailOnMobile ? 'flex' : 'none'};
-            width: 100%;
-            border-right: none;
-          }
-        }
-      `}} />
-
       {/* LEFT COLUMN: LIST OF TICKERS */}
-      <div className="watchlist-left-col">
+      <div className={`watchlist-left-col ${showDetailOnMobile ? 'mobile-hide' : ''}`}>
         <div style={{ padding: '14px 16px', borderBottom: '1px solid var(--ws-border)', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
             <span style={{ color: 'var(--ws-accent)', fontSize: '14px' }}>★</span>
@@ -391,13 +293,13 @@ export default function WatchlistPage() {
           )}
         </div>
       </div>
-
       {/* CENTER COLUMN: CHART & DETAILS */}
-      <div className="watchlist-center-col">
+      <div className={`watchlist-center-col ${showDetailOnMobile ? 'mobile-show' : ''}`}>
         {showDetailOnMobile && (
-          <div style={{ display: 'none', '@media (max-width: 768px)': { display: 'block' } }}>
+          <div className="watchlist-back-btn">
             <button onClick={() => setShowDetailOnMobile(false)}
-              style={{ margin: '14px', padding: '8px 12px', background: 'var(--ws-bg-2)', border: '1px solid var(--ws-border)', color: 'var(--ws-text)', fontSize: '11px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '6px' }}>
+              className="ws-btn-secondary"
+              style={{ margin: '14px', fontSize: '11px', display: 'flex', alignItems: 'center', gap: '6px' }}>
               ← BACK TO LIST
             </button>
           </div>
