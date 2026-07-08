@@ -91,6 +91,8 @@ export default function ExplorePage() {
   const [loadingScreener, setLoadingScreener] = useState(false);
   const [earningsData, setEarningsData] = useState(null);
   const [loadingEarnings, setLoadingEarnings] = useState(false);
+  const [watchlistData, setWatchlistData] = useState([]);
+  const [loadingWatchlist, setLoadingWatchlist] = useState(false);
 
   // Market movers — fetched once, all three tabs come from the same response
   useEffect(() => {
@@ -160,6 +162,19 @@ export default function ExplorePage() {
       .catch(() => {});
   }, []);
 
+  // Load full watchlist details when watchlist tab is active
+  useEffect(() => {
+    if (activeCategory !== 'mywatchlist') return;
+    setLoadingWatchlist(true);
+    fetch('/api/watchlist?full=true')
+      .then((res) => res.json())
+      .then((data) => {
+        setWatchlistData(data.tickers || []);
+      })
+      .catch(() => {})
+      .finally(() => setLoadingWatchlist(false));
+  }, [activeCategory]);
+
   // Global markets panel (indices + commodities)
   useEffect(() => {
     fetch('/api/market?extended=true')
@@ -201,9 +216,16 @@ export default function ExplorePage() {
       if (inList) next.delete(ticker); else next.add(ticker);
       return next;
     });
+    if (inList) {
+      setWatchlistData((prev) => prev.filter(t => t.ticker !== ticker));
+    }
   }, [isSignedIn, watchlistSet]);
 
   const { rows, loading, categoryLabel } = useMemo(() => {
+    if (activeCategory === 'mywatchlist') {
+      return { rows: watchlistData, loading: loadingWatchlist, categoryLabel: 'My Watchlist' };
+    }
+
     if (MOVER_IDS.has(activeCategory)) {
       const label = MOVER_CATEGORIES.find((c) => c.id === activeCategory)?.label;
       return { rows: movers[activeCategory] || [], loading: loadingMovers, categoryLabel: label };
@@ -242,7 +264,7 @@ export default function ExplorePage() {
     const cached = themeCache[activeCategory];
     const label = [...THEME_CATEGORIES, ...INDUSTRY_CATEGORIES].find((c) => c.id === activeCategory)?.label;
     return { rows: cached?.stocks || [], loading: loadingTheme && !cached, categoryLabel: cached?.label || label };
-  }, [activeCategory, movers, loadingMovers, themeCache, loadingTheme, screenerData, loadingScreener, earningsData, loadingEarnings]);
+  }, [activeCategory, movers, loadingMovers, themeCache, loadingTheme, screenerData, loadingScreener, earningsData, loadingEarnings, watchlistData, loadingWatchlist]);
 
   const isEarningsCategory = activeCategory === 'upcomingearnings';
 
@@ -289,6 +311,7 @@ export default function ExplorePage() {
         {/* LEFT: CATEGORY SIDEBAR */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: '18px', background: 'var(--ws-bg-1)', border: '1px solid var(--ws-border)', padding: '16px', boxSizing: 'border-box' }}>
           {[
+            { title: 'MY WATCHLIST', items: [{ id: 'mywatchlist', label: 'Watchlist' }] },
             { title: 'MARKET MOVERS', items: MOVER_CATEGORIES },
             { title: 'THEMATIC', items: THEME_CATEGORIES },
             { title: 'INDUSTRIES', items: INDUSTRY_CATEGORIES },
@@ -336,7 +359,17 @@ export default function ExplorePage() {
             </div>
           ) : rows.length === 0 ? (
             <div style={{ padding: '60px 20px', textAlign: 'center', color: 'var(--ws-text-3)', fontSize: '12px' }}>
-              No data available for this category yet.
+              {activeCategory === 'mywatchlist' ? (
+                !isSignedIn ? (
+                  <div>
+                    Please <a href="/sign-in" style={{ color: 'var(--ws-accent)', fontWeight: 600, textDecoration: 'underline' }}>sign in</a> to view your watchlist.
+                  </div>
+                ) : (
+                  'Your watchlist is empty. Search for a stock to add it to your watchlist!'
+                )
+              ) : (
+                'No data available for this category yet.'
+              )}
             </div>
           ) : (
             <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '12px', textAlign: 'left' }}>
