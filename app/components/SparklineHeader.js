@@ -3,11 +3,13 @@ import { useState, useEffect } from 'react';
 import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts';
 
 const RANGES = [
-  { label: '5D', range: '5d', interval: '1d' },
-  { label: '1M', range: '1mo', interval: '1d' },
-  { label: '3M', range: '3mo', interval: '1d' },
-  { label: '6M', range: '6mo', interval: '1wk' },
-  { label: '1Y', range: '1y', interval: '1wk' },
+  { label: '1D', range: '1d' },
+  { label: '1W', range: '1w' },
+  { label: '1M', range: '1m' },
+  { label: '3M', range: '3m' },
+  { label: '1Y', range: '1y' },
+  { label: 'YTD', range: 'ytd' },
+  { label: 'MAX', range: 'max' },
 ];
 
 const CURRENCY_SYMBOLS = { USD: '$', EUR: '€', GBP: '£', JPY: '¥', CNY: '¥', CHF: 'CHF ', CAD: 'C$', AUD: 'A$', HKD: 'HK$', INR: '₹', KRW: '₩', SEK: 'kr', NOK: 'kr', DKK: 'kr' };
@@ -23,7 +25,7 @@ const CustomTooltip = ({ active, payload, currency }) => {
 };
 
 export default function SparklineHeader({ ticker, currency }) {
-  const [range, setRange] = useState('1mo');
+  const [range, setRange] = useState('1m');
   const [data, setData] = useState(null);
 
   useEffect(() => {
