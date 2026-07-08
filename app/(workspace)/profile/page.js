@@ -222,46 +222,7 @@ export default function WorkspaceProfile() {
     </div>
   );
 
-  const cardStyle = {
-    background: 'var(--ws-bg-1)',
-    border: '1px solid var(--ws-border)',
-    padding: '20px',
-    display: 'flex',
-    flexDirection: 'column',
-    gap: '16px',
-    boxShadow: '0 1px 3px rgba(0,0,0,0.01)',
-  };
 
-  const labelStyle = {
-    fontSize: '10px',
-    color: 'var(--ws-text-3)',
-    fontWeight: 700,
-    letterSpacing: '1px',
-    textTransform: 'uppercase',
-  };
-
-  const inputStyle = {
-    width: '100%',
-    padding: '8px 12px',
-    background: 'var(--ws-bg-2)',
-    border: '1px solid var(--ws-border)',
-    color: 'var(--ws-text)',
-    outline: 'none',
-    fontSize: '13px',
-    boxSizing: 'border-box',
-  };
-
-  const btnStyle = {
-    padding: '8px 16px',
-    fontSize: '12px',
-    fontWeight: 700,
-    background: 'var(--ws-accent)',
-    border: 'none',
-    color: '#fff',
-    cursor: 'pointer',
-    textAlign: 'center',
-    transition: 'opacity 0.2s',
-  };
 
   return (
     <div style={{ padding: '24px', display: 'flex', flexDirection: 'column', gap: '20px', boxSizing: 'border-box' }}>
@@ -369,9 +330,9 @@ export default function WorkspaceProfile() {
         <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
           
           {/* Plan / Subscription Details */}
-          <div style={cardStyle}>
+          <div className="ws-card">
             <div style={{ borderBottom: '1px solid var(--ws-border)', paddingBottom: '10px' }}>
-              <div style={labelStyle}>Subscription & Billing</div>
+              <div className="ws-label">Subscription & Billing</div>
             </div>
             
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '12px' }}>
@@ -385,19 +346,19 @@ export default function WorkspaceProfile() {
               </div>
               {isPro ? (
                 <button onClick={goToPortal} disabled={portalLoading}
-                  style={{ ...btnStyle, background: 'none', border: '1px solid var(--ws-border)', color: 'var(--ws-text)', opacity: portalLoading ? 0.5 : 1 }}>
+                  className="ws-btn-secondary" style={{ opacity: portalLoading ? 0.5 : 1 }}>
                   {portalLoading ? 'Loading...' : 'Manage Subscription →'}
                 </button>
               ) : (
-                <a href="/pricing" style={btnStyle}>Upgrade to Pro →</a>
+                <a href="/pricing" className="ws-btn">Upgrade to Pro →</a>
               )}
             </div>
           </div>
 
           {/* Account Profile Form */}
-          <form onSubmit={handleUpdateProfile} style={cardStyle}>
+          <form onSubmit={handleUpdateProfile} className="ws-card">
             <div style={{ borderBottom: '1px solid var(--ws-border)', paddingBottom: '10px' }}>
-              <div style={labelStyle}>General Account</div>
+              <div className="ws-label">General Account</div>
             </div>
 
             {profileMsg.text && (
@@ -414,21 +375,21 @@ export default function WorkspaceProfile() {
 
             <div>
               <label style={{ fontSize: '11px', color: 'var(--ws-text-2)', display: 'block', marginBottom: '6px', fontWeight: 600 }}>Display Name</label>
-              <input type="text" value={displayName} onChange={e => setDisplayName(e.target.value)} placeholder="Your name" required style={inputStyle} />
+              <input type="text" value={displayName} onChange={e => setDisplayName(e.target.value)} placeholder="Your name" required className="ws-input" />
             </div>
 
             <div>
               <label style={{ fontSize: '11px', color: 'var(--ws-text-3)', display: 'block', marginBottom: '6px', fontWeight: 600 }}>Email Address (Non-changeable)</label>
-              <input type="text" value={user?.email || ''} readOnly style={{ ...inputStyle, opacity: 0.6, cursor: 'not-allowed' }} />
+              <input type="text" value={user?.email || ''} readOnly className="ws-input" style={{ opacity: 0.6, cursor: 'not-allowed' }} />
             </div>
 
-            <button type="submit" style={{ ...btnStyle, alignSelf: 'flex-start' }}>Save Profile</button>
+            <button type="submit" className="ws-btn" style={{ alignSelf: 'flex-start' }}>Save Profile</button>
           </form>
 
           {/* Security / Password Form */}
-          <form onSubmit={handleUpdatePassword} style={cardStyle}>
+          <form onSubmit={handleUpdatePassword} className="ws-card">
             <div style={{ borderBottom: '1px solid var(--ws-border)', paddingBottom: '10px' }}>
-              <div style={labelStyle}>Security & Password</div>
+              <div className="ws-label">Security & Password</div>
             </div>
 
             {securityMsg.text && (
@@ -445,15 +406,15 @@ export default function WorkspaceProfile() {
 
             <div>
               <label style={{ fontSize: '11px', color: 'var(--ws-text-2)', display: 'block', marginBottom: '6px', fontWeight: 600 }}>New Password</label>
-              <input type="password" value={password} onChange={e => setPassword(e.target.value)} placeholder="Minimum 6 characters" required style={inputStyle} />
+              <input type="password" value={password} onChange={e => setPassword(e.target.value)} placeholder="Minimum 6 characters" required className="ws-input" />
             </div>
 
             <div>
               <label style={{ fontSize: '11px', color: 'var(--ws-text-2)', display: 'block', marginBottom: '6px', fontWeight: 600 }}>Confirm New Password</label>
-              <input type="password" value={confirmPassword} onChange={e => setConfirmPassword(e.target.value)} placeholder="Repeat password" required style={inputStyle} />
+              <input type="password" value={confirmPassword} onChange={e => setConfirmPassword(e.target.value)} placeholder="Repeat password" required className="ws-input" />
             </div>
 
-            <button type="submit" style={{ ...btnStyle, alignSelf: 'flex-start' }}>Change Password</button>
+            <button type="submit" className="ws-btn" style={{ alignSelf: 'flex-start' }}>Change Password</button>
           </form>
 
         </div>
@@ -462,9 +423,9 @@ export default function WorkspaceProfile() {
         <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
           
           {/* Customization Preferences */}
-          <div style={cardStyle}>
+          <div className="ws-card">
             <div style={{ borderBottom: '1px solid var(--ws-border)', paddingBottom: '10px' }}>
-              <div style={labelStyle}>Terminal Preferences</div>
+              <div className="ws-label">Terminal Preferences</div>
             </div>
 
             {/* Accent color picker */}
@@ -550,9 +511,9 @@ export default function WorkspaceProfile() {
           </div>
 
           {/* API Developer Keys */}
-          <div style={cardStyle}>
+          <div className="ws-card">
             <div style={{ borderBottom: '1px solid var(--ws-border)', paddingBottom: '10px' }}>
-              <div style={labelStyle}>Developer API Keys</div>
+              <div className="ws-label">Developer API Keys</div>
             </div>
 
             <div style={{ fontSize: '11px', color: 'var(--ws-text-3)' }}>
@@ -561,23 +522,23 @@ export default function WorkspaceProfile() {
 
             <div style={{ display: 'flex', gap: '8px' }}>
               <input type="text" readOnly value={apiToken}
-                style={{ ...inputStyle, fontFamily: "'JetBrains Mono', monospace", fontSize: '11px', background: 'var(--ws-bg-2)' }} />
+                className="ws-input" style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: '11px', background: 'var(--ws-bg-2)' }} />
               
-              <button onClick={copyTokenToClipboard} style={{ ...btnStyle, padding: '8px 12px', flexShrink: 0 }}>
+              <button onClick={copyTokenToClipboard} className="ws-btn" style={{ padding: '8px 12px', flexShrink: 0 }}>
                 {copiedToken ? 'Copied' : 'Copy'}
               </button>
             </div>
 
             <button onClick={rotateApiToken}
-              style={{ ...btnStyle, alignSelf: 'flex-start', background: 'none', border: '1px solid var(--ws-border)', color: 'var(--ws-text-2)' }}>
+              className="ws-btn-secondary" style={{ alignSelf: 'flex-start' }}>
               Regenerate API Token
             </button>
           </div>
 
           {/* Danger Zone */}
-          <div style={{ ...cardStyle, border: '1px solid rgba(239, 68, 68, 0.25)', background: 'rgba(239, 68, 68, 0.02)' }}>
+          <div className="ws-card" style={{ border: '1px solid rgba(239, 68, 68, 0.25)', background: 'rgba(239, 68, 68, 0.02)' }}>
             <div style={{ borderBottom: '1px solid rgba(239, 68, 68, 0.15)', paddingBottom: '10px' }}>
-              <div style={{ ...labelStyle, color: 'var(--ws-red)' }}>Danger Zone</div>
+              <div className="ws-label" style={{ color: 'var(--ws-red)' }}>Danger Zone</div>
             </div>
 
             <div style={{ fontSize: '11px', color: 'var(--ws-text-2)' }}>
@@ -590,7 +551,7 @@ export default function WorkspaceProfile() {
                   <div style={{ fontSize: '12px', fontWeight: 700, color: 'var(--ws-text)' }}>Clear Portfolio Data</div>
                   <div style={{ fontSize: '10px', color: 'var(--ws-text-3)', marginTop: '2px' }}>Wipe all manual and uploaded holdings</div>
                 </div>
-                <button onClick={clearPortfolio} style={{ ...btnStyle, background: 'var(--ws-red)' }}>Clear</button>
+                <button onClick={clearPortfolio} className="ws-btn-danger">Clear</button>
               </div>
 
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '8px', padding: '10px 12px', background: 'var(--ws-bg-1)', border: '1px solid var(--ws-border)' }}>
@@ -598,7 +559,7 @@ export default function WorkspaceProfile() {
                   <div style={{ fontSize: '12px', fontWeight: 700, color: 'var(--ws-text)' }}>Clear Watchlist Data</div>
                   <div style={{ fontSize: '10px', color: 'var(--ws-text-3)', marginTop: '2px' }}>Wipe all watchlisted assets</div>
                 </div>
-                <button onClick={clearWatchlist} style={{ ...btnStyle, background: 'var(--ws-red)' }}>Clear</button>
+                <button onClick={clearWatchlist} className="ws-btn-danger">Clear</button>
               </div>
             </div>
           </div>

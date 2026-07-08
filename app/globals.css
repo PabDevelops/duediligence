@@ -908,3 +908,83 @@ tr:hover td.sticky-col {
     left: 0;
   }
 }
+
+/* Standard Workspace UI classes */
+.ws-card {
+  background: var(--ws-bg-1);
+  border: 1px solid var(--ws-border);
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.01);
+}
+
+.ws-label {
+  font-size: 10px;
+  color: var(--ws-text-3);
+  font-weight: 700;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+}
+
+.ws-input {
+  width: 100%;
+  padding: 8px 12px;
+  background: var(--ws-bg-2);
+  border: 1px solid var(--ws-border);
+  color: var(--ws-text);
+  outline: none;
+  font-size: 13px;
+  box-sizing: border-box;
+}
+
+.ws-btn {
+  padding: 8px 16px;
+  font-size: 12px;
+  font-weight: 700;
+  background: var(--ws-accent);
+  border: none;
+  color: #fff;
+  cursor: pointer;
+  text-align: center;
+  transition: opacity 0.20s;
+}
+.ws-btn:hover {
+  opacity: 0.85;
+}
+.ws-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.ws-btn-secondary {
+  padding: 8px 16px;
+  font-size: 12px;
+  font-weight: 700;
+  background: none;
+  border: 1px solid var(--ws-border);
+  color: var(--ws-text);
+  cursor: pointer;
+  text-align: center;
+  transition: all 0.15s ease;
+}
+.ws-btn-secondary:hover {
+  border-color: var(--ws-accent);
+  color: var(--ws-accent);
+}
+
+.ws-btn-danger {
+  padding: 8px 16px;
+  font-size: 12px;
+  font-weight: 700;
+  background: var(--ws-red);
+  border: none;
+  color: #fff;
+  cursor: pointer;
+  text-align: center;
+  transition: opacity 0.20s;
+}
+.ws-btn-danger:hover {
+  opacity: 0.85;
+}
