@@ -1642,7 +1642,7 @@ export default function WorkspaceHome() {
               <div style={{ minWidth: 0, flex: 1 }}>
                 <div className="text-xs font-bold text-ws-text">{e.ticker}</div>
                 <div className="text-[10px] text-ws-text-3 mt-0.5">
-                  {new Date(e.date).toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric' })}
+                  {new Date(e.date + 'T00:00:00').toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })}
                 </div>
               </div>
               <div style={{ textAlign: 'right', flexShrink: 0 }}>
