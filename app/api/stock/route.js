@@ -329,6 +329,23 @@ async function fetchDescription(ticker) {
   } catch { return null; }
 }
 
+// 10-year Treasury yield, used as the risk-free rate in the WACC/DCF model. Same value
+// for every ticker, so unlike fetchDescription this is safe (good, even) to let Next
+// cache — an hour-stale risk-free rate doesn't meaningfully change a WACC estimate.
+async function fetchRiskFreeRate() {
+  try {
+    const res = await fetch(
+      'https://query1.finance.yahoo.com/v8/finance/chart/%5ETNX?interval=1d&range=5d',
+      { headers: { 'User-Agent': 'Mozilla/5.0' }, next: { revalidate: 3600 } }
+    );
+    const data = await res.json();
+    const price = data?.chart?.result?.[0]?.meta?.regularMarketPrice;
+    return price != null ? price / 100 : 0.045;
+  } catch {
+    return 0.045;
+  }
+}
+
 export async function GET(request) {
   const { searchParams } = new URL(request.url);
   const ticker = searchParams.get('ticker')?.toUpperCase();
@@ -336,6 +353,8 @@ export async function GET(request) {
   if (!ticker) {
     return Response.json({ error: 'Ticker requerido' }, { status: 400 });
   }
+
+  const riskFreeRate = await fetchRiskFreeRate();
 
   try {
     const { data: cached } = await supabase
@@ -434,6 +453,7 @@ export async function GET(request) {
       };
 
       const result = {
+        riskFreeRate,
         ...empty,
         ...(fundamentals || {}),
         name: yh.name,
@@ -521,6 +541,7 @@ export async function GET(request) {
         };
 
         const yhResult = {
+          riskFreeRate,
           ...empty,
           ...(fundamentals || {}),
           name: yh.name,
@@ -553,6 +574,7 @@ export async function GET(request) {
       const pe = eps && currentPrice ? +(currentPrice / eps).toFixed(2) : null;
 
       const result = {
+        riskFreeRate,
         name: fhProfile.name || ticker,
         ticker,
         cik: null,
@@ -823,6 +845,7 @@ const sharesForCalc = sharesValAdj || sharesFinnhub;
     const debtToEquityFinal = debtToEquity ?? (fhm.totalDebt_totalEquityAnnual != null ? fhm.totalDebt_totalEquityAnnual : null);
 
     const result = {
+      riskFreeRate,
       name: company.title,
       ticker,
       cik,

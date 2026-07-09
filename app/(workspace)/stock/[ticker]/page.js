@@ -17,6 +17,7 @@ import {
   totalScore as sharedTotalScore,
   computeEasyMode,
   computeTraqckerValue,
+  computeDCFValue,
   computeFairValue,
 } from '../../../../lib/stockScoring';
 
@@ -380,8 +381,14 @@ export default function StockPage({ params }) {
     || data.roic != null || data.grossMargin != null || (data.revHistory?.length ?? 0) > 0;
 
   const easyMode = computeEasyMode(data, hasFundamentals);
+  const dcfValue = computeDCFValue(data, data.riskFreeRate);
   const traqckerValue = computeTraqckerValue(data);
-  const baseScenario = traqckerValue?.scenarios.find(s => s.primary);
+  const dcfBaseScenario = dcfValue?.scenarios.find(s => s.primary);
+  const peBaseScenario = traqckerValue?.scenarios.find(s => s.primary);
+  // DCF is the more rigorous estimate when it has what it needs (positive FCF, shares
+  // outstanding, a usable WACC); the P/E model is the fallback for tickers it can't
+  // reach (e.g. negative FCF) as long as they at least have positive EPS.
+  const baseScenario = dcfBaseScenario || peBaseScenario;
   const fairValue = computeFairValue(baseScenario?.value, price);
   const negativeEarnings = data.eps != null && data.eps <= 0;
 
@@ -1328,7 +1335,113 @@ export default function StockPage({ params }) {
         {/* DCF TAB */}
         {tab === 'dcf' && (
           <div>
-            <div className="text-ws-text-3 text-[10px] tracking-[2px] border-b border-ws-border pb-1.5 mb-3 mt-6">TRAQCKER VALUE</div>
+            {/* DCF MODEL — WACC-discounted 10yr FCF projection, primary estimate when available */}
+            <div className="text-ws-text-3 text-[10px] tracking-[2px] border-b border-ws-border pb-1.5 mb-3 mt-6">DCF MODEL</div>
+
+            {dcfValue ? (() => {
+              const scenarios = dcfValue.scenarios.map(s => {
+                const diff = price ? +(((s.value - price) / price) * 100).toFixed(1) : null;
+                const underval = price ? s.value > price : null;
+                return { ...s, diff, underval };
+              });
+
+              const values = scenarios.map(s => s.value);
+              const lo = Math.min(...values, price ?? values[0]);
+              const hi = Math.max(...values, price ?? values[values.length - 1]);
+              const span = (hi - lo) || 1;
+              const pctOf = (v) => Math.max(0, Math.min(100, ((v - lo) / span) * 100));
+
+              return (
+                <>
+                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px 24px', background: 'var(--ws-bg-1)', border: '1px solid var(--ws-border)', padding: '14px 16px', marginBottom: '16px', fontSize: '11px' }}>
+                    <div><span className="text-ws-text-3">WACC</span> &nbsp;<b className="text-ws-text">{(dcfValue.wacc * 100).toFixed(1)}%</b></div>
+                    <div><span className="text-ws-text-3">Implied growth</span> &nbsp;<b className="text-ws-text">{(dcfValue.baseGrowth * 100).toFixed(1)}%</b></div>
+                    <div><span className="text-ws-text-3">Exit multiple</span> &nbsp;<b className="text-ws-text">{dcfValue.exitMultiple.toFixed(1)}x FCF</b></div>
+                    <div><span className="text-ws-text-3">Risk-free rate</span> &nbsp;<b className="text-ws-text">{(data.riskFreeRate * 100).toFixed(2)}%</b></div>
+                  </div>
+
+                  {price != null && (
+                    <div style={{ background: 'var(--ws-bg-1)', border: '1px solid var(--ws-border)', padding: '18px 20px', marginBottom: '16px' }}>
+                      <div style={{ fontSize: '10px', fontWeight: 800, color: 'var(--ws-text-3)', letterSpacing: '1.5px', marginBottom: '10px' }}>VALUATION RANGE</div>
+                      <div style={{ position: 'relative', paddingTop: '32px', paddingBottom: '38px' }}>
+                        <div style={{ position: 'relative', height: '6px', borderRadius: '3px', background: 'linear-gradient(to right, var(--ws-red), var(--ws-text-3), var(--ws-accent))', opacity: 0.35, margin: '0 4px' }}>
+                          {scenarios.map(s => (
+                            <div key={s.key} style={{ position: 'absolute', left: `${pctOf(s.value)}%`, bottom: '6px', transform: 'translateX(-50%)', textAlign: 'center', whiteSpace: 'nowrap' }}>
+                              <div style={{ fontSize: '11px', fontWeight: 700, color: s.primary ? 'var(--ws-text)' : 'var(--ws-text-3)', marginBottom: '4px' }}>
+                                {curSym(data.currency)}{s.value}
+                              </div>
+                              <div style={{ width: s.primary ? '3px' : '2px', height: '14px', margin: '0 auto', borderRadius: '2px', background: s.primary ? 'var(--ws-text)' : 'var(--ws-text-3)' }} />
+                            </div>
+                          ))}
+                          <div style={{ position: 'absolute', left: `${pctOf(price)}%`, top: '6px', transform: 'translateX(-50%)', textAlign: 'center', whiteSpace: 'nowrap' }}>
+                            <div style={{ width: 0, height: 0, margin: '0 auto', borderLeft: '5px solid transparent', borderRight: '5px solid transparent', borderBottom: '7px solid var(--ws-text)' }} />
+                            <div style={{ fontSize: '10px', color: 'var(--ws-text-2)', marginTop: '4px' }}>Price {curSym(data.currency)}{price.toFixed(2)}</div>
+                          </div>
+                        </div>
+                      </div>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '9px', color: 'var(--ws-text-3)', letterSpacing: '1px' }}>
+                        <span>BEAR</span><span>BASE</span><span>BULL</span>
+                      </div>
+                    </div>
+                  )}
+
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '12px', marginBottom: '16px' }}>
+                    {scenarios.map(s => (
+                      <div key={s.key} style={{
+                        background: 'var(--ws-bg-1)',
+                        border: s.primary ? '1px solid var(--ws-text)' : '1px solid var(--ws-border)',
+                        padding: '18px',
+                        position: 'relative',
+                      }}>
+                        {s.primary && (
+                          <div style={{ position: 'absolute', top: '-9px', left: '16px', background: 'var(--ws-text)', color: 'var(--ws-bg)', fontSize: '9px', fontWeight: 800, letterSpacing: '1px', padding: '2px 8px' }}>
+                            MAIN ESTIMATE
+                          </div>
+                        )}
+                        <div className="text-ws-text-3 text-[10px] tracking-[2px] mb-3">{s.label}</div>
+                        <div style={{ fontSize: '30px', fontWeight: 700, letterSpacing: '-1px', marginBottom: '10px', color: 'var(--ws-text)' }}>
+                          {curSym(data.currency)}{s.value}
+                        </div>
+                        {s.diff !== null && (
+                          <div style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', fontSize: '11px', fontWeight: 800, padding: '3px 8px', background: 'var(--ws-bg-2)', color: s.underval ? 'var(--ws-accent)' : 'var(--ws-red)', marginBottom: '12px' }}>
+                            {s.underval ? '▲' : '▼'} {Math.abs(s.diff)}% {s.underval ? 'UPSIDE' : 'DOWNSIDE'}
+                          </div>
+                        )}
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '5px', borderTop: '1px solid var(--ws-border)', paddingTop: '10px' }}>
+                          <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '10px' }}>
+                            <span className="text-ws-text-3">WACC</span>
+                            <span style={{ fontWeight: 700 }}>{(s.wacc * 100).toFixed(1)}%</span>
+                          </div>
+                          <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '10px' }}>
+                            <span className="text-ws-text-3">FCF growth (10yr)</span>
+                            <span style={{ fontWeight: 700 }}>{s.growth >= 0 ? '+' : ''}{(s.growth * 100).toFixed(1)}%</span>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+
+                  <div className="text-ws-text-3 text-[10px] tracking-[1px]">
+                    WACC-DISCOUNTED FCF (10YR) + EXIT-MULTIPLE TERMINAL VALUE · GROWTH = MARKET-IMPLIED (GORDON GROWTH, REVERSE-SOLVED) · NOT INVESTMENT ADVICE
+                  </div>
+                </>
+              );
+            })() : (
+              <div style={{ background: 'var(--ws-bg-1)', border: '1px solid var(--ws-border)', padding: '40px', textAlign: 'center', marginBottom: '32px' }}>
+                <div style={{ color: 'var(--ws-accent)', fontSize: '24px', fontWeight: 600, letterSpacing: '4px', marginBottom: '8px' }}>N/A</div>
+                <div style={{ color: 'var(--ws-text-2)', fontSize: '12px', marginBottom: '4px' }}>
+                  {!data.fcfVal || data.fcfVal <= 0 ? 'NEGATIVE OR MISSING FREE CASH FLOW' : 'INSUFFICIENT DATA FOR A DCF'}
+                </div>
+                <div style={{ color: 'var(--ws-text-3)', fontSize: '11px' }}>
+                  {!data.fcfVal || data.fcfVal <= 0
+                    ? "A WACC-discounted DCF isn't meaningful without positive free cash flow to project forward."
+                    : 'Requires FCF, market cap, and shares outstanding — see the Multiples model below instead.'}
+                </div>
+              </div>
+            )}
+
+            {/* MULTIPLES MODEL — quality-adjusted P/E, cross-check / fallback when DCF can't run */}
+            <div className="text-ws-text-3 text-[10px] tracking-[2px] border-b border-ws-border pb-1.5 mb-3 mt-10">MULTIPLES MODEL (P/E)</div>
 
             {traqckerValue ? (() => {
               const scenarios = traqckerValue.scenarios.map(s => {
