@@ -1443,7 +1443,11 @@ export default function StockPage({ params }) {
                       </div>
 
                       <div style={{ overflowX: 'auto' }}>
-                        <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '11px' }}>
+                        <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '11px', tableLayout: 'fixed' }}>
+                          <colgroup>
+                            <col style={{ width: '130px' }} />
+                            {stressGrid.colAxis.map((col, i) => <col key={i} />)}
+                          </colgroup>
                           <thead>
                             <tr>
                               <th style={{ padding: '6px 10px', textAlign: 'left', fontSize: '9px', color: 'var(--ws-text-3)', letterSpacing: '1px' }}>
