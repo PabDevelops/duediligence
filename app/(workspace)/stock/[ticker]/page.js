@@ -367,7 +367,6 @@ export default function StockPage({ params }) {
   const score = totalScore();
   const revChart = data.revHistory.map(r => ({ year: r.year, value: +(r.val / 1e9).toFixed(1) }));
   const fcfChart = data.fcfHistory.map(r => ({ year: r.year, value: +(r.val / 1e9).toFixed(1) }));
-  const marginChart = (data.marginHistory || []).filter(m => m.margin !== null).map(m => ({ year: m.year, value: m.margin }));
 
   const price = data.currentPrice;
   const change = data.priceChange;
@@ -838,91 +837,12 @@ export default function StockPage({ params }) {
         )}
 
         {/* QUALITY TAB */}
-        {tab === 'quality' && (
+        {tab === 'quality' && easyMode && (
   <div>
     {(() => {
-      const sector = (data.sector || '').toLowerCase();
-      const isFinancial = sector.includes('bank') || sector.includes('insurance') || sector.includes('financial');
-      const isTech = sector.includes('tech') || sector.includes('software') || sector.includes('semi');
-      const isPharma = sector.includes('pharma') || sector.includes('biotech') || sector.includes('health');
-      const isConsumer = sector.includes('retail') || sector.includes('consumer') || sector.includes('food') || sector.includes('beverage');
-      const isEnergy = sector.includes('energy') || sector.includes('oil') || sector.includes('gas');
-
-      const roicThreshold = isTech ? 0.25 : isPharma ? 0.20 : isConsumer ? 0.20 : isEnergy ? 0.12 : 0.15;
-      const roicScore = data.roic == null ? 2.5
-        : data.roic / 100 >= roicThreshold * 2 ? 5
-        : data.roic / 100 >= roicThreshold * 1.5 ? 4.5
-        : data.roic / 100 >= roicThreshold ? 4
-        : data.roic / 100 >= roicThreshold * 0.7 ? 3
-        : data.roic / 100 >= roicThreshold * 0.4 ? 2
-        : 1;
-
-      const gmThreshold = isTech ? 0.65 : isPharma ? 0.65 : isConsumer ? 0.45 : isFinancial ? 0.30 : isEnergy ? 0.25 : 0.35;
-      const gmScore = data.grossMargin == null ? 2.5
-        : data.grossMargin / 100 >= gmThreshold * 1.4 ? 5
-        : data.grossMargin / 100 >= gmThreshold * 1.15 ? 4.5
-        : data.grossMargin / 100 >= gmThreshold ? 4
-        : data.grossMargin / 100 >= gmThreshold * 0.75 ? 3
-        : data.grossMargin / 100 >= gmThreshold * 0.5 ? 2
-        : 1;
-
-      const omThreshold = isTech ? 0.20 : isPharma ? 0.20 : isConsumer ? 0.15 : isFinancial ? 0.15 : isEnergy ? 0.12 : 0.15;
-      const omScore = data.opMargin == null ? 2.5
-        : data.opMargin / 100 >= omThreshold * 2 ? 5
-        : data.opMargin / 100 >= omThreshold * 1.5 ? 4.5
-        : data.opMargin / 100 >= omThreshold ? 4
-        : data.opMargin / 100 >= omThreshold * 0.65 ? 3
-        : data.opMargin / 100 > 0 ? 2
-        : 1;
-
-      const deScore = data.debtToEquity == null ? 2.5
-        : data.debtToEquity < 0.3 ? 5
-        : data.debtToEquity < 0.7 ? 4.5
-        : data.debtToEquity < 1.2 ? 4
-        : data.debtToEquity < 2 ? 3
-        : data.debtToEquity < 3 ? 2
-        : 1;
-
-      const cbs = +((roicScore * 0.4 + gmScore * 0.25 + omScore * 0.25 + deScore * 0.1)).toFixed(2);
-
-      const pfcfScore = data.pfcf == null || data.pfcf <= 0 ? 1
-        : data.pfcf < 12 ? 5
-        : data.pfcf < 18 ? 4.5
-        : data.pfcf < 25 ? 4
-        : data.pfcf < 35 ? 3
-        : data.pfcf < 50 ? 2
-        : 1;
-
-      const fcfYieldScore = data.fcfYield == null ? 1
-        : data.fcfYield > 8 ? 5
-        : data.fcfYield > 5 ? 4.5
-        : data.fcfYield > 3 ? 4
-        : data.fcfYield > 1.5 ? 3
-        : data.fcfYield > 0 ? 2
-        : 1;
-
-      const oppo = +((pfcfScore * 0.55 + fcfYieldScore * 0.45)).toFixed(2);
-
-      const revGrowthScore = data.revGrowth == null ? 2.5
-        : data.revGrowth > 25 ? 5
-        : data.revGrowth > 15 ? 4.5
-        : data.revGrowth > 8 ? 4
-        : data.revGrowth > 3 ? 3
-        : data.revGrowth > 0 ? 2
-        : 1;
-
-      const fcfTrend = data.fcfHistory?.length >= 3
-        ? data.fcfHistory[data.fcfHistory.length - 1]?.val > data.fcfHistory[0]?.val ? 1 : 0
-        : null;
-
-      const marginTrend = data.marginHistory?.length >= 3
-        ? (data.marginHistory[data.marginHistory.length - 1]?.margin || 0) > (data.marginHistory[0]?.margin || 0) ? 1 : 0
-        : null;
-
-      const trendBonus = (fcfTrend === 1 ? 0.5 : 0) + (marginTrend === 1 ? 0.5 : 0);
-      const gqs = Math.min(5, +((revGrowthScore * 0.6 + (2.5 + trendBonus * 2) * 0.4)).toFixed(2));
-
-      const finalNote = +((cbs * 0.45 + oppo * 0.30 + gqs * 0.25)).toFixed(2);
+      const isFinancial = (data.sector || '').toLowerCase().includes('bank')
+        || (data.sector || '').toLowerCase().includes('insurance')
+        || (data.sector || '').toLowerCase().includes('financial');
 
       const scoreColor = (s) => s >= 4 ? 'var(--ws-accent)' : s >= 3 ? 'var(--ws-text)' : 'var(--ws-red)';
       const ScoreBar = ({ score }) => (
@@ -944,36 +864,38 @@ export default function StockPage({ params }) {
     </a>
   )}
   <div style={{ background: 'var(--ws-bg-1)', border: '1px solid var(--ws-border)', padding: '24px', filter: !isSignedIn ? 'blur(12px)' : 'none', pointerEvents: !isSignedIn ? 'none' : 'auto', userSelect: !isSignedIn ? 'none' : 'auto', overflow: 'hidden' }}>
-            <div className="quality-score-grid" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr 1fr', gap: '1px', background: 'var(--ws-border)' }}>
+            <div className="quality-score-grid" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr 1fr 1fr', gap: '1px', background: 'var(--ws-border)' }}>
               {[
-                { label: 'CORE BUSINESS', score: cbs, desc: 'ROIC · Margins · Leverage' },
-                { label: 'OPPO SCORE', score: oppo, desc: 'P/FCF · FCF Yield' },
-                { label: 'GROWTH QUALITY', score: gqs, desc: 'Revenue · FCF trend' },
-                { label: 'FINAL NOTE', score: finalNote, desc: 'Weighted composite', highlight: true },
+                { label: 'CORE BUSINESS', score: easyMode.cbs, desc: 'ROIC · Margins · Liquidity' },
+                { label: 'OPPO SCORE', score: easyMode.oppo, desc: 'P/FCF · FCF Yield' },
+                { label: 'GROWTH QUALITY', score: easyMode.gqs, desc: 'Revenue · R&D · SBC' },
+                { label: 'MOAT', text: easyMode.moat, color: easyMode.moatColor, desc: 'ROIC · Op. margin' },
+                { label: 'FINAL NOTE', score: easyMode.finalNote, desc: 'Weighted composite', highlight: true },
               ].map(s => (
                 <div key={s.label} style={{ background: s.highlight ? 'var(--ws-bg-2)' : 'var(--ws-bg-1)', padding: '12px 8px', textAlign: 'center' }}>
                   <div style={{ color: 'var(--ws-text-3)', fontSize: '8px', letterSpacing: '1px', marginBottom: '8px', lineHeight: 1.3 }}>{s.label}</div>
-                  <div style={{ fontSize: s.highlight ? '36px' : '30px', fontWeight: 700, color: scoreColor(s.score), letterSpacing: '-1px', lineHeight: 1 }}>
-                    {s.score.toFixed(1)}
+                  <div style={{ fontSize: s.text ? '18px' : s.highlight ? '36px' : '30px', fontWeight: 700, color: s.text ? s.color : scoreColor(s.score), letterSpacing: '-1px', lineHeight: 1, marginTop: s.text ? '9px' : 0 }}>
+                    {s.text || s.score.toFixed(1)}
                   </div>
                   <div style={{ color: 'var(--ws-text-3)', fontSize: '8px', marginTop: '4px', lineHeight: 1.3 }}>{s.desc}</div>
-                  <ScoreBar score={s.score} />
+                  {!s.text && <ScoreBar score={s.score} />}
                 </div>
               ))}
             </div>
             <div style={{ color: 'var(--ws-text-3)', fontSize: '10px', letterSpacing: '1px', marginTop: '12px', textAlign: 'center' }}>
-              AUTOMATED SCORE · BASED ON SEC EDGAR & FINNHUB · NOT A BUY/SELL SIGNAL · CBS 45% · OPPO 30% · GQS 25%
+              AUTOMATED SCORE · BASED ON SEC EDGAR & FINNHUB · NOT A BUY/SELL SIGNAL · CBS 45% · OPPO 30% · GQS 25% · MOAT ±20%
             </div>
           </div>
         </div>
 
           <div className="text-ws-text-3 text-[10px] tracking-[2px] border-b border-ws-border pb-1.5 mb-3">CORE BUSINESS BREAKDOWN</div>
-          <div className="grid-4" style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '1px', background: 'var(--ws-border)', marginBottom: '24px' }}>
+          <div className="grid-5" style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: '1px', background: 'var(--ws-border)', marginBottom: '24px' }}>
             {[
-              { label: 'ROIC', val: fmtP(data.roic), score: roicScore, desc: `Threshold: ${(roicThreshold * 100).toFixed(0)}% for ${data.sector || 'this sector'}` },
-              { label: isFinancial ? 'NET MARGIN' : 'GROSS MARGIN', val: isFinancial ? fmtP(data.netMargin) : fmtP(data.grossMargin), score: gmScore, desc: `Threshold: ${(gmThreshold * 100).toFixed(0)}% for ${data.sector || 'this sector'}` },
-              { label: 'OP. MARGIN', val: fmtP(data.opMargin), score: omScore, desc: `Threshold: ${(omThreshold * 100).toFixed(0)}% for ${data.sector || 'this sector'}` },
-              { label: 'DEBT/EQUITY', val: fmtN(data.debtToEquity), score: deScore, desc: 'Lower is better' },
+              { label: 'ROIC', val: fmtP(data.roic), score: easyMode.roicScore, desc: `Threshold: ${(easyMode.roicThreshold * 100).toFixed(0)}% for ${data.sector || 'this sector'}` },
+              { label: isFinancial ? 'NET MARGIN' : 'GROSS MARGIN', val: isFinancial ? fmtP(data.netMargin) : fmtP(data.grossMargin), score: easyMode.gmScore, desc: `Threshold: ${(easyMode.gmThreshold * 100).toFixed(0)}% for ${data.sector || 'this sector'}` },
+              { label: 'OP. MARGIN', val: fmtP(data.opMargin), score: easyMode.omScore, desc: `Threshold: ${(easyMode.omThreshold * 100).toFixed(0)}% for ${data.sector || 'this sector'}` },
+              { label: 'DEBT/EQUITY', val: fmtN(data.debtToEquity), score: easyMode.deScore, desc: 'Lower is better' },
+              { label: 'CURRENT RATIO', val: easyMode.currentRatio != null ? `${easyMode.currentRatio.toFixed(2)}x` : 'N/A', score: easyMode.crScore, desc: 'Current assets / liabilities' },
             ].map(m => (
               <div key={m.label} className="bg-ws-bg-1 p-4">
                 <div className="flex justify-between mb-2">
@@ -989,8 +911,8 @@ export default function StockPage({ params }) {
           <div className="text-ws-text-3 text-[10px] tracking-[2px] border-b border-ws-border pb-1.5 mb-3">OPPORTUNITY BREAKDOWN</div>
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '1px', background: 'var(--ws-border)', marginBottom: '24px' }}>
             {[
-              { label: 'P/FCF', val: fmtN(data.pfcf), score: pfcfScore, desc: data.pfcf < 20 ? 'Attractive entry' : data.pfcf < 35 ? 'Fair valuation' : 'Expensive' },
-              { label: 'FCF YIELD', val: data.fcfYield ? `${data.fcfYield}%` : 'N/A', score: fcfYieldScore, desc: data.fcfYield > 5 ? 'Strong yield' : data.fcfYield > 2 ? 'Moderate yield' : 'Low yield' },
+              { label: 'P/FCF', val: fmtN(data.pfcf), score: easyMode.pfcfScore, desc: data.pfcf < 20 ? 'Attractive entry' : data.pfcf < 35 ? 'Fair valuation' : 'Expensive' },
+              { label: 'FCF YIELD', val: data.fcfYield ? `${data.fcfYield}%` : 'N/A', score: easyMode.fcfYieldScore, desc: data.fcfYield > 5 ? 'Strong yield' : data.fcfYield > 2 ? 'Moderate yield' : 'Low yield' },
             ].map(m => (
               <div key={m.label} className="bg-ws-bg-1 p-4">
                 <div className="flex justify-between mb-2">
@@ -1027,24 +949,42 @@ export default function StockPage({ params }) {
 
           <div className="text-ws-text-3 text-[10px] tracking-[2px] border-b border-ws-border pb-1.5 mb-3">GROWTH QUALITY BREAKDOWN</div>
           <div className="grid-3" style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '1px', background: 'var(--ws-border)', marginBottom: '24px' }}>
-            {[
-              { label: 'REVENUE GROWTH', val: data.revGrowth !== null ? `${data.revGrowth > 0 ? '+' : ''}${data.revGrowth}%` : 'N/A', score: revGrowthScore, chart: revChart },
-              { label: 'FCF TREND', val: fcfTrend === 1 ? 'IMPROVING' : fcfTrend === 0 ? 'DECLINING' : 'N/A', score: fcfTrend === 1 ? 4 : fcfTrend === 0 ? 2 : 2.5, chart: fcfChart, color: 'var(--ws-text-2)' },
-              { label: 'MARGIN TREND', val: marginTrend === 1 ? 'EXPANDING' : marginTrend === 0 ? 'COMPRESSING' : 'N/A', score: marginTrend === 1 ? 4 : marginTrend === 0 ? 2 : 2.5, chart: marginChart, isLine: true },
-            ].map(m => (
-              <div key={m.label} className="bg-ws-bg-1 p-4">
-                <div className="flex justify-between mb-2">
-                  <span className="text-ws-text-3 text-[10px] tracking-[1px]">{m.label}</span>
-                  <span style={{ color: scoreColor(m.score), fontSize: '10px' }}>{m.score.toFixed(1)}/5</span>
-                </div>
-                <div style={{ fontSize: '22px', fontWeight: 600, color: scoreColor(m.score), marginBottom: '8px' }}>{m.val}</div>
-                <MiniLine data={m.chart} color={m.color || scoreColor(m.score)} />
+            <div className="bg-ws-bg-1 p-4">
+              <div className="flex justify-between mb-2">
+                <span className="text-ws-text-3 text-[10px] tracking-[1px]">REVENUE GROWTH</span>
+                <span style={{ color: scoreColor(easyMode.revGrowthScore), fontSize: '10px' }}>{easyMode.revGrowthScore.toFixed(1)}/5</span>
               </div>
-            ))}
+              <div style={{ fontSize: '22px', fontWeight: 600, color: scoreColor(easyMode.revGrowthScore), marginBottom: '8px' }}>
+                {data.revGrowth !== null ? `${data.revGrowth > 0 ? '+' : ''}${data.revGrowth}%` : 'N/A'}
+              </div>
+              <MiniLine data={revChart} color={scoreColor(easyMode.revGrowthScore)} />
+            </div>
+            <div className="bg-ws-bg-1 p-4">
+              <div className="flex justify-between mb-2">
+                <span className="text-ws-text-3 text-[10px] tracking-[1px]">R&D / REVENUE</span>
+              </div>
+              <div style={{ fontSize: '28px', fontWeight: 600, color: 'var(--ws-text)', marginBottom: '4px' }}>
+                {easyMode.rdToRevenue != null ? `${(easyMode.rdToRevenue * 100).toFixed(1)}%` : 'N/A'}
+              </div>
+              <div className="text-ws-text-3 text-[10px]">
+                {easyMode.rdToRevenue == null ? 'Not reported' : easyMode.rdToRevenue > 0.15 ? 'Heavy reinvestment (+)' : easyMode.rdToRevenue < 0.05 ? 'Light reinvestment (−)' : 'Moderate reinvestment'}
+              </div>
+            </div>
+            <div className="bg-ws-bg-1 p-4">
+              <div className="flex justify-between mb-2">
+                <span className="text-ws-text-3 text-[10px] tracking-[1px]">SBC / REVENUE</span>
+              </div>
+              <div style={{ fontSize: '28px', fontWeight: 600, color: 'var(--ws-text)', marginBottom: '4px' }}>
+                {easyMode.sbcToRevenue != null ? `${(easyMode.sbcToRevenue * 100).toFixed(1)}%` : 'N/A'}
+              </div>
+              <div className="text-ws-text-3 text-[10px]">
+                {easyMode.sbcToRevenue == null ? 'Not reported' : easyMode.sbcToRevenue > 0.10 ? 'High dilution risk (−)' : easyMode.sbcToRevenue < 0.04 ? 'Low dilution (+)' : 'Moderate dilution'}
+              </div>
+            </div>
           </div>
 
           <div className="text-ws-text-3 text-[10px] tracking-[1px]">
-            SECTOR-ADJUSTED THRESHOLDS · CBS = ROIC×40% + GROSS MARGIN×25% + OP MARGIN×25% + D/E×10% · OPPO = P/FCF×55% + FCF YIELD×45% · GQS = REV GROWTH×60% + TREND×40%
+            SECTOR-ADJUSTED THRESHOLDS · CBS = MARGINS + DEBT/EQUITY + CURRENT RATIO + ROIC (20% each) + SURPLUS CASH BONUS · OPPO = P/FCF×55% + FCF YIELD×45% · GQS = ROIC×50% + REV GROWTH×50% ± R&D/SBC INTENSITY
           </div>
         </>
       );

@@ -543,6 +543,9 @@ html, body {
   .grid-4 {
     grid-template-columns: repeat(2, 1fr) !important;
   }
+  .grid-5 {
+    grid-template-columns: repeat(2, 1fr) !important;
+  }
   .quality-score-grid {
     grid-template-columns: 1fr 1fr !important;
   }
