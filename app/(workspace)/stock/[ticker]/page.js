@@ -575,32 +575,38 @@ export default function StockPage({ params }) {
               <div>
                 <div style={{ color: 'var(--ws-text-3)', fontSize: '10px', fontFamily: "'JetBrains Mono', monospace", letterSpacing: '1.5px', marginBottom: '10px', fontWeight: 700 }}>THE NUMBERS, SIMPLIFIED</div>
                 <div style={{ background: 'var(--ws-bg-1)', border: '1px solid var(--ws-border)', padding: '18px 20px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
-                  {[
-                    {
-                      label: data.revGrowth == null ? 'Revenue data unavailable' : data.revGrowth > 0 ? 'Revenue is growing' : 'Revenue is shrinking',
-                      value: data.revGrowth != null ? `${data.revGrowth > 0 ? '+' : ''}${data.revGrowth}% / yr` : 'N/A',
-                      pct: data.revGrowth != null ? Math.max(4, Math.min(100, 50 + data.revGrowth * 2)) : 0,
-                      color: data.revGrowth == null ? 'var(--ws-text-3)' : data.revGrowth > 5 ? 'var(--ws-accent)' : data.revGrowth > 0 ? 'var(--ws-text-2)' : 'var(--ws-red)',
-                    },
-                    {
-                      label: data.opMargin == null ? 'Margin data unavailable' : data.opMargin > 15 ? 'Keeps a healthy slice of profit' : data.opMargin > 5 ? 'Keeps a modest slice of profit' : data.opMargin > 0 ? 'Thin operating margin' : 'Operating at a loss',
-                      value: data.opMargin != null ? `${data.opMargin}% margin` : 'N/A',
-                      pct: data.opMargin != null ? Math.max(4, Math.min(100, data.opMargin * 2.5)) : 0,
-                      color: data.opMargin == null ? 'var(--ws-text-3)' : data.opMargin > 15 ? 'var(--ws-accent)' : data.opMargin > 5 ? 'var(--ws-text-2)' : 'var(--ws-red)',
-                    },
-                    {
-                      label: data.fcfVal == null ? 'Cash flow data unavailable' : data.fcfVal > 0 ? 'Generates real cash, not just paper profit' : 'Burning cash, not generating profit',
-                      value: data.fcfVal > 0 ? 'Strong' : data.fcfVal < 0 ? 'Negative' : 'N/A',
-                      pct: data.fcfVal > 0 ? 85 : data.fcfVal < 0 ? 15 : 0,
-                      color: data.fcfVal == null ? 'var(--ws-text-3)' : data.fcfVal > 0 ? 'var(--ws-accent)' : 'var(--ws-red)',
-                    },
-                    {
-                      label: data.debtToEquity == null ? 'Debt levels unavailable' : data.debtToEquity < 0 ? 'Negative equity — high risk' : data.debtToEquity > 1.5 ? 'Carries notable debt — worth watching' : 'Debt levels look manageable',
-                      value: data.debtToEquity != null ? `${data.debtToEquity.toFixed(2)}x equity` : 'N/A',
-                      pct: data.debtToEquity != null ? Math.max(4, Math.min(100, 100 - data.debtToEquity * 30)) : 0,
-                      color: data.debtToEquity == null ? 'var(--ws-text-3)' : data.debtToEquity < 0 ? 'var(--ws-red)' : data.debtToEquity < 1 ? 'var(--ws-accent)' : data.debtToEquity < 2 ? 'var(--ws-text-2)' : 'var(--ws-red)',
-                    },
-                  ].map((m, i) => (
+                  {(() => {
+                    // Same 3-tier (accent/neutral/red) + "unavailable" shape for every row, with the
+                    // label always breaking at the same value as the color — no row should say
+                    // something the color next to it contradicts.
+                    const fcfMargin = data.fcfVal != null && data.revVal ? (data.fcfVal / data.revVal) * 100 : null;
+                    return [
+                      {
+                        label: data.revGrowth == null ? 'Revenue data unavailable' : data.revGrowth > 10 ? 'Revenue is growing fast' : data.revGrowth > 0 ? 'Revenue is growing' : 'Revenue is shrinking',
+                        value: data.revGrowth != null ? `${data.revGrowth > 0 ? '+' : ''}${data.revGrowth}% / yr` : 'N/A',
+                        pct: data.revGrowth != null ? Math.max(4, Math.min(100, 50 + data.revGrowth * 2)) : 0,
+                        color: data.revGrowth == null ? 'var(--ws-text-3)' : data.revGrowth > 10 ? 'var(--ws-accent)' : data.revGrowth > 0 ? 'var(--ws-text-2)' : 'var(--ws-red)',
+                      },
+                      {
+                        label: data.opMargin == null ? 'Margin data unavailable' : data.opMargin > 15 ? 'Keeps a healthy slice of profit' : data.opMargin > 0 ? 'Keeps a modest slice of profit' : 'Operating at a loss',
+                        value: data.opMargin != null ? `${data.opMargin}% margin` : 'N/A',
+                        pct: data.opMargin != null ? Math.max(4, Math.min(100, data.opMargin * 2.5)) : 0,
+                        color: data.opMargin == null ? 'var(--ws-text-3)' : data.opMargin > 15 ? 'var(--ws-accent)' : data.opMargin > 0 ? 'var(--ws-text-2)' : 'var(--ws-red)',
+                      },
+                      {
+                        label: data.fcfVal == null ? 'Cash flow data unavailable' : fcfMargin != null && fcfMargin > 15 ? 'Strong cash generation' : data.fcfVal > 0 ? 'Generates real cash, not just paper profit' : 'Burning cash, not generating profit',
+                        value: data.fcfVal == null ? 'N/A' : fcfMargin != null && fcfMargin > 15 ? 'Strong' : data.fcfVal > 0 ? 'Positive' : 'Negative',
+                        pct: data.fcfVal == null ? 0 : fcfMargin != null && fcfMargin > 15 ? 90 : data.fcfVal > 0 ? 60 : 15,
+                        color: data.fcfVal == null ? 'var(--ws-text-3)' : fcfMargin != null && fcfMargin > 15 ? 'var(--ws-accent)' : data.fcfVal > 0 ? 'var(--ws-text-2)' : 'var(--ws-red)',
+                      },
+                      {
+                        label: data.debtToEquity == null ? 'Debt levels unavailable' : data.debtToEquity < 0 ? 'Negative equity — high risk' : data.debtToEquity < 1 ? 'Debt levels look manageable' : data.debtToEquity < 2 ? 'Carries some debt — worth watching' : 'Highly leveraged — significant risk',
+                        value: data.debtToEquity != null ? `${data.debtToEquity.toFixed(2)}x equity` : 'N/A',
+                        pct: data.debtToEquity != null ? Math.max(4, Math.min(100, 100 - data.debtToEquity * 30)) : 0,
+                        color: data.debtToEquity == null ? 'var(--ws-text-3)' : data.debtToEquity < 0 ? 'var(--ws-red)' : data.debtToEquity < 1 ? 'var(--ws-accent)' : data.debtToEquity < 2 ? 'var(--ws-text-2)' : 'var(--ws-red)',
+                      },
+                    ];
+                  })().map((m, i) => (
                     <div key={i} className="flex flex-col gap-2">
                       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', gap: '8px' }}>
                         <span style={{ fontSize: '13px', color: 'var(--ws-text-2)', lineHeight: 1.3 }}>{m.label}</span>
