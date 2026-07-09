@@ -1,6 +1,13 @@
 'use client';
 import { useEffect, useState } from 'react';
 
+// SEC Form 4 transaction codes — P/S are genuine open-market trades, everything else
+// (grants, exercises, tax withholding, gifts...) moves shares for administrative reasons
+// and isn't a real buy/sell signal worth surfacing on a "who's trading" radar.
+const TXN_CODE_LABELS = {
+  P: 'BUY', S: 'SELL', A: 'GRANT', M: 'EXERCISE', F: 'TAX WITHHOLD', G: 'GIFT', C: 'CONVERSION',
+};
+
 // Compact Insider Activity widget — samples insider trades from tickers already
 // surfaced by the movers feed (Finnhub doesn't offer a market-wide insider feed
 // on our plan, only per-symbol), then shows the most recent buys/sells.
@@ -26,11 +33,12 @@ export default function InsiderActivity({ movers, triggerSpotlight }) {
       )
     ).then(results => {
       if (cancelled) return;
-      const all = results
-        .flatMap(r => r?.transactions || [])
-        .sort((a, b) => b.date.localeCompare(a.date))
-        .slice(0, 6);
-      setTrades(all);
+      const flat = results.flatMap(r => r?.transactions || []).sort((a, b) => b.date.localeCompare(a.date));
+      // Prefer real open-market trades; only backfill with grants/exercises/etc. if there
+      // aren't enough, since a page of identical director grants isn't an interesting signal.
+      const openMarket = flat.filter(t => t.isOpenMarket);
+      const rest = flat.filter(t => !t.isOpenMarket);
+      setTrades([...openMarket, ...rest].slice(0, 6));
       setLoading(false);
     });
 
@@ -60,8 +68,8 @@ export default function InsiderActivity({ movers, triggerSpotlight }) {
                 <span style={{ fontWeight: 800, fontSize: '11px', marginRight: '6px' }}>{t.ticker}</span>
                 <span style={{ fontSize: '10px', color: 'var(--ws-text-3)' }}>{t.insider}</span>
               </div>
-              <span style={{ fontSize: '10px', fontWeight: 800, color: t.type === 'BUY' ? '#059669' : '#dc2626', flexShrink: 0, marginLeft: '8px' }}>
-                {t.type === 'BUY' ? '▲' : '▼'} {t.type} {t.shares >= 1000 ? `${Math.round(t.shares / 1000)}K` : t.shares}
+              <span style={{ fontSize: '10px', fontWeight: 800, color: t.isOpenMarket ? (t.type === 'BUY' ? '#059669' : '#dc2626') : 'var(--ws-text-3)', flexShrink: 0, marginLeft: '8px' }}>
+                {t.type === 'BUY' ? '▲' : '▼'} {TXN_CODE_LABELS[t.code] || t.type} {t.shares >= 1000 ? `${Math.round(t.shares / 1000)}K` : t.shares}
               </span>
             </div>
           ))

@@ -28,6 +28,12 @@ const fmtN = (v, d = 2) => sharedFmtN(v, d, 'N/A');
 const CURRENCY_SYMBOLS = { USD: '$', EUR: '€', GBP: '£', JPY: '¥', CNY: '¥', CHF: 'CHF ', CAD: 'C$', AUD: 'A$', HKD: 'HK$', INR: '₹', KRW: '₩', SEK: 'kr', NOK: 'kr', DKK: 'kr' };
 const curSym = (code) => !code || code === 'USD' ? '$' : (CURRENCY_SYMBOLS[code] || `${code} `);
 
+// SEC Form 4 transaction codes — P/S are genuine open-market trades, everything else
+// (grants, exercises, tax withholding, gifts...) moves shares for administrative reasons.
+const TXN_CODE_LABELS = {
+  P: 'BUY', S: 'SELL', A: 'GRANT', M: 'EXERCISE', F: 'TAX WITHHOLD', G: 'GIFT', C: 'CONVERSION',
+};
+
 
 const NAV = [
     { key: 'overview', label: 'OVERVIEW' },
@@ -1582,9 +1588,13 @@ export default function StockPage({ params }) {
                       <tbody>
                         {filteredInsiderTrades.slice(0, 40).map((t, i) => {
                           const isBuy = t.type === 'BUY';
+                          // Only P (open-market buy) and S (open-market sell) reflect a real discretionary
+                          // bet — grants, option exercises, tax withholding and gifts move shares for
+                          // administrative reasons and shouldn't read as the same signal as a BUY/SELL.
+                          const label = TXN_CODE_LABELS[t.code] || (isBuy ? 'ACQUIRED' : 'DISPOSED');
                           const isCeoCfo = t.role && /chief executive|chief financial|\bceo\b|\bcfo\b/i.test(t.role);
-                          const isLargeSell = !isBuy && t.value != null && t.value > 1_000_000;
-                          const highlightValue = (isBuy && isCeoCfo) || isLargeSell;
+                          const isLargeSell = t.isOpenMarket && !isBuy && t.value != null && t.value > 1_000_000;
+                          const highlightValue = (t.isOpenMarket && isBuy && isCeoCfo) || isLargeSell;
                           const ownershipPct = t.sharesOwnedAfter && data.sharesOutstanding
                             ? (t.sharesOwnedAfter / data.sharesOutstanding) * 100 : null;
 
@@ -1603,8 +1613,11 @@ export default function StockPage({ params }) {
                                 {t.role && <div style={{ fontSize: '10px', color: 'var(--ws-text-3)', marginTop: '1px' }}>{t.role}{isCeoCfo ? ' ★' : ''}</div>}
                               </td>
                               <td style={{ padding: '9px 14px', textAlign: 'right', whiteSpace: 'nowrap' }}>
-                                <span style={{ fontWeight: 800, color: isBuy ? '#059669' : '#dc2626' }}>
-                                  {isBuy ? '▲ BUY' : '▼ SELL'}
+                                <span
+                                  title={t.code ? `SEC transaction code: ${t.code}${t.isOpenMarket ? ' (open market)' : ' (not an open-market trade)'}` : undefined}
+                                  style={{ fontWeight: 800, color: t.isOpenMarket ? (isBuy ? '#059669' : '#dc2626') : 'var(--ws-text-3)' }}
+                                >
+                                  {isBuy ? '▲' : '▼'} {label}
                                 </span>
                               </td>
                               <td style={{ padding: '9px 14px', textAlign: 'right', whiteSpace: 'nowrap' }}>{t.shares.toLocaleString()}</td>
@@ -1626,7 +1639,7 @@ export default function StockPage({ params }) {
             )}
 
             <div className="text-ws-text-3 text-[10px] tracking-[1px]" style={{ marginTop: '16px' }}>
-              SOURCE: SEC EDGAR FORM 4 (PRIMARY) · FINNHUB (FALLBACK FOR NON-SEC TICKERS) · ★ = OFFICER TITLE MATCHES CEO/CFO · NOT INVESTMENT ADVICE
+              SOURCE: SEC EDGAR FORM 4 (PRIMARY) · FINNHUB (FALLBACK FOR NON-SEC TICKERS) · ★ = OFFICER TITLE MATCHES CEO/CFO · GRAY LABELS (GRANT/EXERCISE/TAX WITHHOLD/GIFT) ARE NOT OPEN-MARKET TRADES · NOT INVESTMENT ADVICE
             </div>
           </div>
         )}
