@@ -1372,7 +1372,7 @@ export default function StockPage({ params }) {
                     </div>
                   )}
 
-                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '12px', marginBottom: '16px' }}>
+                  <div className="grid-3" style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '12px', marginBottom: '16px' }}>
                     {scenarios.map(s => (
                       <div key={s.key} style={{
                         background: 'var(--ws-bg-1)',
@@ -1426,10 +1426,10 @@ export default function StockPage({ params }) {
                       </div>
 
                       <div style={{ overflowX: 'auto' }}>
-                        <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '11px', tableLayout: 'fixed' }}>
+                        <table style={{ minWidth: `${130 + stressGrid.colAxis.length * 90}px`, borderCollapse: 'collapse', fontSize: '11px', tableLayout: 'fixed' }}>
                           <colgroup>
                             <col style={{ width: '130px' }} />
-                            {stressGrid.colAxis.map((col, i) => <col key={i} />)}
+                            {stressGrid.colAxis.map((col, i) => <col key={i} style={{ width: '90px' }} />)}
                           </colgroup>
                           <thead>
                             <tr>
