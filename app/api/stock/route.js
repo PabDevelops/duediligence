@@ -491,7 +491,11 @@ export async function GET(request) {
         );
         if (factsRes.ok) {
           facts = await factsRes.json();
-          if (facts?.facts) {
+          // Foreign private issuers (e.g. Nokia) file under the 'ifrs-full' taxonomy
+          // instead of 'us-gaap' — every getMetric() call below only reads us-gaap tags,
+          // so a facts blob with no us-gaap data would otherwise pass this check and
+          // silently return an object full of nulls instead of falling through to Finnhub.
+          if (facts?.facts?.['us-gaap'] && Object.keys(facts.facts['us-gaap']).length > 0) {
             hasSecFacts = true;
           }
         }
@@ -598,10 +602,12 @@ export async function GET(request) {
         grossMargin: m.grossMarginTTM || null,
         opMargin: m.operatingMarginTTM || null,
         netMargin: m.netProfitMarginTTM || null,
-        roe: m.roeTTM ? +(m.roeTTM * 100).toFixed(1) : null,
-        roa: m.roaTTM ? +(m.roaTTM * 100).toFixed(1) : null,
-        roic: m.roicTTM ? +(m.roicTTM * 100).toFixed(1) : null,
-        revGrowth: m.revenueGrowthTTMYoy ? +(m.revenueGrowthTTMYoy * 100).toFixed(1) : null,
+        // Already percentage points, not a decimal fraction — see comment on the same
+        // fields further down in the SEC-EDGAR-hybrid branch.
+        roe: m.roeTTM ? +m.roeTTM.toFixed(1) : null,
+        roa: m.roaTTM ? +m.roaTTM.toFixed(1) : null,
+        roic: m.roicTTM ? +m.roicTTM.toFixed(1) : null,
+        revGrowth: m.revenueGrowthTTMYoy ? +m.revenueGrowthTTMYoy.toFixed(1) : null,
         debtToEquity: m.totalDebt_totalEquityAnnual || null,
         revVal: null, niVal: null, oiVal: null, fcfVal: null,
         assetsVal: null, equityVal: null, debtVal: null, cashVal: null,
@@ -838,10 +844,15 @@ const sharesForCalc = sharesValAdj || sharesFinnhub;
     const grossMarginFinal = grossMargin ?? (fhm.grossMarginTTM != null ? fhm.grossMarginTTM : null);
     const opMarginFinal = opMargin ?? (fhm.operatingMarginTTM != null ? fhm.operatingMarginTTM : null);
     const netMarginFinal = netMargin ?? (fhm.netProfitMarginTTM != null ? fhm.netProfitMarginTTM : null);
-    const roeFinal = roe ?? (fhm.roeTTM != null ? +(fhm.roeTTM * 100).toFixed(1) : null);
-    const roaFinal = roa ?? (fhm.roaTTM != null ? +(fhm.roaTTM * 100).toFixed(1) : null);
-    const roicFinal = roic ?? (fhm.roicTTM != null ? +(fhm.roicTTM * 100).toFixed(1) : null);
-    const revGrowthFinal = revGrowth ?? (fhm.revenueGrowthTTMYoy != null ? +(fhm.revenueGrowthTTMYoy * 100).toFixed(1) : null);
+    // Finnhub's roeTTM/roaTTM/roicTTM/revenueGrowthTTMYoy are already percentage points
+    // (e.g. AAPL's roeTTM is ~147, meaning 147%) — same convention as grossMarginTTM
+    // above, not a decimal fraction. Multiplying by 100 here was inflating these 100x
+    // whenever SEC EDGAR didn't have the value (silently, since it only shows up when
+    // this fallback actually fires — e.g. foreign filers on the ifrs-full taxonomy).
+    const roeFinal = roe ?? (fhm.roeTTM != null ? +fhm.roeTTM.toFixed(1) : null);
+    const roaFinal = roa ?? (fhm.roaTTM != null ? +fhm.roaTTM.toFixed(1) : null);
+    const roicFinal = roic ?? (fhm.roicTTM != null ? +fhm.roicTTM.toFixed(1) : null);
+    const revGrowthFinal = revGrowth ?? (fhm.revenueGrowthTTMYoy != null ? +fhm.revenueGrowthTTMYoy.toFixed(1) : null);
     const debtToEquityFinal = debtToEquity ?? (fhm.totalDebt_totalEquityAnnual != null ? fhm.totalDebt_totalEquityAnnual : null);
 
     const result = {
