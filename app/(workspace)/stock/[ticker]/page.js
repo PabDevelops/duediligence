@@ -1507,7 +1507,11 @@ export default function StockPage({ params }) {
               </div>
             )}
 
-            {/* MULTIPLES MODEL — quality-adjusted P/E, cross-check / fallback when DCF can't run */}
+            {/* MULTIPLES MODEL — quality-adjusted P/E. Only shown when the DCF can't run
+                (e.g. negative FCF), so there's never two competing "main estimate" gauges
+                on screen at once — a pure fallback, not a permanent second opinion. */}
+            {!dcfValue && (
+              <>
             <div className="text-ws-text-3 text-[10px] tracking-[2px] border-b border-ws-border pb-1.5 mb-3 mt-10">MULTIPLES MODEL (P/E)</div>
 
             {traqckerValue ? (() => {
@@ -1617,6 +1621,8 @@ export default function StockPage({ params }) {
                     : 'The Traqcker Value model requires EPS data.'}
                 </div>
               </div>
+            )}
+              </>
             )}
           </div>
         )}
