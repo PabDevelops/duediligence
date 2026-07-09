@@ -178,7 +178,7 @@ async function fetchYahooFundamentals(ticker) {
     const tenYearsAgo = now - 10 * 365 * 24 * 3600;
 
     const [qsRes, tsRes] = await Promise.all([
-      fetch(`https://query2.finance.yahoo.com/v10/finance/quoteSummary/${ticker}?modules=assetProfile,summaryDetail,defaultKeyStatistics,financialData&crumb=${encodeURIComponent(auth.crumb)}`, { headers }),
+      fetch(`https://query2.finance.yahoo.com/v10/finance/quoteSummary/${ticker}?modules=assetProfile,summaryDetail,defaultKeyStatistics,financialData,balanceSheetHistory,cashFlowStatementHistory&crumb=${encodeURIComponent(auth.crumb)}`, { headers }),
       fetch(`https://query2.finance.yahoo.com/ws/fundamentals-timeseries/v1/finance/timeseries/${ticker}?symbol=${ticker}&type=${YAHOO_TS_TYPES}&period1=${tenYearsAgo}&period2=${now}&crumb=${encodeURIComponent(auth.crumb)}`, { headers }),
     ]);
 
@@ -193,15 +193,34 @@ async function fetchYahooFundamentals(ticker) {
     const fin = r.financialData || {};
     const num = (m) => (m && m.raw != null ? m.raw : null);
 
+    // Helper: convert Yahoo balanceSheetHistory / cashFlowStatementHistory entries to
+    // the same { year, val } shape used by tsSeries(), as a fallback when the
+    // fundamentals-timeseries endpoint has no data for this ticker (common for ADRs).
+    const bsStatements = (r.balanceSheetHistory?.balanceSheetStatements || [])
+      .filter(s => s.endDate?.raw)
+      .sort((a, b) => a.endDate.raw - b.endDate.raw)
+      .slice(-6);
+    const cfStatements = (r.cashFlowStatementHistory?.cashflowStatements || [])
+      .filter(s => s.endDate?.raw)
+      .sort((a, b) => a.endDate.raw - b.endDate.raw)
+      .slice(-6);
+
+    const bsSeries = (key) => bsStatements
+      .filter(s => s[key]?.raw != null)
+      .map(s => ({ year: new Date(s.endDate.raw * 1000).getFullYear().toString(), val: s[key].raw }));
+    const cfSeries = (key) => cfStatements
+      .filter(s => s[key]?.raw != null)
+      .map(s => ({ year: new Date(s.endDate.raw * 1000).getFullYear().toString(), val: s[key].raw }));
+
     const histories = {
       revHistory: tsSeries(ts, 'annualTotalRevenue'),
       niHistory: tsSeries(ts, 'annualNetIncomeCommonStockholders', 'annualNetIncome'),
       oiHistory: tsSeries(ts, 'annualOperatingIncome'),
       fcfHistory: tsSeries(ts, 'annualOperatingCashFlow'),
-      assetsHistory: tsSeries(ts, 'annualTotalAssets'),
-      equityHistory: tsSeries(ts, 'annualStockholdersEquity'),
-      debtHistory: tsSeries(ts, 'annualTotalDebt', 'annualLongTermDebt'),
-      cashHistory: tsSeries(ts, 'annualCashAndCashEquivalents'),
+      assetsHistory: tsSeries(ts, 'annualTotalAssets').length ? tsSeries(ts, 'annualTotalAssets') : bsSeries('totalAssets'),
+      equityHistory: tsSeries(ts, 'annualStockholdersEquity').length ? tsSeries(ts, 'annualStockholdersEquity') : bsSeries('totalStockholderEquity'),
+      debtHistory: tsSeries(ts, 'annualTotalDebt', 'annualLongTermDebt').length ? tsSeries(ts, 'annualTotalDebt', 'annualLongTermDebt') : bsSeries('longTermDebt'),
+      cashHistory: tsSeries(ts, 'annualCashAndCashEquivalents').length ? tsSeries(ts, 'annualCashAndCashEquivalents') : bsSeries('cash'),
       gpHistory: tsSeries(ts, 'annualGrossProfit'),
       rdHistory: tsSeries(ts, 'annualResearchAndDevelopment'),
       cogsHistory: tsSeries(ts, 'annualCostOfRevenue'),
@@ -212,20 +231,54 @@ async function fetchYahooFundamentals(ticker) {
       sharesHistory: tsSeries(ts, 'annualDilutedAverageShares', 'annualBasicAverageShares'),
       sharesBasicHistory: tsSeries(ts, 'annualBasicAverageShares'),
       sharesDilutedHistory: tsSeries(ts, 'annualDilutedAverageShares'),
-      capexHistory: tsSeries(ts, 'annualCapitalExpenditure'),
-      investingCFHistory: tsSeries(ts, 'annualInvestingCashFlow'),
-      financingCFHistory: tsSeries(ts, 'annualFinancingCashFlow'),
-      currentAssetsHistory: tsSeries(ts, 'annualCurrentAssets'),
-      currentLiabilitiesHistory: tsSeries(ts, 'annualCurrentLiabilities'),
-      totalLiabilitiesHistory: tsSeries(ts, 'annualTotalLiabilitiesNetMinorityInterest'),
-      inventoryHistory: tsSeries(ts, 'annualInventory'),
-      receivablesHistory: tsSeries(ts, 'annualAccountsReceivable'),
-      payablesHistory: tsSeries(ts, 'annualAccountsPayable'),
-      sbcHistory: tsSeries(ts, 'annualStockBasedCompensation'),
-      daHistory: tsSeries(ts, 'annualDepreciationAndAmortization'),
-      dividendsPaidHistory: tsSeries(ts, 'annualCommonStockDividendPaid'),
-      retainedEarningsHistory: tsSeries(ts, 'annualRetainedEarnings'),
+      capexHistory: tsSeries(ts, 'annualCapitalExpenditure').length ? tsSeries(ts, 'annualCapitalExpenditure') : cfSeries('capitalExpenditures'),
+      investingCFHistory: tsSeries(ts, 'annualInvestingCashFlow').length ? tsSeries(ts, 'annualInvestingCashFlow') : cfSeries('totalCashFromInvestingActivities'),
+      financingCFHistory: tsSeries(ts, 'annualFinancingCashFlow').length ? tsSeries(ts, 'annualFinancingCashFlow') : cfSeries('totalCashFlowsFromFinancingActivities'),
+      currentAssetsHistory: tsSeries(ts, 'annualCurrentAssets').length ? tsSeries(ts, 'annualCurrentAssets') : bsSeries('totalCurrentAssets'),
+      currentLiabilitiesHistory: tsSeries(ts, 'annualCurrentLiabilities').length ? tsSeries(ts, 'annualCurrentLiabilities') : bsSeries('totalCurrentLiabilities'),
+      totalLiabilitiesHistory: tsSeries(ts, 'annualTotalLiabilitiesNetMinorityInterest').length ? tsSeries(ts, 'annualTotalLiabilitiesNetMinorityInterest') : bsSeries('totalLiab'),
+      inventoryHistory: tsSeries(ts, 'annualInventory').length ? tsSeries(ts, 'annualInventory') : bsSeries('inventory'),
+      receivablesHistory: tsSeries(ts, 'annualAccountsReceivable').length ? tsSeries(ts, 'annualAccountsReceivable') : bsSeries('netReceivables'),
+      payablesHistory: tsSeries(ts, 'annualAccountsPayable').length ? tsSeries(ts, 'annualAccountsPayable') : bsSeries('accountsPayable'),
+      sbcHistory: tsSeries(ts, 'annualStockBasedCompensation').length ? tsSeries(ts, 'annualStockBasedCompensation') : cfSeries('issuanceOfStock'),
+      daHistory: tsSeries(ts, 'annualDepreciationAndAmortization').length ? tsSeries(ts, 'annualDepreciationAndAmortization') : cfSeries('depreciation'),
+      dividendsPaidHistory: tsSeries(ts, 'annualCommonStockDividendPaid').length ? tsSeries(ts, 'annualCommonStockDividendPaid') : cfSeries('dividendsPaid'),
+      retainedEarningsHistory: tsSeries(ts, 'annualRetainedEarnings').length ? tsSeries(ts, 'annualRetainedEarnings') : bsSeries('retainedEarnings'),
     };
+
+    // Also fill FCF from operating CF - capex if the timeseries FCF is missing
+    if (!histories.fcfHistory.length && cfStatements.length) {
+      histories.fcfHistory = cfStatements
+        .filter(s => s.totalCashFromOperatingActivities?.raw != null)
+        .map(s => {
+          const ocf = s.totalCashFromOperatingActivities.raw;
+          const capex = s.capitalExpenditures?.raw ?? 0;
+          return { year: new Date(s.endDate.raw * 1000).getFullYear().toString(), val: ocf + capex };
+        });
+    }
+
+    // For international tickers (e.g. Nokia ADR) where Yahoo's fundamentals-timeseries
+    // has no data, synthesize single-point entries from the current-period values in
+    // financialData / defaultKeyStatistics. Do this BEFORE the null-guard so tickers
+    // that only have quoteSummary data still produce a usable result.
+    const thisYear = new Date().getFullYear().toString();
+    const fill1 = (history, val) => {
+      if (history.length === 0 && val != null) return [{ year: thisYear, val }];
+      return history;
+    };
+    histories.revHistory     = fill1(histories.revHistory,     num(fin.totalRevenue));
+    histories.niHistory      = fill1(histories.niHistory,      num(fin.netIncomeToCommon) ?? num(keyStats.netIncomeToCommon));
+    histories.gpHistory      = fill1(histories.gpHistory,      num(fin.grossProfits));
+    histories.oiHistory      = fill1(histories.oiHistory,      num(fin.ebit));
+    histories.fcfHistory     = fill1(histories.fcfHistory,     num(fin.freeCashflow));
+    histories.debtHistory    = fill1(histories.debtHistory,    num(fin.totalDebt));
+    histories.cashHistory    = fill1(histories.cashHistory,    num(fin.totalCash));
+    // Equity: derive from book value per share × shares outstanding when history is empty
+    if (histories.equityHistory.length === 0) {
+      const bvps = num(keyStats.bookValue);
+      const shs  = num(keyStats.sharesOutstanding);
+      if (bvps != null && shs != null) histories.equityHistory = [{ year: thisYear, val: bvps * shs }];
+    }
 
     if (histories.revHistory.length === 0 && histories.niHistory.length === 0) return null;
 
@@ -505,11 +558,14 @@ export async function GET(request) {
     }
 
     if (!company || !hasSecFacts) {
-      // Fallback a Finnhub para stocks no en SEC EDGAR
-      const [fhRes, fhBasicRes, fhProfileRes] = await Promise.all([
+      // Fallback for stocks not covered by SEC EDGAR (non-US filers, IFRS reporters, etc.).
+      // Fetch Finnhub and Yahoo fundamentals in parallel so we can combine the best of each:
+      // Finnhub for price/profile/TTM metrics, Yahoo for full financial-statement history.
+      const [fhRes, fhBasicRes, fhProfileRes, yhFundamentals] = await Promise.all([
         fetch(`https://finnhub.io/api/v1/quote?symbol=${ticker}&token=${FH_KEY}`),
         fetch(`https://finnhub.io/api/v1/stock/metric?symbol=${ticker}&metric=all&token=${FH_KEY}`),
         fetch(`https://finnhub.io/api/v1/stock/profile2?symbol=${ticker}&token=${FH_KEY}`),
+        fetchYahooFundamentals(ticker).catch(() => null),
       ]);
 
       const fh = await fhRes.json();
@@ -577,49 +633,66 @@ export async function GET(request) {
       const eps = m.epsAnnual || m.epsTTM || null;
       const pe = eps && currentPrice ? +(currentPrice / eps).toFixed(2) : null;
 
+      // Prefer Yahoo's full financial-statement history for the dollar amounts and charts;
+      // Finnhub fills in TTM ratios and current-price fields that Yahoo may be missing.
+      const yh = yhFundamentals;
       const result = {
         riskFreeRate,
         name: fhProfile.name || ticker,
         ticker,
         cik: null,
-        sector: fhProfile.finnhubIndustry || null,
-        industry: fhProfile.finnhubIndustry || null,
+        sector: fhProfile.finnhubIndustry || yh?.sector || null,
+        industry: fhProfile.finnhubIndustry || yh?.industry || null,
         exchange: fhProfile.exchange || null,
-        description: fhProfile.description || await fetchDescription(ticker),
+        description: yh?.description || fhProfile.description || await fetchDescription(ticker),
         currentPrice,
         priceChange: fh.d || null,
         priceChangePct: fh.dp || null,
         prevClose: fh.pc || null,
-        marketCap,
-        eps,
-        pe,
-        forwardPE: null,
-        high52: m['52WeekHigh'] || null,
-        low52: m['52WeekLow'] || null,
-        beta: m.beta || null,
-        sharesOutstanding,
-        dividendYield: m.dividendYieldIndicatedAnnual || null,
-        grossMargin: m.grossMarginTTM || null,
-        opMargin: m.operatingMarginTTM || null,
-        netMargin: m.netProfitMarginTTM || null,
-        // Already percentage points, not a decimal fraction — see comment on the same
-        // fields further down in the SEC-EDGAR-hybrid branch.
-        roe: m.roeTTM ? +m.roeTTM.toFixed(1) : null,
-        roa: m.roaTTM ? +m.roaTTM.toFixed(1) : null,
-        roic: m.roicTTM ? +m.roicTTM.toFixed(1) : null,
-        revGrowth: m.revenueGrowthTTMYoy ? +m.revenueGrowthTTMYoy.toFixed(1) : null,
-        debtToEquity: m.totalDebt_totalEquityAnnual || null,
-        revVal: null, niVal: null, oiVal: null, fcfVal: null,
-        assetsVal: null, equityVal: null, debtVal: null, cashVal: null,
-        netDebt: null, pfcf: null, fcfYield: null,
-        revHistory: [], niHistory: [], fcfHistory: [], oiHistory: [],
-        marginHistory: [], sharesHistory: [], gpHistory: [],
-        cogsHistory: [], sgaHistory: [], rdHistory: [], ebtHistory: [],
-        taxHistory: [], sharesBasicHistory: [], sharesDilutedHistory: [],
-        capexHistory: [], operatingCFHistory: [], investingCFHistory: [], financingCFHistory: [],
-        epsCagr: null, epsHistory: [],
-        analystTarget: null,
+        marketCap: marketCap ?? yh?.marketCap ?? null,
+        eps: eps ?? yh?.eps ?? null,
+        pe: pe ?? yh?.pe ?? null,
+        forwardPE: yh?.forwardPE ?? null,
+        high52: m['52WeekHigh'] || yh?.high52 || null,
+        low52: m['52WeekLow'] || yh?.low52 || null,
+        beta: m.beta || yh?.beta || null,
+        sharesOutstanding: sharesOutstanding ?? yh?.sharesOutstanding ?? null,
+        dividendYield: m.dividendYieldIndicatedAnnual || yh?.dividendYield || null,
+        // Ratios: prefer Yahoo computed-from-statements, fall back to Finnhub TTM metrics.
+        // Finnhub roeTTM/roaTTM/revenueGrowthTTMYoy are already percentage points.
+        grossMargin: yh?.grossMargin ?? m.grossMarginTTM ?? null,
+        opMargin: yh?.opMargin ?? m.operatingMarginTTM ?? null,
+        netMargin: yh?.netMargin ?? m.netProfitMarginTTM ?? null,
+        roe: yh?.roe ?? (m.roeTTM ? +m.roeTTM.toFixed(1) : null),
+        roa: yh?.roa ?? (m.roaTTM ? +m.roaTTM.toFixed(1) : null),
+        roic: yh?.roic ?? (m.roicTTM ? +m.roicTTM.toFixed(1) : null),
+        revGrowth: yh?.revGrowth ?? (m.revenueGrowthTTMYoy ? +m.revenueGrowthTTMYoy.toFixed(1) : null),
+        debtToEquity: yh?.debtToEquity ?? m.totalDebt_totalEquityAnnual ?? null,
+        // Dollar amounts and history from Yahoo (or null if Yahoo had no statements).
+        revVal: yh?.revVal ?? null, niVal: yh?.niVal ?? null,
+        oiVal: yh?.oiVal ?? null, fcfVal: yh?.fcfVal ?? null,
+        assetsVal: yh?.assetsVal ?? null, equityVal: yh?.equityVal ?? null,
+        debtVal: yh?.debtVal ?? null, cashVal: yh?.cashVal ?? null,
+        netDebt: yh?.netDebt ?? null,
+        pfcf: yh?.pfcf ?? null, fcfYield: yh?.fcfYield ?? null,
+        revHistory: yh?.revHistory ?? [], niHistory: yh?.niHistory ?? [],
+        fcfHistory: yh?.fcfHistory ?? [], oiHistory: yh?.oiHistory ?? [],
+        marginHistory: yh?.marginHistory ?? [], sharesHistory: yh?.sharesHistory ?? [],
+        gpHistory: yh?.gpHistory ?? [],
+        cogsHistory: yh?.cogsHistory ?? [], sgaHistory: yh?.sgaHistory ?? [],
+        rdHistory: yh?.rdHistory ?? [], ebtHistory: yh?.ebtHistory ?? [],
+        taxHistory: yh?.taxHistory ?? [],
+        sharesBasicHistory: yh?.sharesBasicHistory ?? [],
+        sharesDilutedHistory: yh?.sharesDilutedHistory ?? [],
+        capexHistory: yh?.capexHistory ?? [],
+        operatingCFHistory: yh?.operatingCFHistory ?? [],
+        investingCFHistory: yh?.investingCFHistory ?? [],
+        financingCFHistory: yh?.financingCFHistory ?? [],
+        epsCagr: yh?.epsCagr ?? null, epsHistory: yh?.epsHistory ?? [],
+        analystTarget: yh?.analystTarget ?? null,
+        evEbitda: yh?.evEbitda ?? null, priceToBook: yh?.priceToBook ?? null,
         finnhubFallback: true,
+        yahooFundamentals: !!yh,
       };
 
       try {
