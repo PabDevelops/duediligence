@@ -798,21 +798,7 @@ export default function StockPage({ params }) {
                  <ShareCardComponent
                   ticker={ticker}
                   name={data?.name || 'N/A'}
-                  price={data?.currentPrice || 0}
-                  priceChange={data?.priceChangePct || 0}
-                  metrics={[
-                    { label: 'P/E', value: fmtN(data?.peRatio) },
-                    { label: 'Rev Growth', value: fmtP(data?.revenueGrowth) },
-                    { label: 'Op Margin', value: fmtP(data?.operatingMargin) },
-                    { label: 'FCF Yield', value: fmtP(data?.fcfYield) }
-                  ]}
                   score={easyMode?.score100 ?? 50}
-                  verdict={easyMode?.verdict ?? 'HOLD'}
-                  fairValue={fairValue?.estimate ?? null}
-                  fairValueNegative={fairValue?.negative ?? false}
-                  consensus={voteConsensus}
-                  userVote={userVote}
-                  currency={data?.currency}
                 />
               </div>
 

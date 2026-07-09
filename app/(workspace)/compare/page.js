@@ -1,9 +1,8 @@
 'use client';
-import { useState, useEffect, useMemo, useRef } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import { useUser } from '../../components/AuthProvider';
 import Sparkline from '../../components/Sparkline';
-import html2canvas from 'html2canvas';
 
 // Utility formatters
 import { fmt, fmtP as fmtPercent, fmtN } from '../../../lib/formatters';
@@ -27,8 +26,6 @@ export default function MarketRadar() {
   const [spotlightData, setSpotlightData] = useState(null);
   const [loadingSpotlight, setLoadingSpotlight] = useState(false);
   const [spotlightSparkline, setSpotlightSparkline] = useState(null);
-  const [spotlightImgLoading, setSpotlightImgLoading] = useState(false);
-  const spotlightCaptureRef = useRef(null);
 
   // Search state
   const [searchQuery, setSearchQuery] = useState('');
