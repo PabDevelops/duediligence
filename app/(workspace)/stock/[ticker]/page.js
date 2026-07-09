@@ -577,19 +577,19 @@ export default function StockPage({ params }) {
                 <div style={{ background: 'var(--ws-bg-1)', border: '1px solid var(--ws-border)', padding: '18px 20px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
                   {[
                     {
-                      label: 'Revenue is growing',
+                      label: data.revGrowth == null ? 'Revenue data unavailable' : data.revGrowth > 0 ? 'Revenue is growing' : 'Revenue is shrinking',
                       value: data.revGrowth != null ? `${data.revGrowth > 0 ? '+' : ''}${data.revGrowth}% / yr` : 'N/A',
                       pct: data.revGrowth != null ? Math.max(4, Math.min(100, 50 + data.revGrowth * 2)) : 0,
                       color: data.revGrowth == null ? 'var(--ws-text-3)' : data.revGrowth > 5 ? 'var(--ws-accent)' : data.revGrowth > 0 ? 'var(--ws-text-2)' : 'var(--ws-red)',
                     },
                     {
-                      label: 'Keeps a healthy slice of profit',
+                      label: data.opMargin == null ? 'Margin data unavailable' : data.opMargin > 15 ? 'Keeps a healthy slice of profit' : data.opMargin > 5 ? 'Keeps a modest slice of profit' : data.opMargin > 0 ? 'Thin operating margin' : 'Operating at a loss',
                       value: data.opMargin != null ? `${data.opMargin}% margin` : 'N/A',
                       pct: data.opMargin != null ? Math.max(4, Math.min(100, data.opMargin * 2.5)) : 0,
                       color: data.opMargin == null ? 'var(--ws-text-3)' : data.opMargin > 15 ? 'var(--ws-accent)' : data.opMargin > 5 ? 'var(--ws-text-2)' : 'var(--ws-red)',
                     },
                     {
-                      label: 'Generates real cash, not just paper profit',
+                      label: data.fcfVal == null ? 'Cash flow data unavailable' : data.fcfVal > 0 ? 'Generates real cash, not just paper profit' : 'Burning cash, not generating profit',
                       value: data.fcfVal > 0 ? 'Strong' : data.fcfVal < 0 ? 'Negative' : 'N/A',
                       pct: data.fcfVal > 0 ? 85 : data.fcfVal < 0 ? 15 : 0,
                       color: data.fcfVal == null ? 'var(--ws-text-3)' : data.fcfVal > 0 ? 'var(--ws-accent)' : 'var(--ws-red)',
