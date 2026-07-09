@@ -18,6 +18,8 @@ import {
   computeEasyMode,
   computeTraqckerValue,
   computeDCFValue,
+  computeDCFStressGrid,
+  DCF_STRESS_TABLES,
   computeFairValue,
 } from '../../../../lib/stockScoring';
 
@@ -113,6 +115,7 @@ export default function StockPage({ params }) {
   const [insiderTypeFilter, setInsiderTypeFilter] = useState('ALL');
   const [insiderRoleFilter, setInsiderRoleFilter] = useState('ALL');
   const [selectedInsiderName, setSelectedInsiderName] = useState(null);
+  const [stressTableKey, setStressTableKey] = useState('growthWacc');
   const [answers, setAnswers] = useState({});
   const [finTab, setFinTab] = useState('snapshot');
   const [evidence, setEvidence] = useState({});
@@ -390,6 +393,7 @@ export default function StockPage({ params }) {
   // reach (e.g. negative FCF) as long as they at least have positive EPS.
   const baseScenario = dcfBaseScenario || peBaseScenario;
   const fairValue = computeFairValue(baseScenario?.value, price);
+  const stressGrid = dcfValue ? computeDCFStressGrid(data, data.riskFreeRate, stressTableKey) : null;
   const negativeEarnings = data.eps != null && data.eps <= 0;
 
   return (
@@ -1420,6 +1424,65 @@ export default function StockPage({ params }) {
                       </div>
                     ))}
                   </div>
+
+                  {/* Stress test — all 6 grids sweep the same DCF formula across 2 of its
+                      5 inputs at a time; pick which pair to look at. */}
+                  {stressGrid && (
+                    <div style={{ background: 'var(--ws-bg-1)', border: '1px solid var(--ws-border)', padding: '18px 20px', marginBottom: '16px' }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '10px', marginBottom: '14px' }}>
+                        <div style={{ fontSize: '10px', fontWeight: 800, color: 'var(--ws-text-3)', letterSpacing: '1.5px' }}>STRESS TEST</div>
+                        <select
+                          value={stressTableKey}
+                          onChange={(e) => setStressTableKey(e.target.value)}
+                          style={{ background: 'var(--ws-bg-2)', border: '1px solid var(--ws-border)', color: 'var(--ws-text)', fontSize: '11px', padding: '6px 10px', fontWeight: 600 }}
+                        >
+                          {Object.entries(DCF_STRESS_TABLES).map(([key, cfg]) => (
+                            <option key={key} value={key}>{cfg.label}</option>
+                          ))}
+                        </select>
+                      </div>
+
+                      <div style={{ overflowX: 'auto' }}>
+                        <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '11px' }}>
+                          <thead>
+                            <tr>
+                              <th style={{ padding: '6px 10px', textAlign: 'left', fontSize: '9px', color: 'var(--ws-text-3)', letterSpacing: '1px' }}>
+                                {stressGrid.rowLabel} \ {stressGrid.colLabel}
+                              </th>
+                              {stressGrid.colAxis.map(col => (
+                                <th key={col.label} style={{ padding: '6px 10px', textAlign: 'center', fontSize: '10px', color: 'var(--ws-text-2)', fontWeight: 700, whiteSpace: 'nowrap' }}>
+                                  {col.label}
+                                </th>
+                              ))}
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {stressGrid.rowAxis.map((row, ri) => (
+                              <tr key={row.label}>
+                                <td style={{ padding: '6px 10px', fontSize: '10px', color: 'var(--ws-text-2)', fontWeight: 700, whiteSpace: 'nowrap' }}>{row.label}</td>
+                                {stressGrid.colAxis.map((col, ci) => {
+                                  const value = stressGrid.matrix[ri][ci];
+                                  const ratio = value != null && price ? value / price : null;
+                                  const bg = ratio == null ? 'var(--ws-bg-2)'
+                                    : ratio >= 1
+                                      ? `rgba(5, 150, 105, ${Math.min(0.45, 0.08 + Math.min(1, (ratio - 1) / 0.5) * 0.37)})`
+                                      : `rgba(220, 38, 38, ${Math.min(0.45, 0.08 + Math.min(1, (1 - ratio) / 0.5) * 0.37)})`;
+                                  return (
+                                    <td key={col.label} style={{ padding: '8px 10px', textAlign: 'center', background: bg, fontWeight: 600, whiteSpace: 'nowrap' }}>
+                                      {value != null ? `${curSym(data.currency)}${value.toFixed(2)}` : '⚠️'}
+                                    </td>
+                                  );
+                                })}
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+                      <div style={{ fontSize: '10px', color: 'var(--ws-text-3)', marginTop: '10px' }}>
+                        Every cell is the same DCF, run with that row's {stressGrid.rowLabel.toLowerCase()} and column's {stressGrid.colLabel.toLowerCase()} — everything else stays at the base case. Green = above current price ({curSym(data.currency)}{price?.toFixed(2)}), red = below.
+                      </div>
+                    </div>
+                  )}
 
                   <div className="text-ws-text-3 text-[10px] tracking-[1px]">
                     WACC-DISCOUNTED FCF (10YR) + EXIT-MULTIPLE TERMINAL VALUE · GROWTH = MARKET-IMPLIED (GORDON GROWTH, REVERSE-SOLVED) · NOT INVESTMENT ADVICE
