@@ -316,9 +316,13 @@ async function fetchYahooFundamentals(ticker) {
 async function fetchDescription(ticker) {
   if (!AV_KEY) return null;
   try {
+    // Deliberately uncached: our Supabase-level stock_cache already re-attempts this on
+    // every request where description is missing, so Next's fetch cache only adds risk —
+    // if a rate-limited AV response (no Description field, still HTTP 200) ever got cached
+    // here, it would silently poison this ticker's description for a full day.
     const res = await fetch(
       `https://www.alphavantage.co/query?function=OVERVIEW&symbol=${ticker}&apikey=${AV_KEY}`,
-      { next: { revalidate: 86400 } }
+      { cache: 'no-store' }
     );
     const d = await res.json();
     return d.Description && d.Description !== 'None' ? d.Description : null;
