@@ -16,7 +16,6 @@ import {
   getDimScore as sharedGetDimScore,
   totalScore as sharedTotalScore,
   computeEasyMode,
-  computeTraqckerValue,
   computeDCFValue,
   computeDCFStressGrid,
   DCF_STRESS_TABLES,
@@ -385,16 +384,9 @@ export default function StockPage({ params }) {
 
   const easyMode = computeEasyMode(data, hasFundamentals);
   const dcfValue = computeDCFValue(data, data.riskFreeRate);
-  const traqckerValue = computeTraqckerValue(data);
   const dcfBaseScenario = dcfValue?.scenarios.find(s => s.primary);
-  const peBaseScenario = traqckerValue?.scenarios.find(s => s.primary);
-  // DCF is the more rigorous estimate when it has what it needs (positive FCF, shares
-  // outstanding, a usable WACC); the P/E model is the fallback for tickers it can't
-  // reach (e.g. negative FCF) as long as they at least have positive EPS.
-  const baseScenario = dcfBaseScenario || peBaseScenario;
-  const fairValue = computeFairValue(baseScenario?.value, price);
+  const fairValue = computeFairValue(dcfBaseScenario?.value, price);
   const stressGrid = dcfValue ? computeDCFStressGrid(data, data.riskFreeRate, stressTableKey) : null;
-  const negativeEarnings = data.eps != null && data.eps <= 0;
 
   return (
     <div className="p-6">
@@ -704,32 +696,23 @@ export default function StockPage({ params }) {
                 );
               })()}
 
-              {/* Fair value */}
-              {(fairValue || negativeEarnings) && (
+              {/* Fair value — Traqcker's DCF estimate. Hidden entirely when the DCF can't
+                  run (negative/missing FCF); the Valuation tab explains why. */}
+              {fairValue && (
                 <div className="bg-ws-bg-1 border border-ws-border px-[18px] py-4">
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: '12px' }}>
                     <div style={{ fontWeight: 700, fontSize: '13px', color: 'var(--ws-text)' }}>Fair value</div>
-                    {fairValue && (
-                      <div style={{ fontSize: '11px', fontWeight: 600, letterSpacing: '1px', color: fairValue.tagColor, padding: '3px 8px', backgroundColor: 'var(--ws-bg-2)' }}>{fairValue.tag}</div>
-                    )}
+                    <div style={{ fontSize: '11px', fontWeight: 600, letterSpacing: '1px', color: fairValue.tagColor, padding: '3px 8px', backgroundColor: 'var(--ws-bg-2)' }}>{fairValue.tag}</div>
                   </div>
-                  {fairValue ? (
-                    <>
-                      <div style={{ position: 'relative', height: '10px', background: 'var(--ws-bg-2)' }}>
-                        <div style={{ position: 'absolute', top: '-5px', width: '4px', height: '20px', borderRadius: '2px', background: 'var(--ws-text)', left: `${fairValue.pct}%` }} />
-                      </div>
-                      <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '8px', fontSize: '10px', color: 'var(--ws-text-3)' }}>
-                        <span>Cheap</span><span>Fair</span><span>Expensive</span>
-                      </div>
-                      <div style={{ marginTop: '12px', fontSize: '12px', color: 'var(--ws-text-2)', lineHeight: 1.6 }}>
-                        Price: <b className="text-ws-text">{curSym(data.currency)}{price?.toFixed(2)}</b> · Estimate: <b className="text-ws-text">{curSym(data.currency)}{fairValue.estimate.toFixed(2)}</b>
-                      </div>
-                    </>
-                  ) : (
-                    <div style={{ fontSize: '12px', color: 'var(--ws-text-2)', lineHeight: 1.6 }}>
-                      Negative earnings — no positive estimate. Price: <b className="text-ws-text">{curSym(data.currency)}{price?.toFixed(2)}</b>
-                    </div>
-                  )}
+                  <div style={{ position: 'relative', height: '10px', background: 'var(--ws-bg-2)' }}>
+                    <div style={{ position: 'absolute', top: '-5px', width: '4px', height: '20px', borderRadius: '2px', background: 'var(--ws-text)', left: `${fairValue.pct}%` }} />
+                  </div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '8px', fontSize: '10px', color: 'var(--ws-text-3)' }}>
+                    <span>Cheap</span><span>Fair</span><span>Expensive</span>
+                  </div>
+                  <div style={{ marginTop: '12px', fontSize: '12px', color: 'var(--ws-text-2)', lineHeight: 1.6 }}>
+                    Price: <b className="text-ws-text">{curSym(data.currency)}{price?.toFixed(2)}</b> · Estimate: <b className="text-ws-text">{curSym(data.currency)}{fairValue.estimate.toFixed(2)}</b>
+                  </div>
                 </div>
               )}
 
@@ -1502,127 +1485,9 @@ export default function StockPage({ params }) {
                 <div style={{ color: 'var(--ws-text-3)', fontSize: '11px' }}>
                   {!data.fcfVal || data.fcfVal <= 0
                     ? "A WACC-discounted DCF isn't meaningful without positive free cash flow to project forward."
-                    : 'Requires FCF, market cap, and shares outstanding — see the Multiples model below instead.'}
+                    : 'Requires free cash flow, market cap, and shares outstanding.'}
                 </div>
               </div>
-            )}
-
-            {/* MULTIPLES MODEL — quality-adjusted P/E. Only shown when the DCF can't run
-                (e.g. negative FCF), so there's never two competing "main estimate" gauges
-                on screen at once — a pure fallback, not a permanent second opinion. */}
-            {!dcfValue && (
-              <>
-            <div className="text-ws-text-3 text-[10px] tracking-[2px] border-b border-ws-border pb-1.5 mb-3 mt-10">MULTIPLES MODEL (P/E)</div>
-
-            {traqckerValue ? (() => {
-              const scenarios = traqckerValue.scenarios.map(s => {
-                const diff = price ? +(((s.value - price) / price) * 100).toFixed(1) : null;
-                const underval = price ? s.value > price : null;
-                return { ...s, diff, underval };
-              });
-
-              // Range spans bear→bull, stretched to include the current price so its
-              // marker is never clipped off the edge of the gauge.
-              const values = scenarios.map(s => s.value);
-              const lo = Math.min(...values, price ?? values[0]);
-              const hi = Math.max(...values, price ?? values[values.length - 1]);
-              const span = (hi - lo) || 1;
-              const pctOf = (v) => Math.max(0, Math.min(100, ((v - lo) / span) * 100));
-
-              return (
-                <>
-                  {/* Inputs strip */}
-                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px 24px', background: 'var(--ws-bg-1)', border: '1px solid var(--ws-border)', padding: '14px 16px', marginBottom: '16px', fontSize: '11px' }}>
-                    <div><span className="text-ws-text-3">Formula</span> &nbsp;<span style={{ color: 'var(--ws-accent)' }}>Value = EPS × Fair P/E</span></div>
-                    <div><span className="text-ws-text-3">EPS</span> &nbsp;<b className="text-ws-text">{curSym(data.currency)}{data.eps}</b></div>
-                    <div><span className="text-ws-text-3">Base P/E anchor</span> &nbsp;<b className="text-ws-text">{traqckerValue.basePE}x</b></div>
-                  </div>
-
-                  {/* Valuation range gauge */}
-                  {price != null && (
-                    <div style={{ background: 'var(--ws-bg-1)', border: '1px solid var(--ws-border)', padding: '18px 20px', marginBottom: '16px' }}>
-                      <div style={{ fontSize: '10px', fontWeight: 800, color: 'var(--ws-text-3)', letterSpacing: '1.5px', marginBottom: '10px' }}>VALUATION RANGE</div>
-                      <div style={{ position: 'relative', paddingTop: '32px', paddingBottom: '38px' }}>
-                        <div style={{ position: 'relative', height: '6px', borderRadius: '3px', background: 'linear-gradient(to right, var(--ws-red), var(--ws-text-3), var(--ws-accent))', opacity: 0.35, margin: '0 4px' }}>
-                          {scenarios.map(s => (
-                            <div key={s.key} style={{ position: 'absolute', left: `${pctOf(s.value)}%`, bottom: '6px', transform: 'translateX(-50%)', textAlign: 'center', whiteSpace: 'nowrap' }}>
-                              <div style={{ fontSize: '11px', fontWeight: 700, color: s.primary ? 'var(--ws-text)' : 'var(--ws-text-3)', marginBottom: '4px' }}>
-                                {curSym(data.currency)}{s.value}
-                              </div>
-                              <div style={{ width: s.primary ? '3px' : '2px', height: '14px', margin: '0 auto', borderRadius: '2px', background: s.primary ? 'var(--ws-text)' : 'var(--ws-text-3)' }} />
-                            </div>
-                          ))}
-                          <div style={{ position: 'absolute', left: `${pctOf(price)}%`, top: '6px', transform: 'translateX(-50%)', textAlign: 'center', whiteSpace: 'nowrap' }}>
-                            <div style={{ width: 0, height: 0, margin: '0 auto', borderLeft: '5px solid transparent', borderRight: '5px solid transparent', borderBottom: '7px solid var(--ws-text)' }} />
-                            <div style={{ fontSize: '10px', color: 'var(--ws-text-2)', marginTop: '4px' }}>Price {curSym(data.currency)}{price.toFixed(2)}</div>
-                          </div>
-                        </div>
-                      </div>
-                      <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '9px', color: 'var(--ws-text-3)', letterSpacing: '1px' }}>
-                        <span>BEAR</span><span>BASE</span><span>BULL</span>
-                      </div>
-                    </div>
-                  )}
-
-                  {/* Scenario cards */}
-                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '12px', marginBottom: '16px' }}>
-                    {scenarios.map(s => (
-                      <div key={s.key} style={{
-                        background: 'var(--ws-bg-1)',
-                        border: s.primary ? '1px solid var(--ws-text)' : '1px solid var(--ws-border)',
-                        padding: '18px',
-                        position: 'relative',
-                      }}>
-                        {s.primary && (
-                          <div style={{ position: 'absolute', top: '-9px', left: '16px', background: 'var(--ws-text)', color: 'var(--ws-bg)', fontSize: '9px', fontWeight: 800, letterSpacing: '1px', padding: '2px 8px' }}>
-                            MAIN ESTIMATE
-                          </div>
-                        )}
-                        <div className="text-ws-text-3 text-[10px] tracking-[2px] mb-3">{s.label} · Fair P/E {s.fairPE}x</div>
-                        <div style={{ fontSize: '30px', fontWeight: 700, letterSpacing: '-1px', marginBottom: '10px', color: 'var(--ws-text)' }}>
-                          {curSym(data.currency)}{s.value}
-                        </div>
-                        {s.diff !== null && (
-                          <div style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', fontSize: '11px', fontWeight: 800, padding: '3px 8px', background: 'var(--ws-bg-2)', color: s.underval ? 'var(--ws-accent)' : 'var(--ws-red)', marginBottom: '12px' }}>
-                            {s.underval ? '▲' : '▼'} {Math.abs(s.diff)}% {s.underval ? 'UPSIDE' : 'DOWNSIDE'}
-                          </div>
-                        )}
-                        {/* Why: the three factors driving this scenario's Fair P/E */}
-                        <div style={{ display: 'flex', flexDirection: 'column', gap: '5px', borderTop: '1px solid var(--ws-border)', paddingTop: '10px' }}>
-                          {[
-                            { f: s.quality, base: 'ROIC' },
-                            { f: s.growth, base: 'Growth' },
-                            { f: s.leverage, base: 'Debt' },
-                          ].map(({ f, base }) => (
-                            <div key={base} style={{ display: 'flex', justifyContent: 'space-between', fontSize: '10px' }}>
-                              <span className="text-ws-text-3">{f ? f.label : `${base} data unavailable`}</span>
-                              <span style={{ color: !f ? 'var(--ws-text-3)' : f.mult > 1 ? 'var(--ws-accent)' : f.mult < 1 ? 'var(--ws-red)' : 'var(--ws-text-2)', fontWeight: 700 }}>
-                                {f ? `${f.mult > 1 ? '+' : ''}${Math.round((f.mult - 1) * 100)}%` : '—'}
-                              </span>
-                            </div>
-                          ))}
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-
-                  <div className="text-ws-text-3 text-[10px] tracking-[1px]">
-                    TRAQCKER VALUE MODEL · EPS FROM SEC EDGAR & FINNHUB · ROIC/GROWTH/DEBT FROM SEC EDGAR · NOT INVESTMENT ADVICE
-                  </div>
-                </>
-              );
-            })() : (
-              <div style={{ background: 'var(--ws-bg-1)', border: '1px solid var(--ws-border)', padding: '40px', textAlign: 'center' }}>
-                <div style={{ color: 'var(--ws-accent)', fontSize: '24px', fontWeight: 600, letterSpacing: '4px', marginBottom: '8px' }}>N/A</div>
-                <div style={{ color: 'var(--ws-text-2)', fontSize: '12px', marginBottom: '4px' }}>{negativeEarnings ? 'NEGATIVE EARNINGS' : 'EPS DATA NOT AVAILABLE'}</div>
-                <div style={{ color: 'var(--ws-text-3)', fontSize: '11px' }}>
-                  {negativeEarnings
-                    ? `A P/E-based estimate isn't meaningful with negative EPS (${curSym(data.currency)}${data.eps.toFixed(2)}).`
-                    : 'The Traqcker Value model requires EPS data.'}
-                </div>
-              </div>
-            )}
-              </>
             )}
           </div>
         )}
