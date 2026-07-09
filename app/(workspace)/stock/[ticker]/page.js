@@ -16,7 +16,7 @@ import {
   getDimScore as sharedGetDimScore,
   totalScore as sharedTotalScore,
   computeEasyMode,
-  computeGrahamValue,
+  computeTraqckerValue,
   computeFairValue,
 } from '../../../../lib/stockScoring';
 
@@ -39,7 +39,7 @@ const NAV = [
     { key: 'overview', label: 'OVERVIEW' },
     { key: 'quality', label: 'QUALITY' },
     { key: 'financials', label: 'FINANCIALS' },
-    { key: 'dcf', label: 'DCF' },
+    { key: 'dcf', label: 'VALUATION' },
     { key: 'insiders', label: 'INSIDERS' },
   ];
 
@@ -381,8 +381,10 @@ export default function StockPage({ params }) {
     || data.roic != null || data.grossMargin != null || (data.revHistory?.length ?? 0) > 0;
 
   const easyMode = computeEasyMode(data, hasFundamentals);
-  const grahamValue = computeGrahamValue(data);
-  const fairValue = computeFairValue(grahamValue, price);
+  const traqckerValue = computeTraqckerValue(data);
+  const baseScenario = traqckerValue?.scenarios.find(s => s.primary);
+  const fairValue = computeFairValue(baseScenario?.value, price);
+  const negativeEarnings = data.eps != null && data.eps <= 0;
 
   return (
     <div className="p-6">
@@ -693,25 +695,31 @@ export default function StockPage({ params }) {
               })()}
 
               {/* Fair value */}
-              {fairValue && (
+              {(fairValue || negativeEarnings) && (
                 <div className="bg-ws-bg-1 border border-ws-border px-[18px] py-4">
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: '12px' }}>
                     <div style={{ fontWeight: 700, fontSize: '13px', color: 'var(--ws-text)' }}>Fair value</div>
-                    <div style={{ fontSize: '11px', fontWeight: 600, letterSpacing: '1px', color: fairValue.tagColor, padding: '3px 8px', backgroundColor: 'var(--ws-bg-2)' }}>{fairValue.tag}</div>
-                  </div>
-                  <div style={{ position: 'relative', height: '10px', background: 'var(--ws-bg-2)' }}>
-                    <div style={{ position: 'absolute', top: '-5px', width: '4px', height: '20px', borderRadius: '2px', background: 'var(--ws-text)', left: `${fairValue.pct}%` }} />
-                  </div>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '8px', fontSize: '10px', color: 'var(--ws-text-3)' }}>
-                    <span>Cheap</span><span>Fair</span><span>Expensive</span>
-                  </div>
-                  <div style={{ marginTop: '12px', fontSize: '12px', color: 'var(--ws-text-2)', lineHeight: 1.6 }}>
-                    {fairValue.negative ? (
-                      <>Negative earnings — no positive estimate. Price: <b className="text-ws-text">{curSym(data.currency)}{price?.toFixed(2)}</b></>
-                    ) : (
-                      <>Price: <b className="text-ws-text">{curSym(data.currency)}{price?.toFixed(2)}</b> · Estimate: <b className="text-ws-text">{curSym(data.currency)}{fairValue.estimate.toFixed(2)}</b></>
+                    {fairValue && (
+                      <div style={{ fontSize: '11px', fontWeight: 600, letterSpacing: '1px', color: fairValue.tagColor, padding: '3px 8px', backgroundColor: 'var(--ws-bg-2)' }}>{fairValue.tag}</div>
                     )}
                   </div>
+                  {fairValue ? (
+                    <>
+                      <div style={{ position: 'relative', height: '10px', background: 'var(--ws-bg-2)' }}>
+                        <div style={{ position: 'absolute', top: '-5px', width: '4px', height: '20px', borderRadius: '2px', background: 'var(--ws-text)', left: `${fairValue.pct}%` }} />
+                      </div>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '8px', fontSize: '10px', color: 'var(--ws-text-3)' }}>
+                        <span>Cheap</span><span>Fair</span><span>Expensive</span>
+                      </div>
+                      <div style={{ marginTop: '12px', fontSize: '12px', color: 'var(--ws-text-2)', lineHeight: 1.6 }}>
+                        Price: <b className="text-ws-text">{curSym(data.currency)}{price?.toFixed(2)}</b> · Estimate: <b className="text-ws-text">{curSym(data.currency)}{fairValue.estimate.toFixed(2)}</b>
+                      </div>
+                    </>
+                  ) : (
+                    <div style={{ fontSize: '12px', color: 'var(--ws-text-2)', lineHeight: 1.6 }}>
+                      Negative earnings — no positive estimate. Price: <b className="text-ws-text">{curSym(data.currency)}{price?.toFixed(2)}</b>
+                    </div>
+                  )}
                 </div>
               )}
 
@@ -1380,26 +1388,18 @@ export default function StockPage({ params }) {
         {/* DCF TAB */}
         {tab === 'dcf' && (
           <div>
-            <div className="text-ws-text-3 text-[10px] tracking-[2px] border-b border-ws-border pb-1.5 mb-3 mt-6">GRAHAM INTRINSIC VALUE</div>
+            <div className="text-ws-text-3 text-[10px] tracking-[2px] border-b border-ws-border pb-1.5 mb-3 mt-6">TRAQCKER VALUE</div>
 
-            {data.eps ? (() => {
-              const scenarios = [
-                { key: 'conservative', label: 'CONSERVATIVE', mult: 0.5, cap: 15, fallbackG: 3, desc: '50% of 5Y EPS CAGR' },
-                { key: 'base', label: 'BASE CASE', mult: 1, cap: 20, fallbackG: 7, desc: '5Y EPS CAGR, as reported', primary: true },
-                { key: 'optimistic', label: 'OPTIMISTIC', mult: 1.5, cap: 25, fallbackG: 12, desc: '150% of 5Y EPS CAGR', },
-              ].map(s => {
-                const g = data.epsCagr !== null && !isNaN(data.epsCagr)
-                  ? Math.max(0, Math.min(+(data.epsCagr * s.mult).toFixed(1), s.cap))
-                  : s.fallbackG;
-                const intrinsic = +(data.eps * (8.5 + 2 * g) * (4.4 / 5.5)).toFixed(2);
-                const diff = price ? +(((intrinsic - price) / price) * 100).toFixed(1) : null;
-                const underval = price ? intrinsic > price : null;
-                return { ...s, g, intrinsic, diff, underval };
+            {traqckerValue ? (() => {
+              const scenarios = traqckerValue.scenarios.map(s => {
+                const diff = price ? +(((s.value - price) / price) * 100).toFixed(1) : null;
+                const underval = price ? s.value > price : null;
+                return { ...s, diff, underval };
               });
 
-              // Range spans conservative→optimistic, stretched to include the current price
-              // so its marker is never clipped off the edge of the gauge.
-              const values = scenarios.map(s => s.intrinsic);
+              // Range spans bear→bull, stretched to include the current price so its
+              // marker is never clipped off the edge of the gauge.
+              const values = scenarios.map(s => s.value);
               const lo = Math.min(...values, price ?? values[0]);
               const hi = Math.max(...values, price ?? values[values.length - 1]);
               const span = (hi - lo) || 1;
@@ -1409,9 +1409,9 @@ export default function StockPage({ params }) {
                 <>
                   {/* Inputs strip */}
                   <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px 24px', background: 'var(--ws-bg-1)', border: '1px solid var(--ws-border)', padding: '14px 16px', marginBottom: '16px', fontSize: '11px' }}>
-                    <div><span className="text-ws-text-3">Formula</span> &nbsp;<span style={{ color: 'var(--ws-accent)' }}>V = EPS × (8.5 + 2g) × 4.4/5.5</span></div>
+                    <div><span className="text-ws-text-3">Formula</span> &nbsp;<span style={{ color: 'var(--ws-accent)' }}>Value = EPS × Fair P/E</span></div>
                     <div><span className="text-ws-text-3">EPS</span> &nbsp;<b className="text-ws-text">{curSym(data.currency)}{data.eps}</b></div>
-                    <div><span className="text-ws-text-3">5Y EPS CAGR (g)</span> &nbsp;<b className="text-ws-text">{data.epsCagr !== null ? `${data.epsCagr}%` : 'N/A'}</b></div>
+                    <div><span className="text-ws-text-3">Base P/E anchor</span> &nbsp;<b className="text-ws-text">{traqckerValue.basePE}x</b></div>
                   </div>
 
                   {/* Valuation range gauge */}
@@ -1421,9 +1421,9 @@ export default function StockPage({ params }) {
                       <div style={{ position: 'relative', paddingTop: '32px', paddingBottom: '38px' }}>
                         <div style={{ position: 'relative', height: '6px', borderRadius: '3px', background: 'linear-gradient(to right, var(--ws-red), var(--ws-text-3), var(--ws-accent))', opacity: 0.35, margin: '0 4px' }}>
                           {scenarios.map(s => (
-                            <div key={s.key} style={{ position: 'absolute', left: `${pctOf(s.intrinsic)}%`, bottom: '6px', transform: 'translateX(-50%)', textAlign: 'center', whiteSpace: 'nowrap' }}>
+                            <div key={s.key} style={{ position: 'absolute', left: `${pctOf(s.value)}%`, bottom: '6px', transform: 'translateX(-50%)', textAlign: 'center', whiteSpace: 'nowrap' }}>
                               <div style={{ fontSize: '11px', fontWeight: 700, color: s.primary ? 'var(--ws-text)' : 'var(--ws-text-3)', marginBottom: '4px' }}>
-                                {curSym(data.currency)}{s.intrinsic}
+                                {curSym(data.currency)}{s.value}
                               </div>
                               <div style={{ width: s.primary ? '3px' : '2px', height: '14px', margin: '0 auto', borderRadius: '2px', background: s.primary ? 'var(--ws-text)' : 'var(--ws-text-3)' }} />
                             </div>
@@ -1435,7 +1435,7 @@ export default function StockPage({ params }) {
                         </div>
                       </div>
                       <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '9px', color: 'var(--ws-text-3)', letterSpacing: '1px' }}>
-                        <span>CONSERVATIVE</span><span>BASE</span><span>OPTIMISTIC</span>
+                        <span>BEAR</span><span>BASE</span><span>BULL</span>
                       </div>
                     </div>
                   )}
@@ -1454,30 +1454,48 @@ export default function StockPage({ params }) {
                             MAIN ESTIMATE
                           </div>
                         )}
-                        <div className="text-ws-text-3 text-[10px] tracking-[2px] mb-3">{s.label} · g = {s.g}%</div>
+                        <div className="text-ws-text-3 text-[10px] tracking-[2px] mb-3">{s.label} · Fair P/E {s.fairPE}x</div>
                         <div style={{ fontSize: '30px', fontWeight: 700, letterSpacing: '-1px', marginBottom: '10px', color: 'var(--ws-text)' }}>
-                          {curSym(data.currency)}{s.intrinsic}
+                          {curSym(data.currency)}{s.value}
                         </div>
                         {s.diff !== null && (
-                          <div style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', fontSize: '11px', fontWeight: 800, padding: '3px 8px', background: 'var(--ws-bg-2)', color: s.underval ? 'var(--ws-accent)' : 'var(--ws-red)' }}>
+                          <div style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', fontSize: '11px', fontWeight: 800, padding: '3px 8px', background: 'var(--ws-bg-2)', color: s.underval ? 'var(--ws-accent)' : 'var(--ws-red)', marginBottom: '12px' }}>
                             {s.underval ? '▲' : '▼'} {Math.abs(s.diff)}% {s.underval ? 'UPSIDE' : 'DOWNSIDE'}
                           </div>
                         )}
-                        <div style={{ color: 'var(--ws-text-3)', fontSize: '10px', marginTop: '10px' }}>{s.desc}</div>
+                        {/* Why: the three factors driving this scenario's Fair P/E */}
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '5px', borderTop: '1px solid var(--ws-border)', paddingTop: '10px' }}>
+                          {[
+                            { f: s.quality, base: 'ROIC' },
+                            { f: s.growth, base: 'Growth' },
+                            { f: s.leverage, base: 'Debt' },
+                          ].map(({ f, base }) => (
+                            <div key={base} style={{ display: 'flex', justifyContent: 'space-between', fontSize: '10px' }}>
+                              <span className="text-ws-text-3">{f ? f.label : `${base} data unavailable`}</span>
+                              <span style={{ color: !f ? 'var(--ws-text-3)' : f.mult > 1 ? 'var(--ws-accent)' : f.mult < 1 ? 'var(--ws-red)' : 'var(--ws-text-2)', fontWeight: 700 }}>
+                                {f ? `${f.mult > 1 ? '+' : ''}${Math.round((f.mult - 1) * 100)}%` : '—'}
+                              </span>
+                            </div>
+                          ))}
+                        </div>
                       </div>
                     ))}
                   </div>
 
                   <div className="text-ws-text-3 text-[10px] tracking-[1px]">
-                    GRAHAM FORMULA (1962) · EPS FROM SEC EDGAR & FINNHUB · GROWTH FROM SEC EDGAR · NOT INVESTMENT ADVICE
+                    TRAQCKER VALUE MODEL · EPS FROM SEC EDGAR & FINNHUB · ROIC/GROWTH/DEBT FROM SEC EDGAR · NOT INVESTMENT ADVICE
                   </div>
                 </>
               );
             })() : (
               <div style={{ background: 'var(--ws-bg-1)', border: '1px solid var(--ws-border)', padding: '40px', textAlign: 'center' }}>
                 <div style={{ color: 'var(--ws-accent)', fontSize: '24px', fontWeight: 600, letterSpacing: '4px', marginBottom: '8px' }}>N/A</div>
-                <div style={{ color: 'var(--ws-text-2)', fontSize: '12px', marginBottom: '4px' }}>EPS DATA NOT AVAILABLE</div>
-                <div style={{ color: 'var(--ws-text-3)', fontSize: '11px' }}>Graham formula requires EPS data from Alpha Vantage.</div>
+                <div style={{ color: 'var(--ws-text-2)', fontSize: '12px', marginBottom: '4px' }}>{negativeEarnings ? 'NEGATIVE EARNINGS' : 'EPS DATA NOT AVAILABLE'}</div>
+                <div style={{ color: 'var(--ws-text-3)', fontSize: '11px' }}>
+                  {negativeEarnings
+                    ? `A P/E-based estimate isn't meaningful with negative EPS (${curSym(data.currency)}${data.eps.toFixed(2)}).`
+                    : 'The Traqcker Value model requires EPS data.'}
+                </div>
               </div>
             )}
           </div>
