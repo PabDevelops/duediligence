@@ -12,9 +12,20 @@ function tagBlock(xml, tag) {
   const m = xml.match(new RegExp(`<${tag}>([\\s\\S]*?)</${tag}>`));
   return m ? m[1] : null;
 }
+// SEC's XML escapes &, <, >, quotes etc. — decode so names/titles like "EVP &amp; CHRO"
+// render as "EVP & CHRO" instead of leaking the raw entity into the UI.
+function decodeXmlEntities(str) {
+  return str
+    .replace(/&amp;/g, '&')
+    .replace(/&lt;/g, '<')
+    .replace(/&gt;/g, '>')
+    .replace(/&quot;/g, '"')
+    .replace(/&apos;/g, "'")
+    .replace(/&#(\d+);/g, (_, code) => String.fromCharCode(code));
+}
 function flatValue(xml, tag) {
   const m = xml.match(new RegExp(`<${tag}>([^<]*)</${tag}>`));
-  return m ? m[1] : null;
+  return m ? decodeXmlEntities(m[1]) : null;
 }
 function nestedValue(xml, tag) {
   const block = tagBlock(xml, tag);

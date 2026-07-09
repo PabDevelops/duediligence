@@ -1573,7 +1573,7 @@ export default function StockPage({ params }) {
                       <thead>
                         <tr style={{ borderBottom: '1px solid var(--ws-border)' }}>
                           {['DATE', 'INSIDER', 'TYPE', 'SHARES', 'PRICE', 'VALUE', 'OWNERSHIP'].map(h => (
-                            <th key={h} style={{ textAlign: h === 'INSIDER' ? 'left' : 'right', padding: '10px 14px', color: 'var(--ws-text-3)', fontSize: '10px', letterSpacing: '1px', fontWeight: 700, whiteSpace: 'nowrap' }}>
+                            <th key={h} style={{ textAlign: h === 'DATE' || h === 'INSIDER' ? 'left' : 'right', padding: '10px 14px', color: 'var(--ws-text-3)', fontSize: '10px', letterSpacing: '1px', fontWeight: 700, whiteSpace: 'nowrap' }}>
                               {h}
                             </th>
                           ))}
