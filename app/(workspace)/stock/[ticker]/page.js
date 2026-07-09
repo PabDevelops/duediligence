@@ -1380,55 +1380,100 @@ export default function StockPage({ params }) {
         {/* DCF TAB */}
         {tab === 'dcf' && (
           <div>
-            <div className="text-ws-text-3 text-[10px] tracking-[2px] border-b border-ws-border pb-1.5 mb-3 mt-6">GRAHAM INTRINSIC VALUE — V = EPS × (8.5 + 2g)</div>
+            <div className="text-ws-text-3 text-[10px] tracking-[2px] border-b border-ws-border pb-1.5 mb-3 mt-6">GRAHAM INTRINSIC VALUE</div>
 
-            {data.eps ? (
-              <>
-                <div style={{ background: 'var(--ws-bg-1)', border: '1px solid var(--ws-border)', padding: '16px', marginBottom: '24px', fontSize: '11px', color: 'var(--ws-text-2)', lineHeight: 1.8 }}>
-                  <span style={{ color: 'var(--ws-accent)' }}>V = EPS × (8.5 + 2g) × (4.4/5.5)</span> &nbsp;·&nbsp;
-                  EPS: <span className="text-ws-text">{curSym(data.currency)}{data.eps}</span> &nbsp;·&nbsp;
-                  5Y EPS CAGR (g): <span className="text-ws-text">{data.epsCagr !== null ? `${data.epsCagr}%` : 'N/A'}</span> &nbsp;·&nbsp;
-                  <span className="text-ws-text-3">Benjamin Graham formula · Not investment advice</span>
-                </div>
+            {data.eps ? (() => {
+              const scenarios = [
+                { key: 'conservative', label: 'CONSERVATIVE', mult: 0.5, cap: 15, fallbackG: 3, desc: '50% of 5Y EPS CAGR' },
+                { key: 'base', label: 'BASE CASE', mult: 1, cap: 20, fallbackG: 7, desc: '5Y EPS CAGR, as reported', primary: true },
+                { key: 'optimistic', label: 'OPTIMISTIC', mult: 1.5, cap: 25, fallbackG: 12, desc: '150% of 5Y EPS CAGR', },
+              ].map(s => {
+                const g = data.epsCagr !== null && !isNaN(data.epsCagr)
+                  ? Math.max(0, Math.min(+(data.epsCagr * s.mult).toFixed(1), s.cap))
+                  : s.fallbackG;
+                const intrinsic = +(data.eps * (8.5 + 2 * g) * (4.4 / 5.5)).toFixed(2);
+                const diff = price ? +(((intrinsic - price) / price) * 100).toFixed(1) : null;
+                const underval = price ? intrinsic > price : null;
+                return { ...s, g, intrinsic, diff, underval };
+              });
 
-                <div className="grid-3" style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '1px', background: 'var(--ws-border)', marginBottom: '24px' }}>
-                  {[
-                    { label: 'CONSERVATIVE', g: data.epsCagr !== null && !isNaN(data.epsCagr) ? Math.min(+(data.epsCagr * 0.5).toFixed(1), 15) : 3, desc: '50% of 5Y EPS CAGR (max 15%)' },
-                    { label: 'BASE', g: data.epsCagr !== null && !isNaN(data.epsCagr) ? Math.min(+Number(data.epsCagr).toFixed(1), 20) : 7, desc: '5Y EPS CAGR historical (max 20%)' },
-                    { label: 'OPTIMISTIC', g: data.epsCagr !== null && !isNaN(data.epsCagr) ? Math.min(+(data.epsCagr * 1.5).toFixed(1), 25) : 12, desc: '150% of 5Y EPS CAGR (max 25%)' },
-                  ].map(scenario => {
-                    const g = Math.max(0, Math.min(scenario.g, 25));
-                    const intrinsic = +(data.eps * (8.5 + 2 * g) * (4.4 / 5.5)).toFixed(2);
-                    const diff = price ? (((intrinsic - price) / price) * 100).toFixed(1) : null;
-                    const underval = price ? intrinsic > price : null;
-                    return (
-                      <div key={scenario.label} style={{ background: 'var(--ws-bg-1)', padding: '20px' }}>
-                        <div className="text-ws-text-3 text-[10px] tracking-[2px] mb-3">{scenario.label}</div>
-                        <div style={{ color: 'var(--ws-text-3)', fontSize: '10px', marginBottom: '4px' }}>g = {g}%</div>
-                        <div style={{ fontSize: '32px', fontWeight: 600, color: underval ? 'var(--ws-accent)' : 'var(--ws-red)', marginBottom: '4px', letterSpacing: '-1px' }}>
-                          {curSym(data.currency)}{intrinsic}
+              // Range spans conservative→optimistic, stretched to include the current price
+              // so its marker is never clipped off the edge of the gauge.
+              const values = scenarios.map(s => s.intrinsic);
+              const lo = Math.min(...values, price ?? values[0]);
+              const hi = Math.max(...values, price ?? values[values.length - 1]);
+              const span = (hi - lo) || 1;
+              const pctOf = (v) => Math.max(0, Math.min(100, ((v - lo) / span) * 100));
+
+              return (
+                <>
+                  {/* Inputs strip */}
+                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px 24px', background: 'var(--ws-bg-1)', border: '1px solid var(--ws-border)', padding: '14px 16px', marginBottom: '16px', fontSize: '11px' }}>
+                    <div><span className="text-ws-text-3">Formula</span> &nbsp;<span style={{ color: 'var(--ws-accent)' }}>V = EPS × (8.5 + 2g) × 4.4/5.5</span></div>
+                    <div><span className="text-ws-text-3">EPS</span> &nbsp;<b className="text-ws-text">{curSym(data.currency)}{data.eps}</b></div>
+                    <div><span className="text-ws-text-3">5Y EPS CAGR (g)</span> &nbsp;<b className="text-ws-text">{data.epsCagr !== null ? `${data.epsCagr}%` : 'N/A'}</b></div>
+                  </div>
+
+                  {/* Valuation range gauge */}
+                  {price != null && (
+                    <div style={{ background: 'var(--ws-bg-1)', border: '1px solid var(--ws-border)', padding: '18px 20px', marginBottom: '16px' }}>
+                      <div style={{ fontSize: '10px', fontWeight: 800, color: 'var(--ws-text-3)', letterSpacing: '1.5px', marginBottom: '10px' }}>VALUATION RANGE</div>
+                      <div style={{ position: 'relative', paddingTop: '32px', paddingBottom: '38px' }}>
+                        <div style={{ position: 'relative', height: '6px', borderRadius: '3px', background: 'linear-gradient(to right, var(--ws-red), var(--ws-text-3), var(--ws-accent))', opacity: 0.35, margin: '0 4px' }}>
+                          {scenarios.map(s => (
+                            <div key={s.key} style={{ position: 'absolute', left: `${pctOf(s.intrinsic)}%`, bottom: '6px', transform: 'translateX(-50%)', textAlign: 'center', whiteSpace: 'nowrap' }}>
+                              <div style={{ fontSize: '11px', fontWeight: 700, color: s.primary ? 'var(--ws-text)' : 'var(--ws-text-3)', marginBottom: '4px' }}>
+                                {curSym(data.currency)}{s.intrinsic}
+                              </div>
+                              <div style={{ width: s.primary ? '3px' : '2px', height: '14px', margin: '0 auto', borderRadius: '2px', background: s.primary ? 'var(--ws-text)' : 'var(--ws-text-3)' }} />
+                            </div>
+                          ))}
+                          <div style={{ position: 'absolute', left: `${pctOf(price)}%`, top: '6px', transform: 'translateX(-50%)', textAlign: 'center', whiteSpace: 'nowrap' }}>
+                            <div style={{ width: 0, height: 0, margin: '0 auto', borderLeft: '5px solid transparent', borderRight: '5px solid transparent', borderBottom: '7px solid var(--ws-text)' }} />
+                            <div style={{ fontSize: '10px', color: 'var(--ws-text-2)', marginTop: '4px' }}>Price {curSym(data.currency)}{price.toFixed(2)}</div>
+                          </div>
                         </div>
-                        <div style={{ color: 'var(--ws-text-3)', fontSize: '10px', marginBottom: '12px' }}>{scenario.desc}</div>
-                        {diff !== null && (
-                          <div style={{ borderTop: '1px solid var(--ws-border)', paddingTop: '10px' }}>
-                            <div style={{ color: underval ? 'var(--ws-accent)' : 'var(--ws-red)', fontSize: '13px', fontWeight: 600 }}>
-                              {underval ? '+' : '-'} {Math.abs(diff)}% {underval ? 'UPSIDE' : 'DOWNSIDE'}
-                            </div>
-                            <div style={{ color: 'var(--ws-text-3)', fontSize: '10px', marginTop: '2px' }}>
-                              vs current price {curSym(data.currency)}{price?.toFixed(2)}
-                            </div>
+                      </div>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '9px', color: 'var(--ws-text-3)', letterSpacing: '1px' }}>
+                        <span>CONSERVATIVE</span><span>BASE</span><span>OPTIMISTIC</span>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Scenario cards */}
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '12px', marginBottom: '16px' }}>
+                    {scenarios.map(s => (
+                      <div key={s.key} style={{
+                        background: 'var(--ws-bg-1)',
+                        border: s.primary ? '1px solid var(--ws-text)' : '1px solid var(--ws-border)',
+                        padding: '18px',
+                        position: 'relative',
+                      }}>
+                        {s.primary && (
+                          <div style={{ position: 'absolute', top: '-9px', left: '16px', background: 'var(--ws-text)', color: 'var(--ws-bg)', fontSize: '9px', fontWeight: 800, letterSpacing: '1px', padding: '2px 8px' }}>
+                            MAIN ESTIMATE
                           </div>
                         )}
+                        <div className="text-ws-text-3 text-[10px] tracking-[2px] mb-3">{s.label} · g = {s.g}%</div>
+                        <div style={{ fontSize: '30px', fontWeight: 700, letterSpacing: '-1px', marginBottom: '10px', color: 'var(--ws-text)' }}>
+                          {curSym(data.currency)}{s.intrinsic}
+                        </div>
+                        {s.diff !== null && (
+                          <div style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', fontSize: '11px', fontWeight: 800, padding: '3px 8px', background: 'var(--ws-bg-2)', color: s.underval ? 'var(--ws-accent)' : 'var(--ws-red)' }}>
+                            {s.underval ? '▲' : '▼'} {Math.abs(s.diff)}% {s.underval ? 'UPSIDE' : 'DOWNSIDE'}
+                          </div>
+                        )}
+                        <div style={{ color: 'var(--ws-text-3)', fontSize: '10px', marginTop: '10px' }}>{s.desc}</div>
                       </div>
-                    );
-                  })}
-                </div>
+                    ))}
+                  </div>
 
-                <div className="text-ws-text-3 text-[10px] tracking-[1px]">
-                  GRAHAM FORMULA (1962) · EPS FROM SEC EDGAR & FINNHUB · GROWTH FROM SEC EDGAR · NOT INVESTMENT ADVICE
-                </div>
-              </>
-            ) : (
+                  <div className="text-ws-text-3 text-[10px] tracking-[1px]">
+                    GRAHAM FORMULA (1962) · EPS FROM SEC EDGAR & FINNHUB · GROWTH FROM SEC EDGAR · NOT INVESTMENT ADVICE
+                  </div>
+                </>
+              );
+            })() : (
               <div style={{ background: 'var(--ws-bg-1)', border: '1px solid var(--ws-border)', padding: '40px', textAlign: 'center' }}>
                 <div style={{ color: 'var(--ws-accent)', fontSize: '24px', fontWeight: 600, letterSpacing: '4px', marginBottom: '8px' }}>N/A</div>
                 <div style={{ color: 'var(--ws-text-2)', fontSize: '12px', marginBottom: '4px' }}>EPS DATA NOT AVAILABLE</div>
