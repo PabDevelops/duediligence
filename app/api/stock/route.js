@@ -561,16 +561,17 @@ export async function GET(request) {
       // Fallback for stocks not covered by SEC EDGAR (non-US filers, IFRS reporters, etc.).
       // Fetch Finnhub and Yahoo fundamentals in parallel so we can combine the best of each:
       // Finnhub for price/profile/TTM metrics, Yahoo for full financial-statement history.
+      const safeFinnhubJson = (res) => res.ok ? res.json().catch(() => ({})) : Promise.resolve({});
       const [fhRes, fhBasicRes, fhProfileRes, yhFundamentals] = await Promise.all([
-        fetch(`https://finnhub.io/api/v1/quote?symbol=${ticker}&token=${FH_KEY}`),
-        fetch(`https://finnhub.io/api/v1/stock/metric?symbol=${ticker}&metric=all&token=${FH_KEY}`),
-        fetch(`https://finnhub.io/api/v1/stock/profile2?symbol=${ticker}&token=${FH_KEY}`),
+        fetch(`https://finnhub.io/api/v1/quote?symbol=${ticker}&token=${FH_KEY}`).catch(() => null),
+        fetch(`https://finnhub.io/api/v1/stock/metric?symbol=${ticker}&metric=all&token=${FH_KEY}`).catch(() => null),
+        fetch(`https://finnhub.io/api/v1/stock/profile2?symbol=${ticker}&token=${FH_KEY}`).catch(() => null),
         fetchYahooFundamentals(ticker).catch(() => null),
       ]);
 
-      const fh = await fhRes.json();
-      const fhBasic = await fhBasicRes.json();
-      const fhProfile = await fhProfileRes.json();
+      const fh = fhRes ? await safeFinnhubJson(fhRes) : {};
+      const fhBasic = fhBasicRes ? await safeFinnhubJson(fhBasicRes) : {};
+      const fhProfile = fhProfileRes ? await safeFinnhubJson(fhProfileRes) : {};
 
       if (!fhProfile.name) {
         // Finnhub's profile2 is company-oriented and often comes back empty for ETFs/funds
@@ -861,15 +862,16 @@ const roic        = investedCapital > 0 && oiVal !== null ? +((oiVal / investedC
       ? +(((sharesLatest - sharesOldest) / sharesOldest) * 100).toFixed(1)
       : null;
 
+    const safeFinnhubJson = (res) => res.ok ? res.json().catch(() => ({})) : Promise.resolve({});
     const [fhRes, fhBasicRes, fhProfileRes] = await Promise.all([
-      fetch(`https://finnhub.io/api/v1/quote?symbol=${ticker}&token=${FH_KEY}`),
-      fetch(`https://finnhub.io/api/v1/stock/metric?symbol=${ticker}&metric=all&token=${FH_KEY}`),
-      fetch(`https://finnhub.io/api/v1/stock/profile2?symbol=${ticker}&token=${FH_KEY}`),
+      fetch(`https://finnhub.io/api/v1/quote?symbol=${ticker}&token=${FH_KEY}`).catch(() => null),
+      fetch(`https://finnhub.io/api/v1/stock/metric?symbol=${ticker}&metric=all&token=${FH_KEY}`).catch(() => null),
+      fetch(`https://finnhub.io/api/v1/stock/profile2?symbol=${ticker}&token=${FH_KEY}`).catch(() => null),
     ]);
 
-    const fh = await fhRes.json();
-    const fhBasic = await fhBasicRes.json();
-    const fhProfile = await fhProfileRes.json();
+    const fh = fhRes ? await safeFinnhubJson(fhRes) : {};
+    const fhBasic = fhBasicRes ? await safeFinnhubJson(fhBasicRes) : {};
+    const fhProfile = fhProfileRes ? await safeFinnhubJson(fhProfileRes) : {};
 
     const currentPrice   = fh.c || null;
     const priceChange    = fh.d || null;
