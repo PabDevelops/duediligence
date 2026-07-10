@@ -4,6 +4,7 @@ import { ComposedChart, Area, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, 
 import {
   computeProjectionDrift,
   computeAnnualizedVolatility,
+  computeBlendedVolatility,
   computeHistoricalCagr,
   computeProjection,
 } from '../../../../lib/stockScoring';
@@ -34,29 +35,38 @@ const fmtOffset = (years) => {
 export default function ProjectionChart({ ticker, data, dcfValue, price, currency }) {
   const [horizonKey, setHorizonKey] = useState('1y');
   const [closes, setCloses] = useState(null);
+  const [marketVolAnnual, setMarketVolAnnual] = useState(null);
   const [loading, setLoading] = useState(true);
   const [rerollKey, setRerollKey] = useState(0);
 
   const horizon = HORIZONS.find(h => h.key === horizonKey);
 
-  // 1y of daily closes doubles as the volatility estimate and the historical-CAGR signal —
-  // fetched once per ticker, independent of the horizon selector.
+  // 1y of daily closes doubles as the historical-vol estimate and the historical-CAGR
+  // signal. VIX/100 doubles as the market's current annualized vol for the beta signal —
+  // fetched once, not per-ticker, since it's the same number for every stock.
   useEffect(() => {
     let active = true;
     setLoading(true);
-    fetch(`/api/chart?ticker=${ticker}&range=1y`)
-      .then(r => r.json())
-      .then(d => {
-        if (!active) return;
-        setCloses((d.candles || []).map(c => c.c).filter(v => v > 0));
-        setLoading(false);
-      })
-      .catch(() => { if (active) setLoading(false); });
+    Promise.all([
+      fetch(`/api/chart?ticker=${ticker}&range=1y`).then(r => r.json()).catch(() => ({ candles: [] })),
+      fetch(`/api/market`).then(r => r.json()).catch(() => ({ markets: [] })),
+    ]).then(([chartData, marketData]) => {
+      if (!active) return;
+      setCloses((chartData.candles || []).map(c => c.c).filter(v => v > 0));
+      const vix = marketData.markets?.find(m => m.symbol === '^VIX')?.price;
+      setMarketVolAnnual(vix ? vix / 100 : null);
+      setLoading(false);
+    });
     return () => { active = false; };
   }, [ticker]);
 
-  const volAnnual = useMemo(() => computeAnnualizedVolatility(closes), [closes]);
+  const historicalVol = useMemo(() => computeAnnualizedVolatility(closes), [closes]);
   const historicalCagr = useMemo(() => computeHistoricalCagr(closes), [closes]);
+
+  const volAnnual = useMemo(
+    () => computeBlendedVolatility({ historicalVol, beta: data.beta, marketVolAnnual }),
+    [historicalVol, data.beta, marketVolAnnual]
+  );
 
   const analystDrift = data.analystTarget && price ? (data.analystTarget / price) - 1 : null;
   const impliedGrowth = dcfValue?.baseGrowth ?? null;
@@ -154,8 +164,11 @@ export default function ProjectionChart({ ticker, data, dcfValue, price, currenc
           )}
         </div>
         <div><span className="text-ws-text-3">Annual volatility</span> &nbsp;<b className="text-ws-text">{(volAnnual * 100).toFixed(1)}%</b></div>
-        <div><span className="text-ws-text-3">Sources</span> &nbsp;<b className="text-ws-text">
+        <div><span className="text-ws-text-3">Drift sources</span> &nbsp;<b className="text-ws-text">
           {[impliedGrowth != null && 'DCF', historicalCagr != null && '1Y CAGR', analystDrift != null && 'Analyst target'].filter(Boolean).join(' + ') || '—'}
+        </b></div>
+        <div><span className="text-ws-text-3">Vol sources</span> &nbsp;<b className="text-ws-text">
+          {[historicalVol != null && '1Y realized', (data.beta != null && marketVolAnnual != null) && 'Beta × VIX'].filter(Boolean).join(' + ') || '—'}
         </b></div>
       </div>
 
