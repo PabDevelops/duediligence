@@ -1,6 +1,6 @@
 import { supabase } from '../../../lib/supabase';
 
-const FH_KEY = 'd8he51pr01qgcfbpbuo0d8he51pr01qgcfbpbuog';
+const FH_KEY = process.env.FINNHUB_API_KEY;
 
 export async function GET(req) {
   try {

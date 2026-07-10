@@ -196,10 +196,11 @@ export default function WorkspaceHome() {
       .then(r => r.json())
       .then(setMovers);
 
-    // 4. Fetch earnings calendar
+    // 4. Fetch earnings calendar — sorted by date so "first 6" (below) actually means
+    // "next 6 soonest," matching the chronological order the full Calendar page shows.
     fetch('/api/earnings')
       .then(r => r.json())
-      .then(d => setEarnings(d.earnings || []));
+      .then(d => setEarnings((d.earnings || []).sort((a, b) => a.date.localeCompare(b.date))));
 
     // 5. Fetch watchlist from Supabase
     fetch('/api/watchlist')
