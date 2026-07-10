@@ -3,6 +3,7 @@ import { useState, useEffect, useMemo, use } from 'react';
 import { BarChart, Bar, LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell } from 'recharts';
 import PriceChart from './chart';
 import StockChart from '../../../components/StockChart';
+import ProjectionChart from '../../../components/workspace/stock/ProjectionChart';
 import Sparkline from '../../../components/Sparkline';
 import SparklineHeader from '../../../components/SparklineHeader';
 import OnboardingBanner from '../../../components/OnboardingBanner';
@@ -42,6 +43,7 @@ const NAV = [
     { key: 'quality', label: 'QUALITY' },
     { key: 'financials', label: 'FINANCIALS' },
     { key: 'dcf', label: 'VALUATION' },
+    { key: 'projection', label: 'PROJECTION' },
     { key: 'insiders', label: 'INSIDERS' },
   ];
 
@@ -1490,6 +1492,11 @@ export default function StockPage({ params }) {
               </div>
             )}
           </div>
+        )}
+
+        {/* PROJECTION TAB — GBM random-walk price path + analytic confidence band */}
+        {tab === 'projection' && (
+          <ProjectionChart ticker={ticker} data={data} dcfValue={dcfValue} price={price} currency={data.currency} />
         )}
 
         {/* INSIDERS TAB — Form 3/4/5 buy/sell activity, SEC EDGAR primary / Finnhub fallback */}
