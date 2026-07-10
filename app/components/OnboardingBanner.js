@@ -2,9 +2,9 @@
 import { useState, useEffect } from 'react';
 
 const TIPS = [
-  { title: 'Quality Score', desc: '0–100. Above 70 means a fundamentally strong business.' },
-  { title: 'Fair Value',    desc: 'Graham formula estimate. Below price means potentially undervalued.' },
-  { title: 'Explore tabs',  desc: 'Financials, Valuation, Quality scorecard — all from real filings.' },
+  { title: 'Search a stock',  desc: 'Look up any company to see its Quality Score and DCF valuation, computed from SEC filings.' },
+  { title: 'Track it',        desc: 'Add tickers to your Watchlist, or log real trades in Portfolio to follow them over time.' },
+  { title: 'No idea yet?',    desc: 'Radar ranks stocks by quality, valuation, and momentum — a place to start browsing.' },
 ];
 
 export default function OnboardingBanner() {

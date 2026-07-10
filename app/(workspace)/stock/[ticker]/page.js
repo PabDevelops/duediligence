@@ -6,7 +6,6 @@ import StockChart from '../../../components/StockChart';
 import ProjectionChart from '../../../components/workspace/stock/ProjectionChart';
 import Sparkline from '../../../components/Sparkline';
 import SparklineHeader from '../../../components/SparklineHeader';
-import OnboardingBanner from '../../../components/OnboardingBanner';
 import ShareCardComponent from '../../../components/ShareCard';
 import AchievementToast from '../../../components/AchievementToast';
 import MarketStatusDot from '../../../components/workspace/MarketStatusDot';
@@ -392,8 +391,6 @@ export default function StockPage({ params }) {
 
   return (
     <div className="p-6">
-
-      <OnboardingBanner />
 
       {/* TERMINAL HERO */}
       <div style={{ border: '1px solid var(--ws-border)', background: 'var(--ws-bg-1)', marginBottom: '20px', overflow: 'hidden' }}>

@@ -13,6 +13,47 @@ import TechnicalScanner from '../../components/workspace/compare/TechnicalScanne
 import InsiderActivity from '../../components/workspace/compare/InsiderActivity';
 const fmtP = (v) => fmtPercent(v, { decimals: 1 });
 
+// Curated thematic/industry baskets — migrated in from the old standalone Explore page.
+// Explore's other categories (market movers, high/low P/E, volatility, upcoming earnings,
+// watchlist) were cut entirely: movers and fundamentals already have dedicated tabs right
+// here, and the dynamic screens duplicated what the Screener page does properly. These
+// curated collections were the one thing Explore had that nothing else in the app covers.
+const THEME_CATEGORIES = [
+  { id: 'bigtech', label: 'Big Tech' },
+  { id: 'ai', label: 'AI & Semiconductors' },
+  { id: 'defence', label: 'Defence' },
+  { id: 'quantum', label: 'Quantum Computing' },
+  { id: 'evs', label: 'EVs' },
+  { id: 'banks', label: 'Banks & Financials' },
+  { id: 'dividends', label: 'Dividend Aristocrats' },
+  { id: 'cybersecurity', label: 'Cybersecurity' },
+  { id: 'biotech', label: 'Biotech & Drugs' },
+  { id: 'energy', label: 'Oil & Gas' },
+];
+
+const INDUSTRY_CATEGORIES = [
+  { id: 'bigpharma', label: 'Big Pharma' },
+  { id: 'reit', label: 'REIT' },
+  { id: 'airlines', label: 'Airlines' },
+  { id: 'automotive', label: 'Automotive' },
+  { id: 'chipmakers', label: 'Chipmakers' },
+  { id: 'insurance', label: 'Insurance Giants' },
+  { id: 'hotels', label: 'Hotels' },
+  { id: 'restaurants', label: 'Restaurants' },
+  { id: 'regionalbanks', label: 'Regional Banks' },
+  { id: 'mining', label: 'Mining Prospects' },
+  { id: 'chemicals', label: 'Chemical Manufacturing' },
+  { id: 'railroads', label: 'Railroads' },
+  { id: 'motionpictures', label: 'Motion Pictures' },
+  { id: 'broadcasting', label: 'Broadcasting & Cable' },
+  { id: 'grocery', label: 'Grocery Stores' },
+  { id: 'footwear', label: 'Footwear' },
+  { id: 'fashion', label: 'Fashion' },
+  { id: 'robotics', label: 'Robotics' },
+  { id: 'crypto', label: 'Crypto & Blockchain' },
+  { id: 'spac', label: 'SPAC-Born' },
+];
+
 export default function MarketRadar() {
   const router = useRouter();
   const { isSignedIn } = useUser();
@@ -33,7 +74,28 @@ export default function MarketRadar() {
   const [showSuggestions, setShowSuggestions] = useState(false);
 
   // Tab control
-  const [activeTab, setActiveTab] = useState('movers'); // 'movers' | 'fundamentals'
+  const [activeTab, setActiveTab] = useState('movers'); // 'movers' | 'fundamentals' | 'baskets'
+
+  // Baskets tab state — fetched lazily per category, cached so re-selecting is instant
+  const [basketCategory, setBasketCategory] = useState('bigtech');
+  const [basketCache, setBasketCache] = useState({});
+  const [loadingBasket, setLoadingBasket] = useState(false);
+
+  // Load the selected basket, on demand, once per category
+  useEffect(() => {
+    if (activeTab !== 'baskets' || basketCache[basketCategory]) return;
+    setLoadingBasket(true);
+    fetch(`/api/explore?category=${basketCategory}`)
+      .then(r => r.json())
+      .then(data => {
+        setBasketCache(prev => ({ ...prev, [basketCategory]: data.stocks || [] }));
+        // Seed any tickers the cache didn't have yet, same on-demand pattern the ETF
+        // screener's search bar uses — next visit to this category will show them.
+        (data.missing || []).forEach(ticker => { fetch(`/api/stock?ticker=${ticker}`).catch(() => {}); });
+      })
+      .catch(() => setBasketCache(prev => ({ ...prev, [basketCategory]: [] })))
+      .finally(() => setLoadingBasket(false));
+  }, [activeTab, basketCategory, basketCache]);
 
   // Load indices & movers dataset
   useEffect(() => {
@@ -374,10 +436,114 @@ export default function MarketRadar() {
           >
             FUNDAMENTAL LEADERS
           </button>
+          <button
+            onClick={() => setActiveTab('baskets')}
+            style={{
+              background: 'none',
+              border: 'none',
+              borderBottom: activeTab === 'baskets' ? '2.5px solid var(--ws-accent)' : '2.5px solid transparent',
+              color: activeTab === 'baskets' ? 'var(--ws-text)' : 'var(--ws-text-3)',
+              padding: '8px 12px 10px',
+              fontWeight: 800,
+              fontSize: '12px',
+              cursor: 'pointer',
+              transition: 'all 0.15s'
+            }}
+          >
+            BASKETS
+          </button>
         </div>
 
         {/* Data Cards Grid */}
-        {activeTab === 'movers' ? (
+        {activeTab === 'baskets' ? (
+          <div>
+            {/* Category pills — two labeled groups, thematic then industry */}
+            {[
+              { title: 'THEMATIC', items: THEME_CATEGORIES },
+              { title: 'INDUSTRIES', items: INDUSTRY_CATEGORIES },
+            ].map(group => (
+              <div key={group.title} style={{ marginBottom: '10px' }}>
+                <div style={{ fontSize: '9px', fontWeight: 800, color: 'var(--ws-text-3)', letterSpacing: '1.5px', marginBottom: '6px' }}>
+                  {group.title}
+                </div>
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
+                  {group.items.map(cat => (
+                    <button key={cat.id} onClick={() => setBasketCategory(cat.id)}
+                      style={{
+                        padding: '5px 10px',
+                        fontSize: '11px',
+                        fontWeight: basketCategory === cat.id ? 700 : 500,
+                        background: basketCategory === cat.id ? 'var(--ws-accent-dim)' : 'var(--ws-bg-1)',
+                        border: '1px solid ' + (basketCategory === cat.id ? 'var(--ws-accent)' : 'var(--ws-border)'),
+                        color: basketCategory === cat.id ? 'var(--ws-accent)' : 'var(--ws-text-2)',
+                        cursor: 'pointer',
+                      }}>
+                      {cat.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            ))}
+
+            {/* Basket results table */}
+            <div className="bg-ws-bg-1 border border-ws-border overflow-hidden" style={{ marginTop: '14px' }}>
+              {loadingBasket ? (
+                <div style={{ padding: '40px 20px', textAlign: 'center', color: 'var(--ws-text-3)', fontSize: '11px' }}>
+                  LOADING…
+                </div>
+              ) : (basketCache[basketCategory] || []).length === 0 ? (
+                <div style={{ padding: '40px 20px', textAlign: 'center', color: 'var(--ws-text-3)', fontSize: '12px' }}>
+                  No data available for this basket yet.
+                </div>
+              ) : (
+                <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '12px', textAlign: 'left' }}>
+                  <thead>
+                    <tr style={{ background: 'var(--ws-bg-2)' }}>
+                      <th style={{ padding: '10px 16px', fontWeight: 700, fontSize: '10px', color: 'var(--ws-text-3)', borderBottom: '2px solid var(--ws-border)' }}>NAME</th>
+                      <th style={{ padding: '10px 16px', textAlign: 'right', fontWeight: 700, fontSize: '10px', color: 'var(--ws-text-3)', borderBottom: '2px solid var(--ws-border)' }}>PRICE</th>
+                      <th style={{ padding: '10px 16px', textAlign: 'right', fontWeight: 700, fontSize: '10px', color: 'var(--ws-text-3)', borderBottom: '2px solid var(--ws-border)' }}>CHANGE</th>
+                      <th style={{ padding: '10px 16px', width: '40px', borderBottom: '2px solid var(--ws-border)' }} />
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {basketCache[basketCategory].map((s, idx) => {
+                      const isUp = s.priceChangePct != null && s.priceChangePct >= 0;
+                      const inWatchlist = watchlist.includes(s.ticker);
+                      return (
+                        <tr key={s.ticker} onClick={() => triggerSpotlight(s.ticker)}
+                          style={{ cursor: 'pointer', background: idx % 2 === 0 ? 'var(--ws-bg-1)' : 'var(--ws-bg-2)', borderBottom: '1px solid var(--ws-border)' }}>
+                          <td style={{ padding: '10px 16px' }}>
+                            <span style={{ fontWeight: 800, color: 'var(--ws-text)', marginRight: '8px' }}>{s.ticker}</span>
+                            <span style={{ color: 'var(--ws-text-2)', maxWidth: '220px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{s.name}</span>
+                          </td>
+                          <td style={{ padding: '10px 16px', textAlign: 'right', fontWeight: 600, color: 'var(--ws-text)' }}>
+                            {s.currentPrice != null ? `$${s.currentPrice.toFixed(2)}` : '—'}
+                          </td>
+                          <td style={{ padding: '10px 16px', textAlign: 'right', fontWeight: 700, color: s.priceChangePct == null ? 'var(--ws-text-3)' : isUp ? 'var(--ws-accent)' : 'var(--ws-red)' }}>
+                            {s.priceChangePct != null ? `${isUp ? '+' : ''}${s.priceChangePct.toFixed(2)}%` : '—'}
+                          </td>
+                          <td style={{ padding: '10px 16px', textAlign: 'center' }}>
+                            <button
+                              onClick={(e) => { e.stopPropagation(); toggleWatchlist(s.ticker); }}
+                              title={inWatchlist ? 'Remove from Watchlist' : 'Add to Watchlist'}
+                              style={{
+                                width: '22px', height: '22px', borderRadius: '4px', border: '1px solid var(--ws-border)',
+                                background: inWatchlist ? 'var(--ws-text)' : 'var(--ws-bg-2)',
+                                color: inWatchlist ? 'var(--ws-bg)' : 'var(--ws-text)',
+                                fontSize: '12px', fontWeight: 700, cursor: 'pointer', lineHeight: 1,
+                              }}>
+                              {inWatchlist ? '✓' : '+'}
+                            </button>
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              )}
+            </div>
+          </div>
+        ) : activeTab === 'movers' ? (
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '16px' }}>
             {/* Top Gainers */}
             <div className="bg-ws-bg-1 border border-ws-border p-4 flex flex-col gap-2.5">

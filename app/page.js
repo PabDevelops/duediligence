@@ -23,16 +23,6 @@ export default function Home() {
 
   const valueProps = [
     {
-      title: "Cut research time",
-      tagline: "AI queries on any company, filing, or metric",
-      desc: "Ask complex questions like 'what are the main risks outlined in their last 10-K?' or 'how has capital allocation changed?' and get instant, cited answers from Traq AI.",
-      mockup: (
-        <WindowChrome title="terminal.traqcker.com/chat — Traq Research Assistant">
-          <Shot src="/screenshots/chat.png" alt="Traq AI research assistant analyzing company risks" />
-        </WindowChrome>
-      )
-    },
-    {
       title: "Be first",
       tagline: "Global live coverage of filings and prices",
       desc: "Get real-time alerts as soon as filings hit the SEC EDGAR system. Watchlists and portfolios synchronize prices and currency rates continuously to show movements instantly.",
@@ -427,14 +417,6 @@ export default function Home() {
               },
               {
                 step: '06',
-                title: 'Ask Traq AI the hard questions',
-                desc: "Get instant, cited answers to questions like \"what changed in their debt covenants?\" pulled directly from the filings, not a generic summary.",
-                src: '/screenshots/chat.png',
-                alt: 'Traq AI research assistant answering questions about filings',
-                windowTitle: 'terminal.traqcker.com/chat — Traq Research Assistant'
-              },
-              {
-                step: '07',
                 title: 'Never miss a catalyst',
                 desc: 'The earnings calendar and live filing feed keep you ahead of reports, dividends, and SEC EDGAR alerts for everything on your radar.',
                 src: '/screenshots/calendar.png',

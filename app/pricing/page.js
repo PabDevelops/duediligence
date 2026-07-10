@@ -73,7 +73,6 @@ export default function Pricing() {
                 'Full financial statements & detailed valuation ratios',
                 'Stock screener (thousands of global equities)',
                 'Compare up to 3 stocks',
-                'Traq AI research assistant',
                 'Vote history & accuracy tracking',
               ].map(f => (
                 <div key={f} style={{ display: 'flex', gap: '10px', alignItems: 'flex-start', color: 'var(--text-2)', fontSize: '14px', lineHeight: 1.5 }}>

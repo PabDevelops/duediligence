@@ -24,18 +24,6 @@ const NAV_ITEMS = [
       <polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/>
     </svg>
   )},
-  { id: 'explore', href: '/explore', label: 'Explore', icon: (active) => (
-    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke={active ? 'var(--ws-accent)' : 'currentColor'} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-      <circle cx="12" cy="12" r="10"/>
-      <polygon points="16.24 7.76 14.12 14.12 7.76 16.24 9.88 9.88 16.24 7.76"/>
-    </svg>
-  )},
-  { id: 'news', href: '/news', label: 'News', icon: (active) => (
-    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke={active ? 'var(--ws-accent)' : 'currentColor'} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-      <path d="M4 22h16a2 2 0 0 0 2-2V4a2 2 0 0 0-2-2H8a2 2 0 0 0-2 2v16a2 2 0 0 1-2 2Zm0 0a2 2 0 0 1-2-2v-9c0-1.1.9-2 2-2h2"/>
-      <path d="M18 14h-8"/><path d="M15 18h-5"/><path d="M10 6h8v4h-8V6Z"/>
-    </svg>
-  )},
   { id: 'etfs', href: '/etfs', label: 'ETFs', icon: (active) => (
     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke={active ? 'var(--ws-accent)' : 'currentColor'} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
       <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/>
@@ -54,11 +42,6 @@ const NAV_ITEMS = [
   { id: 'portfolio', href: '/portfolio', label: 'Portfolio', icon: (active) => (
     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke={active ? 'var(--ws-accent)' : 'currentColor'} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
       <rect width="20" height="14" x="2" y="5" rx="2"/><line x1="2" x2="22" y1="10" y2="10"/>
-    </svg>
-  )},
-  { id: 'chat', href: '/chat', label: 'TRAQ', icon: (active) => (
-    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke={active ? 'var(--ws-accent)' : 'currentColor'} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-      <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
     </svg>
   )},
   { id: 'watchlist', href: '/watchlist', label: 'Watchlist', icon: (active) => (

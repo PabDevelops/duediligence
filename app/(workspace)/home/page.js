@@ -8,65 +8,29 @@ import { formatPriceWithSymbol as formatCurrency } from '../../../lib/formatters
 import { useCurrencyRates } from '../../../lib/hooks/useCurrencyRates';
 import { distributeMasonryColumns } from '../../../lib/homeLayout';
 import StockLogo from '../../components/workspace/StockLogo';
-import GearIcon from '../../components/workspace/home/GearIcon';
 import NewsImage from '../../components/workspace/home/NewsImage';
 import Card from '../../components/workspace/home/Card';
+import OnboardingBanner from '../../components/OnboardingBanner';
 
 // Same set + localStorage key as the dedicated /portfolio page, so the display
 // currency preference stays in sync between that page and this dashboard widget.
 const CURRENCIES = { USD: '$', EUR: '€', GBP: '£' };
 
-// "Movers" (gainers) dropped from here — it's now covered by the header marquee's
-// dropdown, so this widget focuses on the proprietary quality metrics that live
-// nowhere else in the app. topFcfYield/topRevGrowth were already computed by
-// /api/movers but never actually rendered anywhere until now.
-const MOVER_TABS = [
-  {
-    key: 'topRoic', label: 'High ROIC',
-    renderValue: (s) => <span className="text-xs font-bold text-ws-text">{s.roic?.toFixed(1)}% ROIC</span>
-  },
-  {
-    key: 'topFcfYield', label: 'FCF Yield',
-    renderValue: (s) => <span className="text-xs font-bold text-ws-text">{s.fcfYield?.toFixed(1)}%</span>
-  },
-  {
-    key: 'topRevGrowth', label: 'Rev Growth',
-    renderValue: (s) => <span style={{ fontSize: '12px', fontWeight: 700, color: '#10b981' }}>+{s.revGrowth?.toFixed(1)}%</span>
-  },
-  {
-    key: 'topScore', label: 'Top Scores',
-    renderValue: (s) => (
-      <span style={{ fontSize: '11px', background: 'var(--ws-accent-dim)', color: 'var(--ws-accent)', padding: '2px 6px', borderRadius: '4px', fontWeight: 700 }}>
-        {s.score}
-      </span>
-    )
-  }
-];
-
-const DEFAULT_WIDGETS = [
-  { id: 'indices', column: 'left', order: 0, visible: true },
-  { id: 'portfolio', column: 'left', order: 1, visible: true },
-  { id: 'sotw', column: 'left', order: 2, visible: true },
-  { id: 'workspace', column: 'left', order: 3, visible: true },
-  { id: 'earnings', column: 'right', order: 0, visible: true },
-  { id: 'movers', column: 'right', order: 1, visible: true },
-  { id: 'secFeed', column: 'right', order: 2, visible: true }
-];
+// Fixed dashboard layout — a new user with an empty portfolio/watchlist shouldn't have to
+// configure a dashboard before it's useful. Drag-to-reorder and per-widget visibility used
+// to live here; if a genuinely power-user "advanced mode" is worth building later, it should
+// be designed fresh for that purpose rather than re-enabling this. Market Intelligence,
+// Earnings Calendar and Stock of the Week were cut entirely — they duplicated content that
+// already lives (in more depth) on the Radar and Calendar pages, or added little beyond a
+// gimmick once the community-voting angle was removed. News stays: unlike those, it's
+// content the user actually comes back to Home to read.
+const LEFT_WIDGETS = ['indices', 'portfolio', 'workspace'];
+const RIGHT_WIDGETS = ['secFeed'];
 
 export default function WorkspaceHome() {
   const router = useRouter();
   
-  // Layout States
-  const [widgets, setWidgets] = useState([]);
-  const [draggedId, setDraggedId] = useState(null);
-
-  const [showConfig, setShowConfig] = useState(false);
-  const [layoutMode, setLayoutMode] = useState('split');
-
-  // Mobile gets a single fixed widget order/column — dragging into left/right
-  // columns is a desktop-mouse feature that doesn't translate to touch, and
-  // whatever split a user dragged into on desktop shouldn't also apply on
-  // a narrow phone screen where there's only room for one column anyway.
+  // Mobile collapses the two-column layout into a single fixed-order column.
   const [isMobile, setIsMobile] = useState(false);
   useEffect(() => {
     const check = () => setIsMobile(window.innerWidth < 1024);
@@ -102,18 +66,12 @@ export default function WorkspaceHome() {
   const fxRate = currency === 'USD' ? 1 : (fxRates[currency] || 1);
   const currencySymbol = CURRENCIES[currency];
 
-  // Widget States
-  const [sotw, setSotw] = useState(null);
-  const [sotwStats, setSotwStats] = useState(null); // quick sector/market cap/P-E teaser to kick off research
-  const [sotwVotes, setSotwVotes] = useState({ BUY: 0, HOLD: 0, SELL: 0, total: 0 });
-  const [hasVoted, setHasVoted] = useState(false);
-  const [currentUserVote, setCurrentUserVote] = useState(null);
+  // Widget States — movers still feeds the top marquee ticker even though the Market
+  // Intelligence widget that used to also read from it was cut (see LEFT/RIGHT_WIDGETS above).
   const [movers, setMovers] = useState(null);
   const [marqueeMode, setMarqueeMode] = useState('gainers'); // 'gainers' | 'losers' | 'bigCapMovers'
-  const [earnings, setEarnings] = useState([]);
   const [watchlist, setWatchlist] = useState([]);
   const [recentViewed, setRecentViewed] = useState([]);
-  const [activeMoverTab, setActiveMoverTab] = useState('topRoic');
   const [activeWorkspaceTab, setActiveWorkspaceTab] = useState('watchlist');
 
   // Live market and news states
@@ -144,65 +102,12 @@ export default function WorkspaceHome() {
   }, []);
 
   useEffect(() => {
-    // 1. Load layout
-    const savedLayout = localStorage.getItem('traqcker_dashboard_layout');
-    if (savedLayout) {
-      try {
-        const parsed = JSON.parse(savedLayout);
-        if (parsed && Array.isArray(parsed) && parsed.length > 0) {
-          // Sync missing default widgets in case structure changed
-          const merged = DEFAULT_WIDGETS.map(def => {
-            const match = parsed.find(p => p.id === def.id);
-            return match ? { ...def, ...match } : def;
-          });
-          setWidgets(merged);
-        } else {
-          setWidgets(DEFAULT_WIDGETS);
-        }
-      } catch (e) {
-        setWidgets(DEFAULT_WIDGETS);
-      }
-    } else {
-      setWidgets(DEFAULT_WIDGETS);
-    }
-
-    // Load layout mode
-    const savedMode = localStorage.getItem('traqcker_layout_mode');
-    if (savedMode) setLayoutMode(savedMode);
-
-    // 2. Fetch Stock of the Week
-    fetch('/api/stock-of-week')
-      .then(r => r.json())
-      .then(d => {
-        if (!d.ticker) return;
-        setSotw({ ticker: d.ticker, name: d.name });
-        fetch(`/api/votes?ticker=${d.ticker}`)
-          .then(r => r.json())
-          .then(v => {
-            setSotwVotes({ ...v.percentages, total: v.total });
-            if (v.userVote) {
-              setHasVoted(true);
-              setCurrentUserVote(v.userVote);
-            }
-          });
-        fetch(`/api/stock?ticker=${d.ticker}`)
-          .then(r => r.json())
-          .then(s => setSotwStats({ sector: s.sector, marketCap: s.marketCap, pe: s.pe }))
-          .catch(() => {});
-      });
-
-    // 3. Fetch market intelligence / movers
+    // 1. Fetch movers — feeds the top marquee ticker
     fetch('/api/movers')
       .then(r => r.json())
       .then(setMovers);
 
-    // 4. Fetch earnings calendar — sorted by date so "first 6" (below) actually means
-    // "next 6 soonest," matching the chronological order the full Calendar page shows.
-    fetch('/api/earnings')
-      .then(r => r.json())
-      .then(d => setEarnings((d.earnings || []).sort((a, b) => a.date.localeCompare(b.date))));
-
-    // 5. Fetch watchlist from Supabase
+    // 2. Fetch watchlist from Supabase
     fetch('/api/watchlist')
       .then(r => r.json())
       .then(d => setWatchlist(d.tickers || []))
@@ -517,206 +422,6 @@ export default function WorkspaceHome() {
     }
   };
 
-  // Smooth Auto-scroll during Drag & Drop
-  useEffect(() => {
-    if (!draggedId) return;
-
-    let scrollSpeed = 0;
-    let animationFrameId = null;
-
-    const handleWindowDragOver = (e) => {
-      const threshold = 120; // Zone in pixels from top/bottom of screen to trigger scroll
-      const maxSpeed = 15;   // Maximum speed of scrolling in pixels per frame
-      const clientY = e.clientY;
-      const height = window.innerHeight;
-
-      if (clientY < threshold) {
-        // Near top, scroll up
-        const intensity = (threshold - clientY) / threshold;
-        scrollSpeed = -maxSpeed * intensity;
-      } else if (clientY > height - threshold) {
-        // Near bottom, scroll down
-        const intensity = (clientY - (height - threshold)) / threshold;
-        scrollSpeed = maxSpeed * intensity;
-      } else {
-        scrollSpeed = 0;
-      }
-    };
-
-    const scrollLoop = () => {
-      if (scrollSpeed !== 0) {
-        window.scrollBy(0, scrollSpeed);
-      }
-      animationFrameId = requestAnimationFrame(scrollLoop);
-    };
-
-    window.addEventListener('dragover', handleWindowDragOver);
-    animationFrameId = requestAnimationFrame(scrollLoop);
-
-    return () => {
-      window.removeEventListener('dragover', handleWindowDragOver);
-      if (animationFrameId) {
-        cancelAnimationFrame(animationFrameId);
-      }
-    };
-  }, [draggedId]);
-
-  const changeLayoutMode = (mode) => {
-    setLayoutMode(mode);
-    localStorage.setItem('traqcker_layout_mode', mode);
-  };
-
-  // Drag and drop handlers
-  const handleDragStart = (e, id) => {
-    setDraggedId(id);
-    e.dataTransfer.effectAllowed = 'move';
-  };
-
-  const handleDragEnd = () => {
-    // Persist final rearranged layout on drag release
-    localStorage.setItem('traqcker_dashboard_layout', JSON.stringify(widgets));
-    setDraggedId(null);
-  };
-
-  const handleDragOverWidget = (e, targetId) => {
-    e.preventDefault();
-    if (!draggedId || draggedId === targetId) return;
-
-    // Get the target's midpoint coordinates to prevent jitter feedback loops
-    const targetElement = e.currentTarget;
-    const rect = targetElement.getBoundingClientRect();
-    const clientY = e.clientY;
-    const midpoint = rect.top + rect.height / 2;
-
-    const currentWidgets = [...widgets];
-    const draggedWidget = currentWidgets.find(w => w.id === draggedId);
-    const targetWidget = currentWidgets.find(w => w.id === targetId);
-
-    if (!draggedWidget || !targetWidget) return;
-
-    const isSameColumn = draggedWidget.column === targetWidget.column;
-
-    if (isSameColumn) {
-      const isDragDown = draggedWidget.order < targetWidget.order;
-      // Only swap if crossing card's midpoint
-      if (isDragDown && clientY < midpoint) return;
-      if (!isDragDown && clientY > midpoint) return;
-
-      const col = draggedWidget.column;
-      const colWidgets = currentWidgets
-        .filter(w => w.column === col && w.visible !== false)
-        .sort((a, b) => a.order - b.order);
-
-      const draggedInColIdx = colWidgets.findIndex(w => w.id === draggedId);
-      const targetInColIdx = colWidgets.findIndex(w => w.id === targetId);
-
-      if (draggedInColIdx === -1 || targetInColIdx === -1) return;
-
-      colWidgets.splice(draggedInColIdx, 1);
-      colWidgets.splice(targetInColIdx, 0, draggedWidget);
-
-      colWidgets.forEach((w, idx) => {
-        const original = currentWidgets.find(x => x.id === w.id);
-        if (original) original.order = idx;
-      });
-
-      setWidgets(currentWidgets);
-    } else {
-      // Cross-column live shift: only trigger if pointer is fully within target boundaries
-      if (clientY < rect.top || clientY > rect.bottom) return;
-
-      draggedWidget.column = targetWidget.column;
-
-      // Re-index target column
-      const targetColWidgets = currentWidgets
-        .filter(w => w.column === targetWidget.column && w.visible !== false)
-        .sort((a, b) => a.order - b.order);
-
-      const draggedInColIdx = targetColWidgets.findIndex(w => w.id === draggedId);
-      const targetInColIdx = targetColWidgets.findIndex(w => w.id === targetId);
-
-      if (draggedInColIdx !== -1) {
-        targetColWidgets.splice(draggedInColIdx, 1);
-      }
-      targetColWidgets.splice(targetInColIdx, 0, draggedWidget);
-
-      targetColWidgets.forEach((w, idx) => {
-        const original = currentWidgets.find(x => x.id === w.id);
-        if (original) original.order = idx;
-      });
-
-      // Clean up source column
-      const srcCol = targetWidget.column === 'left' ? 'right' : 'left';
-      const srcWidgets = currentWidgets
-        .filter(w => w.column === srcCol && w.visible !== false)
-        .sort((a, b) => a.order - b.order);
-
-      srcWidgets.forEach((w, idx) => {
-        const original = currentWidgets.find(x => x.id === w.id);
-        if (original) original.order = idx;
-      });
-
-      setWidgets(currentWidgets);
-    }
-  };
-
-  const handleDragOverColumn = (e, column) => {
-    e.preventDefault();
-    if (!draggedId) return;
-
-    // Only shift to bottom if dragging over the outer column container background space
-    const isColumnContainer = e.currentTarget.getAttribute('data-column-container') === 'true';
-    if (!isColumnContainer) return;
-
-    const currentWidgets = [...widgets];
-    const draggedWidget = currentWidgets.find(w => w.id === draggedId);
-    if (!draggedWidget) return;
-
-    if (draggedWidget.column !== column) {
-      draggedWidget.column = column;
-
-      const colWidgets = currentWidgets
-        .filter(w => w.column === column && w.visible !== false)
-        .sort((a, b) => a.order - b.order);
-
-      const idx = colWidgets.findIndex(w => w.id === draggedId);
-      if (idx !== -1) colWidgets.splice(idx, 1);
-      colWidgets.push(draggedWidget);
-
-      colWidgets.forEach((w, i) => {
-        const original = currentWidgets.find(x => x.id === w.id);
-        if (original) original.order = i;
-      });
-
-      // Clean up source column
-      const srcCol = column === 'left' ? 'right' : 'left';
-      const srcWidgets = currentWidgets
-        .filter(w => w.column === srcCol && w.visible !== false)
-        .sort((a, b) => a.order - b.order);
-
-      srcWidgets.forEach((w, i) => {
-        const original = currentWidgets.find(x => x.id === w.id);
-        if (original) original.order = i;
-      });
-
-      setWidgets(currentWidgets);
-    }
-  };
-
-  const castVote = async (vote) => {
-    if (!sotw || hasVoted) return;
-    setHasVoted(true);
-    setCurrentUserVote(vote);
-    await fetch('/api/votes', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ ticker: sotw.ticker, vote })
-    });
-    fetch(`/api/votes?ticker=${sotw.ticker}`)
-      .then(r => r.json())
-      .then(v => setSotwVotes({ ...v.percentages, total: v.total }));
-  };
-
   // Widget Renderers
   const renderIndices = () => {
     if (indicesLoading) {
@@ -743,17 +448,6 @@ export default function WorkspaceHome() {
       <Card
         title="Major Indices Overview"
         subtitle="Key market benchmarks & volatility index."
-        dragProps={{
-          draggable: true,
-          onDragStart: (e) => handleDragStart(e, 'indices'),
-          onDragEnd: handleDragEnd,
-          onDragOver: (e) => handleDragOverWidget(e, 'indices'),
-          style: {
-            opacity: draggedId === 'indices' ? 0.35 : 1,
-            transform: draggedId === 'indices' ? 'scale(0.98)' : 'scale(1)',
-            boxShadow: draggedId === 'indices' ? '0 5px 15px rgba(0,0,0,0.05)' : 'none'
-          }
-        }}
       >
         <div className="widget-indices-grid" style={{ padding: '16px', display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(130px, 1fr))', gap: '12px' }}>
           {indices.map(idx => {
@@ -813,151 +507,6 @@ export default function WorkspaceHome() {
     );
   };
 
-  const renderSotw = () => {
-    return (
-      <Card 
-        title="Spotlight: Stock of the Week"
-        subtitle="A new stock, picked at random, spotlighted for a week of community research."
-        rightElement={
-          sotw && (
-            <div style={{ fontSize: '11px', color: 'var(--ws-text-3)', fontWeight: 600 }}>
-              Consensus: {sotwVotes.total} votes
-            </div>
-          )
-        }
-        dragProps={{
-          draggable: true,
-          onDragStart: (e) => handleDragStart(e, 'sotw'),
-          onDragEnd: handleDragEnd,
-          onDragOver: (e) => handleDragOverWidget(e, 'sotw'),
-          style: {
-            opacity: draggedId === 'sotw' ? 0.35 : 1,
-            transform: draggedId === 'sotw' ? 'scale(0.98)' : 'scale(1)',
-            boxShadow: draggedId === 'sotw' ? '0 5px 15px rgba(0,0,0,0.05)' : 'none'
-          }
-        }}
-      >
-        {sotw ? (
-          <div className="widget-sotw-body" style={{ padding: '20px', display: 'flex', flexDirection: 'column', gap: '18px' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <div onClick={() => router.push(`/stock/${sotw.ticker}`)} 
-                style={{ display: 'flex', alignItems: 'center', gap: '12px', cursor: 'pointer' }}>
-                <StockLogo ticker={sotw.ticker} name={sotw.name} size={42} />
-                <div>
-                  <div style={{ fontSize: '16px', fontWeight: 800, color: 'var(--ws-text)' }}>{sotw.ticker}</div>
-                  <div style={{ fontSize: '12px', color: 'var(--ws-text-3)', marginTop: '2px' }}>{sotw.name}</div>
-                </div>
-              </div>
-              <button onClick={() => router.push(`/stock/${sotw.ticker}`)}
-                style={{
-                  fontSize: '11px',
-                  fontWeight: 600,
-                  color: 'var(--ws-accent)',
-                  background: 'var(--ws-accent-dim)',
-                  border: 'none',
-                  padding: '8px 14px',
-                  cursor: 'pointer',
-                  transition: 'opacity 0.15s'
-                }}
-                onMouseEnter={e => e.currentTarget.style.opacity = 0.8}
-                onMouseLeave={e => e.currentTarget.style.opacity = 1}
-              >
-                Open Analysis →
-              </button>
-            </div>
-
-            {/* Quick teaser stats — a starting point for the week's research, not a verdict */}
-            {sotwStats && (
-              <div className="sotw-teaser-stats" className="flex gap-2.5">
-                {[
-                  { label: 'Sector', value: sotwStats.sector || '—' },
-                  {
-                    label: 'Market Cap',
-                    value: sotwStats.marketCap == null ? '—'
-                      : sotwStats.marketCap >= 1e12 ? `$${(sotwStats.marketCap / 1e12).toFixed(1)}T`
-                      : sotwStats.marketCap >= 1e9 ? `$${(sotwStats.marketCap / 1e9).toFixed(1)}B`
-                      : `$${(sotwStats.marketCap / 1e6).toFixed(0)}M`
-                  },
-                  { label: 'P/E', value: sotwStats.pe != null ? sotwStats.pe.toFixed(1) : '—' }
-                ].map(stat => (
-                  <div key={stat.label} style={{ flex: 1, background: 'var(--ws-bg-2)', border: '1px solid var(--ws-border)', padding: '8px 10px' }}>
-                    <div className="text-[9px] text-ws-text-3 font-bold uppercase">{stat.label}</div>
-                    <div style={{ fontSize: '13px', fontWeight: 700, color: 'var(--ws-text)', marginTop: '2px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{stat.value}</div>
-                  </div>
-                ))}
-              </div>
-            )}
-
-            {/* Sentiment Voting */}
-            <div style={{ background: 'var(--ws-bg-2)', padding: '16px' }}>
-              <div style={{ fontSize: '11px', fontWeight: 700, color: 'var(--ws-text-2)', marginBottom: '12px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <span>{hasVoted ? "Consensus results:" : "How do you underwrite this stock?"}</span>
-                {hasVoted && currentUserVote && (
-                  <span style={{ color: 'var(--ws-accent)', fontWeight: 800 }}>Your vote: {currentUserVote}</span>
-                )}
-              </div>
-              
-              {hasVoted ? (
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-                  {['BUY', 'HOLD', 'SELL'].map(v => {
-                    const pct = sotwVotes[v] || 0;
-                    const fillCol = v === 'BUY' ? '#10b981' : v === 'SELL' ? 'var(--ws-red)' : '#6b7280';
-                    return (
-                      <div key={v} style={{ fontSize: '11px' }}>
-                        <div style={{ display: 'flex', justifyContent: 'space-between', fontWeight: 600, marginBottom: '4px', color: 'var(--ws-text)' }}>
-                          <span>{v}</span>
-                          <span>{pct}%</span>
-                        </div>
-                        <div style={{ width: '100%', height: '8px', background: 'var(--ws-border)', borderRadius: '4px', overflow: 'hidden' }}>
-                          <div style={{ width: `${pct}%`, height: '100%', background: fillCol, borderRadius: '4px', transition: 'width 0.4s' }} />
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-              ) : (
-                <div className="flex gap-2.5">
-                  {['BUY', 'HOLD', 'SELL'].map(v => {
-                    const hoverCol = v === 'BUY' ? '#10b981' : v === 'SELL' ? 'var(--ws-red)' : 'var(--ws-text)';
-                    return (
-                      <button key={v} onClick={() => castVote(v)}
-                        style={{
-                          flex: 1,
-                          padding: '10px 0',
-                          fontSize: '12px',
-                          fontWeight: 700,
-                          border: '1px solid var(--ws-border)',
-                          background: 'var(--ws-bg-1)',
-                          color: 'var(--ws-text-2)',
-                          cursor: 'pointer',
-                          transition: 'all 0.15s'
-                        }}
-                        onMouseEnter={e => {
-                          e.currentTarget.style.color = hoverCol;
-                          e.currentTarget.style.borderColor = hoverCol;
-                          e.currentTarget.style.background = 'rgba(0, 0, 0, 0.01)';
-                        }}
-                        onMouseLeave={e => {
-                          e.currentTarget.style.color = 'var(--ws-text-2)';
-                          e.currentTarget.style.borderColor = 'var(--ws-border)';
-                          e.currentTarget.style.background = 'var(--ws-bg-1)';
-                        }}
-                      >
-                        {v}
-                      </button>
-                    );
-                  })}
-                </div>
-              )}
-            </div>
-          </div>
-        ) : (
-          <div style={{ padding: '30px', textAlign: 'center', color: 'var(--ws-text-3)', fontSize: '13px' }}>Loading spotlight data…</div>
-        )}
-      </Card>
-    );
-  };
-
   const renderWorkspace = () => {
     return (
       <Card 
@@ -996,17 +545,6 @@ export default function WorkspaceHome() {
             </button>
           </div>
         }
-        dragProps={{
-          draggable: true,
-          onDragStart: (e) => handleDragStart(e, 'workspace'),
-          onDragEnd: handleDragEnd,
-          onDragOver: (e) => handleDragOverWidget(e, 'workspace'),
-          style: {
-            opacity: draggedId === 'workspace' ? 0.35 : 1,
-            transform: draggedId === 'workspace' ? 'scale(0.98)' : 'scale(1)',
-            boxShadow: draggedId === 'workspace' ? '0 5px 15px rgba(0,0,0,0.05)' : 'none'
-          }
-        }}
       >
         {activeWorkspaceTab === 'watchlist' ? (
           <div className="flex flex-col">
@@ -1217,17 +755,6 @@ export default function WorkspaceHome() {
             </button>
           </div>
         }
-        dragProps={{
-          draggable: true,
-          onDragStart: (e) => handleDragStart(e, 'portfolio'),
-          onDragEnd: handleDragEnd,
-          onDragOver: (e) => handleDragOverWidget(e, 'portfolio'),
-          style: {
-            opacity: draggedId === 'portfolio' ? 0.35 : 1,
-            transform: draggedId === 'portfolio' ? 'scale(0.98)' : 'scale(1)',
-            boxShadow: draggedId === 'portfolio' ? '0 5px 15px rgba(0,0,0,0.05)' : 'none'
-          }
-        }}
       >
         <div className="widget-portfolio-body" style={{ display: 'flex', flexDirection: 'column', gap: '14px', padding: '16px' }}>
           {/* Sign In Banner if not signed in */}
@@ -1593,165 +1120,6 @@ export default function WorkspaceHome() {
   };
 
 
-  const renderEarnings = () => {
-    return (
-      <Card 
-        title="Earnings Calendar" 
-        subtitle="Next 7 days corporate announcements."
-        rightElement={
-          <button onClick={() => router.push('/calendar')}
-            style={{
-              fontSize: '10px',
-              fontWeight: 600,
-              color: 'var(--ws-accent)',
-              background: 'none',
-              border: 'none',
-              cursor: 'pointer'
-            }}
-          >
-            View Full
-          </button>
-        }
-        dragProps={{
-          draggable: true,
-          onDragStart: (e) => handleDragStart(e, 'earnings'),
-          onDragEnd: handleDragEnd,
-          onDragOver: (e) => handleDragOverWidget(e, 'earnings'),
-          style: {
-            opacity: draggedId === 'earnings' ? 0.35 : 1,
-            transform: draggedId === 'earnings' ? 'scale(0.98)' : 'scale(1)',
-            boxShadow: draggedId === 'earnings' ? '0 5px 15px rgba(0,0,0,0.05)' : 'none'
-          }
-        }}
-      >
-        <div className="flex flex-col">
-          {earnings.slice(0, 6).map((e, index) => (
-            <div key={e.ticker + e.date + index} onClick={() => router.push(`/stock/${e.ticker}`)}
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: '10px',
-                padding: '10px 16px',
-                borderBottom: index < 5 ? '1px solid var(--ws-border)' : 'none',
-                cursor: 'pointer',
-                transition: 'background 0.15s'
-              }}
-              onMouseEnter={e => e.currentTarget.style.background = 'var(--ws-bg-2)'}
-              onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
-            >
-              <StockLogo ticker={e.ticker} name={e.ticker} size={22} />
-              <div style={{ minWidth: 0, flex: 1 }}>
-                <div className="text-xs font-bold text-ws-text">{e.ticker}</div>
-                <div className="text-[10px] text-ws-text-3 mt-0.5">
-                  {new Date(e.date + 'T00:00:00').toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })}
-                </div>
-              </div>
-              <div style={{ textAlign: 'right', flexShrink: 0 }}>
-                <span style={{
-                  fontSize: '9px',
-                  background: e.hour === 'bmo' ? '#f59e0b16' : '#3b82f616',
-                  color: e.hour === 'bmo' ? '#d97706' : '#2563eb',
-                  padding: '2px 6px',
-                  borderRadius: '4px',
-                  fontWeight: 700,
-                  textTransform: 'uppercase'
-                }}>
-                  {e.hour === 'bmo' ? 'Before Open' : e.hour === 'amc' ? 'After Close' : 'Time TBD'}
-                </span>
-                {e.epsEstimate != null && (
-                  <div style={{ fontSize: '10px', color: 'var(--ws-text-2)', marginTop: '4px', fontWeight: 600 }}>Est. ${e.epsEstimate}</div>
-                )}
-              </div>
-            </div>
-          ))}
-          {earnings.length === 0 && (
-            <div style={{ padding: '24px', textAlign: 'center', color: 'var(--ws-text-3)', fontSize: '12px' }}>
-              No earnings calls in the next 7 days.
-            </div>
-          )}
-        </div>
-      </Card>
-    );
-  };
-
-  const renderMovers = () => {
-    return (
-      <Card 
-        title="Market Intelligence" 
-        subtitle="Top computed metrics across database."
-        dragProps={{
-          draggable: true,
-          onDragStart: (e) => handleDragStart(e, 'movers'),
-          onDragEnd: handleDragEnd,
-          onDragOver: (e) => handleDragOverWidget(e, 'movers'),
-          style: {
-            opacity: draggedId === 'movers' ? 0.35 : 1,
-            transform: draggedId === 'movers' ? 'scale(0.98)' : 'scale(1)',
-            boxShadow: draggedId === 'movers' ? '0 5px 15px rgba(0,0,0,0.05)' : 'none'
-          }
-        }}
-      >
-        {/* Widget Tabs */}
-        <div className="flex border-b border-ws-border bg-black/[0.01]">
-          {MOVER_TABS.map(({ key, label }) => (
-            <button key={key} onClick={() => setActiveMoverTab(key)}
-              style={{
-                flex: 1,
-                padding: '10px 0',
-                fontSize: '10px',
-                fontWeight: 700,
-                color: activeMoverTab === key ? 'var(--ws-accent)' : 'var(--ws-text-3)',
-                background: 'none',
-                border: 'none',
-                borderBottom: activeMoverTab === key ? '2px solid var(--ws-accent)' : 'none',
-                cursor: 'pointer',
-                outline: 'none',
-                transition: 'all 0.15s ease'
-              }}
-            >
-              {label}
-            </button>
-          ))}
-        </div>
-
-        {/* Tab contents */}
-        <div className="flex flex-col">
-          {movers ? (
-            (() => {
-              const activeTab = MOVER_TABS.find(t => t.key === activeMoverTab);
-              const list = (movers[activeMoverTab] || []).slice(0, 6);
-              return list.map((s, index) => (
-                <div key={s.ticker} onClick={() => router.push(`/stock/${s.ticker}`)}
-                  style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'space-between',
-                    padding: '10px 16px',
-                    borderBottom: index < list.length - 1 ? '1px solid var(--ws-border)' : 'none',
-                    cursor: 'pointer',
-                    transition: 'background 0.15s'
-                  }}
-                  onMouseEnter={e => e.currentTarget.style.background = 'var(--ws-bg-2)'}
-                  onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
-                >
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '10px', minWidth: 0 }}>
-                    <StockLogo ticker={s.ticker} name={s.name} size={20} />
-                    <div>
-                      <div className="text-xs font-bold text-ws-text">{s.ticker}</div>
-                      <div style={{ fontSize: '10px', color: 'var(--ws-text-3)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: '140px', marginTop: '2px' }}>{s.name}</div>
-                    </div>
-                  </div>
-                  {activeTab.renderValue(s)}
-                </div>
-              ));
-            })()
-          ) : (
-            <div className="p-[30px] text-center text-ws-text-3 text-xs">Loading market data…</div>
-          )}
-        </div>
-      </Card>
-    );
-  };
 
   const renderSecFeed = () => {
     const activeFeed = (newsTab === 'holdings' ? holdingsNews : secFeed).slice(0, 12);
@@ -1761,17 +1129,6 @@ export default function WorkspaceHome() {
       <Card
         title="Market News"
         subtitle="Stock & ETF headlines, ranked by relevance."
-        dragProps={{
-          draggable: true,
-          onDragStart: (e) => handleDragStart(e, 'secFeed'),
-          onDragEnd: handleDragEnd,
-          onDragOver: (e) => handleDragOverWidget(e, 'secFeed'),
-          style: {
-            opacity: draggedId === 'secFeed' ? 0.35 : 1,
-            transform: draggedId === 'secFeed' ? 'scale(0.98)' : 'scale(1)',
-            boxShadow: draggedId === 'secFeed' ? '0 5px 15px rgba(0,0,0,0.05)' : 'none'
-          }
-        }}
       >
         {/* Widget Tabs */}
         <div className="flex border-b border-ws-border bg-black/[0.01]">
@@ -1898,16 +1255,6 @@ export default function WorkspaceHome() {
           ))}
         </div>
         )}
-        <div onClick={() => router.push('/watchlist')}
-          style={{
-            display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px',
-            padding: '12px', borderTop: '1px solid var(--ws-border)', cursor: 'pointer',
-            fontSize: '11px', fontWeight: 700, color: 'var(--ws-text-2)',
-          }}
-          onMouseEnter={e => e.currentTarget.style.color = 'var(--ws-accent)'}
-          onMouseLeave={e => e.currentTarget.style.color = 'var(--ws-text-2)'}>
-          View all news →
-        </div>
       </Card>
     );
   };
@@ -1916,175 +1263,20 @@ export default function WorkspaceHome() {
     switch (id) {
       case 'indices': return renderIndices();
       case 'portfolio': return renderPortfolio();
-      case 'sotw': return renderSotw();
       case 'workspace': return renderWorkspace();
-      case 'earnings': return renderEarnings();
-      case 'movers': return renderMovers();
       case 'secFeed': return renderSecFeed();
       default: return null;
     }
   };
 
-  // Filter columns (ignore hidden widgets)
-  const leftWidgets = widgets.filter(w => w.column === 'left' && w.visible !== false).sort((a, b) => a.order - b.order);
-  const rightWidgets = widgets.filter(w => w.column === 'right' && w.visible !== false).sort((a, b) => a.order - b.order);
-
-  // Mobile: one fixed order regardless of the user's desktop drag/column setup — see isMobile above.
-  const mobileWidgets = DEFAULT_WIDGETS
-    .map(def => widgets.find(w => w.id === def.id) || def)
-    .filter(w => w.visible !== false);
+  // Mobile collapses to one fixed-order column; desktop keeps the two-column split.
+  const mobileWidgets = [...LEFT_WIDGETS, ...RIGHT_WIDGETS];
 
   return (
     <div className="home-container" style={{ padding: '24px', display: 'flex', flexDirection: 'column', gap: '24px' }}>
-      
-      {/* Floating layout/config gear — fixed bottom-right, stays reachable while scrolling */}
-      <div
-        onMouseEnter={() => setShowConfig(true)}
-        onMouseLeave={() => setShowConfig(false)}
-        style={{ position: 'fixed', bottom: '24px', right: '24px', zIndex: 50 }}
-      >
-        <button
-          style={{
-            width: '36px',
-            height: '36px',
-            background: 'var(--ws-bg-1)',
-            border: '1px solid var(--ws-border)',
-            borderRadius: '50%',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            color: 'var(--ws-text-2)',
-            cursor: 'pointer',
-            boxShadow: '0 2px 8px rgba(0,0,0,0.08)',
-            transition: 'all 0.2s cubic-bezier(0.16, 1, 0.3, 1)',
-            outline: 'none'
-          }}
-          onMouseEnter={e => {
-            e.currentTarget.style.background = 'var(--ws-bg-2)';
-            e.currentTarget.style.borderColor = 'var(--ws-accent)';
-            e.currentTarget.style.color = 'var(--ws-accent)';
-          }}
-          onMouseLeave={e => {
-            e.currentTarget.style.background = 'var(--ws-bg-1)';
-            e.currentTarget.style.borderColor = 'var(--ws-border)';
-            e.currentTarget.style.color = 'var(--ws-text-2)';
-          }}
-        >
-          <GearIcon style={{
-            transition: 'transform 0.4s cubic-bezier(0.16, 1, 0.3, 1)',
-            transform: showConfig ? 'rotate(90deg)' : 'rotate(0deg)',
-            pointerEvents: 'none',
-          }} />
-        </button>
+      <OnboardingBanner />
 
-        {showConfig && (
-          <div className="home-config-popup-wrapper">
-            <div className="home-config-popup">
-              <div className="home-config-popup-col-1">
-                {/* Layout Mode Presets — desktop only, mobile always uses one fixed column */}
-                {!isMobile && (
-                <div>
-                  <div className="text-[10px] font-bold text-ws-text-3 uppercase mb-2 tracking-[0.5px]">
-                    Dashboard Layout
-                  </div>
-                  <div style={{ display: 'flex', gap: '6px' }}>
-                    {[
-                      { id: 'split', label: 'Standard' },
-                      { id: 'equal', label: '50/50' },
-                      { id: 'full', label: 'Full Width' }
-                    ].map(lay => (
-                      <button
-                        key={lay.id}
-                        onClick={() => changeLayoutMode(lay.id)}
-                        style={{
-                          flex: 1,
-                          padding: '6px 0',
-                          fontSize: '11px',
-                          fontWeight: 600,
-                          borderRadius: '4px',
-                          border: layoutMode === lay.id ? '1px solid var(--ws-accent)' : '1px solid var(--ws-border)',
-                          background: layoutMode === lay.id ? 'var(--ws-accent-dim)' : 'var(--ws-bg-2)',
-                          color: layoutMode === lay.id ? 'var(--ws-accent)' : 'var(--ws-text-2)',
-                          cursor: 'pointer',
-                          transition: 'all 0.1s ease'
-                        }}
-                      >
-                        {lay.label}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-                )}
-
-                {/* Reset Buttons */}
-                <button
-                  onClick={() => {
-                    setWidgets(DEFAULT_WIDGETS);
-                    localStorage.setItem('traqcker_dashboard_layout', JSON.stringify(DEFAULT_WIDGETS));
-                    changeLayoutMode('split');
-                    setShowConfig(false);
-                  }}
-                  style={{
-                    padding: '8px 0',
-                    fontSize: '11px',
-                    fontWeight: 700,
-                    border: 'none',
-                    background: 'var(--ws-bg-2)',
-                    color: 'var(--ws-red)',
-                    cursor: 'pointer',
-                    marginTop: '4px',
-                    transition: 'all 0.15s ease',
-                    width: '100%'
-                  }}
-                  onMouseEnter={e => e.currentTarget.style.opacity = 0.9}
-                  onMouseLeave={e => e.currentTarget.style.opacity = 1}
-                >
-                  Reset Layout & Widgets
-                </button>
-              </div>
-
-              <div className="home-config-popup-col-2">
-                {/* Active Widgets Checkboxes */}
-                <div>
-                  <div className="text-[10px] font-bold text-ws-text-3 uppercase mb-2 tracking-[0.5px]">
-                    Active Widgets
-                  </div>
-                  <div className="home-config-popup-widgets-list">
-                    {widgets.map(w => {
-                      const label = w.id === 'indices' ? 'Market Benchmarks'
-                                  : w.id === 'portfolio' ? 'Equity Portfolio'
-                                  : w.id === 'sotw' ? 'Stock of the Week'
-                                  : w.id === 'workspace' ? 'Coverage Workspace'
-                                  : w.id === 'earnings' ? 'Earnings Calendar'
-                                  : w.id === 'movers' ? 'Market Intelligence'
-                                  : w.id === 'secFeed' ? 'Market News'
-                                  : w.id;
-                      const isVisible = w.visible !== false;
-                      return (
-                        <label key={w.id} style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '12px', color: 'var(--ws-text)', cursor: 'pointer' }}>
-                          <input
-                            type="checkbox"
-                            checked={isVisible}
-                            onChange={() => {
-                              const updated = widgets.map(item => item.id === w.id ? { ...item, visible: !isVisible } : item);
-                              setWidgets(updated);
-                              localStorage.setItem('traqcker_dashboard_layout', JSON.stringify(updated));
-                            }}
-                            style={{ accentColor: 'var(--ws-accent)' }}
-                          />
-                          {label}
-                        </label>
-                      );
-                    })}
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        )}
-      </div>
-
-      {/* 2. Top Movers Marquee Ticker — pick Gainers/Losers/Big Cap Movers from the dropdown, all today-only (see MAX_CACHE_AGE_HOURS in /api/movers), auto-scrolls continuously */}
+      {/* Top Movers Marquee Ticker — pick Gainers/Losers/Big Cap Movers from the dropdown, all today-only (see MAX_CACHE_AGE_HOURS in /api/movers), auto-scrolls continuously */}
       {movers && (() => {
         const MARQUEE_SOURCES = {
           gainers: { data: movers.gainers || [], colorMode: 'positive' },
@@ -2154,60 +1346,38 @@ export default function WorkspaceHome() {
         );
       })()}
 
-      {/* 3. Main Custom Grid Layout — mobile always gets one fixed-order column; the
-          draggable left/right split below is a desktop-only feature (see isMobile above). */}
+      {/* Main grid — mobile collapses to one fixed-order column; desktop keeps the
+          fixed two-column split (see LEFT_WIDGETS/RIGHT_WIDGETS above). */}
       {isMobile ? (
         <div className="home-main-grid" style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
-          {mobileWidgets.map((widget) => (
-            <div key={widget.id}>
-              {renderWidget(widget.id)}
+          {mobileWidgets.map((id) => (
+            <div key={id}>
+              {renderWidget(id)}
             </div>
           ))}
         </div>
       ) : (
         <div className="home-main-grid" style={{
           display: 'grid',
-          gridTemplateColumns: layoutMode === 'full' ? '1fr' : layoutMode === 'equal' ? '1fr 1fr' : '1fr 360px',
+          gridTemplateColumns: '1fr 360px',
           gap: '20px',
           alignItems: 'start'
         }}>
 
           {/* LEFT COLUMN */}
-          <div
-            data-column-container="true"
-            onDragOver={(e) => handleDragOverColumn(e, 'left')}
-            style={{
-              display: 'flex',
-              flexDirection: 'column',
-              gap: '20px',
-              minHeight: '400px',
-              padding: '4px',
-              transition: 'all 0.2s ease'
-            }}
-          >
-            {leftWidgets.map((widget) => (
-              <div key={widget.id}>
-                {renderWidget(widget.id)}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+            {LEFT_WIDGETS.map((id) => (
+              <div key={id}>
+                {renderWidget(id)}
               </div>
             ))}
           </div>
 
           {/* RIGHT COLUMN */}
-          <div
-            data-column-container="true"
-            onDragOver={(e) => handleDragOverColumn(e, 'right')}
-            style={{
-              display: 'flex',
-              flexDirection: 'column',
-              gap: '20px',
-              minHeight: '400px',
-              padding: '4px',
-              transition: 'all 0.2s ease'
-            }}
-          >
-            {rightWidgets.map((widget) => (
-              <div key={widget.id}>
-                {renderWidget(widget.id)}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+            {RIGHT_WIDGETS.map((id) => (
+              <div key={id}>
+                {renderWidget(id)}
               </div>
             ))}
           </div>

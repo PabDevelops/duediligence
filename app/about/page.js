@@ -24,14 +24,6 @@ const bentoTiles = [
   },
   {
     span: 1,
-    badge: 'TRAQ AI',
-    title: 'Research Assistant',
-    desc: 'Ask complex questions about any filing and get instant, cited answers.',
-    src: '/screenshots/chat.png',
-    alt: 'Traq AI research assistant'
-  },
-  {
-    span: 1,
     badge: 'SCREENER',
     title: 'Quantitative Universe Filter',
     desc: 'Rank thousands of global equities by margin, FCF yield, debt profile, and dilution in seconds.',
