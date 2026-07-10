@@ -113,12 +113,17 @@ export default function ProjectionChart({ ticker, data, dcfValue, price, currenc
 
   const chartData = useMemo(() => {
     if (!projection) return [];
-    return projection.points.map(p => ({
-      ...p,
-      base: p.p10,
-      band: +(p.p90 - p.p10).toFixed(2),
-      dateLabel: fmtOffset(p.t),
-    }));
+    return projection.points.map(p => {
+      const fanKeys = Object.fromEntries(p.paths.map((v, i) => [`path${i}`, v]));
+      return {
+        ...p,
+        base: p.p10,
+        band: +(p.p90 - p.p10).toFixed(2),
+        best: p.paths[projection.bestPathIndex],
+        dateLabel: fmtOffset(p.t),
+        ...fanKeys,
+      };
+    });
   }, [projection]);
 
   const endPoint = chartData[chartData.length - 1];
@@ -183,7 +188,7 @@ export default function ProjectionChart({ ticker, data, dcfValue, price, currenc
             </button>
           ))}
         </div>
-        <button onClick={() => setRerollKey(k => k + 1)} title="Generate another equally plausible path"
+        <button onClick={() => setRerollKey(k => k + 1)} title="Draw a fresh set of simulated paths"
           style={{ width: '22px', height: '22px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '11px', background: 'transparent', color: 'var(--ws-text-3)', border: '1px solid var(--ws-border)', borderRadius: '3px', cursor: 'pointer', opacity: 0.7 }}>
           🎲
         </button>
@@ -196,17 +201,20 @@ export default function ProjectionChart({ ticker, data, dcfValue, price, currenc
             <YAxis domain={['auto', 'auto']} tick={{ fill: 'var(--ws-text-3)', fontSize: 9 }} axisLine={false} tickLine={false} width={56} tickFormatter={v => `${sym}${v.toFixed(0)}`} />
             <Tooltip
               formatter={(v, name) => {
-                if (name === 'band' || name === 'base') return null;
-                const label = name === 'sim' ? 'Simulated path' : 'Median (p50)';
-                return [`${sym}${v}`, label];
+                if (name === 'p50') return [`${sym}${v}`, 'Median (p50)'];
+                if (name === 'best') return [`${sym}${v}`, 'Most probable path'];
+                return null;
               }}
               labelFormatter={l => l}
               contentStyle={{ background: 'var(--ws-bg-2)', border: '1px solid var(--ws-border)', fontSize: 10 }}
             />
             <Area dataKey="base" stackId="band" fill="transparent" stroke="none" isAnimationActive={false} />
             <Area dataKey="band" stackId="band" fill="var(--ws-accent)" fillOpacity={0.12} stroke="none" isAnimationActive={false} />
+            {Array.from({ length: projection.numPaths }, (_, i) => (
+              <Line key={i} dataKey={`path${i}`} stroke="var(--ws-text-3)" strokeWidth={1} strokeOpacity={0.16} dot={false} isAnimationActive={false} />
+            ))}
             <Line dataKey="p50" stroke="var(--ws-text-3)" strokeDasharray="4 4" strokeWidth={1.25} dot={false} isAnimationActive={false} />
-            <Line dataKey="sim" stroke="var(--ws-accent)" strokeWidth={1.75} dot={false} isAnimationActive={false} />
+            <Line dataKey="best" stroke="var(--ws-accent)" strokeWidth={2} dot={false} isAnimationActive={false} />
             {price != null && <ReferenceLine y={price} stroke="var(--ws-text-2)" strokeDasharray="2 2" />}
           </ComposedChart>
         </ResponsiveContainer>
@@ -233,9 +241,10 @@ export default function ProjectionChart({ ticker, data, dcfValue, price, currenc
       )}
 
       <div style={{ marginTop: '14px', fontSize: '10px', color: 'var(--ws-text-3)', lineHeight: 1.6 }}>
-        This is a simulated scenario, not a prediction. The solid line is one random walk built from {ticker}&apos;s historical volatility;
-        the shaded band is the statistical range (10th–90th percentile) around the projected drift. Reroll to see another equally
-        plausible path — the range is what actually matters here, not any single line.
+        This is a simulated scenario, not a prediction. The faint lines are {projection.numPaths} independent random walks built from {ticker}&apos;s
+        historical volatility; the highlighted line is whichever one tracked the median most closely over the whole horizon — not a
+        more likely outcome than the others, just the least extreme sample of the bunch. The shaded band (10th–90th percentile) is
+        what actually matters here, not any single line. Reroll to draw a fresh set.
       </div>
     </div>
   );
