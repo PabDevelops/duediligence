@@ -779,11 +779,19 @@ export async function GET(request) {
   });
 };
 
+    // SEC's own tag only carries operating cash flow — FCF is OCF minus CapEx, matched by
+    // fiscal period end so a year missing a capex filing doesn't get double-counted from
+    // a different year. Missing capex for a given period defaults to 0 (no PP&E purchases
+    // reported), not "no data" — the tag is genuinely omitted by plenty of asset-light filers.
+    const capexByEnd = new Map((capex || []).map(u => [u.end, u.val]));
+    const freeCashFlows = (cashFlows || []).map(u => ({ ...u, val: u.val - (capexByEnd.get(u.end) ?? 0) }));
+
     const revVal   = latest(revenues);
     const revPrev  = prev(revenues);
     const niVal    = latest(netIncomes);
     const oiVal    = latest(operatingIncomes);
-    const fcfVal   = latest(cashFlows);
+    const operatingCFVal = latest(cashFlows);
+    const fcfVal   = latest(freeCashFlows);
     const assetsVal = latest(assets);
     const equityVal = latest(equity);
     const debtVal  = latest(debt);
@@ -831,7 +839,7 @@ const roic        = investedCapital > 0 && oiVal !== null ? +((oiVal / investedC
 
     const revHistory = buildHistory(revenues);
     const niHistory  = buildHistory(netIncomes);
-    const fcfHistory = buildHistory(cashFlows);
+    const fcfHistory = buildHistory(freeCashFlows);
     const oiHistory  = buildHistory(operatingIncomes);
     const sharesHistory = buildHistory(shares, true);
     const gpHistory  = buildHistory(grossProfit);
@@ -974,7 +982,7 @@ const sharesForCalc = sharesValAdj || sharesFinnhub;
       evEbitda,
       priceToBook,
       analystTarget: null,
-      operatingCFVal: fcfVal,
+      operatingCFVal,
       finnhubFallback: false,
     };
 
