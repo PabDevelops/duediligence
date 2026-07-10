@@ -470,6 +470,46 @@ export default function MarketRadar() {
               </div>
             </div>
 
+            {/* Top Quality Score (CBS) */}
+            <div className="bg-ws-bg-1 border border-ws-border p-4 flex flex-col gap-2.5">
+              <div className="border-b border-ws-border pb-2">
+                <span className="text-[11px] font-extrabold text-ws-accent tracking-[1px]">QUALITY SCORE LEADERS</span>
+              </div>
+              <div className="flex flex-col gap-0.5">
+                {(movers?.topQuality || []).slice(0, 5).map(s => (
+                  <div key={s.ticker} onClick={() => triggerSpotlight(s.ticker)} className="flex items-center justify-between px-1.5 py-2 rounded-[6px] cursor-pointer transition-[background] duration-150" onMouseEnter={e => e.currentTarget.style.background = 'var(--ws-bg-2)'} onMouseLeave={e => e.currentTarget.style.background = 'none'}>
+                    <div>
+                      <div className="font-extrabold text-xs">{s.ticker}</div>
+                      <div className="text-[10px] text-ws-text-3">{s.sector}</div>
+                    </div>
+                    <div style={{ fontWeight: 800, color: 'var(--ws-accent)', fontSize: '13px' }}>
+                      {s.cbs ? `${Math.round(s.cbs * 20)}/100` : '—'}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Top OPPO Score */}
+            <div className="bg-ws-bg-1 border border-ws-border p-4 flex flex-col gap-2.5">
+              <div className="border-b border-ws-border pb-2">
+                <span className="text-[11px] font-extrabold text-ws-accent tracking-[1px]">OPPO SCORE LEADERS</span>
+              </div>
+              <div className="flex flex-col gap-0.5">
+                {(movers?.topOppo || []).slice(0, 5).map(s => (
+                  <div key={s.ticker} onClick={() => triggerSpotlight(s.ticker)} className="flex items-center justify-between px-1.5 py-2 rounded-[6px] cursor-pointer transition-[background] duration-150" onMouseEnter={e => e.currentTarget.style.background = 'var(--ws-bg-2)'} onMouseLeave={e => e.currentTarget.style.background = 'none'}>
+                    <div>
+                      <div className="font-extrabold text-xs">{s.ticker}</div>
+                      <div className="text-[10px] text-ws-text-3">{s.sector}</div>
+                    </div>
+                    <div style={{ fontWeight: 800, color: 'var(--ws-accent)', fontSize: '13px' }}>
+                      {s.oppo ? `${Math.round(s.oppo * 20)}/100` : '—'}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+
             {/* Top ROIC */}
             <div className="bg-ws-bg-1 border border-ws-border p-4 flex flex-col gap-2.5">
               <div className="border-b border-ws-border pb-2">

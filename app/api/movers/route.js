@@ -18,7 +18,7 @@ export async function GET() {
       .not('data->currentPrice', 'is', null)
       .not('data->priceChangePct', 'is', null);
 
-    if (!rows?.length) return Response.json({ gainers: [], losers: [], topRoic: [], topFcfYield: [], topRevGrowth: [], topScore: [], bigCapMovers: [] });
+    if (!rows?.length) return Response.json({ gainers: [], losers: [], topRoic: [], topFcfYield: [], topRevGrowth: [], topScore: [], topQuality: [], topOppo: [], bigCapMovers: [] });
 
     const freshRows = rows.filter(r => {
       const hoursOld = (Date.now() - new Date(r.updated_at).getTime()) / (1000 * 60 * 60);
@@ -61,10 +61,11 @@ export async function GET() {
       const oppo = pfcfS*0.55 + fcfYS*0.45;
       const revGS = d.revGrowth == null ? 2.5 : d.revGrowth > 25 ? 5 : d.revGrowth > 15 ? 4.5 : d.revGrowth > 8 ? 4 : d.revGrowth > 3 ? 3 : 2;
       const gqs = Math.min(5, revGS*0.6 + 3*0.4);
-      return +((cbs*0.45 + oppo*0.30 + gqs*0.25)).toFixed(1);
+      const score = +((cbs*0.45 + oppo*0.30 + gqs*0.25)).toFixed(1);
+      return { score, cbs: +cbs.toFixed(1), oppo: +oppo.toFixed(1) };
     };
 
-    const withScore = stocks.map(s => ({ ...s, score: calcScore(s) }));
+    const withScore = stocks.map(s => ({ ...s, ...calcScore(s) }));
     const sorted = (arr, key, dir = 'desc', max = null) => [...arr]
   .filter(s => s[key] != null)
   .filter(s => max === null || Math.abs(s[key]) <= max)
@@ -85,10 +86,12 @@ export async function GET() {
       topFcfYield: sorted(withScore, 'fcfYield', 'desc', 50).slice(0, 10),
       topRevGrowth: sorted(withScore, 'revGrowth', 'desc', 300).slice(0, 10),
       topScore: sorted(withScore, 'score').slice(0, 10),
+      topQuality: sorted(withScore, 'cbs').slice(0, 10),
+      topOppo: sorted(withScore, 'oppo').slice(0, 10),
       bigCapMovers,
     });
   } catch (e) {
     console.error(e);
-    return Response.json({ gainers: [], losers: [], topRoic: [], topFcfYield: [], topRevGrowth: [], topScore: [], bigCapMovers: [] });
+    return Response.json({ gainers: [], losers: [], topRoic: [], topFcfYield: [], topRevGrowth: [], topScore: [], topQuality: [], topOppo: [], bigCapMovers: [] });
   }
 }
