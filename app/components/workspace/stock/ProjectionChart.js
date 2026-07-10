@@ -7,6 +7,7 @@ import {
   computeBlendedVolatility,
   computeHistoricalCagr,
   computeProjection,
+  createSeededRng,
 } from '../../../../lib/stockScoring';
 
 const HORIZONS = [
@@ -37,7 +38,6 @@ export default function ProjectionChart({ ticker, data, dcfValue, price, currenc
   const [closes, setCloses] = useState(null);
   const [marketVolAnnual, setMarketVolAnnual] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [rerollKey, setRerollKey] = useState(0);
 
   const horizon = HORIZONS.find(h => h.key === horizonKey);
 
@@ -102,12 +102,17 @@ export default function ProjectionChart({ ticker, data, dcfValue, price, currenc
 
   const projection = useMemo(() => {
     if (!price || effectiveDrift == null || volAnnual == null || !horizon) return null;
+    // Seeded from the actual inputs (not wall-clock time) so the fan is a pure function of
+    // ticker/horizon/drift/vol — reloading the page reproduces the exact same paths, and
+    // the fan only reshuffles when one of these genuinely changes (e.g. the user edits drift).
+    const seed = `${ticker}-${horizon.key}-${effectiveDrift.toFixed(4)}-${volAnnual.toFixed(4)}`;
     return computeProjection({
       price, driftAnnual: effectiveDrift, volAnnual,
       horizonYears: horizon.years, stepsPerYear: horizon.stepsPerYear,
+      rng: createSeededRng(seed),
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [price, effectiveDrift, volAnnual, horizon.key, rerollKey]);
+  }, [ticker, price, effectiveDrift, volAnnual, horizon.key]);
 
   const sym = curSym(currency || data.currency);
 
@@ -179,19 +184,13 @@ export default function ProjectionChart({ ticker, data, dcfValue, price, currenc
         </b></div>
       </div>
 
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px', flexWrap: 'wrap', gap: '10px' }}>
-        <div style={{ display: 'flex', gap: '1px', background: 'var(--ws-border)' }}>
-          {HORIZONS.map(h => (
-            <button key={h.key} onClick={() => setHorizonKey(h.key)}
-              style={{ padding: '5px 12px', fontSize: '10px', letterSpacing: '1px', background: horizonKey === h.key ? 'var(--ws-accent)' : 'var(--ws-bg-2)', color: horizonKey === h.key ? '#000' : 'var(--ws-text-3)', border: 'none', cursor: 'pointer', fontFamily: "'JetBrains Mono', monospace", fontWeight: horizonKey === h.key ? 700 : 500 }}>
-              {h.label}
-            </button>
-          ))}
-        </div>
-        <button onClick={() => setRerollKey(k => k + 1)} title="Draw a fresh set of simulated paths"
-          style={{ width: '22px', height: '22px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '11px', background: 'transparent', color: 'var(--ws-text-3)', border: '1px solid var(--ws-border)', borderRadius: '3px', cursor: 'pointer', opacity: 0.7 }}>
-          🎲
-        </button>
+      <div style={{ display: 'flex', gap: '1px', background: 'var(--ws-border)', marginBottom: '12px' }}>
+        {HORIZONS.map(h => (
+          <button key={h.key} onClick={() => setHorizonKey(h.key)}
+            style={{ padding: '5px 12px', fontSize: '10px', letterSpacing: '1px', background: horizonKey === h.key ? 'var(--ws-accent)' : 'var(--ws-bg-2)', color: horizonKey === h.key ? '#000' : 'var(--ws-text-3)', border: 'none', cursor: 'pointer', fontFamily: "'JetBrains Mono', monospace", fontWeight: horizonKey === h.key ? 700 : 500 }}>
+            {h.label}
+          </button>
+        ))}
       </div>
 
       <div style={{ background: 'var(--ws-bg-1)', border: '1px solid var(--ws-border)', padding: '16px' }}>
@@ -244,7 +243,7 @@ export default function ProjectionChart({ ticker, data, dcfValue, price, currenc
         This is a simulated scenario, not a prediction. The faint lines are {projection.numPaths} independent random walks built from {ticker}&apos;s
         historical volatility; the highlighted line is whichever one tracked the median most closely over the whole horizon — not a
         more likely outcome than the others, just the least extreme sample of the bunch. The shaded band (10th–90th percentile) is
-        what actually matters here, not any single line. Reroll to draw a fresh set.
+        what actually matters here, not any single line.
       </div>
     </div>
   );
