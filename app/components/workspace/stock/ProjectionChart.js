@@ -10,6 +10,11 @@ import {
   createSeededRng,
 } from '../../../../lib/stockScoring';
 
+// Matches computeHistoricalCagr's own 0.25-year cutoff — below this, the CAGR signal
+// already silently drops out of the drift blend, and the volatility estimate (which only
+// needs 10 days to compute at all) is statistically thin enough to warn about explicitly.
+const MIN_RELIABLE_DAYS = 63;
+
 const HORIZONS = [
   { key: '6m', label: '6M', years: 0.5, stepsPerYear: 252 },
   { key: '1y', label: '1Y', years: 1, stepsPerYear: 252 },
@@ -183,6 +188,14 @@ export default function ProjectionChart({ ticker, data, dcfValue, price, currenc
           {[historicalVol != null && '1Y realized', (data.beta != null && marketVolAnnual != null) && 'Beta × VIX'].filter(Boolean).join(' + ') || '—'}
         </b></div>
       </div>
+
+      {closes && closes.length < MIN_RELIABLE_DAYS && (
+        <div style={{ background: 'rgba(239, 68, 68, 0.08)', border: '1px solid var(--ws-red)', padding: '10px 14px', marginBottom: '16px', fontSize: '11px', color: 'var(--ws-red)', lineHeight: 1.5 }}>
+          ⚠ {ticker} only has {closes.length} trading day{closes.length === 1 ? '' : 's'} of price history — recent IPOs like this one don&apos;t
+          have enough data yet for a reliable volatility or growth-trend estimate. Treat this projection as a rough placeholder, not a
+          real read on {ticker}&apos;s risk.
+        </div>
+      )}
 
       <div style={{ display: 'flex', gap: '1px', background: 'var(--ws-border)', marginBottom: '12px' }}>
         {HORIZONS.map(h => (
