@@ -69,11 +69,13 @@ export default function ProjectionChart({ ticker, data, dcfValue, price, currenc
   );
 
   const analystDrift = data.analystTarget && price ? (data.analystTarget / price) - 1 : null;
-  const impliedGrowth = dcfValue?.baseGrowth ?? null;
+  // The DCF tab's own (fundamentals-based, not market-implied) growth assumption — one of
+  // three independent drift signals blended below.
+  const dcfGrowth = dcfValue?.baseGrowth ?? null;
 
   const driftAnnual = useMemo(
-    () => computeProjectionDrift({ impliedGrowth, historicalCagr, analystDrift }),
-    [impliedGrowth, historicalCagr, analystDrift]
+    () => computeProjectionDrift({ impliedGrowth: dcfGrowth, historicalCagr, analystDrift }),
+    [dcfGrowth, historicalCagr, analystDrift]
   );
 
   // The drift input is preloaded with our blended estimate but the user can overwrite it
@@ -165,7 +167,7 @@ export default function ProjectionChart({ ticker, data, dcfValue, price, currenc
         </div>
         <div><span className="text-ws-text-3">Annual volatility</span> &nbsp;<b className="text-ws-text">{(volAnnual * 100).toFixed(1)}%</b></div>
         <div><span className="text-ws-text-3">Drift sources</span> &nbsp;<b className="text-ws-text">
-          {[impliedGrowth != null && 'DCF', historicalCagr != null && '1Y CAGR', analystDrift != null && 'Analyst target'].filter(Boolean).join(' + ') || '—'}
+          {[dcfGrowth != null && 'DCF', historicalCagr != null && '1Y CAGR', analystDrift != null && 'Analyst target'].filter(Boolean).join(' + ') || '—'}
         </b></div>
         <div><span className="text-ws-text-3">Vol sources</span> &nbsp;<b className="text-ws-text">
           {[historicalVol != null && '1Y realized', (data.beta != null && marketVolAnnual != null) && 'Beta × VIX'].filter(Boolean).join(' + ') || '—'}

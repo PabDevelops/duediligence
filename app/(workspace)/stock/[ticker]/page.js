@@ -1344,9 +1344,14 @@ export default function StockPage({ params }) {
                 <>
                   <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px 24px', background: 'var(--ws-bg-1)', border: '1px solid var(--ws-border)', padding: '14px 16px', marginBottom: '16px', fontSize: '11px' }}>
                     <div><span className="text-ws-text-3">WACC</span> &nbsp;<b className="text-ws-text">{(dcfValue.wacc * 100).toFixed(1)}%</b></div>
-                    <div><span className="text-ws-text-3">Implied growth</span> &nbsp;<b className="text-ws-text">{(dcfValue.baseGrowth * 100).toFixed(1)}%</b></div>
+                    <div><span className="text-ws-text-3">Growth assumption</span> &nbsp;<b className="text-ws-text">{(dcfValue.baseGrowth * 100).toFixed(1)}%</b></div>
                     <div><span className="text-ws-text-3">Exit multiple</span> &nbsp;<b className="text-ws-text">{dcfValue.exitMultiple.toFixed(1)}x FCF</b></div>
                     <div><span className="text-ws-text-3">Risk-free rate</span> &nbsp;<b className="text-ws-text">{(data.riskFreeRate * 100).toFixed(2)}%</b></div>
+                    {dcfValue.impliedGrowth != null && (
+                      <div title="The growth rate that would justify today's price — shown for context only, not used in this valuation.">
+                        <span className="text-ws-text-3">Market is pricing in</span> &nbsp;<b className="text-ws-text">{(dcfValue.impliedGrowth * 100).toFixed(1)}%</b>
+                      </div>
+                    )}
                   </div>
 
                   {price != null && (
