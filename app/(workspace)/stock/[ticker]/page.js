@@ -1476,7 +1476,7 @@ export default function StockPage({ params }) {
                   )}
 
                   <div className="text-ws-text-3 text-[10px] tracking-[1px]">
-                    WACC-DISCOUNTED FCF (10YR) + EXIT-MULTIPLE TERMINAL VALUE · GROWTH = MARKET-IMPLIED (GORDON GROWTH, REVERSE-SOLVED) · NOT INVESTMENT ADVICE
+                    WACC-DISCOUNTED FCF (10YR, FADING TO A LONG-RUN RATE) + EXIT-MULTIPLE TERMINAL VALUE · GROWTH = FUNDAMENTALS-BASED (HISTORICAL FCF CAGR) · NOT INVESTMENT ADVICE
                   </div>
                 </>
               );
