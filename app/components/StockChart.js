@@ -14,6 +14,20 @@ const RANGES = [
 const CURRENCY_SYMBOLS = { USD: '$', EUR: '€', GBP: '£', JPY: '¥', CNY: '¥', CHF: 'CHF ', CAD: 'C$', AUD: 'A$', HKD: 'HK$', INR: '₹', KRW: '₩', SEK: 'kr', NOK: 'kr', DKK: 'kr' };
 const curSym = (code) => !code || code === 'USD' ? '$' : (CURRENCY_SYMBOLS[code] || `${code} `);
 
+// Reads a CSS custom property resolved at `el`'s location in the DOM — lets a canvas-based
+// chart (which can't just inherit CSS vars the way DOM elements do) still follow the current
+// theme. Tries the workspace variable first, falls back to the marketing one, since this
+// component renders inside both `.workspace` (stock page, light/dark) and the blog (light
+// only, no --ws-* vars defined).
+function cssVar(el, ...names) {
+  const style = getComputedStyle(el);
+  for (const name of names) {
+    const v = style.getPropertyValue(name).trim();
+    if (v) return v;
+  }
+  return null;
+}
+
 export default function StockChart({ ticker, currency }) {
   const containerRef = useRef(null);
   const chartRef = useRef(null);
@@ -22,6 +36,16 @@ export default function StockChart({ ticker, currency }) {
   const [mode, setMode] = useState('line');
   const [candles, setCandles] = useState([]);
   const [loading, setLoading] = useState(true);
+  // Bumped whenever the workspace theme toggle flips data-ws-theme, so the effect below
+  // re-reads CSS vars and rebuilds the chart with the new theme's colors instead of being
+  // stuck with whatever was resolved at first mount.
+  const [themeVersion, setThemeVersion] = useState(0);
+
+  useEffect(() => {
+    const observer = new MutationObserver(() => setThemeVersion(v => v + 1));
+    observer.observe(document.documentElement, { attributes: true, attributeFilter: ['data-ws-theme'] });
+    return () => observer.disconnect();
+  }, []);
 
   // Fetch data
   useEffect(() => {
@@ -62,10 +86,23 @@ export default function StockChart({ ticker, currency }) {
 
       const currencySymbol = curSym(currency);
 
+      // Resolve theme colors from wherever this chart actually sits — .workspace (light or
+      // dark) on the stock page, or the (light-only) marketing palette on the blog — instead
+      // of hardcoding a single dark theme the chart no longer has a background of its own.
+      const el = containerRef.current;
+      const textColor = cssVar(el, '--ws-text-3', '--text-3') || '#888888';
+      const gridColor = cssVar(el, '--ws-border', '--border') || 'rgba(128,128,128,0.15)';
+      const green = '#10b981';
+      const red = cssVar(el, '--ws-red', '--red') || '#ef4444';
+
+      const first = candles[0]?.c;
+      const last = candles[candles.length - 1]?.c;
+      const trendColor = last >= first ? green : red;
+
       const chart = createChart(containerRef.current, {
         layout: {
-          background: { type: ColorType.Solid, color: '#111111' },
-          textColor: '#555555',
+          background: { type: ColorType.Solid, color: 'transparent' },
+          textColor,
           fontFamily: 'JetBrains Mono, monospace',
           fontSize: 10,
           // lightweight-charts renders a "Charting by TradingView" attribution link by
@@ -73,12 +110,12 @@ export default function StockChart({ ticker, currency }) {
           attributionLogo: false,
         },
         grid: {
-          vertLines: { color: '#1a1a1a' },
-          horzLines: { color: '#1a1a1a' },
+          vertLines: { color: gridColor },
+          horzLines: { color: gridColor },
         },
         crosshair: { mode: 1 },
-        rightPriceScale: { borderColor: '#222222' },
-        timeScale: { borderColor: '#222222', timeVisible: true },
+        rightPriceScale: { borderColor: gridColor },
+        timeScale: { borderColor: gridColor, timeVisible: true },
         localization: {
           priceFormatter: (price) => {
             return `${currencySymbol}${price < 1.0 ? price.toFixed(4) : price.toFixed(2)}`;
@@ -93,12 +130,12 @@ export default function StockChart({ ticker, currency }) {
       if (mode === 'candles') {
         const { CandlestickSeries } = await import('lightweight-charts');
         const series = chart.addSeries(CandlestickSeries, {
-          upColor: '#22c55e',
-          downColor: '#ef4444',
-          borderUpColor: '#22c55e',
-          borderDownColor: '#ef4444',
-          wickUpColor: '#22c55e',
-          wickDownColor: '#ef4444',
+          upColor: green,
+          downColor: red,
+          borderUpColor: green,
+          borderDownColor: red,
+          wickUpColor: green,
+          wickDownColor: red,
         });
         series.setData(candles.map(c => ({
           time: Math.floor(c.t / 1000),
@@ -110,9 +147,9 @@ export default function StockChart({ ticker, currency }) {
       } else {
         const { AreaSeries } = await import('lightweight-charts');
         const series = chart.addSeries(AreaSeries, {
-          lineColor: '#F59E0B',
-          topColor: 'rgba(245, 158, 11, 0.15)',
-          bottomColor: 'rgba(245, 158, 11, 0)',
+          lineColor: trendColor,
+          topColor: trendColor === green ? 'rgba(16, 185, 129, 0.15)' : 'rgba(239, 68, 68, 0.15)',
+          bottomColor: trendColor === green ? 'rgba(16, 185, 129, 0)' : 'rgba(239, 68, 68, 0)',
           lineWidth: 2,
         });
         series.setData(candles.map(c => ({
@@ -139,7 +176,7 @@ export default function StockChart({ ticker, currency }) {
         chartRef.current = null;
       }
     };
-  }, [candles, mode, loading, currency]);
+  }, [candles, mode, loading, currency, themeVersion]);
 
   return (
     <div style={{ background: 'var(--bg-1)', padding: '16px', position: 'relative' }}>
