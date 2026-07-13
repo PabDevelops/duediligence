@@ -18,7 +18,7 @@ export const metadata = {
   alternates: { canonical: 'https://traqcker.com/radar' },
 };
 
-export default function CompareLayout({ children }) {
+export default function RadarLayout({ children }) {
   return children;
 }
 

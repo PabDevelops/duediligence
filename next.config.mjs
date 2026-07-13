@@ -8,6 +8,15 @@ const nextConfig = {
       },
     ];
   },
+  async redirects() {
+    return [
+      {
+        source: '/compare',
+        destination: '/radar',
+        permanent: true,
+      },
+    ];
+  },
 };
 
 export default nextConfig;

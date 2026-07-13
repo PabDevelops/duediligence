@@ -1359,7 +1359,7 @@ export default function WorkspaceHome() {
       ) : (
         <div className="home-main-grid" style={{
           display: 'grid',
-          gridTemplateColumns: '1fr 360px',
+          gridTemplateColumns: '1fr 1fr',
           gap: '20px',
           alignItems: 'start'
         }}>

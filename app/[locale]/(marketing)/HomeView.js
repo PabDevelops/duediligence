@@ -6,6 +6,18 @@ import NewsletterForm from '../../components/NewsletterForm';
 import { WindowChrome, Shot } from '../../components/WindowChrome';
 import { localizeHref } from '../../../lib/i18n/locale';
 
+// Switching away from Spanish must explicitly clear the cookie — the
+// middleware treats NEXT_LOCALE as authoritative, so without this a bare
+// link back would just get redirected straight back to /es.
+function useLangToggle(locale) {
+  const otherLocaleHref = locale === 'es' ? '/' : '/es';
+  const label = locale === 'es' ? 'EN' : 'ES';
+  const onClick = () => {
+    if (locale === 'es') document.cookie = 'NEXT_LOCALE=en; path=/; max-age=31536000';
+  };
+  return { otherLocaleHref, label, onClick };
+}
+
 const MONO = "'JetBrains Mono', monospace";
 
 // Screenshot metadata describes actual English-language product UI, so it
@@ -22,7 +34,7 @@ const PRODUCT_TOUR_SHOTS = [
   { src: '/screenshots/portfolio.png', alt: 'Traqcker multi-currency portfolio tracker', windowTitle: 'terminal.traqcker.com/portfolio — Multi-Currency Portfolio' },
   { src: '/screenshots/stock.png', alt: 'Traqcker stock analysis page verified against SEC filings', windowTitle: 'terminal.traqcker.com/stock/AAPL — SEC Source Reference' },
   { src: '/screenshots/screener.png', alt: 'Traqcker quantitative stock screener', windowTitle: 'terminal.traqcker.com/screener — Quantitative Universe Filter' },
-  { src: '/screenshots/compare.png', alt: 'Traqcker side-by-side company comparison', windowTitle: 'terminal.traqcker.com/compare — Side-by-Side Comparison' },
+  { src: '/screenshots/radar.png', alt: 'Traqcker Radar market intelligence dashboard', windowTitle: 'terminal.traqcker.com/radar — Market Radar' },
   { src: '/screenshots/calendar.png', alt: 'Traqcker earnings and filings calendar', windowTitle: 'terminal.traqcker.com/calendar — Earnings & Filings Calendar' },
 ];
 
@@ -38,6 +50,7 @@ export default function HomeView({ dict, locale }) {
   }, [isLoaded, isSignedIn, router]);
 
   const valueProps = t.valueProps.items.map((item, i) => ({ ...item, shot: VALUE_PROP_SHOTS[i] }));
+  const langToggle = useLangToggle(locale);
 
   return (
     <div style={{ background: '#ffffff', minHeight: '100vh', color: 'var(--text)', fontFamily: 'Inter, sans-serif', overflow: 'hidden' }}>
@@ -63,6 +76,7 @@ export default function HomeView({ dict, locale }) {
         </nav>
 
         <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+          <a href={langToggle.otherLocaleHref} onClick={langToggle.onClick} style={{ textDecoration: 'none', color: 'var(--text-3)', fontSize: '13px', fontWeight: 700 }}>{langToggle.label}</a>
           <a href={href('/sign-in')} style={{ textDecoration: 'none', color: 'var(--text-2)', fontSize: '13px', fontWeight: 600 }}>{t.openApp}</a>
           <a href={href('/pricing')} style={{
             height: '38px',
@@ -71,7 +85,6 @@ export default function HomeView({ dict, locale }) {
             color: '#ffffff',
             fontSize: '13px',
             fontWeight: 700,
-            borderRadius: '8px',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
@@ -116,7 +129,6 @@ export default function HomeView({ dict, locale }) {
             fontWeight: 700,
             background: 'var(--accent)',
             color: '#ffffff',
-            borderRadius: '8px',
             textDecoration: 'none',
             boxShadow: '0 4px 14px rgba(15, 118, 110, 0.25)',
             transition: 'opacity 0.15s'
@@ -133,7 +145,6 @@ export default function HomeView({ dict, locale }) {
             background: 'transparent',
             color: 'var(--text)',
             border: '1px solid var(--border)',
-            borderRadius: '8px',
             textDecoration: 'none',
             transition: 'background 0.15s'
           }}
@@ -163,32 +174,6 @@ export default function HomeView({ dict, locale }) {
             <WindowChrome title="terminal.traqcker.com/home — Market Overview Dashboard" maxWidth="920px">
               <Shot src="/screenshots/stock.png" alt="Traqcker Terminal Stock Analysis Screen" />
             </WindowChrome>
-          </div>
-        </div>
-      </section>
-
-      {/* TRUSTED BY STRIP */}
-      <section style={{ borderTop: '1px solid var(--border)', borderBottom: '1px solid var(--border)', background: '#fafafa', padding: '36px 24px' }}>
-        <div style={{ maxWidth: '1200px', margin: '0 auto', textAlign: 'center' }}>
-          <p style={{ fontSize: '11px', fontWeight: 700, color: 'var(--text-3)', textTransform: 'uppercase', letterSpacing: '1.5px', marginBottom: '24px' }}>
-            {t.trustedBy}
-          </p>
-          <div style={{
-            display: 'flex',
-            justifyContent: 'center',
-            alignItems: 'center',
-            gap: '48px',
-            flexWrap: 'wrap',
-            fontFamily: MONO,
-            fontSize: '14px',
-            fontWeight: 700,
-            color: 'var(--text-3)',
-          }}>
-            <span>STIFEL</span>
-            <span>YAHOO FINANCE</span>
-            <span>JANUS HENDERSON</span>
-            <span>MONTANARO</span>
-            <span>WOOD MACKENZIE</span>
           </div>
         </div>
       </section>
@@ -229,8 +214,7 @@ export default function HomeView({ dict, locale }) {
             <a href={href('/pricing')} style={{
               height: '44px',
               border: '1px solid var(--text)',
-              borderRadius: '8px',
-              display: 'flex',
+                display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
               fontSize: '13px',
@@ -273,8 +257,7 @@ export default function HomeView({ dict, locale }) {
             <a href={href('/pricing')} style={{
               height: '44px',
               border: '1px solid var(--text)',
-              borderRadius: '8px',
-              display: 'flex',
+                display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
               fontSize: '13px',
@@ -410,8 +393,7 @@ export default function HomeView({ dict, locale }) {
                 fontWeight: 700,
                 background: '#ffffff',
                 color: '#0b0d13',
-                borderRadius: '8px',
-                textDecoration: 'none',
+                    textDecoration: 'none',
                 boxShadow: '0 4px 14px rgba(0,0,0,0.15)',
                 transition: 'opacity 0.15s'
               }}
@@ -427,8 +409,7 @@ export default function HomeView({ dict, locale }) {
                 background: 'transparent',
                 color: '#ffffff',
                 border: '1px solid rgba(255,255,255,0.3)',
-                borderRadius: '8px',
-                textDecoration: 'none',
+                    textDecoration: 'none',
                 transition: 'background 0.15s'
               }}
                 onMouseEnter={e => e.currentTarget.style.background = 'rgba(255,255,255,0.05)'}

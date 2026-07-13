@@ -63,7 +63,7 @@ export default function Topbar() {
           ) : (
             <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
               <a href={href('/sign-in')} style={{ color: 'var(--text-3)', fontSize: '13px', fontWeight: 600, textDecoration: 'none' }}>{t.signIn}</a>
-              <a href={href('/pricing')} className="btn-primary" style={{ padding: '6px 16px', fontSize: '13px' }}>{t.startFreeTrial}</a>
+              <a href={href('/pricing')} className="btn-primary" style={{ padding: '6px 16px', fontSize: '13px', background: 'var(--accent)', borderRadius: 0 }}>{t.startFreeTrial}</a>
             </div>
           )}
         </div>
@@ -93,7 +93,7 @@ export default function Topbar() {
           </a>
           {!isSignedIn && (
             <div style={{ padding: '12px 16px' }}>
-              <a href={href('/sign-in')} className="btn-primary" style={{ display: 'block', width: '100%', padding: '10px', textAlign: 'center', boxSizing: 'border-box' }}>{t.signIn}</a>
+              <a href={href('/sign-in')} className="btn-primary" style={{ display: 'block', width: '100%', padding: '10px', textAlign: 'center', boxSizing: 'border-box', background: 'var(--accent)', borderRadius: 0 }}>{t.signIn}</a>
             </div>
           )}
         </div>
