@@ -5,11 +5,17 @@ import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer } from 'recharts';
 // since it needs 10 visually distinct colors, not just the app's accent/text/border set.
 const PALETTE = ['#4f7a68', '#7c6fe0', '#d99a4e', '#5a9bd4', '#c1666b', '#8fb996', '#b98fc9', '#e0a458', '#6b9080', '#a4a4a4'];
 
-export default function AllocationChart({ title, data }) {
+// `onClick`/`open` are optional — passing them turns the card into a toggle (Watchlist's
+// collapsed-by-default pie groups); omitting them keeps the plain static card Portfolio uses.
+export default function AllocationChart({ title, data, onClick, open }) {
   if (data.length === 0) return null;
   return (
-    <div className="border border-ws-border p-4">
-      <div style={{ fontSize: '11px', fontFamily: "'JetBrains Mono', monospace", fontWeight: 700, color: 'var(--ws-text-3)', letterSpacing: '1.5px', marginBottom: '8px' }}>{title}</div>
+    <div className="border p-4" onClick={onClick}
+      style={{ borderColor: open ? 'var(--ws-accent)' : 'var(--ws-border)', cursor: onClick ? 'pointer' : 'default' }}>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '8px' }}>
+        <div style={{ fontSize: '11px', fontFamily: "'JetBrains Mono', monospace", fontWeight: 700, color: 'var(--ws-text-3)', letterSpacing: '1.5px' }}>{title}</div>
+        {onClick && <span style={{ fontSize: '11px', color: open ? 'var(--ws-accent)' : 'var(--ws-text-3)' }}>{open ? '▾' : '▸'}</span>}
+      </div>
       <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
         <div style={{ width: '120px', height: '120px', flexShrink: 0 }}>
           <ResponsiveContainer width="100%" height="100%">

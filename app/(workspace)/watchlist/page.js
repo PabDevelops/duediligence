@@ -28,6 +28,16 @@ export default function WatchlistPage() {
   const [pieDraft, setPieDraft] = useState('');
   const [showPieSuggestions, setShowPieSuggestions] = useState(false);
 
+  // Pies render as a grid of clickable cards, collapsed by default — the stock table for a
+  // pie only shows once you click its card. Doesn't apply when nothing's grouped yet (see
+  // `hasPies` below), so the plain add-a-symbol flow still just sees one flat table.
+  const [expandedPies, setExpandedPies] = useState(() => new Set());
+  const togglePie = (name) => setExpandedPies(prev => {
+    const next = new Set(prev);
+    if (next.has(name)) next.delete(name); else next.add(name);
+    return next;
+  });
+
   const fetchWatchlist = useCallback(async () => {
     setLoading(true);
     try {
@@ -165,6 +175,103 @@ export default function WatchlistPage() {
     }
   };
 
+  const renderTable = (items) => (
+    <div className="responsive-table-container" style={{ border: '1px solid var(--ws-border)', background: 'var(--ws-bg-1)' }}>
+      <table className="responsive-table" style={{ fontSize: '12px' }}>
+        <thead>
+          <tr style={{ borderBottom: '1px solid var(--ws-border)', background: 'var(--ws-bg-1)' }}>
+            {['Stock', '1M', 'Price', 'Day', 'P/E', 'Div yield', 'Sector', ''].map(h => (
+              <th key={h} className={h === 'Stock' ? 'sticky-col' : ''} style={{ padding: '9px 12px', textAlign: h === 'Stock' ? 'left' : h === '1M' ? 'center' : 'right', fontWeight: 600, fontSize: '10px', color: 'var(--ws-text-3)' }}>{h}</th>
+            ))}
+          </tr>
+        </thead>
+        <tbody>
+          {items.map(t => {
+            const isEditingPie = editingPieTicker === t.ticker;
+            const dayChange = t.priceChangePct ?? 0;
+            return (
+              <tr key={t.ticker} onClick={() => router.push(`/stock/${t.ticker}`)}
+                style={{ borderBottom: '1px solid var(--ws-border)', cursor: 'pointer', background: 'var(--ws-bg-1)' }}
+                onMouseEnter={e => e.currentTarget.style.background = 'var(--ws-bg-2)'}
+                onMouseLeave={e => e.currentTarget.style.background = 'var(--ws-bg-1)'}>
+                <td className="sticky-col" style={{ padding: '10px 12px' }}>
+                  <div className="flex items-center gap-2">
+                    <StockLogo ticker={t.ticker} size={24} />
+                    <div>
+                      <div style={{ fontWeight: 600, color: 'var(--ws-text)', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                        {t.ticker}
+                        <MarketStatusDot ticker={t.ticker} />
+                      </div>
+                      <div style={{ color: 'var(--ws-text-3)', fontSize: '11px' }}>{t.name || '…'}</div>
+                    </div>
+                  </div>
+                </td>
+                <td style={{ padding: '10px 12px', textAlign: 'center' }}>
+                  {sparklines[t.ticker] && <Sparkline data={sparklines[t.ticker]} width={64} height={22} />}
+                </td>
+                <td style={{ padding: '10px 12px', textAlign: 'right', fontWeight: 600 }}>
+                  {t.currentPrice != null ? formatCurrency(t.currentPrice, t.currency || 'USD') : '—'}
+                </td>
+                <td style={{ padding: '10px 12px', textAlign: 'right', color: t.priceChangePct == null ? 'var(--ws-text-3)' : dayChange >= 0 ? 'var(--ws-accent)' : 'var(--ws-red)' }}>
+                  {t.priceChangePct != null ? `${dayChange >= 0 ? '+' : ''}${dayChange.toFixed(2)}%` : '—'}
+                </td>
+                <td style={{ padding: '10px 12px', textAlign: 'right', color: 'var(--ws-text-2)' }}>{t.pe ? t.pe.toFixed(1) : '—'}</td>
+                <td style={{ padding: '10px 12px', textAlign: 'right', color: 'var(--ws-text-2)' }}>{t.dividendYield ? `${t.dividendYield.toFixed(2)}%` : '—'}</td>
+                <td style={{ padding: '10px 12px', textAlign: 'right', color: 'var(--ws-text-2)' }}>{t.sector || '—'}</td>
+                <td style={{ padding: '10px 12px', textAlign: 'right', whiteSpace: 'nowrap' }} onClick={e => e.stopPropagation()}>
+                  {isEditingPie ? (
+                    <div style={{ position: 'relative', display: 'inline-block' }}>
+                      <input
+                        autoFocus
+                        value={pieDraft}
+                        placeholder="General"
+                        onChange={e => { setPieDraft(e.target.value); setShowPieSuggestions(true); }}
+                        onFocus={() => setShowPieSuggestions(true)}
+                        onKeyDown={e => {
+                          if (e.key === 'Enter') moveToPie(t.ticker, pieDraft);
+                          if (e.key === 'Escape') { setEditingPieTicker(null); setShowPieSuggestions(false); }
+                        }}
+                        onBlur={() => setTimeout(() => moveToPie(t.ticker, pieDraft), 150)}
+                        style={{ width: '110px', fontSize: '10px', padding: '4px 6px', background: 'var(--ws-bg-1)', border: '1px solid var(--ws-accent)', color: 'var(--ws-text)', fontFamily: 'JetBrains Mono, monospace' }}
+                      />
+                      {showPieSuggestions && pieSuggestions.length > 0 && (
+                        <div style={{ position: 'absolute', top: '26px', right: 0, minWidth: '120px', background: 'var(--ws-bg-1)', border: '1px solid var(--ws-border)', zIndex: 20, textAlign: 'left', boxShadow: '0 8px 24px rgba(0,0,0,0.15)' }}>
+                          {pieSuggestions.map(p => (
+                            <div key={p} onMouseDown={() => moveToPie(t.ticker, p)}
+                              style={{ padding: '6px 8px', fontSize: '10px', cursor: 'pointer', color: 'var(--ws-text)' }}
+                              onMouseEnter={e => e.currentTarget.style.background = 'var(--ws-bg-2)'}
+                              onMouseLeave={e => e.currentTarget.style.background = 'transparent'}>
+                              {p}
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  ) : (
+                    <button
+                      onClick={() => { setEditingPieTicker(t.ticker); setPieDraft(t.pie || ''); }}
+                      title="Move to a different list"
+                      style={{ background: 'var(--ws-bg-2)', border: '1px solid var(--ws-border)', color: 'var(--ws-text-3)', fontSize: '9px', fontWeight: 700, padding: '4px 8px', cursor: 'pointer', fontFamily: 'JetBrains Mono, monospace', whiteSpace: 'nowrap', marginRight: '8px' }}
+                      onMouseEnter={e => { e.currentTarget.style.color = 'var(--ws-accent)'; e.currentTarget.style.borderColor = 'var(--ws-accent)'; }}
+                      onMouseLeave={e => { e.currentTarget.style.color = 'var(--ws-text-3)'; e.currentTarget.style.borderColor = 'var(--ws-border)'; }}>
+                      {t.pie || 'General'}
+                    </button>
+                  )}
+                  <button onClick={() => removeTicker(t.ticker)} title={`Remove ${t.ticker} from watchlist`}
+                    style={{ background: 'none', border: 'none', color: 'var(--ws-text-3)', cursor: 'pointer', fontSize: '13px' }}
+                    onMouseEnter={e => e.target.style.color = 'var(--ws-red)'}
+                    onMouseLeave={e => e.target.style.color = 'var(--ws-text-3)'}>
+                    ✕
+                  </button>
+                </td>
+              </tr>
+            );
+          })}
+        </tbody>
+      </table>
+    </div>
+  );
+
   return (
     <div style={{ padding: '24px' }}>
       <div style={{ border: '1px solid var(--ws-border)', background: 'var(--ws-bg-1)', marginBottom: '20px', overflow: 'hidden' }}>
@@ -236,122 +343,51 @@ export default function WatchlistPage() {
             {hasPies && <AllocationChart title="ALLOCATION BY PIE" data={pieChart} />}
           </div>
 
-          {groups.map(group => {
-            // Each ticker in the group counts equally (watchlist has no dollar weight to
-            // split by) — this is "what's actually inside this pie", as opposed to the
-            // ALLOCATION BY PIE donut above, which is "how are my tickers split across pies".
-            const groupChart = group.items.map(t => ({ name: t.ticker, value: (1 / group.items.length) * 100 }));
-            return (
-            <div key={group.name} style={{ marginBottom: '18px' }}>
-              {hasPies && (
-                group.items.length > 1 ? (
-                  <div style={{ marginBottom: '10px' }}>
-                    <AllocationChart title={`${group.name.toUpperCase()} · ${group.items.length} TICKERS`} data={groupChart} />
-                  </div>
-                ) : (
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '10px 4px', marginBottom: '2px' }}>
-                    <div style={{ fontSize: '13px', fontWeight: 700, color: 'var(--ws-text)' }}>{group.name}</div>
-                    <div style={{ fontSize: '11px', color: 'var(--ws-text-3)' }}>{group.items.length} ticker</div>
-                  </div>
-                )
-              )}
-              <div className="responsive-table-container" style={{ border: '1px solid var(--ws-border)', background: 'var(--ws-bg-1)' }}>
-                <table className="responsive-table" style={{ fontSize: '12px' }}>
-                  <thead>
-                    <tr style={{ borderBottom: '1px solid var(--ws-border)', background: 'var(--ws-bg-1)' }}>
-                      {['Stock', '1M', 'Price', 'Day', 'P/E', 'Div yield', 'Sector', ''].map(h => (
-                        <th key={h} className={h === 'Stock' ? 'sticky-col' : ''} style={{ padding: '9px 12px', textAlign: h === 'Stock' ? 'left' : h === '1M' ? 'center' : 'right', fontWeight: 600, fontSize: '10px', color: 'var(--ws-text-3)' }}>{h}</th>
-                      ))}
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {group.items.map(t => {
-                      const isEditingPie = editingPieTicker === t.ticker;
-                      const dayChange = t.priceChangePct ?? 0;
-                      return (
-                        <tr key={t.ticker} onClick={() => router.push(`/stock/${t.ticker}`)}
-                          style={{ borderBottom: '1px solid var(--ws-border)', cursor: 'pointer', background: 'var(--ws-bg-1)' }}
-                          onMouseEnter={e => e.currentTarget.style.background = 'var(--ws-bg-2)'}
-                          onMouseLeave={e => e.currentTarget.style.background = 'var(--ws-bg-1)'}>
-                          <td className="sticky-col" style={{ padding: '10px 12px' }}>
-                            <div className="flex items-center gap-2">
-                              <StockLogo ticker={t.ticker} size={24} />
-                              <div>
-                                <div style={{ fontWeight: 600, color: 'var(--ws-text)', display: 'flex', alignItems: 'center', gap: '6px' }}>
-                                  {t.ticker}
-                                  <MarketStatusDot ticker={t.ticker} />
-                                </div>
-                                <div style={{ color: 'var(--ws-text-3)', fontSize: '11px' }}>{t.name || '…'}</div>
-                              </div>
-                            </div>
-                          </td>
-                          <td style={{ padding: '10px 12px', textAlign: 'center' }}>
-                            {sparklines[t.ticker] && <Sparkline data={sparklines[t.ticker]} width={64} height={22} />}
-                          </td>
-                          <td style={{ padding: '10px 12px', textAlign: 'right', fontWeight: 600 }}>
-                            {t.currentPrice != null ? formatCurrency(t.currentPrice, t.currency || 'USD') : '—'}
-                          </td>
-                          <td style={{ padding: '10px 12px', textAlign: 'right', color: t.priceChangePct == null ? 'var(--ws-text-3)' : dayChange >= 0 ? 'var(--ws-accent)' : 'var(--ws-red)' }}>
-                            {t.priceChangePct != null ? `${dayChange >= 0 ? '+' : ''}${dayChange.toFixed(2)}%` : '—'}
-                          </td>
-                          <td style={{ padding: '10px 12px', textAlign: 'right', color: 'var(--ws-text-2)' }}>{t.pe ? t.pe.toFixed(1) : '—'}</td>
-                          <td style={{ padding: '10px 12px', textAlign: 'right', color: 'var(--ws-text-2)' }}>{t.dividendYield ? `${t.dividendYield.toFixed(2)}%` : '—'}</td>
-                          <td style={{ padding: '10px 12px', textAlign: 'right', color: 'var(--ws-text-2)' }}>{t.sector || '—'}</td>
-                          <td style={{ padding: '10px 12px', textAlign: 'right', whiteSpace: 'nowrap' }} onClick={e => e.stopPropagation()}>
-                            {isEditingPie ? (
-                              <div style={{ position: 'relative', display: 'inline-block' }}>
-                                <input
-                                  autoFocus
-                                  value={pieDraft}
-                                  placeholder="General"
-                                  onChange={e => { setPieDraft(e.target.value); setShowPieSuggestions(true); }}
-                                  onFocus={() => setShowPieSuggestions(true)}
-                                  onKeyDown={e => {
-                                    if (e.key === 'Enter') moveToPie(t.ticker, pieDraft);
-                                    if (e.key === 'Escape') { setEditingPieTicker(null); setShowPieSuggestions(false); }
-                                  }}
-                                  onBlur={() => setTimeout(() => moveToPie(t.ticker, pieDraft), 150)}
-                                  style={{ width: '110px', fontSize: '10px', padding: '4px 6px', background: 'var(--ws-bg-1)', border: '1px solid var(--ws-accent)', color: 'var(--ws-text)', fontFamily: 'JetBrains Mono, monospace' }}
-                                />
-                                {showPieSuggestions && pieSuggestions.length > 0 && (
-                                  <div style={{ position: 'absolute', top: '26px', right: 0, minWidth: '120px', background: 'var(--ws-bg-1)', border: '1px solid var(--ws-border)', zIndex: 20, textAlign: 'left', boxShadow: '0 8px 24px rgba(0,0,0,0.15)' }}>
-                                    {pieSuggestions.map(p => (
-                                      <div key={p} onMouseDown={() => moveToPie(t.ticker, p)}
-                                        style={{ padding: '6px 8px', fontSize: '10px', cursor: 'pointer', color: 'var(--ws-text)' }}
-                                        onMouseEnter={e => e.currentTarget.style.background = 'var(--ws-bg-2)'}
-                                        onMouseLeave={e => e.currentTarget.style.background = 'transparent'}>
-                                        {p}
-                                      </div>
-                                    ))}
-                                  </div>
-                                )}
-                              </div>
-                            ) : (
-                              <button
-                                onClick={() => { setEditingPieTicker(t.ticker); setPieDraft(t.pie || ''); }}
-                                title="Move to a different list"
-                                style={{ background: 'var(--ws-bg-2)', border: '1px solid var(--ws-border)', color: 'var(--ws-text-3)', fontSize: '9px', fontWeight: 700, padding: '4px 8px', cursor: 'pointer', fontFamily: 'JetBrains Mono, monospace', whiteSpace: 'nowrap', marginRight: '8px' }}
-                                onMouseEnter={e => { e.currentTarget.style.color = 'var(--ws-accent)'; e.currentTarget.style.borderColor = 'var(--ws-accent)'; }}
-                                onMouseLeave={e => { e.currentTarget.style.color = 'var(--ws-text-3)'; e.currentTarget.style.borderColor = 'var(--ws-border)'; }}>
-                                {t.pie || 'General'}
-                              </button>
-                            )}
-                            <button onClick={() => removeTicker(t.ticker)} title={`Remove ${t.ticker} from watchlist`}
-                              style={{ background: 'none', border: 'none', color: 'var(--ws-text-3)', cursor: 'pointer', fontSize: '13px' }}
-                              onMouseEnter={e => e.target.style.color = 'var(--ws-red)'}
-                              onMouseLeave={e => e.target.style.color = 'var(--ws-text-3)'}>
-                              ✕
-                            </button>
-                          </td>
-                        </tr>
-                      );
-                    })}
-                  </tbody>
-                </table>
+          {hasPies ? (
+            <>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(240px, 1fr))', gap: '12px', marginBottom: '18px' }}>
+                {groups.map(group => {
+                  const isOpen = expandedPies.has(group.name);
+                  if (group.items.length > 1) {
+                    // Each ticker in the group counts equally (watchlist has no dollar weight
+                    // to split by) — this is "what's inside this pie", as opposed to the
+                    // ALLOCATION BY PIE donut above, which is "how tickers split across pies".
+                    const groupChart = group.items.map(t => ({ name: t.ticker, value: (1 / group.items.length) * 100 }));
+                    return (
+                      <AllocationChart
+                        key={group.name}
+                        title={`${group.name.toUpperCase()} · ${group.items.length} TICKERS`}
+                        data={groupChart}
+                        onClick={() => togglePie(group.name)}
+                        open={isOpen}
+                      />
+                    );
+                  }
+                  // AllocationChart returns null for a single ticker (no meaningful split), so
+                  // single-ticker pies get a plain compact clickable card instead.
+                  return (
+                    <div key={group.name} className="border p-4" onClick={() => togglePie(group.name)}
+                      style={{ borderColor: isOpen ? 'var(--ws-accent)' : 'var(--ws-border)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                      <div>
+                        <div style={{ fontSize: '13px', fontWeight: 700, color: 'var(--ws-text)' }}>{group.name}</div>
+                        <div style={{ fontSize: '11px', color: 'var(--ws-text-3)' }}>{group.items.length} ticker</div>
+                      </div>
+                      <span style={{ fontSize: '11px', color: isOpen ? 'var(--ws-accent)' : 'var(--ws-text-3)' }}>{isOpen ? '▾' : '▸'}</span>
+                    </div>
+                  );
+                })}
               </div>
-            </div>
-            );
-          })}
+
+              {groups.filter(g => expandedPies.has(g.name)).map(group => (
+                <div key={group.name} style={{ marginBottom: '18px' }}>
+                  <div style={{ fontSize: '11px', fontWeight: 700, color: 'var(--ws-text-3)', letterSpacing: '1px', marginBottom: '8px' }}>{group.name.toUpperCase()}</div>
+                  {renderTable(group.items)}
+                </div>
+              ))}
+            </>
+          ) : (
+            renderTable(tickers)
+          )}
         </>
       )}
     </div>
