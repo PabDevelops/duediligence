@@ -1,5 +1,6 @@
 'use client';
-import { useState, useEffect, useMemo, use } from 'react';
+import { useState, useEffect, useMemo, useRef, use } from 'react';
+import { useRouter } from 'next/navigation';
 import { BarChart, Bar, LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell } from 'recharts';
 import PriceChart from './chart';
 import StockChart from '../../../components/StockChart';
@@ -12,6 +13,7 @@ import MarketStatusDot from '../../../components/workspace/MarketStatusDot';
 import { useUser } from '../../../components/AuthProvider';
 import { fmt as sharedFmt, fmtP as sharedFmtP, fmtN as sharedFmtN } from '../../../../lib/formatters';
 import { useStockData } from '../../../../lib/hooks/useStockData';
+import { useTickerSearch } from '../../../../lib/hooks/useTickerSearch';
 import {
   getDimScore as sharedGetDimScore,
   totalScore as sharedTotalScore,
@@ -106,8 +108,21 @@ const ScoreBox = ({ score, size = 48 }) => {
 export default function StockPage({ params }) {
   const { ticker: rawTicker } = use(params);
   const ticker = rawTicker.toUpperCase();
+  const router = useRouter();
   const { data, error, loading } = useStockData(ticker);
   const [tab, setTab] = useState('overview');
+  const [jumpQuery, setJumpQuery] = useState('');
+  const [showJumpSuggestions, setShowJumpSuggestions] = useState(false);
+  const jumpInputRef = useRef(null);
+  const { suggestions: jumpSuggestions } = useTickerSearch(jumpQuery, { limit: 6 });
+  const goToTicker = (t) => {
+    const next = t.trim().toUpperCase();
+    if (!next) return;
+    router.push(`/stock/${next}`);
+    setJumpQuery('');
+    setShowJumpSuggestions(false);
+    jumpInputRef.current?.blur();
+  };
   const [insiderTrades, setInsiderTrades] = useState(null);
   const [insiderLoading, setInsiderLoading] = useState(false);
   const [insiderChart, setInsiderChart] = useState(null);
@@ -404,6 +419,61 @@ export default function StockPage({ params }) {
               [LIMITED DATA]
             </span>
           )}
+
+          {/* Jump-to-ticker search, so you can move between stocks without leaving the page */}
+          <div style={{ marginLeft: 'auto', position: 'relative', width: '200px' }}>
+            <input
+              ref={jumpInputRef}
+              value={jumpQuery}
+              onChange={e => { setJumpQuery(e.target.value); setShowJumpSuggestions(true); }}
+              onKeyDown={e => {
+                if (e.key === 'Enter' && jumpQuery.trim()) goToTicker(jumpQuery);
+                if (e.key === 'Escape') { setShowJumpSuggestions(false); jumpInputRef.current?.blur(); }
+              }}
+              onFocus={() => { if (jumpQuery) setShowJumpSuggestions(true); }}
+              onBlur={() => setTimeout(() => setShowJumpSuggestions(false), 150)}
+              placeholder="jump to ticker..."
+              style={{
+                width: '100%',
+                height: '24px',
+                padding: '0 8px',
+                fontSize: '10px',
+                fontFamily: "'JetBrains Mono', monospace",
+                letterSpacing: '0.5px',
+                border: '1px solid var(--ws-border)',
+                borderRadius: 'var(--ws-radius)',
+                background: 'var(--ws-bg-1)',
+                color: 'var(--ws-text)',
+                outline: 'none',
+              }}
+            />
+            {showJumpSuggestions && jumpSuggestions.length > 0 && (
+              <div style={{
+                position: 'absolute',
+                top: '28px',
+                right: 0,
+                width: '260px',
+                background: 'var(--ws-bg-1)',
+                border: '1px solid var(--ws-border)',
+                borderRadius: 'var(--ws-radius)',
+                boxShadow: '0 8px 32px rgba(0,0,0,0.12)',
+                maxHeight: '280px',
+                overflowY: 'auto',
+                zIndex: 30,
+              }}>
+                {jumpSuggestions.map(s => (
+                  <div key={s.ticker}
+                    onMouseDown={() => goToTicker(s.ticker)}
+                    style={{ padding: '7px 10px', cursor: 'pointer', display: 'flex', gap: '8px', alignItems: 'baseline', fontSize: '11px' }}
+                    onMouseEnter={e => e.currentTarget.style.background = 'var(--ws-bg-2)'}
+                    onMouseLeave={e => e.currentTarget.style.background = 'transparent'}>
+                    <span style={{ color: 'var(--ws-accent)', fontWeight: 700, fontFamily: "'JetBrains Mono', monospace", minWidth: '44px' }}>{s.ticker}</span>
+                    <span style={{ color: 'var(--ws-text-2)', flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{s.name}</span>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
         </div>
 
         {/* Terminal output body */}
