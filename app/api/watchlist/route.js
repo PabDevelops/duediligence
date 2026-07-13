@@ -74,7 +74,10 @@ export async function GET(request) {
         currentPrice: stock.currentPrice,
         priceChangePct: stock.priceChangePct,
         exchange: stock.exchange,
-        currency: stock.currency
+        currency: stock.currency,
+        pe: stock.pe,
+        dividendYield: stock.dividendYield,
+        sector: stock.sector,
       };
     });
 

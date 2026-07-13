@@ -2,60 +2,63 @@
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import { useUser } from '../../components/AuthProvider';
 import { useRouter } from 'next/navigation';
-import StockChart from '../../components/StockChart';
-import { fmt, formatPrice as formatCurrency } from '../../../lib/formatters';
-import { useStockData } from '../../../lib/hooks/useStockData';
-
+import Link from 'next/link';
+import Sparkline from '../../components/Sparkline';
+import MarketStatusDot from '../../components/workspace/MarketStatusDot';
 import StockLogo from '../../components/workspace/StockLogo';
-
-function NewsRow({ item, isLast }) {
-  const [expanded, setExpanded] = useState(false);
-  return (
-    <div onClick={() => setExpanded(e => !e)}
-      style={{ padding: '12px 14px', borderBottom: isLast ? 'none' : '1px solid var(--ws-border)', cursor: 'pointer', background: 'transparent', transition: 'background 0.15s' }}
-      onMouseEnter={e => e.currentTarget.style.background = 'var(--ws-bg-2)'}
-      onMouseLeave={e => e.currentTarget.style.background = 'transparent'}>
-      <div style={{ fontSize: '12px', fontWeight: 700, color: 'var(--ws-text)', lineHeight: 1.4 }}>{item.title}</div>
-      <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginTop: '4px' }}>
-        <span style={{ fontSize: '10px', color: 'var(--ws-text-3)' }}>{item.source} · {item.time}</span>
-      </div>
-      {expanded && (
-        <div style={{ marginTop: '8px', fontSize: '11px', color: 'var(--ws-text-2)', lineHeight: 1.5 }}>
-          <div>{item.summary || 'No summary available for this story.'}</div>
-          <a href={item.url} target="_blank" rel="noopener noreferrer" onClick={e => e.stopPropagation()}
-            style={{ display: 'inline-block', marginTop: '6px', fontSize: '11px', fontWeight: 700, color: 'var(--ws-accent)', textDecoration: 'none' }}>
-            Read full article ↗
-          </a>
-        </div>
-      )}
-    </div>
-  );
-}
+import AllocationChart from '../../components/workspace/portfolio/AllocationChart';
+import { formatPrice as formatCurrency } from '../../../lib/formatters';
 
 export default function WatchlistPage() {
   const { isSignedIn } = useUser();
   const router = useRouter();
   const [tickers, setTickers] = useState([]);
-  const [loadingWatchlist, setLoadingWatchlist] = useState(true);
-  const [activeTicker, setActiveTicker] = useState(null);
-  const { data: selectedStockData, loading: loadingStock } = useStockData(activeTicker);
-  const [news, setNews] = useState([]);
-  const [loadingNews, setLoadingNews] = useState(false);
+  const [sparklines, setSparklines] = useState({});
+  const [loading, setLoading] = useState(true);
 
-  // Search/Add states
+  // Search/Add states — the plain "type a symbol, hit Enter" flow stays exactly this
+  // simple regardless of Pies; grouping is opt-in, applied after the fact.
   const [searchQuery, setSearchQuery] = useState('');
   const [searchError, setSearchError] = useState('');
   const [isAdding, setIsAdding] = useState(false);
 
-  // Responsive state
-  const [showDetailOnMobile, setShowDetailOnMobile] = useState(false);
-
   // Pie (themed sub-list) grouping — same idea as Portfolio's Pies. A ticker with no
-  // `pie` falls into "General", which always sorts first so the plain, ungrouped case
-  // (most people just adding symbols with no organizing) still reads as one flat list.
+  // `pie` falls into "General", which always sorts first.
   const [editingPieTicker, setEditingPieTicker] = useState(null);
   const [pieDraft, setPieDraft] = useState('');
   const [showPieSuggestions, setShowPieSuggestions] = useState(false);
+
+  const fetchWatchlist = useCallback(async () => {
+    setLoading(true);
+    try {
+      const res = await fetch('/api/watchlist?full=true');
+      const data = await res.json();
+      const list = data.tickers || [];
+      setTickers(list);
+      list.forEach(t => {
+        fetch(`/api/sparkline?ticker=${t.ticker}`)
+          .then(r => r.json())
+          .then(d => setSparklines(prev => ({ ...prev, [t.ticker]: d.candles })))
+          .catch(() => {});
+      });
+    } catch (e) {
+      console.error(e);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (isSignedIn) fetchWatchlist();
+    else setLoading(false);
+  }, [isSignedIn, fetchWatchlist]);
+
+  // Keep prices reasonably live, same cadence as Portfolio.
+  useEffect(() => {
+    if (!isSignedIn) return;
+    const interval = setInterval(fetchWatchlist, 60000);
+    return () => clearInterval(interval);
+  }, [isSignedIn, fetchWatchlist]);
 
   const existingPies = useMemo(
     () => [...new Set(tickers.map(t => t.pie).filter(Boolean))].sort(),
@@ -65,6 +68,30 @@ export default function WatchlistPage() {
     p.toLowerCase().includes(pieDraft.toLowerCase()) && p.toLowerCase() !== pieDraft.toLowerCase()
   );
 
+  const total = tickers.length;
+
+  const sectorChart = useMemo(() => {
+    if (total === 0) return [];
+    const bySector = {};
+    tickers.forEach(t => {
+      const key = t.sector || 'Unknown';
+      bySector[key] = (bySector[key] || 0) + (1 / total) * 100;
+    });
+    return Object.entries(bySector).map(([name, value]) => ({ name, value })).sort((a, b) => b.value - a.value);
+  }, [tickers, total]);
+
+  const pieChart = useMemo(() => {
+    if (total === 0) return [];
+    const byPie = {};
+    tickers.forEach(t => {
+      const key = t.pie || 'General';
+      byPie[key] = (byPie[key] || 0) + (1 / total) * 100;
+    });
+    return Object.entries(byPie)
+      .map(([name, value]) => ({ name, value }))
+      .sort((a, b) => a.name === 'General' ? -1 : b.name === 'General' ? 1 : b.value - a.value);
+  }, [tickers, total]);
+
   const groups = useMemo(() => {
     const map = {};
     tickers.forEach(t => { (map[t.pie || 'General'] ||= []).push(t); });
@@ -72,72 +99,20 @@ export default function WatchlistPage() {
     return names.map(name => ({ name, items: map[name] }));
   }, [tickers]);
 
-  // Fetch watchlist symbols + brief details
-  const fetchWatchlist = useCallback(async (selectTicker = null) => {
-    setLoadingWatchlist(true);
-    try {
-      const res = await fetch('/api/watchlist?full=true');
-      const data = await res.json();
-      const list = data.tickers || [];
-      setTickers(list);
-      
-      if (list.length > 0) {
-        if (selectTicker) {
-          setActiveTicker(selectTicker);
-        } else if (!activeTicker) {
-          setActiveTicker(list[0].ticker);
-        }
-      } else {
-        setActiveTicker(null);
-      }
-    } catch (e) {
-      console.error(e);
-    } finally {
-      setLoadingWatchlist(false);
-    }
-  }, [activeTicker]);
+  const hasPies = groups.length > 1 || (groups.length === 1 && groups[0].name !== 'General');
+  const hasSectors = sectorChart.length > 1;
 
-  useEffect(() => {
-    if (isSignedIn) {
-      fetchWatchlist();
-    } else {
-      setLoadingWatchlist(false);
-    }
-  }, [isSignedIn]);
-
-  // Fetch news for active stock
-  useEffect(() => {
-    if (!activeTicker) {
-      setNews([]);
-      return;
-    }
-    setLoadingNews(true);
-    fetch(`/api/filings?tickers=${activeTicker}`)
-      .then(r => r.json())
-      .then(d => {
-        setNews(d.holdingsNews || []);
-      })
-      .catch(() => setNews([]))
-      .finally(() => setLoadingNews(false));
-  }, [activeTicker]);
+  const gainers = tickers.filter(t => (t.priceChangePct ?? 0) > 0).length;
+  const losers = tickers.filter(t => (t.priceChangePct ?? 0) < 0).length;
 
   // Remove ticker
   const removeTicker = async (tickerToRemove) => {
+    setTickers(prev => prev.filter(t => t.ticker !== tickerToRemove));
     await fetch('/api/watchlist', {
       method: 'DELETE',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ ticker: tickerToRemove }),
     });
-
-    setTickers(prev => prev.filter(t => t.ticker !== tickerToRemove));
-    if (activeTicker === tickerToRemove) {
-      const remaining = tickers.filter(t => t.ticker !== tickerToRemove);
-      if (remaining.length > 0) {
-        setActiveTicker(remaining[0].ticker);
-      } else {
-        setActiveTicker(null);
-      }
-    }
   };
 
   // Move a ticker into a different pie (or back to General with an empty value)
@@ -179,7 +154,7 @@ export default function WatchlistPage() {
 
       if (addRes.ok) {
         setSearchQuery('');
-        fetchWatchlist(ticker);
+        fetchWatchlist();
       } else {
         setSearchError('Error adding symbol');
       }
@@ -190,285 +165,183 @@ export default function WatchlistPage() {
     }
   };
 
-  if (!isSignedIn) {
-    return (
-      <div style={{ display: 'flex', flex1: 1, height: 'calc(100vh - var(--topbar-height))', alignItems: 'center', justifyContent: 'center', background: 'var(--ws-bg-1)', padding: '24px', boxSizing: 'border-box' }}>
-        <div style={{ border: '1px solid var(--ws-border)', background: 'var(--ws-bg-2)', width: '100%', maxWidth: '420px', padding: '30px 24px', textAlign: 'center' }}>
-          <div style={{ color: 'var(--ws-accent)', fontSize: '24px', marginBottom: '14px' }}>★</div>
-          <h2 style={{ fontSize: '18px', fontWeight: 700, margin: '0 0 10px', color: 'var(--ws-text)' }}>Your Watchlist</h2>
-          <p style={{ fontSize: '13px', color: 'var(--ws-text-3)', lineHeight: 1.6, margin: '0 0 24px' }}>
-            Please sign in to start tracking and analyzing your favorite stocks in real-time.
-          </p>
-          <button onClick={() => router.push('/sign-in')}
-            style={{ width: '100%', padding: '12px', background: 'var(--ws-accent)', border: 'none', color: '#000', fontWeight: 700, fontSize: '13px', cursor: 'pointer' }}>
-            SIGN IN
-          </button>
-        </div>
-      </div>
-    );
-  }
-
-  const activeStock = tickers.find(t => t.ticker === activeTicker);
   return (
-    <div className="watchlist-container">
-      {/* LEFT COLUMN: LIST OF TICKERS */}
-      <div className={`watchlist-left-col ${showDetailOnMobile ? 'mobile-hide' : ''}`}>
-        <div style={{ padding: '14px 16px', borderBottom: '1px solid var(--ws-border)', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-            <span style={{ color: 'var(--ws-accent)', fontSize: '14px' }}>★</span>
-            <span style={{ fontSize: '12px', fontWeight: 800, color: 'var(--ws-text)', letterSpacing: '1px', fontFamily: 'JetBrains Mono, monospace' }}>WATCHLIST</span>
-          </div>
-          <span className="text-[10px] text-ws-text-3" style={{ fontFamily: 'JetBrains Mono, monospace' }}>
-            {tickers.length} TICKERS
+    <div style={{ padding: '24px' }}>
+      <div style={{ border: '1px solid var(--ws-border)', background: 'var(--ws-bg-1)', marginBottom: '20px', overflow: 'hidden' }}>
+        <div className="bg-ws-bg-2 border-b border-ws-border px-4 py-[7px]">
+          <span style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: '11px', color: 'var(--ws-accent)', fontWeight: 700, letterSpacing: '1px' }}>
+            $ traq watchlist
           </span>
         </div>
-
-        {/* SEARCH ADD BAR */}
-        <div style={{ padding: '10px 16px', borderBottom: '1px solid var(--ws-border)', background: 'var(--ws-bg-2)' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', background: 'var(--ws-bg-1)', border: '1px solid var(--ws-border)', padding: '6px 10px' }}>
-            <span style={{ color: 'var(--ws-text-3)', fontSize: '12px' }}>+</span>
-            <input
-              type="text"
-              placeholder="Add symbol... (Enter)"
-              value={searchQuery}
-              onChange={(e) => { setSearchQuery(e.target.value); setSearchError(''); }}
-              onKeyDown={handleAddStock}
-              disabled={isAdding}
-              style={{ background: 'transparent', border: 'none', color: 'var(--ws-text)', fontSize: '11px', outline: 'none', width: '100%', fontFamily: 'JetBrains Mono, monospace' }}
-            />
-          </div>
-          {searchError && (
-            <div style={{ fontSize: '10px', color: 'var(--ws-red)', marginTop: '4px', fontFamily: 'JetBrains Mono, monospace' }}>
-              {searchError}
-            </div>
-          )}
-        </div>
-
-        {/* LIST — grouped by pie, General (ungrouped) always first */}
-        <div style={{ flex: 1, overflowY: 'auto' }}>
-          {loadingWatchlist ? (
-            <div className="text-center text-ws-text-3 text-[11px] px-4 py-10" style={{ fontFamily: 'JetBrains Mono, monospace' }}>
-              LOADING...
-            </div>
-          ) : tickers.length === 0 ? (
-            <div style={{ padding: '40px 16px', textAlign: 'center', color: 'var(--ws-text-3)', fontSize: '12px', lineHeight: 1.6 }}>
-              Your watchlist is empty.<br/>Add symbols above to get started.
-            </div>
-          ) : (
-            groups.map(group => (
-              <div key={group.name}>
-                <div style={{ padding: '10px 16px 6px', fontSize: '10px', fontWeight: 700, letterSpacing: '1px', color: 'var(--ws-text-3)', fontFamily: 'JetBrains Mono, monospace' }}>
-                  {group.name.toUpperCase()} · {group.items.length}
-                </div>
-                {group.items.map((t) => {
-                  const active = t.ticker === activeTicker;
-                  const priceChange = t.priceChangePct ?? 0;
-                  const isPositive = priceChange >= 0;
-                  const isEditingPie = editingPieTicker === t.ticker;
-
-                  return (
-                    <div key={t.ticker}
-                      onClick={() => {
-                        setActiveTicker(t.ticker);
-                        setShowDetailOnMobile(true);
-                      }}
-                      className={`watchlist-item ${active ? 'active' : ''}`}>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '10px', minWidth: 0 }}>
-                        <StockLogo ticker={t.ticker} />
-                        <div style={{ minWidth: 0 }}>
-                          <div style={{ fontWeight: 700, fontSize: '12px', color: active ? 'var(--ws-accent)' : 'var(--ws-text)', fontFamily: 'JetBrains Mono, monospace' }}>{t.ticker}</div>
-                          <div style={{ fontSize: '10px', color: 'var(--ws-text-3)', textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap' }}>{t.name || '—'}</div>
-                        </div>
-                      </div>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexShrink: 0 }}>
-                        <div style={{ textAlign: 'right' }}>
-                          <div style={{ fontWeight: 700, fontSize: '11px', color: 'var(--ws-text)', fontFamily: 'JetBrains Mono, monospace' }}>
-                            {formatCurrency(t.currentPrice, t.currency || 'USD')}
-                          </div>
-                          <div style={{ fontWeight: 700, fontSize: '10px', color: isPositive ? 'var(--ws-accent)' : 'var(--ws-red)', fontFamily: 'JetBrains Mono, monospace' }}>
-                            {isPositive ? '+' : ''}{priceChange.toFixed(2)}%
-                          </div>
-                        </div>
-
-                        {isEditingPie ? (
-                          <div onClick={e => e.stopPropagation()} style={{ position: 'relative' }}>
-                            <input
-                              autoFocus
-                              value={pieDraft}
-                              placeholder="General"
-                              onChange={e => { setPieDraft(e.target.value); setShowPieSuggestions(true); }}
-                              onFocus={() => setShowPieSuggestions(true)}
-                              onKeyDown={e => {
-                                if (e.key === 'Enter') moveToPie(t.ticker, pieDraft);
-                                if (e.key === 'Escape') { setEditingPieTicker(null); setShowPieSuggestions(false); }
-                              }}
-                              onBlur={() => setTimeout(() => moveToPie(t.ticker, pieDraft), 150)}
-                              style={{ width: '90px', fontSize: '10px', padding: '4px 6px', background: 'var(--ws-bg-1)', border: '1px solid var(--ws-accent)', color: 'var(--ws-text)', fontFamily: 'JetBrains Mono, monospace' }}
-                            />
-                            {showPieSuggestions && pieSuggestions.length > 0 && (
-                              <div style={{ position: 'absolute', top: '26px', right: 0, minWidth: '110px', background: 'var(--ws-bg-1)', border: '1px solid var(--ws-border)', zIndex: 20, boxShadow: '0 8px 24px rgba(0,0,0,0.15)' }}>
-                                {pieSuggestions.map(p => (
-                                  <div key={p} onMouseDown={() => moveToPie(t.ticker, p)}
-                                    style={{ padding: '6px 8px', fontSize: '10px', cursor: 'pointer', color: 'var(--ws-text)' }}
-                                    onMouseEnter={e => e.currentTarget.style.background = 'var(--ws-bg-2)'}
-                                    onMouseLeave={e => e.currentTarget.style.background = 'transparent'}>
-                                    {p}
-                                  </div>
-                                ))}
-                              </div>
-                            )}
-                          </div>
-                        ) : (
-                          <button
-                            onClick={e => { e.stopPropagation(); setEditingPieTicker(t.ticker); setPieDraft(t.pie || ''); }}
-                            title="Move to a different list"
-                            style={{ background: 'var(--ws-bg-2)', border: '1px solid var(--ws-border)', color: 'var(--ws-text-3)', fontSize: '9px', fontWeight: 700, padding: '4px 8px', cursor: 'pointer', fontFamily: 'JetBrains Mono, monospace', whiteSpace: 'nowrap' }}
-                            onMouseEnter={e => { e.currentTarget.style.color = 'var(--ws-accent)'; e.currentTarget.style.borderColor = 'var(--ws-accent)'; }}
-                            onMouseLeave={e => { e.currentTarget.style.color = 'var(--ws-text-3)'; e.currentTarget.style.borderColor = 'var(--ws-border)'; }}>
-                            {t.pie || 'General'}
-                          </button>
-                        )}
-
-                        <button onClick={(e) => { e.stopPropagation(); removeTicker(t.ticker); }}
-                          style={{ background: 'none', border: 'none', color: 'var(--ws-text-3)', cursor: 'pointer', fontSize: '14px', padding: '4px' }}
-                          onMouseEnter={e => e.target.style.color = 'var(--ws-red)'}
-                          onMouseLeave={e => e.target.style.color = 'var(--ws-text-3)'}>
-                          ✕
-                        </button>
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            ))
-          )}
-        </div>
-      </div>
-      {/* CENTER COLUMN: CHART & DETAILS */}
-      <div className={`watchlist-center-col ${showDetailOnMobile ? 'mobile-show' : ''}`}>
-        {showDetailOnMobile && (
-          <div className="watchlist-back-btn">
-            <button onClick={() => setShowDetailOnMobile(false)}
-              className="ws-btn-secondary"
-              style={{ margin: '14px', fontSize: '11px', display: 'flex', alignItems: 'center', gap: '6px' }}>
-              ← BACK TO LIST
-            </button>
-          </div>
-        )}
-
-        {!activeTicker ? (
-          <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '40px', color: 'var(--ws-text-3)', fontSize: '12px' }}>
-            Select a stock to view details and chart
-          </div>
-        ) : (
+        <div style={{ padding: '18px 20px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '12px' }}>
           <div>
-            {/* Header info */}
-            <div style={{ borderBottom: '1px solid var(--ws-border)', padding: '18px 24px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
-                <StockLogo ticker={activeTicker} size={36} />
-                <div>
-                  <div style={{ fontSize: '10px', color: 'var(--ws-text-3)', fontFamily: 'JetBrains Mono, monospace', letterSpacing: '1px' }}>
-                    {activeTicker} · {activeStock?.exchange || 'NASDAQ'}
-                  </div>
-                  <h1 style={{ fontSize: '18px', fontWeight: 800, margin: '2px 0 0', color: 'var(--ws-text)' }}>
-                    {activeStock?.name || '—'}
-                  </h1>
-                </div>
-                <button onClick={() => router.push(`/stock/${activeTicker}`)}
-                  title={`Open full ${activeTicker} page`}
-                  style={{ background: 'var(--ws-bg-2)', border: '1px solid var(--ws-border)', color: 'var(--ws-text-2)', fontSize: '10px', fontWeight: 700, padding: '6px 10px', cursor: 'pointer', fontFamily: 'JetBrains Mono, monospace', whiteSpace: 'nowrap' }}
-                  onMouseEnter={e => { e.currentTarget.style.color = 'var(--ws-accent)'; e.currentTarget.style.borderColor = 'var(--ws-accent)'; }}
-                  onMouseLeave={e => { e.currentTarget.style.color = 'var(--ws-text-2)'; e.currentTarget.style.borderColor = 'var(--ws-border)'; }}>
-                  FULL PAGE ↗
-                </button>
-              </div>
-
-              {activeStock && (
-                <div style={{ textAlign: 'right' }}>
-                  <div style={{ fontSize: '20px', fontWeight: 800, color: 'var(--ws-text)', fontFamily: 'JetBrains Mono, monospace' }}>
-                    {formatCurrency(activeStock.currentPrice, activeStock.currency || 'USD')}
-                  </div>
-                  <div style={{ fontSize: '12px', fontWeight: 700, color: (activeStock.priceChangePct ?? 0) >= 0 ? 'var(--ws-accent)' : 'var(--ws-red)', fontFamily: 'JetBrains Mono, monospace' }}>
-                    {(activeStock.priceChangePct ?? 0) >= 0 ? '+' : ''}{(activeStock.priceChangePct ?? 0).toFixed(2)}%
-                  </div>
-                </div>
-              )}
-            </div>
-
-            {/* CHART */}
-            <div style={{ borderBottom: '1px solid var(--ws-border)', background: 'var(--ws-bg-1)' }}>
-              <StockChart ticker={activeTicker} currency={selectedStockData?.currency || 'USD'} />
-            </div>
-
-            {/* KEY METRICS */}
-            <div style={{ padding: '24px' }}>
-              <h3 style={{ fontSize: '10px', color: 'var(--ws-text-3)', fontFamily: 'JetBrains Mono, monospace', letterSpacing: '1.5px', margin: '0 0 16px', fontWeight: 800 }}>
-                KEY FINANCIAL STATISTICS
-              </h3>
-
-              {loadingStock ? (
-                <div style={{ padding: '20px 0', color: 'var(--ws-text-3)', fontSize: '11px', fontFamily: 'JetBrains Mono, monospace' }}>
-                  LOADING DATA...
-                </div>
-              ) : selectedStockData ? (
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px 32px' }}>
-                  {[
-                    { label: 'MARKET CAP', value: fmt(selectedStockData.marketCap) },
-                    { label: 'P/E RATIO', value: selectedStockData.pe ? selectedStockData.pe.toFixed(1) : '—' },
-                    { label: 'FORWARD P/E', value: selectedStockData.forwardPE ? selectedStockData.forwardPE.toFixed(1) : '—' },
-                    { label: 'FCF YIELD', value: selectedStockData.fcfYield ? `${selectedStockData.fcfYield.toFixed(2)}%` : '—' },
-                    { label: 'DIVIDEND YIELD', value: selectedStockData.dividendYield ? `${selectedStockData.dividendYield.toFixed(2)}%` : '—' },
-                    { label: 'BETA (1Y)', value: selectedStockData.beta ? selectedStockData.beta.toFixed(2) : '—' },
-                    { label: '52W RANGE', value: selectedStockData.low52 && selectedStockData.high52 ? `$${selectedStockData.low52.toFixed(2)} - $${selectedStockData.high52.toFixed(2)}` : '—' },
-                    { label: 'SECTOR', value: selectedStockData.sector || '—' },
-                  ].map((metric) => (
-                    <div key={metric.label} style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid var(--ws-border)', paddingBottom: '6px' }}>
-                      <span className="text-[10px] text-ws-text-3" style={{ fontFamily: 'JetBrains Mono, monospace' }}>
-                        {metric.label}
-                      </span>
-                      <span style={{ fontSize: '12px', fontWeight: 700, color: 'var(--ws-text)', fontFamily: 'JetBrains Mono, monospace' }}>
-                        {metric.value}
-                      </span>
-                    </div>
-                  ))}
-                </div>
-              ) : (
-                <div style={{ color: 'var(--ws-text-3)', fontSize: '11px' }}>
-                  No fundamental metrics available for this ticker.
-                </div>
-              )}
-            </div>
+            <div style={{ fontSize: '20px', fontWeight: 700, color: 'var(--ws-text)' }}>Watchlist</div>
+            <div style={{ fontSize: '13px', color: 'var(--ws-text-2)' }}>Track the stocks you're keeping an eye on.</div>
           </div>
-        )}
-      </div>
-
-      {/* RIGHT COLUMN: NEWS & FILINGS */}
-      <div className="watchlist-right-col">
-        <div style={{ padding: '14px 16px', borderBottom: '1px solid var(--ws-border)', display: 'flex', alignItems: 'center', gap: '8px' }}>
-          <span style={{ color: 'var(--ws-accent)', fontSize: '12px' }}>▶</span>
-          <span style={{ fontSize: '12px', fontWeight: 800, color: 'var(--ws-text)', letterSpacing: '1.5px', fontFamily: 'JetBrains Mono, monospace' }}>NEWS & FILINGS</span>
-        </div>
-
-        <div style={{ flex: 1, overflowY: 'auto' }}>
-          {!activeTicker ? (
-            <div className="text-center text-ws-text-3 text-[11px] px-4 py-10" style={{ fontFamily: 'JetBrains Mono, monospace' }}>
-              SELECT TICKER
+          {isSignedIn && (
+            <div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', background: 'var(--ws-bg-2)', border: '1px solid var(--ws-border)', padding: '0 10px', height: '34px' }}>
+                <span style={{ color: 'var(--ws-text-3)', fontSize: '12px' }}>+</span>
+                <input
+                  type="text"
+                  placeholder="Add symbol... (Enter)"
+                  value={searchQuery}
+                  onChange={(e) => { setSearchQuery(e.target.value); setSearchError(''); }}
+                  onKeyDown={handleAddStock}
+                  disabled={isAdding}
+                  style={{ background: 'transparent', border: 'none', color: 'var(--ws-text)', fontSize: '12px', outline: 'none', width: '170px', fontFamily: 'JetBrains Mono, monospace' }}
+                />
+              </div>
+              {searchError && (
+                <div style={{ fontSize: '10px', color: 'var(--ws-red)', marginTop: '4px', fontFamily: 'JetBrains Mono, monospace' }}>
+                  {searchError}
+                </div>
+              )}
             </div>
-          ) : loadingNews ? (
-            <div className="text-center text-ws-text-3 text-[11px] px-4 py-10" style={{ fontFamily: 'JetBrains Mono, monospace' }}>
-              LOADING HEADLINES...
-            </div>
-          ) : news.length === 0 ? (
-            <div className="text-center text-ws-text-3 text-[11px] px-4 py-10" style={{ fontFamily: 'JetBrains Mono, monospace' }}>
-              NO NEWS AVAILABLE
-            </div>
-          ) : (
-            news.map((item, i) => (
-              <NewsRow key={item.id || i} item={item} isLast={i === news.length - 1} />
-            ))
           )}
         </div>
       </div>
+
+      {!isSignedIn ? (
+        <div className="border border-ws-border p-12 text-center">
+          <div style={{ color: 'var(--ws-text-2)', fontSize: '14px', marginBottom: '16px' }}>Sign in to track your watchlist</div>
+          <Link href="/sign-in" className="ws-btn" style={{ padding: '9px 20px', textDecoration: 'none' }}>Sign in →</Link>
+        </div>
+      ) : loading ? (
+        <div style={{ color: 'var(--ws-text-3)', fontSize: '13px', padding: '30px 0' }}>Loading…</div>
+      ) : tickers.length === 0 ? (
+        <div className="border border-ws-border p-12 text-center">
+          <div style={{ color: 'var(--ws-text)', fontSize: '14px', fontWeight: 600, marginBottom: '6px' }}>Your watchlist is empty</div>
+          <div style={{ color: 'var(--ws-text-3)', fontSize: '12px' }}>Add a symbol above to get started.</div>
+        </div>
+      ) : (
+        <>
+          <div className="portfolio-overview-grid">
+            <div className="border border-ws-border p-3.5">
+              <div style={{ fontSize: '10px', color: 'var(--ws-text-3)', letterSpacing: '0.5px', marginBottom: '4px' }}>TICKERS</div>
+              <div style={{ fontSize: '20px', fontWeight: 700, color: 'var(--ws-text)' }}>{tickers.length}</div>
+            </div>
+            <div className="border border-ws-border p-3.5">
+              <div style={{ fontSize: '10px', color: 'var(--ws-text-3)', letterSpacing: '0.5px', marginBottom: '4px' }}>GAINERS TODAY</div>
+              <div style={{ fontSize: '20px', fontWeight: 700, color: 'var(--ws-accent)' }}>{gainers}</div>
+            </div>
+            <div className="border border-ws-border p-3.5">
+              <div style={{ fontSize: '10px', color: 'var(--ws-text-3)', letterSpacing: '0.5px', marginBottom: '4px' }}>LOSERS TODAY</div>
+              <div style={{ fontSize: '20px', fontWeight: 700, color: 'var(--ws-red)' }}>{losers}</div>
+            </div>
+          </div>
+
+          <div className="portfolio-allocations-grid" style={{ gridTemplateColumns: `repeat(${1 + (hasPies ? 1 : 0)}, 1fr)` }}>
+            <AllocationChart title="ALLOCATION BY SECTOR" data={sectorChart} />
+            {hasPies && <AllocationChart title="ALLOCATION BY PIE" data={pieChart} />}
+          </div>
+
+          {groups.map(group => (
+            <div key={group.name} style={{ marginBottom: '18px' }}>
+              {hasPies && (
+                <div style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '10px 4px', marginBottom: '2px' }}>
+                  <div style={{ fontSize: '13px', fontWeight: 700, color: 'var(--ws-text)' }}>{group.name}</div>
+                  <div style={{ fontSize: '11px', color: 'var(--ws-text-3)' }}>{group.items.length} ticker{group.items.length !== 1 ? 's' : ''}</div>
+                </div>
+              )}
+              <div className="responsive-table-container" style={{ border: '1px solid var(--ws-border)', background: 'var(--ws-bg-1)' }}>
+                <table className="responsive-table" style={{ fontSize: '12px' }}>
+                  <thead>
+                    <tr style={{ borderBottom: '1px solid var(--ws-border)', background: 'var(--ws-bg-1)' }}>
+                      {['Stock', '1M', 'Price', 'Day', 'P/E', 'Div yield', 'Sector', ''].map(h => (
+                        <th key={h} className={h === 'Stock' ? 'sticky-col' : ''} style={{ padding: '9px 12px', textAlign: h === 'Stock' ? 'left' : h === '1M' ? 'center' : 'right', fontWeight: 600, fontSize: '10px', color: 'var(--ws-text-3)' }}>{h}</th>
+                      ))}
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {group.items.map(t => {
+                      const isEditingPie = editingPieTicker === t.ticker;
+                      const dayChange = t.priceChangePct ?? 0;
+                      return (
+                        <tr key={t.ticker} onClick={() => router.push(`/stock/${t.ticker}`)}
+                          style={{ borderBottom: '1px solid var(--ws-border)', cursor: 'pointer', background: 'var(--ws-bg-1)' }}
+                          onMouseEnter={e => e.currentTarget.style.background = 'var(--ws-bg-2)'}
+                          onMouseLeave={e => e.currentTarget.style.background = 'var(--ws-bg-1)'}>
+                          <td className="sticky-col" style={{ padding: '10px 12px' }}>
+                            <div className="flex items-center gap-2">
+                              <StockLogo ticker={t.ticker} size={24} />
+                              <div>
+                                <div style={{ fontWeight: 600, color: 'var(--ws-text)', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                                  {t.ticker}
+                                  <MarketStatusDot ticker={t.ticker} />
+                                </div>
+                                <div style={{ color: 'var(--ws-text-3)', fontSize: '11px' }}>{t.name || '…'}</div>
+                              </div>
+                            </div>
+                          </td>
+                          <td style={{ padding: '10px 12px', textAlign: 'center' }}>
+                            {sparklines[t.ticker] && <Sparkline data={sparklines[t.ticker]} width={64} height={22} />}
+                          </td>
+                          <td style={{ padding: '10px 12px', textAlign: 'right', fontWeight: 600 }}>
+                            {t.currentPrice != null ? formatCurrency(t.currentPrice, t.currency || 'USD') : '—'}
+                          </td>
+                          <td style={{ padding: '10px 12px', textAlign: 'right', color: t.priceChangePct == null ? 'var(--ws-text-3)' : dayChange >= 0 ? 'var(--ws-accent)' : 'var(--ws-red)' }}>
+                            {t.priceChangePct != null ? `${dayChange >= 0 ? '+' : ''}${dayChange.toFixed(2)}%` : '—'}
+                          </td>
+                          <td style={{ padding: '10px 12px', textAlign: 'right', color: 'var(--ws-text-2)' }}>{t.pe ? t.pe.toFixed(1) : '—'}</td>
+                          <td style={{ padding: '10px 12px', textAlign: 'right', color: 'var(--ws-text-2)' }}>{t.dividendYield ? `${t.dividendYield.toFixed(2)}%` : '—'}</td>
+                          <td style={{ padding: '10px 12px', textAlign: 'right', color: 'var(--ws-text-2)' }}>{t.sector || '—'}</td>
+                          <td style={{ padding: '10px 12px', textAlign: 'right', whiteSpace: 'nowrap' }} onClick={e => e.stopPropagation()}>
+                            {isEditingPie ? (
+                              <div style={{ position: 'relative', display: 'inline-block' }}>
+                                <input
+                                  autoFocus
+                                  value={pieDraft}
+                                  placeholder="General"
+                                  onChange={e => { setPieDraft(e.target.value); setShowPieSuggestions(true); }}
+                                  onFocus={() => setShowPieSuggestions(true)}
+                                  onKeyDown={e => {
+                                    if (e.key === 'Enter') moveToPie(t.ticker, pieDraft);
+                                    if (e.key === 'Escape') { setEditingPieTicker(null); setShowPieSuggestions(false); }
+                                  }}
+                                  onBlur={() => setTimeout(() => moveToPie(t.ticker, pieDraft), 150)}
+                                  style={{ width: '110px', fontSize: '10px', padding: '4px 6px', background: 'var(--ws-bg-1)', border: '1px solid var(--ws-accent)', color: 'var(--ws-text)', fontFamily: 'JetBrains Mono, monospace' }}
+                                />
+                                {showPieSuggestions && pieSuggestions.length > 0 && (
+                                  <div style={{ position: 'absolute', top: '26px', right: 0, minWidth: '120px', background: 'var(--ws-bg-1)', border: '1px solid var(--ws-border)', zIndex: 20, textAlign: 'left', boxShadow: '0 8px 24px rgba(0,0,0,0.15)' }}>
+                                    {pieSuggestions.map(p => (
+                                      <div key={p} onMouseDown={() => moveToPie(t.ticker, p)}
+                                        style={{ padding: '6px 8px', fontSize: '10px', cursor: 'pointer', color: 'var(--ws-text)' }}
+                                        onMouseEnter={e => e.currentTarget.style.background = 'var(--ws-bg-2)'}
+                                        onMouseLeave={e => e.currentTarget.style.background = 'transparent'}>
+                                        {p}
+                                      </div>
+                                    ))}
+                                  </div>
+                                )}
+                              </div>
+                            ) : (
+                              <button
+                                onClick={() => { setEditingPieTicker(t.ticker); setPieDraft(t.pie || ''); }}
+                                title="Move to a different list"
+                                style={{ background: 'var(--ws-bg-2)', border: '1px solid var(--ws-border)', color: 'var(--ws-text-3)', fontSize: '9px', fontWeight: 700, padding: '4px 8px', cursor: 'pointer', fontFamily: 'JetBrains Mono, monospace', whiteSpace: 'nowrap', marginRight: '8px' }}
+                                onMouseEnter={e => { e.currentTarget.style.color = 'var(--ws-accent)'; e.currentTarget.style.borderColor = 'var(--ws-accent)'; }}
+                                onMouseLeave={e => { e.currentTarget.style.color = 'var(--ws-text-3)'; e.currentTarget.style.borderColor = 'var(--ws-border)'; }}>
+                                {t.pie || 'General'}
+                              </button>
+                            )}
+                            <button onClick={() => removeTicker(t.ticker)} title={`Remove ${t.ticker} from watchlist`}
+                              style={{ background: 'none', border: 'none', color: 'var(--ws-text-3)', cursor: 'pointer', fontSize: '13px' }}
+                              onMouseEnter={e => e.target.style.color = 'var(--ws-red)'}
+                              onMouseLeave={e => e.target.style.color = 'var(--ws-text-3)'}>
+                              ✕
+                            </button>
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          ))}
+        </>
+      )}
     </div>
   );
 }
