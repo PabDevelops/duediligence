@@ -236,13 +236,24 @@ export default function WatchlistPage() {
             {hasPies && <AllocationChart title="ALLOCATION BY PIE" data={pieChart} />}
           </div>
 
-          {groups.map(group => (
+          {groups.map(group => {
+            // Each ticker in the group counts equally (watchlist has no dollar weight to
+            // split by) — this is "what's actually inside this pie", as opposed to the
+            // ALLOCATION BY PIE donut above, which is "how are my tickers split across pies".
+            const groupChart = group.items.map(t => ({ name: t.ticker, value: (1 / group.items.length) * 100 }));
+            return (
             <div key={group.name} style={{ marginBottom: '18px' }}>
               {hasPies && (
-                <div style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '10px 4px', marginBottom: '2px' }}>
-                  <div style={{ fontSize: '13px', fontWeight: 700, color: 'var(--ws-text)' }}>{group.name}</div>
-                  <div style={{ fontSize: '11px', color: 'var(--ws-text-3)' }}>{group.items.length} ticker{group.items.length !== 1 ? 's' : ''}</div>
-                </div>
+                group.items.length > 1 ? (
+                  <div style={{ marginBottom: '10px' }}>
+                    <AllocationChart title={`${group.name.toUpperCase()} · ${group.items.length} TICKERS`} data={groupChart} />
+                  </div>
+                ) : (
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '10px 4px', marginBottom: '2px' }}>
+                    <div style={{ fontSize: '13px', fontWeight: 700, color: 'var(--ws-text)' }}>{group.name}</div>
+                    <div style={{ fontSize: '11px', color: 'var(--ws-text-3)' }}>{group.items.length} ticker</div>
+                  </div>
+                )
               )}
               <div className="responsive-table-container" style={{ border: '1px solid var(--ws-border)', background: 'var(--ws-bg-1)' }}>
                 <table className="responsive-table" style={{ fontSize: '12px' }}>
@@ -339,7 +350,8 @@ export default function WatchlistPage() {
                 </table>
               </div>
             </div>
-          ))}
+            );
+          })}
         </>
       )}
     </div>
