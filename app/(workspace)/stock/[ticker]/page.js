@@ -9,6 +9,7 @@ import Sparkline from '../../../components/Sparkline';
 import SparklineHeader from '../../../components/SparklineHeader';
 import ShareCardComponent from '../../../components/ShareCard';
 import AchievementToast from '../../../components/AchievementToast';
+import AddHoldingModal from '../../../components/workspace/portfolio/AddHoldingModal';
 import MarketStatusDot from '../../../components/workspace/MarketStatusDot';
 import { useUser } from '../../../components/AuthProvider';
 import { fmt as sharedFmt, fmtP as sharedFmtP, fmtN as sharedFmtN } from '../../../../lib/formatters';
@@ -148,6 +149,7 @@ export default function StockPage({ params }) {
   const [upcomingEvent, setUpcomingEvent] = useState(null);
   const [loadingEvent, setLoadingEvent] = useState(true);
   const { isSignedIn, user } = useUser();
+  const [showAddHolding, setShowAddHolding] = useState(false);
 
   useEffect(() => {
     fetch(`/api/earnings?ticker=${ticker}`)
@@ -884,6 +886,10 @@ export default function StockPage({ params }) {
                     ? { fontSize: '12px', padding: '10px 8px', width: '100%', background: 'var(--ws-text)', color: 'var(--ws-bg)', border: 'none', fontWeight: 600, cursor: 'pointer' }
                     : { fontSize: '12px', padding: '10px 8px', width: '100%', background: 'var(--ws-bg-1)', border: '1px solid var(--ws-border)', color: 'var(--ws-text)', cursor: 'pointer' }}>
                   {inWatchlist ? 'Remove from Watchlist' : 'Add to Watchlist'}
+                </button>
+                <button onClick={() => { if (!isSignedIn) { window.location.href = '/sign-in'; return; } setShowAddHolding(true); }}
+                  style={{ fontSize: '12px', padding: '10px 8px', width: '100%', background: 'var(--ws-accent)', color: '#fff', border: 'none', fontWeight: 600, cursor: 'pointer' }}>
+                  + Add to Portfolio
                 </button>
                 <button onClick={() => { window.location.href = `/stock/${ticker}?refresh=true`; }}
                   style={{ fontSize: '12px', padding: '10px 8px', width: '100%', background: 'var(--ws-bg-1)', border: '1px solid var(--ws-border)', color: 'var(--ws-text)', cursor: 'pointer' }}>
@@ -1775,6 +1781,15 @@ export default function StockPage({ params }) {
         <AchievementToast
           achievement={achievementToast}
           onClose={() => setAchievementToast(null)}
+        />
+      )}
+
+      {showAddHolding && (
+        <AddHoldingModal
+          presetTicker={ticker}
+          existingPies={[]}
+          onClose={() => setShowAddHolding(false)}
+          onAdded={() => setShowAddHolding(false)}
         />
       )}
     </div>
