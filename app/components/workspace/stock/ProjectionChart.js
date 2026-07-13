@@ -114,7 +114,7 @@ export default function ProjectionChart({ ticker, data, dcfValue, price, currenc
     return computeProjection({
       price, driftAnnual: effectiveDrift, volAnnual,
       horizonYears: horizon.years, stepsPerYear: horizon.stepsPerYear,
-      rng: createSeededRng(seed),
+      rng: createSeededRng(seed), riskFreeRate: data.riskFreeRate,
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [ticker, price, effectiveDrift, volAnnual, horizon.key]);
@@ -137,6 +137,17 @@ export default function ProjectionChart({ ticker, data, dcfValue, price, currenc
   }, [projection]);
 
   const endPoint = chartData[chartData.length - 1];
+
+  // Scale the axis to the p10-p90 band, not to the 18 faint background paths — those are
+  // pure random-walk noise for visual texture (see the footnote below), and over a 10-year
+  // horizon at high volatility one of them can wander to an extreme multiple of the band by
+  // chance alone. Without this, that single line would blow out the axis and squash the
+  // band everyone actually cares about down to a flat line near the bottom.
+  const yDomain = useMemo(() => {
+    if (!chartData.length) return ['auto', 'auto'];
+    const maxP90 = Math.max(...chartData.map(p => p.p90));
+    return [0, +(maxP90 * 1.15).toFixed(2)];
+  }, [chartData]);
 
   if (loading) {
     return (
@@ -210,7 +221,7 @@ export default function ProjectionChart({ ticker, data, dcfValue, price, currenc
         <ResponsiveContainer width="100%" height={340}>
           <ComposedChart data={chartData} margin={{ top: 8, right: 8, bottom: 0, left: 0 }}>
             <XAxis dataKey="dateLabel" tick={{ fill: 'var(--ws-text-3)', fontSize: 9 }} axisLine={false} tickLine={false} minTickGap={40} />
-            <YAxis domain={['auto', 'auto']} tick={{ fill: 'var(--ws-text-3)', fontSize: 9 }} axisLine={false} tickLine={false} width={56} tickFormatter={v => `${sym}${v.toFixed(0)}`} />
+            <YAxis domain={yDomain} allowDataOverflow tick={{ fill: 'var(--ws-text-3)', fontSize: 9 }} axisLine={false} tickLine={false} width={56} tickFormatter={v => `${sym}${v.toFixed(0)}`} />
             <Tooltip
               formatter={(v, name) => {
                 if (name === 'p50') return [`${sym}${v}`, 'Median (p50)'];
