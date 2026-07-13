@@ -16,7 +16,7 @@ export default async function robots() {
       {
         userAgent: '*',
         allow: '/',
-        disallow: ['/api/', '/profile', '/sign-in', '/sign-up'],
+        disallow: ['/api/', '/profile', '/sign-in', '/sign-up', '/es/sign-in', '/es/sign-up'],
       },
     ],
     sitemap: 'https://traqcker.com/sitemap.xml',

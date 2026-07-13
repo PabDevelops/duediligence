@@ -4,12 +4,27 @@ const BASE_URL = 'https://traqcker.com';
 // lives behind sign-up + an active subscription on terminal.traqcker.com, so
 // it has no business being crawled/indexed under the public marketing site.
 // Only the informational pages that are actually public belong here.
+//
+// Each entry also carries a Spanish alternate — the /es equivalent added
+// alongside the English localization work — so Google can index and rank
+// both language versions independently instead of only ever seeing English.
+const PAGES = [
+  { path: '',          changeFrequency: 'weekly',  priority: 1.0 },
+  { path: '/pricing',  changeFrequency: 'monthly', priority: 0.9 },
+  { path: '/about',    changeFrequency: 'monthly', priority: 0.6 },
+  { path: '/sign-up',  changeFrequency: 'yearly',  priority: 0.5 },
+  { path: '/sign-in',  changeFrequency: 'yearly',  priority: 0.3 },
+];
+
 export default async function sitemap() {
-  return [
-    { url: BASE_URL,                        changeFrequency: 'weekly',  priority: 1.0 },
-    { url: `${BASE_URL}/pricing`,           changeFrequency: 'monthly', priority: 0.9 },
-    { url: `${BASE_URL}/about`,             changeFrequency: 'monthly', priority: 0.6 },
-    { url: `${BASE_URL}/sign-up`,           changeFrequency: 'yearly',  priority: 0.5 },
-    { url: `${BASE_URL}/sign-in`,           changeFrequency: 'yearly',  priority: 0.3 },
-  ];
+  return PAGES.map(({ path, ...rest }) => ({
+    url: `${BASE_URL}${path}`,
+    ...rest,
+    alternates: {
+      languages: {
+        en: `${BASE_URL}${path}`,
+        es: `${BASE_URL}/es${path}`,
+      },
+    },
+  }));
 }

@@ -1,5 +1,6 @@
 import "./globals.css";
 import Script from 'next/script';
+import { headers } from 'next/headers';
 import { AuthProvider } from './components/AuthProvider';
 import CookieBanner from './components/CookieBanner';
 import BottomNav from './components/BottomNav';
@@ -42,10 +43,11 @@ export const viewport = {
   initialScale: 1,
 };
 
-export default function RootLayout({ children }) {
+export default async function RootLayout({ children }) {
+  const locale = (await headers()).get('x-locale') || 'en';
   return (
     <AuthProvider>
-      <html lang="en" suppressHydrationWarning>
+      <html lang={locale} suppressHydrationWarning>
         <head>
           <script dangerouslySetInnerHTML={{ __html: `(function(){try{var t=localStorage.getItem('ws_theme')||'light';document.documentElement.setAttribute('data-ws-theme',t)}catch(e){}})()` }} />
         </head>

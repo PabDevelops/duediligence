@@ -1,7 +1,11 @@
 'use client';
 import { useState } from 'react';
+import { useLocale } from '../../lib/i18n/useLocale';
+import { getDictionary } from '../../lib/i18n/getDictionary';
 
-export default function NewsletterForm({ source = 'landing', title = 'Get one stock breakdown a week', subtitle = 'No spam. Unsubscribe anytime.' }) {
+export default function NewsletterForm({ source = 'landing', dict }) {
+  const locale = useLocale();
+  const t = dict || getDictionary(locale).newsletter;
   const [email, setEmail] = useState('');
   const [status, setStatus] = useState('idle'); // idle | loading | done | error
   const [errorMsg, setErrorMsg] = useState('');
@@ -22,7 +26,7 @@ export default function NewsletterForm({ source = 'landing', title = 'Get one st
       setStatus('done');
     } catch {
       setStatus('error');
-      setErrorMsg('Something went wrong');
+      setErrorMsg(t.genericError);
     }
   };
 
@@ -30,27 +34,27 @@ export default function NewsletterForm({ source = 'landing', title = 'Get one st
     return (
       <div className="glass" style={{ padding: '24px', textAlign: 'center' }}>
         <div style={{ fontSize: '20px', marginBottom: '6px' }}>✓</div>
-        <div style={{ fontWeight: 800, fontSize: '15px' }}>You're in.</div>
-        <div style={{ color: 'var(--text-3)', fontSize: '13px', marginTop: '4px' }}>Watch your inbox for the next breakdown.</div>
+        <div style={{ fontWeight: 800, fontSize: '15px' }}>{t.doneTitle}</div>
+        <div style={{ color: 'var(--text-3)', fontSize: '13px', marginTop: '4px' }}>{t.doneSubtitle}</div>
       </div>
     );
   }
 
   return (
     <div className="glass" style={{ padding: '24px', textAlign: 'center' }}>
-      <div style={{ fontWeight: 800, fontSize: '16px', marginBottom: '4px' }}>{title}</div>
-      <div style={{ color: 'var(--text-3)', fontSize: '13px', marginBottom: '16px' }}>{subtitle}</div>
+      <div style={{ fontWeight: 800, fontSize: '16px', marginBottom: '4px' }}>{t.title}</div>
+      <div style={{ color: 'var(--text-3)', fontSize: '13px', marginBottom: '16px' }}>{t.subtitle}</div>
       <form onSubmit={submit} style={{ display: 'flex', gap: '8px', maxWidth: '380px', margin: '0 auto', flexWrap: 'wrap', justifyContent: 'center' }}>
         <input
           type="email"
           required
           value={email}
           onChange={e => setEmail(e.target.value)}
-          placeholder="you@email.com"
+          placeholder={t.placeholder}
           style={{ flex: '1 1 200px', padding: '11px 14px', borderRadius: '10px', border: '1px solid var(--border)', background: 'var(--bg-1)', color: 'var(--text)', fontSize: '14px', fontFamily: 'Inter, sans-serif' }}
         />
         <button type="submit" disabled={status === 'loading'} className="btn-primary" style={{ opacity: status === 'loading' ? 0.6 : 1, flexShrink: 0 }}>
-          {status === 'loading' ? 'Joining...' : 'Subscribe'}
+          {status === 'loading' ? t.joining : t.subscribe}
         </button>
       </form>
       {status === 'error' && <div style={{ color: 'var(--red)', fontSize: '12px', marginTop: '10px' }}>{errorMsg}</div>}

@@ -1,8 +1,9 @@
 'use client';
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { createClient } from '../../lib/supabase/client';
+import { createClient } from '../../../../lib/supabase/client';
 import Link from 'next/link';
+import { localizeHref } from '../../../../lib/i18n/locale';
 
 const GoogleIcon = () => (
   <svg width="18" height="18" viewBox="0 0 24 24" style={{ marginRight: '10px', flexShrink: 0 }}>
@@ -13,12 +14,13 @@ const GoogleIcon = () => (
   </svg>
 );
 
-export default function SignInPage() {
+export default function SignInView({ dict, locale }) {
   const router = useRouter();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  const t = dict.signIn;
 
   const signIn = async (e) => {
     e.preventDefault();
@@ -28,7 +30,7 @@ export default function SignInPage() {
     const { error } = await supabase.auth.signInWithPassword({ email, password });
     setLoading(false);
     if (error) { setError(error.message); return; }
-    router.push('/');
+    router.push(localizeHref('/', locale));
     router.refresh();
   };
 
@@ -43,11 +45,11 @@ export default function SignInPage() {
   return (
     <div className="workspace" style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '100vh', padding: '20px', boxSizing: 'border-box' }}>
       <div style={{ border: '1px solid var(--ws-border)', background: 'var(--ws-bg-1)', width: '100%', maxWidth: '400px', borderRadius: '4px', overflow: 'hidden', boxShadow: '0 8px 30px rgba(0,0,0,0.12)' }}>
-        
+
         {/* Terminal Header */}
         <div style={{ background: 'var(--ws-bg-2)', borderBottom: '1px solid var(--ws-border)', padding: '10px 16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           <span style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: '11px', color: 'var(--ws-accent)', fontWeight: 700, letterSpacing: '1px' }}>
-            $ traq login
+            {t.windowTitle}
           </span>
           <div style={{ display: 'flex', gap: '6px' }}>
             <div style={{ width: '8px', height: '8px', borderRadius: '50%', background: 'var(--ws-border)' }} />
@@ -58,8 +60,8 @@ export default function SignInPage() {
         <div style={{ padding: '32px 24px' }}>
           {/* Header */}
           <div style={{ textAlign: 'center', marginBottom: '24px' }}>
-            <h1 style={{ fontSize: '20px', fontWeight: 800, letterSpacing: '-0.5px', marginBottom: '6px', color: 'var(--ws-text)' }}>Welcome Back</h1>
-            <p style={{ color: 'var(--ws-text-3)', fontSize: '12px' }}>Sign in to access your terminal</p>
+            <h1 style={{ fontSize: '20px', fontWeight: 800, letterSpacing: '-0.5px', marginBottom: '6px', color: 'var(--ws-text)' }}>{t.title}</h1>
+            <p style={{ color: 'var(--ws-text-3)', fontSize: '12px' }}>{t.subtitle}</p>
           </div>
 
           {/* Google Sign In */}
@@ -85,20 +87,20 @@ export default function SignInPage() {
             onMouseLeave={e => { e.currentTarget.style.backgroundColor = 'var(--ws-bg-2)'; }}
           >
             <GoogleIcon />
-            Continue with Google
+            {t.google}
           </button>
 
           <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '16px', color: 'var(--ws-text-3)', fontSize: '11px', fontWeight: 500 }}>
             <div style={{ flex: 1, height: '1px', background: 'var(--ws-border)' }} />
-            <span>OR</span>
+            <span>{t.or}</span>
             <div style={{ flex: 1, height: '1px', background: 'var(--ws-border)' }} />
           </div>
 
           {/* Password Form */}
           <form onSubmit={signIn} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-            
+
             <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-              <label htmlFor="email" style={{ fontSize: '11px', fontWeight: 700, color: 'var(--ws-text-2)' }}>EMAIL ADDRESS</label>
+              <label htmlFor="email" style={{ fontSize: '11px', fontWeight: 700, color: 'var(--ws-text-2)' }}>{t.emailLabel}</label>
               <input
                 id="email"
                 type="email"
@@ -128,11 +130,11 @@ export default function SignInPage() {
 
             <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <label htmlFor="password" style={{ fontSize: '11px', fontWeight: 700, color: 'var(--ws-text-2)' }}>PASSWORD</label>
+                <label htmlFor="password" style={{ fontSize: '11px', fontWeight: 700, color: 'var(--ws-text-2)' }}>{t.passwordLabel}</label>
                 <Link href="/forgot-password" style={{ fontSize: '11px', color: 'var(--ws-accent)', textDecoration: 'none', fontWeight: 600 }}
                   onMouseEnter={e => e.currentTarget.style.textDecoration = 'underline'}
                   onMouseLeave={e => e.currentTarget.style.textDecoration = 'none'}>
-                  Forgot password?
+                  {t.forgotPassword}
                 </Link>
               </div>
               <input
@@ -176,27 +178,27 @@ export default function SignInPage() {
               </div>
             )}
 
-            <button type="submit" disabled={loading} 
-              style={{ 
-                width: '100%', 
-                padding: '10px', 
-                borderRadius: '4px', 
-                fontSize: '13px', 
-                fontWeight: 700, 
-                background: 'var(--ws-accent)', 
+            <button type="submit" disabled={loading}
+              style={{
+                width: '100%',
+                padding: '10px',
+                borderRadius: '4px',
+                fontSize: '13px',
+                fontWeight: 700,
+                background: 'var(--ws-accent)',
                 color: 'var(--ws-bg-1)',
                 border: 'none',
                 cursor: 'pointer',
-                marginTop: '4px' 
+                marginTop: '4px'
               }}>
-              {loading ? 'Signing in...' : 'Sign in'}
+              {loading ? t.submitLoading : t.submit}
             </button>
           </form>
 
           <div style={{ textAlign: 'center', marginTop: '24px', fontSize: '13px', color: 'var(--ws-text-3)' }}>
-            Don't have an account? <Link href="/sign-up" style={{ color: 'var(--ws-accent)', fontWeight: 600, textDecoration: 'none' }}
+            {t.noAccount} <Link href={localizeHref('/sign-up', locale)} style={{ color: 'var(--ws-accent)', fontWeight: 600, textDecoration: 'none' }}
               onMouseEnter={e => e.currentTarget.style.textDecoration = 'underline'}
-              onMouseLeave={e => e.currentTarget.style.textDecoration = 'none'}>Sign up</Link>
+              onMouseLeave={e => e.currentTarget.style.textDecoration = 'none'}>{t.signUpLink}</Link>
           </div>
         </div>
       </div>

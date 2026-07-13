@@ -3,6 +3,9 @@ import { usePathname } from 'next/navigation';
 import { useState, useEffect } from 'react';
 import { useUser } from './AuthProvider';
 import UserMenu from './workspace/UserMenu';
+import { stripLocale, localizeHref } from '../../lib/i18n/locale';
+import { useLocale } from '../../lib/i18n/useLocale';
+import { getDictionary } from '../../lib/i18n/getDictionary';
 
 function ProBadge() {
   const [isPro, setIsPro] = useState(false);
@@ -17,11 +20,24 @@ export default function Topbar() {
   const path = usePathname();
   const [menuOpen, setMenuOpen] = useState(false);
   const { isSignedIn } = useUser();
+  const locale = useLocale();
+  const t = getDictionary(locale).topbar;
+  const bare = stripLocale(path);
+  const href = (p) => localizeHref(p, locale);
 
-  const navItem = (href, label) => {
-    const active = path === href || path.startsWith(href + '/');
+  // Switching away from Spanish must explicitly clear the cookie — the
+  // middleware treats NEXT_LOCALE as authoritative, so without this a bare
+  // link back would just get redirected straight back to /es/...
+  const otherLocaleHref = locale === 'es' ? bare : `/es${bare === '/' ? '' : bare}`;
+  const switchLocale = () => {
+    if (locale === 'es') document.cookie = 'NEXT_LOCALE=en; path=/; max-age=31536000';
+  };
+
+  const navItem = (targetPath, label) => {
+    const target = href(targetPath);
+    const active = path === target || path.startsWith(target + '/');
     return (
-      <a href={href} className={`topbar-nav-link${active ? ' active' : ''}`}>{label}</a>
+      <a href={target} className={`topbar-nav-link${active ? ' active' : ''}`}>{label}</a>
     );
   };
 
@@ -29,14 +45,15 @@ export default function Topbar() {
     <>
       <div className="topbar">
         {/* Logo */}
-        <a href="/" className="topbar-logo" style={{ display: 'flex', alignItems: 'center' }}>
+        <a href={href('/')} className="topbar-logo" style={{ display: 'flex', alignItems: 'center' }}>
           <img src="/logo-traqcker-new.png" alt="Traqcker" style={{ height: '18px', width: 'auto' }} />
         </a>
 
         {/* Desktop nav — informational only; the terminal itself is behind sign-up + subscription */}
         <div className="desktop-nav" style={{ display: 'flex', alignItems: 'center', gap: '20px', flex: 1, justifyContent: 'flex-end' }}>
-          {navItem('/about', 'About')}
-          {navItem('/pricing', 'Pricing')}
+          {navItem('/about', t.about)}
+          {navItem('/pricing', t.pricing)}
+          <a href={otherLocaleHref} onClick={switchLocale} style={{ color: 'var(--text-3)', fontSize: '13px', fontWeight: 700, textDecoration: 'none' }}>{t.langToggle}</a>
 
           {isSignedIn ? (
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
@@ -45,8 +62,8 @@ export default function Topbar() {
             </div>
           ) : (
             <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-              <a href="/sign-in" style={{ color: 'var(--text-3)', fontSize: '13px', fontWeight: 600, textDecoration: 'none' }}>Sign in</a>
-              <a href="/pricing" className="btn-primary" style={{ padding: '6px 16px', fontSize: '13px' }}>Start free trial</a>
+              <a href={href('/sign-in')} style={{ color: 'var(--text-3)', fontSize: '13px', fontWeight: 600, textDecoration: 'none' }}>{t.signIn}</a>
+              <a href={href('/pricing')} className="btn-primary" style={{ padding: '6px 16px', fontSize: '13px' }}>{t.startFreeTrial}</a>
             </div>
           )}
         </div>
@@ -62,15 +79,21 @@ export default function Topbar() {
       {/* Mobile dropdown menu */}
       {menuOpen && (
         <div className="topbar-mobile-menu mobile-menu">
-          {[['/', 'Home'], ['/about', 'About'], ['/pricing', 'Pricing']].map(([href, label]) => (
-            <a key={href} href={href} onClick={() => setMenuOpen(false)}
-              className={`topbar-mobile-link${path === href ? ' active' : ''}`}>
-              {label}
-            </a>
-          ))}
+          {[['/', t.home], ['/about', t.about], ['/pricing', t.pricing]].map(([p, label]) => {
+            const target = href(p);
+            return (
+              <a key={p} href={target} onClick={() => setMenuOpen(false)}
+                className={`topbar-mobile-link${path === target ? ' active' : ''}`}>
+                {label}
+              </a>
+            );
+          })}
+          <a href={otherLocaleHref} onClick={() => { switchLocale(); setMenuOpen(false); }} className="topbar-mobile-link">
+            {t.langToggle}
+          </a>
           {!isSignedIn && (
             <div style={{ padding: '12px 16px' }}>
-              <a href="/sign-in" className="btn-primary" style={{ display: 'block', width: '100%', padding: '10px', textAlign: 'center', boxSizing: 'border-box' }}>Sign in</a>
+              <a href={href('/sign-in')} className="btn-primary" style={{ display: 'block', width: '100%', padding: '10px', textAlign: 'center', boxSizing: 'border-box' }}>{t.signIn}</a>
             </div>
           )}
         </div>
