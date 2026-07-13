@@ -15,6 +15,11 @@ export default function AddHoldingModal({ onClose, onAdded, existingPies, defaul
   );
   const [preview, setPreview] = useState(null);
   const [shares, setShares] = useState(editLot ? String(editLot.shares) : '');
+  // 'shares' is always the value actually submitted — in 'amount' mode it's kept in sync
+  // (via the effect below) from the amount the user typed, so the rest of the form (total
+  // cost display, submit handler) doesn't need to know which mode is active.
+  const [sharesMode, setSharesMode] = useState('shares');
+  const [amount, setAmount] = useState('');
   const [costBasis, setCostBasis] = useState(editLot ? String(editLot.cost_basis) : '');
   const [costBasisCurrency, setCostBasisCurrency] = useState(editLot?.cost_basis_currency || defaultCurrency || 'USD');
   const [purchaseDate, setPurchaseDate] = useState(editLot?.purchase_date || new Date().toISOString().slice(0, 10));
@@ -45,6 +50,16 @@ export default function AddHoldingModal({ onClose, onAdded, existingPies, defaul
   };
 
   const useCurrentPrice = () => { if (preview?.currentPrice) { setCostBasis(String(preview.currentPrice)); setCostBasisCurrency('USD'); } };
+
+  // Amount mode: derive shares from "how much I spent / price per share" instead of the
+  // user having to do that math themselves. Recomputes whenever either input changes, in
+  // either fill order.
+  useEffect(() => {
+    if (sharesMode !== 'amount') return;
+    const amt = Number(amount), price = Number(costBasis);
+    if (amount === '' || costBasis === '' || !(price > 0)) return;
+    setShares(String(amt / price));
+  }, [sharesMode, amount, costBasis]);
 
   const manualLookup = async () => {
     if (!query) return;
@@ -162,8 +177,31 @@ export default function AddHoldingModal({ onClose, onAdded, existingPies, defaul
 
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
             <div>
-              <div className="ws-label" style={{ marginBottom: '4px' }}>SHARES</div>
-              <input type="number" step="any" min="0" value={shares} onChange={e => setShares(e.target.value)} className="ws-input" required />
+              <div className="ws-label" style={{ marginBottom: '4px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <span>{sharesMode === 'shares' ? 'SHARES' : `AMOUNT (${costBasisCurrency})`}</span>
+                <div style={{ display: 'flex', gap: '8px' }}>
+                  <button type="button" onClick={() => setSharesMode('shares')}
+                    style={{ background: 'none', border: 'none', color: sharesMode === 'shares' ? 'var(--ws-accent)' : 'var(--ws-text-3)', fontSize: '10px', fontWeight: 700, cursor: 'pointer', padding: 0 }}>
+                    Shares
+                  </button>
+                  <button type="button" onClick={() => setSharesMode('amount')}
+                    style={{ background: 'none', border: 'none', color: sharesMode === 'amount' ? 'var(--ws-accent)' : 'var(--ws-text-3)', fontSize: '10px', fontWeight: 700, cursor: 'pointer', padding: 0 }}>
+                    Amount
+                  </button>
+                </div>
+              </div>
+              {sharesMode === 'shares' ? (
+                <input type="number" step="any" min="0" value={shares} onChange={e => setShares(e.target.value)} className="ws-input" required />
+              ) : (
+                <>
+                  <input type="number" step="any" min="0" value={amount} onChange={e => setAmount(e.target.value)} className="ws-input" placeholder="e.g. 80" required />
+                  <div style={{ fontSize: '10px', color: 'var(--ws-text-3)', marginTop: '3px' }}>
+                    {amount && costBasis && Number(costBasis) > 0
+                      ? `≈ ${(Number(amount) / Number(costBasis)).toLocaleString(undefined, { maximumFractionDigits: 4 })} shares at ${CURRENCIES[costBasisCurrency]}${Number(costBasis).toFixed(2)}`
+                      : 'Enter cost per share to see how many shares that buys.'}
+                  </div>
+                </>
+              )}
             </div>
             <div>
               <div className="ws-label" style={{ marginBottom: '4px', display: 'flex', justifyContent: 'space-between' }}>
