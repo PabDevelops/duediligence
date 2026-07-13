@@ -49,8 +49,8 @@ function StockCard({ s, onClick }) {
         </div>
       </div>
 
-      <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between' }}>
-        <span style={{ fontSize: '10px', color: 'var(--ws-text-3)', letterSpacing: '0.5px', textTransform: 'uppercase' }}>
+      <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', gap: '8px' }}>
+        <span style={{ fontSize: '10px', color: 'var(--ws-text-3)', letterSpacing: '0.5px', textTransform: 'uppercase', flex: 1, minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
           {s.exchange}{s.sector ? ` · ${s.sector}` : ''}
         </span>
         {s.currentPrice != null && (
