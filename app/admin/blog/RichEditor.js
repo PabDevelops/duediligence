@@ -48,7 +48,7 @@ export default function RichEditor({ html, onChange }) {
   };
 
   const insertChart = () => {
-    const ticker = window.prompt('Ticker for TradingView chart (e.g. AAPL):');
+    const ticker = window.prompt('Ticker for stock chart (e.g. AAPL):');
     if (ticker) editor.chain().focus().insertContent(`<p>[chart:${ticker.toUpperCase().trim()}]</p>`).run();
   };
 
@@ -77,7 +77,7 @@ export default function RichEditor({ html, onChange }) {
 
         <ToolbarButton title="Link" active={editor.isActive('link')} onClick={insertLink}>🔗</ToolbarButton>
         <ToolbarButton title="Insert image" onClick={insertImage}>🖼</ToolbarButton>
-        <ToolbarButton title="Insert TradingView chart" onClick={insertChart}>📈</ToolbarButton>
+        <ToolbarButton title="Insert stock chart" onClick={insertChart}>📈</ToolbarButton>
         <ToolbarButton title="Divider" onClick={() => editor.chain().focus().setHorizontalRule().run()}>―</ToolbarButton>
 
         <div style={{ width: '1px', background: 'var(--border)', margin: '4px 2px' }} />

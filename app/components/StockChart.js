@@ -68,6 +68,9 @@ export default function StockChart({ ticker, currency }) {
           textColor: '#555555',
           fontFamily: 'JetBrains Mono, monospace',
           fontSize: 10,
+          // lightweight-charts renders a "Charting by TradingView" attribution link by
+          // default — this is our own chart, on our own data, so it comes off.
+          attributionLogo: false,
         },
         grid: {
           vertLines: { color: '#1a1a1a' },

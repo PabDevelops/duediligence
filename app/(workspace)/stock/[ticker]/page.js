@@ -2,7 +2,6 @@
 import { useState, useEffect, useMemo, useRef, use } from 'react';
 import { useRouter } from 'next/navigation';
 import { BarChart, Bar, LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell } from 'recharts';
-import PriceChart from './chart';
 import StockChart from '../../../components/StockChart';
 import ProjectionChart from '../../../components/workspace/stock/ProjectionChart';
 import Sparkline from '../../../components/Sparkline';

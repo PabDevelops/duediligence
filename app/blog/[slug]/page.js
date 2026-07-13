@@ -2,7 +2,7 @@
 import { useRouter } from 'next/navigation';
 import { use, useState, useEffect } from 'react';
 import Topbar from '../../components/Topbar';
-import TradingViewChart from '../../components/TradingViewChart';
+import StockChart from '../../components/StockChart';
 import NewsletterForm from '../../components/NewsletterForm';
 import { useUser } from '../../components/AuthProvider';
 
@@ -16,7 +16,7 @@ function renderHtmlContent(html) {
     if (i % 2 === 0) {
       if (parts[i]) nodes.push(<div key={`h-${i}`} dangerouslySetInnerHTML={{ __html: parts[i] }} />);
     } else {
-      nodes.push(<TradingViewChart key={`c-${i}`} ticker={parts[i].toUpperCase()} />);
+      nodes.push(<StockChart key={`c-${i}`} ticker={parts[i].toUpperCase()} />);
     }
   }
   return nodes;
