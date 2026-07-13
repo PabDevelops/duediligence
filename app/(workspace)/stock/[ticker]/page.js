@@ -87,10 +87,15 @@ const MiniBar = ({ data, color = 'var(--ws-text-2)' }) => {
   );
 };
 
+// domain={['auto','auto']} on the (hidden) Y axis is what actually makes this readable —
+// without it, Recharts defaults toward including 0, so a metric that only moves within a
+// narrow band relative to its absolute size (e.g. revenue climbing 25% over 5 years) renders
+// as a nearly flat line. Same fix already applied in Sparkline/SparklineHeader.
 const MiniLine = ({ data, color = 'var(--ws-accent)' }) => (
   <ResponsiveContainer width="100%" height={60}>
     <LineChart data={data}>
       <XAxis dataKey="year" tick={{ fill: 'var(--ws-text-3)', fontSize: 9 }} axisLine={false} tickLine={false} />
+      <YAxis domain={['auto', 'auto']} hide />
       <Tooltip contentStyle={{ background: 'var(--ws-bg-1)', border: '1px solid var(--ws-border)', fontSize: 10 }} />
       <Line type="monotone" dataKey="value" stroke={color} strokeWidth={1.5} dot={{ fill: color, r: 2 }} />
     </LineChart>
