@@ -178,21 +178,24 @@ export default function StockChart({ ticker, currency }) {
     };
   }, [candles, mode, loading, currency, themeVersion]);
 
+  // var(--ws-X, var(--X)) throughout: this component renders both inside .workspace
+  // (stock page, where --ws-* carries the light/dark toggle) and on the blog (marketing-only
+  // light theme, no --ws-* vars defined) — the fallback picks whichever is actually in scope.
   return (
-    <div style={{ background: 'var(--bg-1)', padding: '16px', position: 'relative' }}>
+    <div style={{ background: 'var(--ws-bg-1, var(--bg-1))', padding: '16px', position: 'relative' }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '12px', alignItems: 'center' }}>
-        <div style={{ display: 'flex', gap: '1px', background: 'var(--border)' }}>
+        <div style={{ display: 'flex', gap: '1px', background: 'var(--ws-border, var(--border))' }}>
           {RANGES.map(r => (
             <button key={r.value} onClick={() => setRange(r.value)}
-              style={{ padding: '4px 8px', fontSize: '10px', letterSpacing: '1px', background: range === r.value ? 'var(--accent)' : 'var(--bg-2)', color: range === r.value ? '#000' : 'var(--text-3)', border: 'none', cursor: 'pointer', fontFamily: 'JetBrains Mono, monospace', fontWeight: range === r.value ? 600 : 400 }}>
+              style={{ padding: '4px 8px', fontSize: '10px', letterSpacing: '1px', background: range === r.value ? 'var(--ws-accent, var(--accent))' : 'var(--ws-bg-2, var(--bg-2))', color: range === r.value ? '#000' : 'var(--ws-text-3, var(--text-3))', border: 'none', cursor: 'pointer', fontFamily: 'JetBrains Mono, monospace', fontWeight: range === r.value ? 600 : 400 }}>
               {r.label}
             </button>
           ))}
         </div>
-        <div style={{ display: 'flex', gap: '1px', background: 'var(--border)' }}>
+        <div style={{ display: 'flex', gap: '1px', background: 'var(--ws-border, var(--border))' }}>
           {['line', 'candles'].map(m => (
             <button key={m} onClick={() => setMode(m)}
-              style={{ padding: '4px 10px', fontSize: '10px', letterSpacing: '1px', background: mode === m ? 'var(--accent)' : 'var(--bg-2)', color: mode === m ? '#000' : 'var(--text-3)', border: 'none', cursor: 'pointer', fontFamily: 'JetBrains Mono, monospace', fontWeight: mode === m ? 600 : 400 }}>
+              style={{ padding: '4px 10px', fontSize: '10px', letterSpacing: '1px', background: mode === m ? 'var(--ws-accent, var(--accent))' : 'var(--ws-bg-2, var(--bg-2))', color: mode === m ? '#000' : 'var(--ws-text-3, var(--text-3))', border: 'none', cursor: 'pointer', fontFamily: 'JetBrains Mono, monospace', fontWeight: mode === m ? 600 : 400 }}>
               {m.toUpperCase()}
             </button>
           ))}
@@ -200,7 +203,7 @@ export default function StockChart({ ticker, currency }) {
       </div>
 
       {loading && (
-  <div style={{ height: 320, display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--text-3)', fontSize: '11px', letterSpacing: '2px', position: 'absolute', width: '100%' }}>
+  <div style={{ height: 320, display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--ws-text-3, var(--text-3))', fontSize: '11px', letterSpacing: '2px', position: 'absolute', width: '100%' }}>
     LOADING...
   </div>
 )}

@@ -1,22 +1,28 @@
 @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@500;700&display=swap');
 @import "tailwindcss";
 
-/* Maps the --ws-* custom properties below to Tailwind utilities (bg-ws-bg-1,
-   text-ws-text, border-ws-border, ...). These stay indirections to the
-   custom properties rather than fixed values, so the light/dark override
-   in `.workspace.dark` further down still applies at runtime. */
-@theme {
-  --color-ws-bg: var(--ws-bg);
-  --color-ws-bg-1: var(--ws-bg-1);
-  --color-ws-bg-2: var(--ws-bg-2);
-  --color-ws-text: var(--ws-text);
-  --color-ws-text-2: var(--ws-text-2);
-  --color-ws-text-3: var(--ws-text-3);
-  --color-ws-border: var(--ws-border);
-  --color-ws-accent: var(--ws-accent);
-  --color-ws-accent-dim: var(--ws-accent-dim);
-  --color-ws-red: var(--ws-red);
-}
+/* Maps the --ws-* custom properties below to utility classes (bg-ws-bg-1,
+   text-ws-text, border-ws-border, ...) used across the workspace. Written as
+   plain classes rather than Tailwind @theme tokens: @theme's build step was
+   folding `var(--ws-bg-1)` down to its light-mode literal at compile time,
+   so every one of these classes silently stopped tracking the .workspace.dark
+   override and rendered light-theme colors even with dark mode active. Plain
+   CSS keeps the var() reference live, resolved at the element's actual
+   position in the DOM the way the light/dark override needs. */
+.bg-ws-bg { background-color: var(--ws-bg); }
+.bg-ws-bg-1 { background-color: var(--ws-bg-1); }
+.bg-ws-bg-2 { background-color: var(--ws-bg-2); }
+.text-ws-text { color: var(--ws-text); }
+.text-ws-text-2 { color: var(--ws-text-2); }
+.text-ws-text-3 { color: var(--ws-text-3); }
+.border-ws-border { border-color: var(--ws-border); }
+.bg-ws-accent { background-color: var(--ws-accent); }
+.text-ws-accent { color: var(--ws-accent); }
+.border-ws-accent { border-color: var(--ws-accent); }
+.bg-ws-accent-dim { background-color: var(--ws-accent-dim); }
+.bg-ws-red { background-color: var(--ws-red); }
+.text-ws-red { color: var(--ws-red); }
+.border-ws-red { border-color: var(--ws-red); }
 
 :root {
   /* Marketing theme — matches the app's own --ws-* light palette below, so
