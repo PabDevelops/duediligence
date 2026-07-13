@@ -17,8 +17,11 @@ export default function AddHoldingModal({ onClose, onAdded, existingPies, defaul
   const [shares, setShares] = useState(editLot ? String(editLot.shares) : '');
   // 'shares' is always the value actually submitted — in 'amount' mode it's kept in sync
   // (via the effect below) from the amount the user typed, so the rest of the form (total
-  // cost display, submit handler) doesn't need to know which mode is active.
-  const [sharesMode, setSharesMode] = useState('shares');
+  // cost display, submit handler) doesn't need to know which mode is active. Defaults to
+  // 'amount' for a new holding (most people think "I put in £80", not "I bought 12.3457
+  // shares") but 'shares' when editing an existing lot, since that already has an exact
+  // share count to adjust rather than an amount to re-derive it from.
+  const [sharesMode, setSharesMode] = useState(isEdit ? 'shares' : 'amount');
   const [amount, setAmount] = useState('');
   const [costBasis, setCostBasis] = useState(editLot ? String(editLot.cost_basis) : '');
   const [costBasisCurrency, setCostBasisCurrency] = useState(editLot?.cost_basis_currency || defaultCurrency || 'USD');
