@@ -374,8 +374,15 @@ export default function WatchlistPage() {
                     {activeStock?.name || '—'}
                   </h1>
                 </div>
+                <button onClick={() => router.push(`/stock/${activeTicker}`)}
+                  title={`Open full ${activeTicker} page`}
+                  style={{ background: 'var(--ws-bg-2)', border: '1px solid var(--ws-border)', color: 'var(--ws-text-2)', fontSize: '10px', fontWeight: 700, padding: '6px 10px', cursor: 'pointer', fontFamily: 'JetBrains Mono, monospace', whiteSpace: 'nowrap' }}
+                  onMouseEnter={e => { e.currentTarget.style.color = 'var(--ws-accent)'; e.currentTarget.style.borderColor = 'var(--ws-accent)'; }}
+                  onMouseLeave={e => { e.currentTarget.style.color = 'var(--ws-text-2)'; e.currentTarget.style.borderColor = 'var(--ws-border)'; }}>
+                  FULL PAGE ↗
+                </button>
               </div>
-              
+
               {activeStock && (
                 <div style={{ textAlign: 'right' }}>
                   <div style={{ fontSize: '20px', fontWeight: 800, color: 'var(--ws-text)', fontFamily: 'JetBrains Mono, monospace' }}>
