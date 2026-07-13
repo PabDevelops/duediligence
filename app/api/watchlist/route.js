@@ -12,12 +12,13 @@ export async function GET(request) {
   const full = searchParams.get('full') === 'true';
 
   // 1. Fetch current watchlist
-  let { data: watchlistData } = await supabase
+  let { data: watchlistData, error: watchlistError } = await supabase
     .from('watchlists')
-    .select('ticker, created_at')
+    .select('ticker, created_at, pie')
     .eq('user_id', userId)
     .order('created_at', { ascending: false });
 
+  if (watchlistError) console.error('GET /api/watchlist:', watchlistError);
   watchlistData = watchlistData || [];
 
   // 2. Fetch portfolio holdings to auto-sync pre-existing assets
@@ -42,10 +43,10 @@ export async function GET(request) {
       // Re-fetch updated watchlist
       const { data: updatedWatchlistData } = await supabase
         .from('watchlists')
-        .select('ticker, created_at')
+        .select('ticker, created_at, pie')
         .eq('user_id', userId)
         .order('created_at', { ascending: false });
-      
+
       watchlistData = updatedWatchlistData || [];
     }
   }
@@ -68,6 +69,7 @@ export async function GET(request) {
       return {
         ticker: d.ticker,
         created_at: d.created_at,
+        pie: d.pie || null,
         name: stock.name,
         currentPrice: stock.currentPrice,
         priceChangePct: stock.priceChangePct,
@@ -86,10 +88,16 @@ export async function POST(request) {
   const userId = await getUserId();
   if (!userId) return Response.json({ error: 'Not authenticated' }, { status: 401 });
 
-  const { ticker } = await request.json();
+  const { ticker, pie } = await request.json();
   if (!ticker) return Response.json({ error: 'Ticker required' }, { status: 400 });
 
-  await supabase.from('watchlists').upsert({ user_id: userId, ticker: ticker.toUpperCase() });
+  // Only set `pie` on the row when the caller actually passed one — omitting it lets an
+  // upsert against an already-watched ticker leave its existing list assignment alone
+  // instead of silently resetting it to General.
+  const row = { user_id: userId, ticker: ticker.toUpperCase() };
+  if (pie !== undefined) row.pie = pie ? pie.trim() || null : null;
+
+  await supabase.from('watchlists').upsert(row);
 
   const { count } = await supabase
     .from('watchlists')
@@ -97,6 +105,22 @@ export async function POST(request) {
     .eq('user_id', userId);
 
   return Response.json({ success: true, watchlistCount: count || 0 });
+}
+
+// Move a ticker to a different pie (or back to General with pie: null).
+export async function PATCH(request) {
+  const userId = await getUserId();
+  if (!userId) return Response.json({ error: 'Not authenticated' }, { status: 401 });
+
+  const { ticker, pie } = await request.json();
+  if (!ticker) return Response.json({ error: 'Ticker required' }, { status: 400 });
+
+  await supabase.from('watchlists')
+    .update({ pie: pie ? pie.trim() || null : null })
+    .eq('user_id', userId)
+    .eq('ticker', ticker.toUpperCase());
+
+  return Response.json({ success: true });
 }
 
 export async function DELETE(request) {

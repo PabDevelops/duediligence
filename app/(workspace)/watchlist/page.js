@@ -1,5 +1,5 @@
 'use client';
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import { useUser } from '../../components/AuthProvider';
 import { useRouter } from 'next/navigation';
 import StockChart from '../../components/StockChart';
@@ -49,6 +49,28 @@ export default function WatchlistPage() {
 
   // Responsive state
   const [showDetailOnMobile, setShowDetailOnMobile] = useState(false);
+
+  // Pie (themed sub-list) grouping — same idea as Portfolio's Pies. A ticker with no
+  // `pie` falls into "General", which always sorts first so the plain, ungrouped case
+  // (most people just adding symbols with no organizing) still reads as one flat list.
+  const [editingPieTicker, setEditingPieTicker] = useState(null);
+  const [pieDraft, setPieDraft] = useState('');
+  const [showPieSuggestions, setShowPieSuggestions] = useState(false);
+
+  const existingPies = useMemo(
+    () => [...new Set(tickers.map(t => t.pie).filter(Boolean))].sort(),
+    [tickers]
+  );
+  const pieSuggestions = existingPies.filter(p =>
+    p.toLowerCase().includes(pieDraft.toLowerCase()) && p.toLowerCase() !== pieDraft.toLowerCase()
+  );
+
+  const groups = useMemo(() => {
+    const map = {};
+    tickers.forEach(t => { (map[t.pie || 'General'] ||= []).push(t); });
+    const names = Object.keys(map).sort((a, b) => a === 'General' ? -1 : b === 'General' ? 1 : a.localeCompare(b));
+    return names.map(name => ({ name, items: map[name] }));
+  }, [tickers]);
 
   // Fetch watchlist symbols + brief details
   const fetchWatchlist = useCallback(async (selectTicker = null) => {
@@ -116,6 +138,19 @@ export default function WatchlistPage() {
         setActiveTicker(null);
       }
     }
+  };
+
+  // Move a ticker into a different pie (or back to General with an empty value)
+  const moveToPie = async (ticker, newPie) => {
+    const pie = newPie.trim() || null;
+    setTickers(prev => prev.map(t => t.ticker === ticker ? { ...t, pie } : t));
+    setEditingPieTicker(null);
+    setShowPieSuggestions(false);
+    await fetch('/api/watchlist', {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ ticker, pie }),
+    });
   };
 
   // Add ticker
@@ -209,7 +244,7 @@ export default function WatchlistPage() {
           )}
         </div>
 
-        {/* LIST */}
+        {/* LIST — grouped by pie, General (ungrouped) always first */}
         <div style={{ flex: 1, overflowY: 'auto' }}>
           {loadingWatchlist ? (
             <div className="text-center text-ws-text-3 text-[11px] px-4 py-10" style={{ fontFamily: 'JetBrains Mono, monospace' }}>
@@ -220,44 +255,92 @@ export default function WatchlistPage() {
               Your watchlist is empty.<br/>Add symbols above to get started.
             </div>
           ) : (
-            tickers.map((t) => {
-              const active = t.ticker === activeTicker;
-              const priceChange = t.priceChangePct ?? 0;
-              const isPositive = priceChange >= 0;
-
-              return (
-                <div key={t.ticker}
-                  onClick={() => {
-                    setActiveTicker(t.ticker);
-                    setShowDetailOnMobile(true);
-                  }}
-                  className={`watchlist-item ${active ? 'active' : ''}`}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '10px', minWidth: 0 }}>
-                    <StockLogo ticker={t.ticker} />
-                    <div style={{ minWidth: 0 }}>
-                      <div style={{ fontWeight: 700, fontSize: '12px', color: active ? 'var(--ws-accent)' : 'var(--ws-text)', fontFamily: 'JetBrains Mono, monospace' }}>{t.ticker}</div>
-                      <div style={{ fontSize: '10px', color: 'var(--ws-text-3)', textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap' }}>{t.name || '—'}</div>
-                    </div>
-                  </div>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexShrink: 0 }}>
-                    <div style={{ textAlign: 'right' }}>
-                      <div style={{ fontWeight: 700, fontSize: '11px', color: 'var(--ws-text)', fontFamily: 'JetBrains Mono, monospace' }}>
-                        {formatCurrency(t.currentPrice, t.currency || 'USD')}
-                      </div>
-                      <div style={{ fontWeight: 700, fontSize: '10px', color: isPositive ? 'var(--ws-accent)' : 'var(--ws-red)', fontFamily: 'JetBrains Mono, monospace' }}>
-                        {isPositive ? '+' : ''}{priceChange.toFixed(2)}%
-                      </div>
-                    </div>
-                    <button onClick={(e) => { e.stopPropagation(); removeTicker(t.ticker); }}
-                      style={{ background: 'none', border: 'none', color: 'var(--ws-text-3)', cursor: 'pointer', fontSize: '14px', padding: '4px' }}
-                      onMouseEnter={e => e.target.style.color = 'var(--ws-red)'}
-                      onMouseLeave={e => e.target.style.color = 'var(--ws-text-3)'}>
-                      ✕
-                    </button>
-                  </div>
+            groups.map(group => (
+              <div key={group.name}>
+                <div style={{ padding: '10px 16px 6px', fontSize: '10px', fontWeight: 700, letterSpacing: '1px', color: 'var(--ws-text-3)', fontFamily: 'JetBrains Mono, monospace' }}>
+                  {group.name.toUpperCase()} · {group.items.length}
                 </div>
-              );
-            })
+                {group.items.map((t) => {
+                  const active = t.ticker === activeTicker;
+                  const priceChange = t.priceChangePct ?? 0;
+                  const isPositive = priceChange >= 0;
+                  const isEditingPie = editingPieTicker === t.ticker;
+
+                  return (
+                    <div key={t.ticker}
+                      onClick={() => {
+                        setActiveTicker(t.ticker);
+                        setShowDetailOnMobile(true);
+                      }}
+                      className={`watchlist-item ${active ? 'active' : ''}`}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '10px', minWidth: 0 }}>
+                        <StockLogo ticker={t.ticker} />
+                        <div style={{ minWidth: 0 }}>
+                          <div style={{ fontWeight: 700, fontSize: '12px', color: active ? 'var(--ws-accent)' : 'var(--ws-text)', fontFamily: 'JetBrains Mono, monospace' }}>{t.ticker}</div>
+                          <div style={{ fontSize: '10px', color: 'var(--ws-text-3)', textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap' }}>{t.name || '—'}</div>
+                        </div>
+                      </div>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexShrink: 0 }}>
+                        <div style={{ textAlign: 'right' }}>
+                          <div style={{ fontWeight: 700, fontSize: '11px', color: 'var(--ws-text)', fontFamily: 'JetBrains Mono, monospace' }}>
+                            {formatCurrency(t.currentPrice, t.currency || 'USD')}
+                          </div>
+                          <div style={{ fontWeight: 700, fontSize: '10px', color: isPositive ? 'var(--ws-accent)' : 'var(--ws-red)', fontFamily: 'JetBrains Mono, monospace' }}>
+                            {isPositive ? '+' : ''}{priceChange.toFixed(2)}%
+                          </div>
+                        </div>
+
+                        {isEditingPie ? (
+                          <div onClick={e => e.stopPropagation()} style={{ position: 'relative' }}>
+                            <input
+                              autoFocus
+                              value={pieDraft}
+                              placeholder="General"
+                              onChange={e => { setPieDraft(e.target.value); setShowPieSuggestions(true); }}
+                              onFocus={() => setShowPieSuggestions(true)}
+                              onKeyDown={e => {
+                                if (e.key === 'Enter') moveToPie(t.ticker, pieDraft);
+                                if (e.key === 'Escape') { setEditingPieTicker(null); setShowPieSuggestions(false); }
+                              }}
+                              onBlur={() => setTimeout(() => moveToPie(t.ticker, pieDraft), 150)}
+                              style={{ width: '90px', fontSize: '10px', padding: '4px 6px', background: 'var(--ws-bg-1)', border: '1px solid var(--ws-accent)', color: 'var(--ws-text)', fontFamily: 'JetBrains Mono, monospace' }}
+                            />
+                            {showPieSuggestions && pieSuggestions.length > 0 && (
+                              <div style={{ position: 'absolute', top: '26px', right: 0, minWidth: '110px', background: 'var(--ws-bg-1)', border: '1px solid var(--ws-border)', zIndex: 20, boxShadow: '0 8px 24px rgba(0,0,0,0.15)' }}>
+                                {pieSuggestions.map(p => (
+                                  <div key={p} onMouseDown={() => moveToPie(t.ticker, p)}
+                                    style={{ padding: '6px 8px', fontSize: '10px', cursor: 'pointer', color: 'var(--ws-text)' }}
+                                    onMouseEnter={e => e.currentTarget.style.background = 'var(--ws-bg-2)'}
+                                    onMouseLeave={e => e.currentTarget.style.background = 'transparent'}>
+                                    {p}
+                                  </div>
+                                ))}
+                              </div>
+                            )}
+                          </div>
+                        ) : (
+                          <button
+                            onClick={e => { e.stopPropagation(); setEditingPieTicker(t.ticker); setPieDraft(t.pie || ''); }}
+                            title="Move to a different list"
+                            style={{ background: 'var(--ws-bg-2)', border: '1px solid var(--ws-border)', color: 'var(--ws-text-3)', fontSize: '9px', fontWeight: 700, padding: '4px 8px', cursor: 'pointer', fontFamily: 'JetBrains Mono, monospace', whiteSpace: 'nowrap' }}
+                            onMouseEnter={e => { e.currentTarget.style.color = 'var(--ws-accent)'; e.currentTarget.style.borderColor = 'var(--ws-accent)'; }}
+                            onMouseLeave={e => { e.currentTarget.style.color = 'var(--ws-text-3)'; e.currentTarget.style.borderColor = 'var(--ws-border)'; }}>
+                            {t.pie || 'General'}
+                          </button>
+                        )}
+
+                        <button onClick={(e) => { e.stopPropagation(); removeTicker(t.ticker); }}
+                          style={{ background: 'none', border: 'none', color: 'var(--ws-text-3)', cursor: 'pointer', fontSize: '14px', padding: '4px' }}
+                          onMouseEnter={e => e.target.style.color = 'var(--ws-red)'}
+                          onMouseLeave={e => e.target.style.color = 'var(--ws-text-3)'}>
+                          ✕
+                        </button>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            ))
           )}
         </div>
       </div>
@@ -306,7 +389,7 @@ export default function WatchlistPage() {
             </div>
 
             {/* CHART */}
-            <div style={{ borderBottom: '1px solid var(--ws-border)', background: '#111111' }}>
+            <div style={{ borderBottom: '1px solid var(--ws-border)', background: 'var(--ws-bg-1)' }}>
               <StockChart ticker={activeTicker} currency={selectedStockData?.currency || 'USD'} />
             </div>
 
