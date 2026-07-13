@@ -356,7 +356,7 @@ export default function StockPage({ params }) {
             </span>
           </div>
           <div style={{ borderTop: '1px solid var(--ws-border)', paddingTop: '16px', display: 'flex', gap: '8px' }}>
-            <a href="/" style={{ textDecoration: 'none', fontSize: '11px', letterSpacing: '1px', background: 'var(--ws-text)', color: 'var(--ws-bg)', border: 'none', fontWeight: 700, padding: '8px 16px' }}>
+            <a href="/search" style={{ textDecoration: 'none', fontSize: '11px', letterSpacing: '1px', background: 'var(--ws-text)', color: 'var(--ws-bg)', border: 'none', fontWeight: 700, padding: '8px 16px' }}>
               NEW SEARCH
             </a>
             <a href="/screener" style={{ textDecoration: 'none', fontSize: '11px', letterSpacing: '1px', background: 'transparent', border: '1px solid var(--ws-border)', color: 'var(--ws-text-2)', padding: '8px 16px' }}>
