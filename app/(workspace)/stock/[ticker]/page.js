@@ -579,7 +579,7 @@ export default function StockPage({ params }) {
           <div className="stock-overview-grid">
 
             {/* Left column: vote + numbers + chart */}
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '16px', minWidth: 0 }}>
 
               {/* Community vote */}
               <div style={{ background: 'var(--ws-bg-1)', border: '1px solid var(--ws-border)', padding: '20px' }}>
