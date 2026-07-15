@@ -11,7 +11,7 @@ import AchievementToast from '../../../components/AchievementToast';
 import AddHoldingModal from '../../../components/workspace/portfolio/AddHoldingModal';
 import MarketStatusDot from '../../../components/workspace/MarketStatusDot';
 import { useUser } from '../../../components/AuthProvider';
-import { fmt as sharedFmt, fmtP as sharedFmtP, fmtN as sharedFmtN } from '../../../../lib/formatters';
+import { fmt as sharedFmt, fmtP as sharedFmtP, fmtN as sharedFmtN, formatCurrency } from '../../../../lib/formatters';
 import { useStockData } from '../../../../lib/hooks/useStockData';
 import { useTickerSearch } from '../../../../lib/hooks/useTickerSearch';
 import {
@@ -581,10 +581,18 @@ export default function StockPage({ params }) {
     || data.roic != null || data.grossMargin != null || (data.revHistory?.length ?? 0) > 0;
 
   const easyMode = computeEasyMode(data, hasFundamentals);
+  // No user-facing knobs on the DCF — every assumption (FCF base, growth fade shape, margin
+  // recovery ramp) is decided automatically from the company's own reported history. See
+  // computeDCFValue in lib/stockScoring.js for exactly what triggers each adjustment.
   const dcfValue = computeDCFValue(data, data.riskFreeRate);
   const dcfBaseScenario = dcfValue?.scenarios.find(s => s.primary);
   const fairValue = computeFairValue(dcfBaseScenario?.value, price);
-  const stressGrid = dcfValue ? computeDCFStressGrid(data, data.riskFreeRate, stressTableKey) : null;
+  const stressGrid = dcfValue ? computeDCFStressGrid(data, data.riskFreeRate, stressTableKey, {
+    fcfBase: dcfValue.fcfBase,
+    plateauYears: dcfValue.plateauYears,
+    matureFcfMargin: dcfValue.matureFcfMargin,
+    fcfMarginRampYears: dcfValue.fcfMarginRampYears,
+  }) : null;
 
   return (
     <div className="p-6">
@@ -1602,12 +1610,25 @@ export default function StockPage({ params }) {
                     <div><span className="text-ws-text-3">Growth assumption</span> &nbsp;<b className="text-ws-text">{(dcfValue.baseGrowth * 100).toFixed(1)}%</b></div>
                     <div><span className="text-ws-text-3">Exit multiple</span> &nbsp;<b className="text-ws-text">{dcfValue.exitMultiple.toFixed(1)}x FCF</b></div>
                     <div><span className="text-ws-text-3">Risk-free rate</span> &nbsp;<b className="text-ws-text">{(data.riskFreeRate * 100).toFixed(2)}%</b></div>
+                    <div title={dcfValue.fcfBaseMethod === 'normalized' ? 'Average FCF-to-revenue margin over the trailing years, applied to current revenue — smooths out a single year of capex or working-capital timing noise.' : "The latest reported year's free cash flow."}>
+                      <span className="text-ws-text-3">FCF base</span> &nbsp;<b className="text-ws-text">{formatCurrency(dcfValue.fcfBase, curSym(data.currency))}</b> <span style={{ color: 'var(--ws-text-3)' }}>({dcfValue.fcfBaseMethod === 'normalized' ? 'normalized' : 'latest FY'})</span>
+                    </div>
                     {dcfValue.impliedGrowth != null && (
                       <div title="The growth rate that would justify today's price — shown for context only, not used in this valuation.">
                         <span className="text-ws-text-3">Market is pricing in</span> &nbsp;<b className="text-ws-text">{(dcfValue.impliedGrowth * 100).toFixed(1)}%</b>
                       </div>
                     )}
                   </div>
+
+                  {(dcfValue.reinvestmentPhase || dcfValue.marginDepressed) && (
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px', background: 'rgba(217, 119, 6, 0.1)', border: '1px solid rgba(217, 119, 6, 0.35)', padding: '10px 14px', marginBottom: '16px', fontSize: '11px', color: 'var(--ws-text-2)' }}>
+                      <span style={{ fontWeight: 800, color: '#d97706', letterSpacing: '0.5px' }}>MARGIN RECOVERY APPLIED</span>
+                      <span>
+                        {dcfValue.reinvestmentPhase ? 'capex/revenue is running well above its own trailing average' : "today's FCF margin sits well below this company's own best recent margin"}
+                        {' '}— the DCF uses a margin-normalized FCF base, a 3yr growth plateau, and ramps the FCF margin toward {(dcfValue.matureFcfMargin * 100).toFixed(1)}% over 6yrs (the best this company has already demonstrated) instead of assuming the current depressed conversion holds for all 10 years.
+                      </span>
+                    </div>
+                  )}
 
                   {price != null && (
                     <div style={{ background: 'var(--ws-bg-1)', border: '1px solid var(--ws-border)', padding: '18px 20px', marginBottom: '16px' }}>
@@ -1734,7 +1755,7 @@ export default function StockPage({ params }) {
                   )}
 
                   <div className="text-ws-text-3 text-[10px] tracking-[1px]">
-                    WACC-DISCOUNTED FCF (10YR, FADING TO A LONG-RUN RATE) + EXIT-MULTIPLE TERMINAL VALUE · GROWTH = FUNDAMENTALS-BASED (REINVESTMENT RATE × ROIC, FALLS BACK TO FCF CAGR) · NOT INVESTMENT ADVICE
+                    WACC-DISCOUNTED FCF (10YR, FADING TO A LONG-RUN RATE) + EXIT-MULTIPLE TERMINAL VALUE · GROWTH = FUNDAMENTALS-BASED (REINVESTMENT RATE × ROIC, FALLS BACK TO FCF CAGR) · FCF BASE AUTO-NORMALIZES DURING A DETECTED REINVESTMENT PHASE · NOT INVESTMENT ADVICE
                   </div>
                 </>
               );
