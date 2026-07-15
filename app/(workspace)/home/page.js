@@ -10,7 +10,6 @@ import { distributeMasonryColumns } from '../../../lib/homeLayout';
 import StockLogo from '../../components/workspace/StockLogo';
 import NewsImage from '../../components/workspace/home/NewsImage';
 import Card from '../../components/workspace/home/Card';
-import MarketHeatmap from '../../components/workspace/home/MarketHeatmap';
 import OnboardingBanner from '../../components/OnboardingBanner';
 
 // Same set + localStorage key as the dedicated /portfolio page, so the display
@@ -1346,16 +1345,6 @@ export default function WorkspaceHome() {
           </div>
         );
       })()}
-
-      {/* Market map — full-width, sits above the two-column grid since a treemap needs real
-          horizontal room to read; cramming it into either narrow column would make every box
-          sub-legible. See MarketHeatmap.js for why it's grouped by sector only (not sector →
-          industry) and why the universe is whatever's in stock_cache, not a fixed S&P 500 list. */}
-      <div style={{ marginBottom: '20px' }}>
-        <Card title="MARKET MAP" subtitle="Sized by market cap · colored by today's change">
-          <MarketHeatmap />
-        </Card>
-      </div>
 
       {/* Main grid — mobile collapses to one fixed-order column; desktop keeps the
           fixed two-column split (see LEFT_WIDGETS/RIGHT_WIDGETS above). */}
