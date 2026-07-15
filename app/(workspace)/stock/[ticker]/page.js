@@ -29,6 +29,35 @@ const fmt = (val) => sharedFmt(val, 'N/A');
 const fmtP = (v) => sharedFmtP(v, { fallback: 'N/A' });
 const fmtN = (v, d = 2) => sharedFmtN(v, d, 'N/A');
 
+// Animated fill bar for the main Quality Score. Was an ASCII '█'/'░' character string —
+// besides not being animatable, mixing two block-drawing glyphs at a font weight (400) that
+// isn't one of the loaded JetBrains Mono weights (500/700) meant the two characters could
+// render via different font-matching paths and end up visually mismatched in size. A real
+// div-based bar sidesteps both problems. Defined at module scope (not inside StockPage's
+// render body, where the equivalent ScoreBar below lives) so its identity — and animation
+// state — survives StockPage re-renders; it only replays the fill when the score itself
+// changes (e.g. switching tickers), via the `score100` dependency.
+function QualityScoreBar({ score100, color }) {
+  const [width, setWidth] = useState(0);
+  useEffect(() => {
+    setWidth(0);
+    // setTimeout, not requestAnimationFrame — rAF never fires in a backgrounded/hidden tab
+    // (verified: a bare rAF call sat un-fired for 2s+ under document.hidden), so a rAF-driven
+    // trigger would silently never animate for anyone opening this in a background tab.
+    // setTimeout still runs there (may be throttled, but it runs), and a few ms is
+    // imperceptible either way — this only has to force one paint of width:0 before the
+    // width:score100 change so the CSS transition has something to animate from.
+    const t = setTimeout(() => setWidth(score100), 30);
+    return () => clearTimeout(t);
+  }, [score100]);
+  return (
+    <div style={{ position: 'relative', width: '150px', height: '18px', background: 'var(--ws-border)', overflow: 'hidden', flexShrink: 0 }}>
+      <div style={{ position: 'absolute', inset: 0, width: `${width}%`, background: color, transition: 'width 0.9s cubic-bezier(0.16, 1, 0.3, 1)' }} />
+      <div style={{ position: 'absolute', inset: 0, backgroundImage: 'repeating-linear-gradient(90deg, var(--ws-bg-1) 0px, var(--ws-bg-1) 2px, transparent 2px, transparent 15px)' }} />
+    </div>
+  );
+}
+
 const CURRENCY_SYMBOLS = { USD: '$', EUR: '€', GBP: '£', JPY: '¥', CNY: '¥', CHF: 'CHF ', CAD: 'C$', AUD: 'A$', HKD: 'HK$', INR: '₹', KRW: '₩', SEK: 'kr', NOK: 'kr', DKK: 'kr' };
 const curSym = (code) => !code || code === 'USD' ? '$' : (CURRENCY_SYMBOLS[code] || `${code} `);
 
@@ -527,9 +556,7 @@ export default function StockPage({ params }) {
               ) : (
               <>
               <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                <span style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: '16px', color: easyMode.verdictColor, letterSpacing: '2px', lineHeight: 1 }}>
-                  {'█'.repeat(Math.round(easyMode.score100 / 10))}{'░'.repeat(10 - Math.round(easyMode.score100 / 10))}
-                </span>
+                <QualityScoreBar score100={easyMode.score100} color={easyMode.verdictColor} />
                 <span style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: '28px', fontWeight: 700, color: easyMode.verdictColor, lineHeight: 1 }}>
                   {easyMode.score100}
                 </span>
