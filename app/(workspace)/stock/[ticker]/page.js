@@ -69,6 +69,142 @@ function QualityScoreBar({ score100, color }) {
   );
 }
 
+// Faceted diamond, recolored from a public-domain gemstone SVG (10 real cut facets, not a
+// flat polygon) with a blue light-source gradient (light upper-left, dark lower-right) and a
+// diagonal shine sweeping across it — see GemRevealBar below for why this exists.
+function GemDiamondIcon({ size = 46 }) {
+  return (
+    <svg viewBox="0 0 231.884 231.884" width={size} height={size} style={{ overflow: 'visible' }}>
+      <defs>
+        <clipPath id="gemOutlineClip">
+          <polygon points="110.327,15.329 65.057,80.069 40.085,15.657" />
+          <polygon points="35.24,19.685 59.8,83.029 0,82.665" />
+          <polygon points="1.301,88.638 62.067,89.014 107.171,216.556" />
+          <polygon points="112.643,214.127 68.41,89.05 112.917,89.324" />
+          <polygon points="112.935,83.357 70.218,83.095 112.845,22.137 113.072,21.821 112.959,71.823" />
+          <polygon points="231.884,82.665 172.085,83.029 196.638,19.685" />
+          <polygon points="191.799,15.657 166.828,80.069 121.557,15.329" />
+          <polygon points="118.926,71.823 118.812,21.821 119.033,22.137 161.666,83.095 118.95,83.357" />
+          <polygon points="118.961,89.324 163.474,89.05 119.242,214.127" />
+          <polygon points="124.714,216.556 169.817,89.014 230.584,88.638" />
+        </clipPath>
+      </defs>
+      <polygon fill="#85B7EB" points="110.327,15.329 65.057,80.069 40.085,15.657" />
+      <polygon fill="#B5D4F4" points="35.24,19.685 59.8,83.029 0,82.665" />
+      <polygon fill="#378ADD" points="1.301,88.638 62.067,89.014 107.171,216.556" />
+      <polygon fill="#185FA5" points="112.643,214.127 68.41,89.05 112.917,89.324" />
+      <polygon fill="#E6F1FB" points="112.935,83.357 70.218,83.095 112.845,22.137 113.072,21.821 112.959,71.823" />
+      <polygon fill="#378ADD" points="231.884,82.665 172.085,83.029 196.638,19.685" />
+      <polygon fill="#185FA5" points="191.799,15.657 166.828,80.069 121.557,15.329" />
+      <polygon fill="#0C447C" points="118.926,71.823 118.812,21.821 119.033,22.137 161.666,83.095 118.95,83.357" />
+      <polygon fill="#042C53" points="118.961,89.324 163.474,89.05 119.242,214.127" />
+      <polygon fill="#0C447C" points="124.714,216.556 169.817,89.014 230.584,88.638" />
+      <polygon fill="none" stroke="#E6F1FB" strokeWidth="1.5" opacity="0.4"
+        points="110.327,15.329 191.799,15.657 231.884,82.665 230.584,88.638 169.817,89.014 124.714,216.556 107.171,216.556 62.067,89.014 1.301,88.638 0,82.665 40.085,15.657" />
+      <g clipPath="url(#gemOutlineClip)">
+        <rect x="-60" y="-20" width="50" height="280" fill="#ffffff" opacity="0.6" style={{ animation: 'gem-shine 1.8s ease-in-out 0.3s infinite' }} />
+      </g>
+    </svg>
+  );
+}
+
+// The "blue gem" reveal — replaces the ordinary QualityScoreBar when easyMode.isBlueGem is
+// true (computeEasyMode: a WIDE-moat business with CBS/OPPO/GQS all near their own individual
+// max, rare enough that four textbook "wonderful businesses" — Visa, Mastercard, ASML, Eli
+// Lilly — all fell short on OPPO alone; see the comment above isBlueGem in stockScoring.js).
+// Sequence: fill to 100% same as the normal bar, hold, shake with escalating amplitude for
+// ~1s (built tension, not idle vibration — the bar is straining against its own ceiling),
+// flash + shatter into fragments, then the whole readout swaps to a blue "HIDDEN GEM" label
+// next to the faceted diamond. Module-scope like QualityScoreBar, same reasoning: stable
+// identity across StockPage re-renders so the sequence doesn't replay on unrelated updates.
+function GemRevealBar({ score100 }) {
+  const [stage, setStage] = useState('filling'); // filling -> shaking -> exploding -> revealed
+  const [fillWidth, setFillWidth] = useState(0);
+  const [chunks, setChunks] = useState([]);
+  const [flash, setFlash] = useState(false);
+
+  useEffect(() => {
+    setStage('filling');
+    setFillWidth(0);
+    setChunks([]);
+    setFlash(false);
+
+    const tFill = setTimeout(() => setFillWidth(100), 400);
+    const tShake = setTimeout(() => setStage('shaking'), 1500);
+    const tExplode = setTimeout(() => {
+      const n = 5;
+      const colors = ['#5DCAA5', '#1D9E75', '#5DCAA5', '#1D9E75', '#9FE1CB'];
+      setChunks(Array.from({ length: n }, (_, i) => ({
+        left: (i * 130) / n, width: 130 / n, color: colors[i],
+        ex: (i - (n - 1) / 2) * 22 + (Math.random() * 10 - 5),
+        ey: -18 - Math.random() * 16,
+        rot: Math.random() * 140 - 70,
+        flying: false,
+      })));
+      setFlash(true);
+      setStage('exploding');
+      setTimeout(() => setFlash(false), 70);
+      // Same reason as QualityScoreBar's fill delay: force the chunks to paint at rest before
+      // flipping to their flying transform, or the transition has nothing to animate from.
+      setTimeout(() => {
+        setChunks(cs => cs.map(c => ({ ...c, flying: true })));
+      }, 30);
+    }, 2500);
+    const tReveal = setTimeout(() => setStage('revealed'), 2700);
+
+    return () => { clearTimeout(tFill); clearTimeout(tShake); clearTimeout(tExplode); clearTimeout(tReveal); };
+  }, [score100]);
+
+  const barHidden = stage === 'exploding' || stage === 'revealed';
+
+  return (
+    <div style={{ position: 'relative', height: '46px', display: 'flex', alignItems: 'center' }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: '14px', opacity: stage === 'revealed' ? 0 : 1, transition: 'opacity 0.2s' }}>
+        <div style={{
+          position: 'relative', width: '130px', height: '18px', flexShrink: 0, overflow: 'visible',
+          backgroundImage: 'radial-gradient(circle, #1D9E75 1.1px, transparent 1.1px)',
+          backgroundSize: '6px 6px', backgroundColor: 'var(--ws-bg-1)',
+          animation: stage === 'shaking' ? 'gem-escalate-shake 1s ease-in-out 1' : 'none',
+        }}>
+          <div style={{
+            position: 'absolute', inset: 0, background: '#1D9E75', width: `${fillWidth}%`,
+            opacity: barHidden ? 0 : 1,
+            transition: 'width 1.1s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.15s',
+          }} />
+          <div style={{ position: 'absolute', inset: '-6px', background: '#fff', opacity: flash ? 1 : 0, transition: flash ? 'opacity 0.06s' : 'opacity 0.3s' }} />
+          {chunks.map((c, i) => (
+            <div key={i} style={{
+              position: 'absolute', top: 0, height: '18px', left: `${c.left}px`, width: `${c.width}px`, background: c.color,
+              transform: c.flying ? `translate(${c.ex}px, ${c.ey}px) rotate(${c.rot}deg)` : 'translate(0, 0) rotate(0)',
+              opacity: c.flying ? 0 : 1,
+              transition: 'transform 0.5s cubic-bezier(0.3, 0, 0.7, 1), opacity 0.5s',
+            }} />
+          ))}
+        </div>
+        <span style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: '28px', fontWeight: 700, color: '#1D9E75', lineHeight: 1 }}>{score100}</span>
+      </div>
+
+      <div style={{
+        position: 'absolute', left: 0, top: '50%', marginTop: '-23px', display: 'flex', alignItems: 'center', gap: '12px',
+        opacity: stage === 'revealed' ? 1 : 0, transition: 'opacity 0.3s', pointerEvents: stage === 'revealed' ? 'auto' : 'none',
+      }}>
+        <div style={{
+          position: 'absolute', left: '4px', top: '50%', width: '64px', height: '64px', marginTop: '-32px', marginLeft: '-9px',
+          borderRadius: '50%', background: 'radial-gradient(circle, rgba(133,183,235,0.9) 0%, rgba(55,138,221,0.4) 45%, transparent 75%)',
+          animation: stage === 'revealed' ? 'gem-glow-pulse 0.9s ease-out 1' : 'none', pointerEvents: 'none',
+        }} />
+        <div style={{ width: '46px', height: '46px', flexShrink: 0, transform: stage === 'revealed' ? 'scale(1)' : 'scale(0)', transition: 'transform 0.55s cubic-bezier(0.34, 1.56, 0.64, 1)' }}>
+          <GemDiamondIcon size={46} />
+        </div>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
+          <span style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: '17px', fontWeight: 700, color: '#85B7EB', letterSpacing: '0.5px', lineHeight: 1.1 }}>HIDDEN GEM</span>
+          <span style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: '9px', color: '#5a7ba0', letterSpacing: '1px' }}>QUALITY OFF THE CHARTS</span>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 const CURRENCY_SYMBOLS = { USD: '$', EUR: '€', GBP: '£', JPY: '¥', CNY: '¥', CHF: 'CHF ', CAD: 'C$', AUD: 'A$', HKD: 'HK$', INR: '₹', KRW: '₩', SEK: 'kr', NOK: 'kr', DKK: 'kr' };
 const curSym = (code) => !code || code === 'USD' ? '$' : (CURRENCY_SYMBOLS[code] || `${code} `);
 
@@ -566,12 +702,16 @@ export default function StockPage({ params }) {
                 </div>
               ) : (
               <>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                <QualityScoreBar score100={easyMode.score100} color={easyMode.verdictColor} />
-                <span style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: '28px', fontWeight: 700, color: easyMode.verdictColor, lineHeight: 1 }}>
-                  {easyMode.score100}
-                </span>
-              </div>
+              {easyMode.isBlueGem ? (
+                <GemRevealBar score100={easyMode.score100} />
+              ) : (
+                <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                  <QualityScoreBar score100={easyMode.score100} color={easyMode.verdictColor} />
+                  <span style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: '28px', fontWeight: 700, color: easyMode.verdictColor, lineHeight: 1 }}>
+                    {easyMode.score100}
+                  </span>
+                </div>
+              )}
               <div style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: '11px', fontWeight: 700, color: easyMode.verdictColor, letterSpacing: '1px' }}>
                 {easyMode.verdict.toUpperCase()}
               </div>

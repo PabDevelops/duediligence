@@ -1021,3 +1021,31 @@ tr:hover td.sticky-col {
   opacity: 0.85;
 }
 
+/* Blue Gem reveal (Quality Score hero) — bar strains against its own 100% ceiling, then
+   breaks. Amplitude escalates across the animation instead of a flat shake, so it reads as
+   "building tension" rather than idle vibration. */
+@keyframes gem-escalate-shake {
+  0%, 100% { transform: translateX(0); }
+  8% { transform: translateX(-0.5px); }
+  16% { transform: translateX(0.5px); }
+  24% { transform: translateX(-0.8px); }
+  32% { transform: translateX(0.8px); }
+  40% { transform: translateX(-1.4px); }
+  48% { transform: translateX(1.4px); }
+  56% { transform: translateX(-2.2px); }
+  64% { transform: translateX(2.2px); }
+  72% { transform: translateX(-3.2px); }
+  80% { transform: translateX(3.2px); }
+  88% { transform: translateX(-4.5px); }
+  96% { transform: translateX(4.5px); }
+}
+@keyframes gem-glow-pulse {
+  0% { transform: scale(0.3); opacity: 0; }
+  40% { transform: scale(1.7); opacity: 0.9; }
+  100% { transform: scale(2.8); opacity: 0; }
+}
+@keyframes gem-shine {
+  0% { transform: translateX(-40px) rotate(20deg); }
+  100% { transform: translateX(180px) rotate(20deg); }
+}
+
