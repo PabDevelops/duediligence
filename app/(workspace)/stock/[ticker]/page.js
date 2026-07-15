@@ -44,15 +44,18 @@ function QualityScoreBar({ score100, color }) {
     // setTimeout, not requestAnimationFrame — rAF never fires in a backgrounded/hidden tab
     // (verified: a bare rAF call sat un-fired for 2s+ under document.hidden), so a rAF-driven
     // trigger would silently never animate for anyone opening this in a background tab.
-    // setTimeout still runs there (may be throttled, but it runs), and a few ms is
-    // imperceptible either way — this only has to force one paint of width:0 before the
-    // width:score100 change so the CSS transition has something to animate from.
-    const t = setTimeout(() => setWidth(score100), 30);
+    // setTimeout still runs there (may be throttled, but it runs). The delay itself is
+    // deliberately longer than "just force one paint" needs — this is the hero score, the
+    // first thing on the page, so it mounts the instant data arrives; a near-zero delay meant
+    // the fill was already mostly done by the time a human actually registers the page has
+    // loaded (reported: "the bar's already filled by the time I see it"). Holding at 0% for
+    // ~400ms first gives the eye an empty state to register before it fills.
+    const t = setTimeout(() => setWidth(score100), 400);
     return () => clearTimeout(t);
   }, [score100]);
   return (
     <div style={{ position: 'relative', width: '150px', height: '18px', background: 'var(--ws-border)', overflow: 'hidden', flexShrink: 0 }}>
-      <div style={{ position: 'absolute', inset: 0, width: `${width}%`, background: color, transition: 'width 0.9s cubic-bezier(0.16, 1, 0.3, 1)' }} />
+      <div style={{ position: 'absolute', inset: 0, width: `${width}%`, background: color, transition: 'width 1.1s cubic-bezier(0.16, 1, 0.3, 1)' }} />
       <div style={{ position: 'absolute', inset: 0, backgroundImage: 'repeating-linear-gradient(90deg, var(--ws-bg-1) 0px, var(--ws-bg-1) 2px, transparent 2px, transparent 15px)' }} />
     </div>
   );
