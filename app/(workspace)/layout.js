@@ -4,6 +4,16 @@ import { usePathname } from 'next/navigation';
 import Sidebar from '../components/workspace/Sidebar';
 import { useUser } from '../components/AuthProvider';
 
+// Routes reachable without an account (and without a Pro subscription) as
+// part of the anonymous-access exploration flow. Watchlist is included here
+// too — signed-out users get a session-only watchlist there, gated inside
+// the page itself, not at this layout level.
+const PUBLIC_ROUTES = ['/home', '/search', '/stock', '/screener', '/radar', '/calendar', '/watchlist'];
+
+function isPublicPath(path) {
+  return PUBLIC_ROUTES.some(r => path === r || path.startsWith(r + '/'));
+}
+
 function PaywallGate() {
   const card = { padding: '12px 0', borderRadius: '10px', fontWeight: 700, fontSize: '14px', textDecoration: 'none', textAlign: 'center' };
   return (
@@ -41,6 +51,8 @@ export default function WorkspaceLayout({ children }) {
 
   useEffect(() => {
     if (!isLoaded) return;
+    if (isPublicPath(path)) { setAccess('granted'); return; }
+    setAccess('checking');
     if (!isSignedIn) { setAccess('denied'); return; }
     let cancelled = false;
     fetch('/api/subscription')
@@ -48,7 +60,7 @@ export default function WorkspaceLayout({ children }) {
       .then(d => { if (!cancelled) setAccess(d.isPro ? 'granted' : 'denied'); })
       .catch(() => { if (!cancelled) setAccess('denied'); });
     return () => { cancelled = true; };
-  }, [isLoaded, isSignedIn]);
+  }, [isLoaded, isSignedIn, path]);
 
   useEffect(() => {
     const handleSettingsChanged = () => {

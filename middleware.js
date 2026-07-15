@@ -1,5 +1,6 @@
 import { createServerClient } from '@supabase/ssr';
 import { NextResponse } from 'next/server';
+import { randomUUID } from 'crypto';
 import { getCookieDomain } from './lib/cookieDomain';
 
 // Marketing/informational pages that live on the apex domain (traqcker.com).
@@ -88,6 +89,12 @@ export async function middleware(request) {
   let rewriteUrl = null;        // internal target when default-locale content is served bare
   let localeCookieToSet = null; // 'en' | 'es' | null
 
+  // Anonymous visitor id, used to scope rate limits and usage caps for
+  // guests browsing the Terminal without an account. Minted once and kept
+  // for a year; never overwritten once set.
+  const existingGuestId = request.cookies.get('tq_gid')?.value;
+  const guestId = existingGuestId || randomUUID();
+
   if (!pathname.startsWith('/api') && isLocalizablePath(pathname)) {
     const bare = stripLocalePrefix(pathname);
 
@@ -123,6 +130,7 @@ export async function middleware(request) {
 
   let response = buildResponse();
   if (localeCookieToSet) response.cookies.set('NEXT_LOCALE', localeCookieToSet, { path: '/', maxAge: 31536000 });
+  if (!existingGuestId) response.cookies.set('tq_gid', guestId, { path: '/', maxAge: 31536000, httpOnly: true, sameSite: 'lax' });
 
   const cookieDomain = getCookieDomain(request.headers.get('host'));
 
@@ -138,6 +146,7 @@ export async function middleware(request) {
           cookiesToSet.forEach(({ name, value }) => request.cookies.set(name, value));
           response = buildResponse();
           if (localeCookieToSet) response.cookies.set('NEXT_LOCALE', localeCookieToSet, { path: '/', maxAge: 31536000 });
+          if (!existingGuestId) response.cookies.set('tq_gid', guestId, { path: '/', maxAge: 31536000, httpOnly: true, sameSite: 'lax' });
           cookiesToSet.forEach(({ name, value, options }) => {
             response.cookies.set(name, value, cookieDomain ? { ...options, domain: cookieDomain } : options);
           });
