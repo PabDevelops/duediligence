@@ -167,6 +167,26 @@ function computeDerivedFinancials(h) {
 }
 
 // Full fundamentals for tickers not covered by SEC EDGAR (non-US filers), sourced from
+// Foreign private issuers (Novo Nordisk, Shell, etc.) file statements in their home
+// currency while their US-listed shares trade in USD — Yahoo tags the statement currency
+// via financialData.financialCurrency, separate from the quote currency. Left unconverted,
+// e.g. NVO's DKK-denominated FCF gets divided by USD share count in the DCF, inflating
+// fair value ~6-7x (observed: $801 "fair value" vs a $49 quote). No crumb needed, same
+// unauthenticated chart endpoint as fetchYahooQuote.
+async function fetchFxRate(from, to) {
+  if (!from || !to || from === to) return 1;
+  try {
+    const res = await fetch(`https://query1.finance.yahoo.com/v8/finance/chart/${from}${to}=X`, {
+      headers: { 'User-Agent': 'Mozilla/5.0' },
+    });
+    const data = await res.json();
+    const rate = data?.chart?.result?.[0]?.meta?.regularMarketPrice;
+    return typeof rate === 'number' && rate > 0 ? rate : 1;
+  } catch {
+    return 1;
+  }
+}
+
 // Yahoo Finance's quoteSummary + fundamentals-timeseries endpoints (unofficial, needs the
 // crumb/cookie above). Returns null if Yahoo has no usable financial statement data at all,
 // so the caller can fall back to a price-only quote.
@@ -192,6 +212,13 @@ async function fetchYahooFundamentals(ticker) {
     const keyStats = r.defaultKeyStatistics || {};
     const fin = r.financialData || {};
     const num = (m) => (m && m.raw != null ? m.raw : null);
+
+    // financialData.financialCurrency is the statement currency (e.g. DKK for Novo Nordisk);
+    // summaryDetail.currency is the quote/share currency (USD for the NYSE-listed ADR). See
+    // fetchFxRate above for why these can diverge and what happens if left unconverted.
+    const financialCurrency = fin.financialCurrency || null;
+    const quoteCurrency = (summary.currency === 'GBp' ? 'GBP' : summary.currency) || null;
+    const fx = await fetchFxRate(financialCurrency, quoteCurrency);
 
     // Helper: convert Yahoo balanceSheetHistory / cashFlowStatementHistory entries to
     // the same { year, val } shape used by tsSeries(), as a fallback when the
@@ -273,6 +300,26 @@ async function fetchYahooFundamentals(ticker) {
     histories.fcfHistory     = fill1(histories.fcfHistory,     num(fin.freeCashflow));
     histories.debtHistory    = fill1(histories.debtHistory,    num(fin.totalDebt));
     histories.cashHistory    = fill1(histories.cashHistory,    num(fin.totalCash));
+
+    // Convert every monetary (non-share-count) history from statement currency to quote
+    // currency now, before anything downstream (WACC, DCF, per-share ratios) divides these
+    // by USD-denominated shares/market cap. Must run before the book-value equity fallback
+    // below, since bookValue/sharesOutstanding are already quote-currency and must not be
+    // converted again.
+    if (fx !== 1) {
+      const MONETARY_HISTORY_KEYS = [
+        'revHistory', 'niHistory', 'oiHistory', 'fcfHistory', 'assetsHistory', 'equityHistory',
+        'debtHistory', 'cashHistory', 'gpHistory', 'rdHistory', 'cogsHistory', 'sgaHistory',
+        'ebtHistory', 'taxHistory', 'interestHistory', 'capexHistory', 'investingCFHistory',
+        'financingCFHistory', 'currentAssetsHistory', 'currentLiabilitiesHistory',
+        'totalLiabilitiesHistory', 'inventoryHistory', 'receivablesHistory', 'payablesHistory',
+        'sbcHistory', 'daHistory', 'dividendsPaidHistory', 'retainedEarningsHistory',
+      ];
+      for (const key of MONETARY_HISTORY_KEYS) {
+        histories[key] = histories[key].map(pt => ({ ...pt, val: pt.val * fx }));
+      }
+    }
+
     // Equity: derive from book value per share × shares outstanding when history is empty
     if (histories.equityHistory.length === 0) {
       const bvps = num(keyStats.bookValue);
@@ -630,7 +677,14 @@ export async function GET(request) {
       const m = fhBasic?.metric || {};
       const currentPrice = fh.c || null;
       const sharesOutstanding = m.sharesOutstanding ? m.sharesOutstanding * 1e6 : null;
-      const marketCap = fhProfile.marketCapitalization ? fhProfile.marketCapitalization * 1e6 : null;
+      // fhProfile can resolve to a foreign primary listing (e.g. ticker NVO -> Novo Nordisk's
+      // Copenhagen listing, profile2 returns "currency":"DKK") even though /quote above
+      // correctly returns the USD ADR price — mixing the two overstates market cap by the FX
+      // rate. Only trust Finnhub's figure when its own profile currency matches the USD quote;
+      // otherwise fall through to Yahoo's currency-normalized market cap below.
+      const marketCap = fhProfile.marketCapitalization && (!fhProfile.currency || fhProfile.currency === 'USD')
+        ? fhProfile.marketCapitalization * 1e6
+        : null;
       const eps = m.epsAnnual || m.epsTTM || null;
       const pe = eps && currentPrice ? +(currentPrice / eps).toFixed(2) : null;
 
