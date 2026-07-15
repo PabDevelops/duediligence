@@ -53,7 +53,7 @@ const YAHOO_TS_TYPES = [
   'annualInventory', 'annualAccountsReceivable', 'annualAccountsPayable', 'annualStockBasedCompensation',
   'annualDepreciationAndAmortization', 'annualCommonStockDividendPaid', 'annualInvestingCashFlow',
   'annualFinancingCashFlow', 'annualCurrentAssets', 'annualCurrentLiabilities',
-  'annualTotalLiabilitiesNetMinorityInterest', 'annualRetainedEarnings',
+  'annualTotalLiabilitiesNetMinorityInterest', 'annualRetainedEarnings', 'annualChangeInWorkingCapital',
 ].join(',');
 
 // Reads a fundamentals-timeseries response for the first candidate type with data,
@@ -271,6 +271,11 @@ async function fetchYahooFundamentals(ticker) {
       daHistory: tsSeries(ts, 'annualDepreciationAndAmortization').length ? tsSeries(ts, 'annualDepreciationAndAmortization') : cfSeries('depreciation'),
       dividendsPaidHistory: tsSeries(ts, 'annualCommonStockDividendPaid').length ? tsSeries(ts, 'annualCommonStockDividendPaid') : cfSeries('dividendsPaid'),
       retainedEarningsHistory: tsSeries(ts, 'annualRetainedEarnings').length ? tsSeries(ts, 'annualRetainedEarnings') : bsSeries('retainedEarnings'),
+      // Cash-flow-statement-signed (negative = cash used, i.e. working capital grew) — used
+      // by computeReinvestmentGrowth in stockScoring.js. No balanceSheetHistory/cfStatements
+      // fallback: deriving this from current-assets/liabilities deltas would double-count
+      // cash and short-term debt that don't belong in a working-capital reinvestment figure.
+      wcChangeHistory: tsSeries(ts, 'annualChangeInWorkingCapital'),
     };
 
     // Also fill FCF from operating CF - capex if the timeseries FCF is missing
@@ -313,7 +318,7 @@ async function fetchYahooFundamentals(ticker) {
         'ebtHistory', 'taxHistory', 'interestHistory', 'capexHistory', 'investingCFHistory',
         'financingCFHistory', 'currentAssetsHistory', 'currentLiabilitiesHistory',
         'totalLiabilitiesHistory', 'inventoryHistory', 'receivablesHistory', 'payablesHistory',
-        'sbcHistory', 'daHistory', 'dividendsPaidHistory', 'retainedEarningsHistory',
+        'sbcHistory', 'daHistory', 'dividendsPaidHistory', 'retainedEarningsHistory', 'wcChangeHistory',
       ];
       for (const key of MONETARY_HISTORY_KEYS) {
         histories[key] = histories[key].map(pt => ({ ...pt, val: pt.val * fx }));
@@ -365,7 +370,7 @@ async function fetchYahooFundamentals(ticker) {
       totalLiabilitiesVal: d.totalLiabilitiesVal, retainedEarningsVal: d.retainedEarningsVal,
       capexVal: d.capexVal, investingCFVal: d.investingCFVal, financingCFVal: d.financingCFVal,
       inventoryVal: d.inventoryVal, receivablesVal: d.receivablesVal, payablesVal: d.payablesVal,
-      sbcVal: d.sbcVal, dividendsPaidVal: d.dividendsPaidVal,
+      sbcVal: d.sbcVal, dividendsPaidVal: d.dividendsPaidVal, daVal: d.daVal,
       dso: d.dso, dio: d.dio, dpo: d.dpo, ccc: d.ccc, inventoryTurnover: d.inventoryTurnover,
 
       opMargin: d.opMargin ?? (num(fin.operatingMargins) != null ? +(num(fin.operatingMargins) * 100).toFixed(1) : null),
@@ -389,6 +394,8 @@ async function fetchYahooFundamentals(ticker) {
       totalLiabilitiesHistory: histories.totalLiabilitiesHistory,
       capexHistory: histories.capexHistory, operatingCFHistory: histories.fcfHistory,
       investingCFHistory: histories.investingCFHistory, financingCFHistory: histories.financingCFHistory,
+      daHistory: histories.daHistory, debtHistory: histories.debtHistory,
+      equityHistory: histories.equityHistory, wcChangeHistory: histories.wcChangeHistory,
       epsCagr: d.epsCagr, epsHistory: d.epsHistory,
 
       eps: num(keyStats.trailingEps) ?? null,
@@ -728,6 +735,11 @@ export async function GET(request) {
         oiVal: yh?.oiVal ?? null, fcfVal: yh?.fcfVal ?? null,
         assetsVal: yh?.assetsVal ?? null, equityVal: yh?.equityVal ?? null,
         debtVal: yh?.debtVal ?? null, cashVal: yh?.cashVal ?? null,
+        // ebtVal/taxVal/daVal: computed by fetchYahooFundamentals but previously dropped here,
+        // so computeWACC's tax-rate calc and computeReinvestmentGrowth silently fell back to
+        // defaults for every ticker on this path (all foreign ADRs, i.e. exactly the tickers
+        // needing the real numbers most).
+        ebtVal: yh?.ebtVal ?? null, taxVal: yh?.taxVal ?? null, daVal: yh?.daVal ?? null,
         netDebt: yh?.netDebt ?? null,
         pfcf: yh?.pfcf ?? null, fcfYield: yh?.fcfYield ?? null,
         revHistory: yh?.revHistory ?? [], niHistory: yh?.niHistory ?? [],
@@ -743,6 +755,8 @@ export async function GET(request) {
         operatingCFHistory: yh?.operatingCFHistory ?? [],
         investingCFHistory: yh?.investingCFHistory ?? [],
         financingCFHistory: yh?.financingCFHistory ?? [],
+        daHistory: yh?.daHistory ?? [], debtHistory: yh?.debtHistory ?? [],
+        equityHistory: yh?.equityHistory ?? [], wcChangeHistory: yh?.wcChangeHistory ?? [],
         epsCagr: yh?.epsCagr ?? null, epsHistory: yh?.epsHistory ?? [],
         analystTarget: yh?.analystTarget ?? null,
         evEbitda: yh?.evEbitda ?? null, priceToBook: yh?.priceToBook ?? null,
@@ -911,6 +925,12 @@ const roic        = investedCapital > 0 && oiVal !== null ? +((oiVal / investedC
     const operatingCFHistory = buildHistory(cashFlows);
     const investingCFHistory = buildHistory(investingActivities);
     const financingCFHistory = buildHistory(financingActivities);
+    // Needed for computeReinvestmentGrowth (lib/stockScoring.js) — no XBRL tag reliably
+    // carries a working-capital delta the way Yahoo's annualChangeInWorkingCapital does, so
+    // this path's reinvestment estimate runs without the WC term (treated as 0 there).
+    const daHistory = buildHistory(da);
+    const debtHistory = buildHistory(debt);
+    const equityHistory = buildHistory(equity);
 
     const marginHistory = revHistory.map((r, i) => {
       const oi = oiHistory[i];
@@ -1006,7 +1026,7 @@ const sharesForCalc = sharesValAdj || sharesFinnhub;
       revVal, niVal, oiVal, fcfVal, assetsVal, equityVal, debtVal, cashVal, sharesVal, rdVal,
       cogsVal, sgaVal, ebtVal, taxVal, interestVal, sharesBasicVal, sharesDilutedVal,
       currentAssetsVal, currentLiabilitiesVal, totalLiabilitiesVal, retainedEarningsVal,
-      capexVal, investingCFVal, financingCFVal,
+      capexVal, investingCFVal, financingCFVal, daVal,
       inventoryVal, receivablesVal, payablesVal, sbcVal, dividendsPaidVal,
       dso, dio, dpo, ccc, inventoryTurnover,
       opMargin: opMarginFinal,
@@ -1023,6 +1043,7 @@ const sharesForCalc = sharesValAdj || sharesFinnhub;
       sharesBasicHistory, sharesDilutedHistory,
       currentAssetsHistory, currentLiabilitiesHistory, totalLiabilitiesHistory,
       capexHistory, operatingCFHistory, investingCFHistory, financingCFHistory,
+      daHistory, debtHistory, equityHistory,
       epsCagr, epsHistory,
       currentPrice, priceChange, priceChangePct, prevClose,
       eps: epsCalc, pe: peCalc,
