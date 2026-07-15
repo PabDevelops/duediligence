@@ -77,7 +77,7 @@ export default function HomeView({ dict, locale }) {
 
         <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
           <a href={langToggle.otherLocaleHref} onClick={langToggle.onClick} style={{ textDecoration: 'none', color: 'var(--text-3)', fontSize: '13px', fontWeight: 700 }}>{langToggle.label}</a>
-          <a href={href('/sign-in')} style={{ textDecoration: 'none', color: 'var(--text-2)', fontSize: '13px', fontWeight: 600 }}>{t.openApp}</a>
+          <a href="/home" style={{ textDecoration: 'none', color: 'var(--text-2)', fontSize: '13px', fontWeight: 600 }}>{t.openApp}</a>
           <a href={href('/pricing')} style={{
             height: '38px',
             padding: '0 16px',
