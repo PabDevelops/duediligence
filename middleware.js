@@ -1,6 +1,5 @@
 import { createServerClient } from '@supabase/ssr';
 import { NextResponse } from 'next/server';
-import { randomUUID } from 'crypto';
 import { getCookieDomain } from './lib/cookieDomain';
 
 // Marketing/informational pages that live on the apex domain (traqcker.com).
@@ -93,7 +92,7 @@ export async function middleware(request) {
   // guests browsing the Terminal without an account. Minted once and kept
   // for a year; never overwritten once set.
   const existingGuestId = request.cookies.get('tq_gid')?.value;
-  const guestId = existingGuestId || randomUUID();
+  const guestId = existingGuestId || crypto.randomUUID();
 
   if (!pathname.startsWith('/api') && isLocalizablePath(pathname)) {
     const bare = stripLocalePrefix(pathname);
