@@ -10,7 +10,7 @@ import ShareCardComponent from '../../../components/ShareCard';
 import AchievementToast from '../../../components/AchievementToast';
 import AddHoldingModal from '../../../components/workspace/portfolio/AddHoldingModal';
 import MarketStatusDot from '../../../components/workspace/MarketStatusDot';
-import SoftWall from '../../../components/SoftWall';
+import SoftWall, { LockedPanel } from '../../../components/SoftWall';
 import { useUser } from '../../../components/AuthProvider';
 import { isInGuestWatchlist, addToGuestWatchlist, removeFromGuestWatchlist } from '../../../../lib/guestWatchlist';
 import { fmt as sharedFmt, fmtP as sharedFmtP, fmtN as sharedFmtN, formatCurrency } from '../../../../lib/formatters';
@@ -974,8 +974,10 @@ export default function StockPage({ params }) {
               })()}
 
               {/* Fair value — Traqcker's DCF estimate. Hidden entirely when the DCF can't
-                  run (negative/missing FCF); the Valuation tab explains why. */}
-              {fairValue && (
+                  run (negative/missing FCF); the Valuation tab explains why. Signed-out
+                  visitors get a locked card instead of the real cheap/fair/expensive call —
+                  that call is the product, not something to leak for free. */}
+              {fairValue && (isSignedIn ? (
                 <div className="bg-ws-bg-1 border border-ws-border px-[18px] py-4">
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: '12px' }}>
                     <div style={{ fontWeight: 700, fontSize: '13px', color: 'var(--ws-text)' }}>Fair value</div>
@@ -991,7 +993,9 @@ export default function StockPage({ params }) {
                     Price: <b className="text-ws-text">{curSym(data.currency)}{price?.toFixed(2)}</b> · Estimate: <b className="text-ws-text">{curSym(data.currency)}{fairValue.estimate.toFixed(2)}</b>
                   </div>
                 </div>
-              )}
+              ) : (
+                <LockedPanel compact title="Fair value" description="Regístrate gratis para ver si esta acción cotiza barata, justa o cara según nuestro modelo." />
+              ))}
 
               {/* Upcoming Event */}
               {(!loadingEvent || upcomingEvent) && (
@@ -1591,8 +1595,14 @@ export default function StockPage({ params }) {
   </div>
 )}
 
-        {/* DCF TAB */}
-        {tab === 'dcf' && (
+        {/* DCF TAB — locked entirely for guests, not just blurred: the valuation
+            call itself is the product. */}
+        {tab === 'dcf' && (!isSignedIn ? (
+          <LockedPanel
+            title="Valuation (DCF)"
+            description="El modelo DCF completo — rango de valoración, escenarios bull/bear y stress test — se desbloquea con una cuenta gratuita."
+          />
+        ) : (
           <div>
             {/* DCF MODEL — WACC-discounted 10yr FCF projection, primary estimate when available */}
             <div className="text-ws-text-3 text-[10px] tracking-[2px] border-b border-ws-border pb-1.5 mb-3 mt-6">DCF MODEL</div>
@@ -1780,12 +1790,18 @@ export default function StockPage({ params }) {
               </div>
             )}
           </div>
-        )}
+        ))}
 
-        {/* PROJECTION TAB — GBM random-walk price path + analytic confidence band */}
-        {tab === 'projection' && (
+        {/* PROJECTION TAB — GBM random-walk price path + analytic confidence band.
+            Locked entirely for guests, same reasoning as the DCF tab above. */}
+        {tab === 'projection' && (!isSignedIn ? (
+          <LockedPanel
+            title="Projections"
+            description="Las proyecciones de precio a futuro (Monte Carlo + banda de confianza) se desbloquean con una cuenta gratuita."
+          />
+        ) : (
           <ProjectionChart ticker={ticker} data={data} dcfValue={dcfValue} price={price} currency={data.currency} />
-        )}
+        ))}
 
         {/* INSIDERS TAB — Form 3/4/5 buy/sell activity, SEC EDGAR primary / Finnhub fallback */}
         {tab === 'insiders' && (

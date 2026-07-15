@@ -63,3 +63,37 @@ export default function SoftWall({
     </div>
   );
 }
+
+// Full replacement lock for content we don't want to reveal even blurred
+// (the real numbers/charts are never mounted) — use where the shape of the
+// data itself is the thing being sold, e.g. a DCF model or a fair-value call.
+export function LockedPanel({ title, description, compact = false, ctaLabel = 'Registrarme gratis', ctaHref = '/sign-up' }) {
+  return (
+    <div style={{
+      background: 'var(--ws-bg-1)',
+      border: '1px solid var(--ws-border)',
+      padding: compact ? '20px 18px' : '48px 32px',
+      textAlign: 'center',
+      marginTop: compact ? 0 : '24px',
+    }}>
+      <div style={{ fontSize: compact ? '13px' : '15px', fontWeight: 800, color: 'var(--ws-text)', marginBottom: '8px' }}>
+        {title}
+      </div>
+      <p style={{ fontSize: compact ? '11px' : '12px', color: 'var(--ws-text-3)', lineHeight: 1.6, maxWidth: compact ? 'none' : '360px', margin: compact ? '0 0 14px' : '0 auto 20px' }}>
+        {description}
+      </p>
+      <a href={ctaHref} style={{
+        display: 'inline-block',
+        background: 'var(--ws-accent)',
+        color: 'var(--ws-bg-1)',
+        borderRadius: '6px',
+        padding: compact ? '7px 14px' : '10px 20px',
+        fontSize: '11px',
+        fontWeight: 700,
+        textDecoration: 'none',
+      }}>
+        {ctaLabel}
+      </a>
+    </div>
+  );
+}
