@@ -54,7 +54,15 @@ function QualityScoreBar({ score100, color }) {
     return () => clearTimeout(t);
   }, [score100]);
   return (
-    <div style={{ position: 'relative', width: '150px', height: '18px', background: 'var(--ws-border)', overflow: 'hidden', flexShrink: 0 }}>
+    <div style={{
+      position: 'relative', width: '150px', height: '18px', overflow: 'hidden', flexShrink: 0,
+      // The '░' look, recreated as a CSS dot grid instead of a font glyph — this is the base
+      // layer the whole bar starts as, same color as the fill (not a muted gray) so it reads
+      // as "the same bar, less dense" rather than a different track color, matching how '█'
+      // and '░' shared one color in the original ASCII version.
+      backgroundImage: `radial-gradient(circle, ${color} 1.1px, transparent 1.1px)`,
+      backgroundSize: '6px 6px', backgroundColor: 'var(--ws-bg-1)',
+    }}>
       <div style={{ position: 'absolute', inset: 0, width: `${width}%`, background: color, transition: 'width 1.1s cubic-bezier(0.16, 1, 0.3, 1)' }} />
       <div style={{ position: 'absolute', inset: 0, backgroundImage: 'repeating-linear-gradient(90deg, var(--ws-bg-1) 0px, var(--ws-bg-1) 2px, transparent 2px, transparent 15px)' }} />
     </div>
