@@ -4,12 +4,47 @@ import { supabase } from '../../../lib/supabase';
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;
 
+// Guests have no persisted watchlist row, but the client keeps a session-only
+// list in sessionStorage (see lib/guestWatchlist.js) and passes it here to
+// enrich with live data. Read-only — nothing is written for anonymous callers.
+const GUEST_LOOKUP_LIMIT = 25;
+
+async function lookupGuestTickers(tickersParam) {
+  if (!tickersParam) return Response.json({ tickers: [] });
+  const tickers = [...new Set(tickersParam.split(',').map(t => t.trim().toUpperCase()).filter(Boolean))].slice(0, GUEST_LOOKUP_LIMIT);
+  if (tickers.length === 0) return Response.json({ tickers: [] });
+
+  const { data: cacheData } = await supabase.from('stock_cache').select('ticker, data').in('ticker', tickers);
+  const byTicker = Object.fromEntries((cacheData || []).map(row => [row.ticker, row.data]));
+
+  const fullTickers = tickers.filter(t => byTicker[t]).map(t => {
+    const stock = byTicker[t];
+    return {
+      ticker: t,
+      created_at: null,
+      pie: null,
+      name: stock.name,
+      currentPrice: stock.currentPrice,
+      priceChangePct: stock.priceChangePct,
+      exchange: stock.exchange,
+      currency: stock.currency,
+      pe: stock.pe,
+      dividendYield: stock.dividendYield,
+      sector: stock.sector,
+    };
+  });
+
+  return Response.json({ tickers: fullTickers });
+}
+
 export async function GET(request) {
   const userId = await getUserId();
-  if (!userId) return Response.json({ tickers: [] });
-
   const { searchParams } = new URL(request.url);
   const full = searchParams.get('full') === 'true';
+
+  if (!userId) {
+    return full ? lookupGuestTickers(searchParams.get('tickers')) : Response.json({ tickers: [] });
+  }
 
   // 1. Fetch current watchlist
   let { data: watchlistData, error: watchlistError } = await supabase

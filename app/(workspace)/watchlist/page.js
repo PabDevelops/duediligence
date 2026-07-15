@@ -8,6 +8,7 @@ import MarketStatusDot from '../../components/workspace/MarketStatusDot';
 import StockLogo from '../../components/workspace/StockLogo';
 import AllocationChart from '../../components/workspace/portfolio/AllocationChart';
 import { formatPrice as formatCurrency } from '../../../lib/formatters';
+import { getGuestWatchlist, addToGuestWatchlist, removeFromGuestWatchlist, GUEST_WATCHLIST_LIMIT } from '../../../lib/guestWatchlist';
 
 export default function WatchlistPage() {
   const { isSignedIn } = useUser();
@@ -41,9 +42,19 @@ export default function WatchlistPage() {
   const fetchWatchlist = useCallback(async () => {
     setLoading(true);
     try {
-      const res = await fetch('/api/watchlist?full=true');
-      const data = await res.json();
-      const list = data.tickers || [];
+      let list = [];
+      if (isSignedIn) {
+        const res = await fetch('/api/watchlist?full=true');
+        const data = await res.json();
+        list = data.tickers || [];
+      } else {
+        const guestTickers = getGuestWatchlist();
+        if (guestTickers.length > 0) {
+          const res = await fetch(`/api/watchlist?full=true&tickers=${guestTickers.join(',')}`);
+          const data = await res.json();
+          list = data.tickers || [];
+        }
+      }
       setTickers(list);
       list.forEach(t => {
         fetch(`/api/sparkline?ticker=${t.ticker}`)
@@ -56,18 +67,24 @@ export default function WatchlistPage() {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [isSignedIn]);
 
   useEffect(() => {
-    if (isSignedIn) fetchWatchlist();
-    else setLoading(false);
-  }, [isSignedIn, fetchWatchlist]);
+    fetchWatchlist();
+  }, [fetchWatchlist]);
 
   // Keep prices reasonably live, same cadence as Portfolio.
   useEffect(() => {
-    if (!isSignedIn) return;
     const interval = setInterval(fetchWatchlist, 60000);
     return () => clearInterval(interval);
+  }, [fetchWatchlist]);
+
+  // Picks up tickers added from elsewhere (e.g. the stock detail page) while
+  // this page stays mounted, since guests have no server push to rely on.
+  useEffect(() => {
+    if (isSignedIn) return;
+    window.addEventListener('guest-watchlist-changed', fetchWatchlist);
+    return () => window.removeEventListener('guest-watchlist-changed', fetchWatchlist);
   }, [isSignedIn, fetchWatchlist]);
 
   const existingPies = useMemo(
@@ -118,6 +135,7 @@ export default function WatchlistPage() {
   // Remove ticker
   const removeTicker = async (tickerToRemove) => {
     setTickers(prev => prev.filter(t => t.ticker !== tickerToRemove));
+    if (!isSignedIn) { removeFromGuestWatchlist(tickerToRemove); return; }
     await fetch('/api/watchlist', {
       method: 'DELETE',
       headers: { 'Content-Type': 'application/json' },
@@ -152,6 +170,18 @@ export default function WatchlistPage() {
       const data = await res.json();
       if (data.error) {
         setSearchError('Symbol not found');
+        setIsAdding(false);
+        return;
+      }
+
+      if (!isSignedIn) {
+        const { added, atLimit } = addToGuestWatchlist(ticker);
+        if (atLimit) {
+          setSearchError(`Límite de ${GUEST_WATCHLIST_LIMIT} valores temporales — regístrate para uso ilimitado`);
+        } else if (added) {
+          setSearchQuery('');
+          fetchWatchlist();
+        }
         setIsAdding(false);
         return;
       }
@@ -219,7 +249,7 @@ export default function WatchlistPage() {
                 <td style={{ padding: '10px 12px', textAlign: 'right', color: 'var(--ws-text-2)' }}>{t.dividendYield ? `${t.dividendYield.toFixed(2)}%` : '—'}</td>
                 <td style={{ padding: '10px 12px', textAlign: 'right', color: 'var(--ws-text-2)' }}>{t.sector || '—'}</td>
                 <td style={{ padding: '10px 12px', textAlign: 'right', whiteSpace: 'nowrap' }} onClick={e => e.stopPropagation()}>
-                  {isEditingPie ? (
+                  {isSignedIn && (isEditingPie ? (
                     <div style={{ position: 'relative', display: 'inline-block' }}>
                       <input
                         autoFocus
@@ -256,7 +286,7 @@ export default function WatchlistPage() {
                       onMouseLeave={e => { e.currentTarget.style.color = 'var(--ws-text-3)'; e.currentTarget.style.borderColor = 'var(--ws-border)'; }}>
                       {t.pie || 'General'}
                     </button>
-                  )}
+                  ))}
                   <button onClick={() => removeTicker(t.ticker)} title={`Remove ${t.ticker} from watchlist`}
                     style={{ background: 'none', border: 'none', color: 'var(--ws-text-3)', cursor: 'pointer', fontSize: '13px' }}
                     onMouseEnter={e => e.target.style.color = 'var(--ws-red)'}
@@ -285,40 +315,64 @@ export default function WatchlistPage() {
             <div style={{ fontSize: '20px', fontWeight: 700, color: 'var(--ws-text)' }}>Watchlist</div>
             <div style={{ fontSize: '13px', color: 'var(--ws-text-2)' }}>Track the stocks you're keeping an eye on.</div>
           </div>
-          {isSignedIn && (
-            <div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', background: 'var(--ws-bg-2)', border: '1px solid var(--ws-border)', padding: '0 10px', height: '34px' }}>
-                <span style={{ color: 'var(--ws-text-3)', fontSize: '12px' }}>+</span>
-                <input
-                  type="text"
-                  placeholder="Add symbol... (Enter)"
-                  value={searchQuery}
-                  onChange={(e) => { setSearchQuery(e.target.value); setSearchError(''); }}
-                  onKeyDown={handleAddStock}
-                  disabled={isAdding}
-                  style={{ background: 'transparent', border: 'none', color: 'var(--ws-text)', fontSize: '12px', outline: 'none', width: '170px', fontFamily: 'JetBrains Mono, monospace' }}
-                />
-              </div>
-              {searchError && (
-                <div style={{ fontSize: '10px', color: 'var(--ws-red)', marginTop: '4px', fontFamily: 'JetBrains Mono, monospace' }}>
-                  {searchError}
-                </div>
-              )}
+          <div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', background: 'var(--ws-bg-2)', border: '1px solid var(--ws-border)', padding: '0 10px', height: '34px' }}>
+              <span style={{ color: 'var(--ws-text-3)', fontSize: '12px' }}>+</span>
+              <input
+                type="text"
+                placeholder="Add symbol... (Enter)"
+                value={searchQuery}
+                onChange={(e) => { setSearchQuery(e.target.value); setSearchError(''); }}
+                onKeyDown={handleAddStock}
+                disabled={isAdding}
+                style={{ background: 'transparent', border: 'none', color: 'var(--ws-text)', fontSize: '12px', outline: 'none', width: '170px', fontFamily: 'JetBrains Mono, monospace' }}
+              />
             </div>
-          )}
+            {searchError && (
+              <div style={{ fontSize: '10px', color: 'var(--ws-red)', marginTop: '4px', fontFamily: 'JetBrains Mono, monospace' }}>
+                {searchError}
+              </div>
+            )}
+          </div>
         </div>
       </div>
 
-      {!isSignedIn ? (
-        <div className="border border-ws-border p-12 text-center">
-          <div style={{ color: 'var(--ws-text-2)', fontSize: '14px', marginBottom: '16px' }}>Sign in to track your watchlist</div>
-          <Link href="/sign-in" className="ws-btn" style={{ padding: '9px 20px', textDecoration: 'none' }}>Sign in →</Link>
+      {!isSignedIn && (
+        <div style={{
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          gap: '12px',
+          padding: '10px 16px',
+          background: 'var(--ws-accent-dim)',
+          border: '1px solid var(--ws-border)',
+          marginBottom: '20px'
+        }}>
+          <span style={{ fontSize: '11px', color: 'var(--ws-text-2)', lineHeight: '1.5' }}>
+            Esta watchlist es temporal y se borra al cerrar la pestaña. Regístrate gratis para guardarla permanentemente.
+          </span>
+          <Link href="/sign-up" style={{
+            background: 'var(--ws-accent)',
+            color: 'var(--ws-bg-1)',
+            borderRadius: '6px',
+            padding: '6px 12px',
+            fontSize: '11px',
+            fontWeight: 700,
+            textDecoration: 'none',
+            whiteSpace: 'nowrap'
+          }}>
+            Registrarme gratis
+          </Link>
         </div>
-      ) : loading ? (
+      )}
+
+      {loading ? (
         <div style={{ color: 'var(--ws-text-3)', fontSize: '13px', padding: '30px 0' }}>Loading…</div>
       ) : tickers.length === 0 ? (
         <div className="border border-ws-border p-12 text-center">
-          <div style={{ color: 'var(--ws-text)', fontSize: '14px', fontWeight: 600, marginBottom: '6px' }}>Your watchlist is empty</div>
+          <div style={{ color: 'var(--ws-text)', fontSize: '14px', fontWeight: 600, marginBottom: '6px' }}>
+            {isSignedIn ? 'Your watchlist is empty' : 'Tu watchlist temporal está vacía'}
+          </div>
           <div style={{ color: 'var(--ws-text-3)', fontSize: '12px' }}>Add a symbol above to get started.</div>
         </div>
       ) : (

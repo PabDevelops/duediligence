@@ -10,7 +10,9 @@ import ShareCardComponent from '../../../components/ShareCard';
 import AchievementToast from '../../../components/AchievementToast';
 import AddHoldingModal from '../../../components/workspace/portfolio/AddHoldingModal';
 import MarketStatusDot from '../../../components/workspace/MarketStatusDot';
+import SoftWall from '../../../components/SoftWall';
 import { useUser } from '../../../components/AuthProvider';
+import { isInGuestWatchlist, addToGuestWatchlist, removeFromGuestWatchlist } from '../../../../lib/guestWatchlist';
 import { fmt as sharedFmt, fmtP as sharedFmtP, fmtN as sharedFmtN, formatCurrency } from '../../../../lib/formatters';
 import { useStockData } from '../../../../lib/hooks/useStockData';
 import { useTickerSearch } from '../../../../lib/hooks/useTickerSearch';
@@ -446,13 +448,17 @@ export default function StockPage({ params }) {
       .then(d => setSparklineData(d.candles || null))
       .catch(() => {});
 
-    fetch('/api/watchlist')
-      .then(r => r.json())
-      .then(d => {
-        const tickers = d.tickers?.map(t => t.ticker) || [];
-        setInWatchlist(tickers.includes(ticker));
-      })
-      .catch(() => {});
+    if (isSignedIn) {
+      fetch('/api/watchlist')
+        .then(r => r.json())
+        .then(d => {
+          const tickers = d.tickers?.map(t => t.ticker) || [];
+          setInWatchlist(tickers.includes(ticker));
+        })
+        .catch(() => {});
+    } else {
+      setInWatchlist(isInGuestWatchlist(ticker));
+    }
 
     if (isSignedIn) {
       fetch('/api/subscription')
@@ -500,7 +506,17 @@ export default function StockPage({ params }) {
   };
 
   const toggleWatchlist = async () => {
-    if (!isSignedIn) { window.location.href = '/sign-in'; return; }
+    if (!isSignedIn) {
+      if (inWatchlist) {
+        removeFromGuestWatchlist(ticker);
+        setInWatchlist(false);
+        return;
+      }
+      const { added, atLimit } = addToGuestWatchlist(ticker);
+      if (atLimit) { window.location.href = '/sign-up'; return; }
+      setInWatchlist(added);
+      return;
+    }
     const method = inWatchlist ? 'DELETE' : 'POST';
     const res = await fetch('/api/watchlist', {
       method,
@@ -1112,17 +1128,8 @@ export default function StockPage({ params }) {
 
       return (
         <>
-          <div style={{ position: 'relative', marginBottom: '24px' }}>
-  {!isSignedIn && (
-    <a href="/sign-in" style={{ position: 'absolute', inset: 0, zIndex: 2, display: 'flex', alignItems: 'center', justifyContent: 'center', textDecoration: 'none', opacity: 0, transition: 'opacity 0.2s' }}
-      onMouseEnter={e => e.currentTarget.style.opacity = '1'}
-      onMouseLeave={e => e.currentTarget.style.opacity = '0'}>
-      <div style={{ background: 'var(--ws-bg-1)', border: '1px solid var(--ws-accent)', padding: '10px 20px', color: 'var(--ws-accent)', fontSize: '11px', fontWeight: 700, letterSpacing: '2px' }}>
-        SIGN IN TO SEE SCORES
-      </div>
-    </a>
-  )}
-  <div style={{ background: 'var(--ws-bg-1)', border: '1px solid var(--ws-border)', padding: '24px', filter: !isSignedIn ? 'blur(12px)' : 'none', pointerEvents: !isSignedIn ? 'none' : 'auto', userSelect: !isSignedIn ? 'none' : 'auto', overflow: 'hidden' }}>
+          <SoftWall active={!isSignedIn} label="REGÍSTRATE PARA VER LOS SCORES" ctaHref="/sign-up" style={{ marginBottom: '24px' }}>
+          <div style={{ background: 'var(--ws-bg-1)', border: '1px solid var(--ws-border)', padding: '24px', overflow: 'hidden' }}>
             <div className="quality-score-grid" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr 1fr 1fr', gap: '1px', background: 'var(--ws-border)' }}>
               {[
                 { label: 'CORE BUSINESS', score: easyMode.cbs, desc: 'ROIC · Margins · Liquidity' },
@@ -1145,7 +1152,7 @@ export default function StockPage({ params }) {
               AUTOMATED SCORE · BASED ON SEC EDGAR & FINNHUB · NOT A BUY/SELL SIGNAL · CBS 45% · OPPO 30% · GQS 25% · MOAT ±20%
             </div>
           </div>
-        </div>
+          </SoftWall>
 
           <div className="text-ws-text-3 text-[10px] tracking-[2px] border-b border-ws-border pb-1.5 mb-3">CORE BUSINESS BREAKDOWN</div>
           <div className="grid-5" style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: '1px', background: 'var(--ws-border)', marginBottom: '24px' }}>
