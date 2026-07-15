@@ -5,14 +5,9 @@ import { useUser } from '../../components/AuthProvider';
 import Sparkline from '../../components/Sparkline';
 import { fmt, fmtP, fmtN } from '../../../lib/formatters';
 
-const MOCK_GUEST_STOCKS = [
-  { ticker: 'AAPL', name: 'Apple Inc.', sector: 'Technology', currentPrice: 175.50, marketCap: 2750000000000, pe: 28.2, revGrowth: 8.5, opMargin: 30.2, fcfYield: 4.8, roe: 145.4, grossMargin: 44.3, netDebt: 65000000000, eps: 6.13 },
-  { ticker: 'MSFT', name: 'Microsoft Corporation', sector: 'Technology', currentPrice: 415.20, marketCap: 3100000000000, pe: 35.8, revGrowth: 15.2, opMargin: 43.6, fcfYield: 3.5, roe: 38.5, grossMargin: 68.9, netDebt: 45000000000, eps: 11.60 },
-  { ticker: 'NVDA', name: 'NVIDIA Corporation', sector: 'Technology', currentPrice: 875.00, marketCap: 2200000000000, pe: 72.4, revGrowth: 125.8, opMargin: 54.1, fcfYield: 2.8, roe: 91.2, grossMargin: 76.2, netDebt: -12000000000, eps: 12.08 },
-  { ticker: 'AMZN', name: 'Amazon.com, Inc.', sector: 'Consumer Cyclical', currentPrice: 180.10, marketCap: 1870000000000, pe: 41.5, revGrowth: 12.1, opMargin: 9.8, fcfYield: 5.2, roe: 20.3, grossMargin: 46.5, netDebt: 35000000000, eps: 4.32 },
-  { ticker: 'GOOGL', name: 'Alphabet Inc.', sector: 'Technology', currentPrice: 152.30, marketCap: 1900000000000, pe: 25.4, revGrowth: 13.4, opMargin: 27.8, fcfYield: 4.9, roe: 27.2, grossMargin: 56.8, netDebt: -65000000000, eps: 5.80 },
-  { ticker: 'META', name: 'Meta Platforms, Inc.', sector: 'Technology', currentPrice: 495.80, marketCap: 1250000000000, pe: 24.1, revGrowth: 25.3, opMargin: 38.2, fcfYield: 4.5, roe: 28.4, grossMargin: 81.1, netDebt: -32000000000, eps: 14.87 }
-];
+// Mirrors ANON_RESULT_LIMIT in app/api/screener/route.js — used only for the
+// guest banner copy, the actual cap is enforced server-side.
+const ANON_RESULT_LIMIT = 40;
 
 const PRESETS = {
   all: { label: 'All Stocks', filters: { minMargin: '', maxPE: '', minFCFYield: '', minRevGrowth: '', minROE: '', minGrossMargin: '' } },
@@ -36,6 +31,9 @@ export default function WorkspaceScreener() {
   const [isPro, setIsPro] = useState(false);
   const [activePreset, setActivePreset] = useState('all');
   const [showFilters, setShowFilters] = useState(false);
+  const [limited, setLimited] = useState(false);
+  const [rateLimited, setRateLimited] = useState(false);
+  const [bannerDismissed, setBannerDismissed] = useState(false);
   const tableRef = useRef(null);
   const PAGE_SIZE = 50;
 
@@ -50,15 +48,23 @@ export default function WorkspaceScreener() {
 
   // Load user data / subscription
   useEffect(() => {
+    if (!isLoaded) return;
     if (isSignedIn) {
       fetch('/api/subscription').then(r => r.json()).then(d => setIsPro(d.isPro)).catch(() => {});
-      fetch('/api/screener').then(r => r.json()).then(d => { setStocks(d.stocks || []); setLoading(false); }).catch(() => setLoading(false));
-    } else {
-      // For guests, use mock list
-      setStocks(MOCK_GUEST_STOCKS);
-      setLoading(false);
     }
-  }, [isSignedIn]);
+    fetch('/api/screener')
+      .then(r => {
+        if (r.status === 429) { setRateLimited(true); setLoading(false); return null; }
+        return r.json();
+      })
+      .then(d => {
+        if (!d) return;
+        setStocks(d.stocks || []);
+        setLimited(!!d.limited);
+        setLoading(false);
+      })
+      .catch(() => setLoading(false));
+  }, [isLoaded, isSignedIn]);
 
   useEffect(() => {
     if (tableRef.current) tableRef.current.scrollTop = 0;
@@ -324,69 +330,47 @@ export default function WorkspaceScreener() {
 
       {/* Main Grid View */}
       <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden', position: 'relative' }}>
-        
-        {/* Guest Lock Overlay */}
-        {!isSignedIn && (
+
+        {/* Guest soft wall — informs, doesn't block the real data underneath */}
+        {limited && !bannerDismissed && (
           <div style={{
-            position: 'absolute',
-            top: 0,
-            left: 0,
-            right: 0,
-            bottom: 0,
-            background: 'rgba(9, 9, 11, 0.7)',
-            backdropFilter: 'blur(8px)',
             display: 'flex',
             alignItems: 'center',
-            justifyContent: 'center',
-            zIndex: 10,
-            padding: '24px'
+            justifyContent: 'space-between',
+            gap: '12px',
+            padding: '10px 16px',
+            background: 'var(--ws-accent-dim)',
+            borderBottom: '1px solid var(--ws-border)',
+            flexShrink: 0
           }}>
-            <div style={{
-              background: 'var(--ws-bg-2)',
-              border: '1px solid var(--ws-border)',
-              borderRadius: '12px',
-              padding: '28px',
-              maxWidth: '400px',
-              width: '100%',
-              boxShadow: '0 20px 50px rgba(0,0,0,0.5)',
-              display: 'flex',
-              flexDirection: 'column',
-              alignItems: 'center',
-              textAlign: 'center',
-              gap: '14px'
-            }}>
-              <h3 style={{ fontSize: '16px', fontWeight: 800, color: 'var(--ws-text)', margin: 0 }}>Unlock Stock Screener</h3>
-              <p style={{ fontSize: '11px', color: 'var(--ws-text-3)', lineHeight: '1.6', margin: 0 }}>
-                Sign in or register to filters & explore over 100+ global companies, interactive sparklines, and premium valuation metrics.
-              </p>
-              <div style={{ display: 'flex', gap: '8px', width: '100%', marginTop: '6px' }}>
-                <button onClick={() => router.push('/sign-in')} style={{
-                  flex: 1,
-                  background: 'var(--ws-accent)',
-                  color: 'var(--ws-bg-1)',
-                  border: 'none',
-                  borderRadius: '6px',
-                  padding: '9px 12px',
-                  fontSize: '11px',
-                  fontWeight: 700,
-                  cursor: 'pointer'
-                }}>
-                  Sign In
-                </button>
-                <button onClick={() => router.push('/sign-up')} style={{
-                  flex: 1,
-                  background: 'none',
-                  border: '1px solid var(--ws-border)',
-                  color: 'var(--ws-text)',
-                  borderRadius: '6px',
-                  padding: '9px 12px',
-                  fontSize: '11px',
-                  fontWeight: 700,
-                  cursor: 'pointer'
-                }}>
-                  Register
-                </button>
-              </div>
+            <span style={{ fontSize: '11px', color: 'var(--ws-text-2)', lineHeight: '1.5' }}>
+              Estás viendo las {ANON_RESULT_LIMIT} empresas más grandes por capitalización. Regístrate gratis para el screener completo, filtros avanzados y exportar a CSV.
+            </span>
+            <div style={{ display: 'flex', gap: '8px', flexShrink: 0, alignItems: 'center' }}>
+              <button onClick={() => router.push('/sign-up')} style={{
+                background: 'var(--ws-accent)',
+                color: 'var(--ws-bg-1)',
+                border: 'none',
+                borderRadius: '6px',
+                padding: '6px 12px',
+                fontSize: '11px',
+                fontWeight: 700,
+                cursor: 'pointer',
+                whiteSpace: 'nowrap'
+              }}>
+                Registrarme gratis
+              </button>
+              <button onClick={() => setBannerDismissed(true)} aria-label="Cerrar" style={{
+                background: 'none',
+                border: 'none',
+                color: 'var(--ws-text-3)',
+                fontSize: '16px',
+                lineHeight: 1,
+                cursor: 'pointer',
+                padding: '0 4px'
+              }}>
+                ×
+              </button>
             </div>
           </div>
         )}
@@ -469,7 +453,28 @@ export default function WorkspaceScreener() {
 
         {/* Quantitative Data Table */}
         <div ref={tableRef} className="responsive-table-container" style={{ flex: 1, overflow: 'auto' }}>
-          {loading ? (
+          {rateLimited ? (
+            <div style={{ padding: '80px 20px', textAlign: 'center', color: 'var(--ws-text-3)' }}>
+              <div style={{ fontSize: '13px', fontWeight: 700, color: 'var(--ws-text)', marginBottom: '8px' }}>
+                Has llegado al límite de exploración de esta hora
+              </div>
+              <p style={{ fontSize: '11px', lineHeight: '1.6', maxWidth: '360px', margin: '0 auto 16px' }}>
+                Regístrate gratis para uso ilimitado del screener, o vuelve a intentarlo dentro de un rato.
+              </p>
+              <button onClick={() => router.push('/sign-up')} style={{
+                background: 'var(--ws-accent)',
+                color: 'var(--ws-bg-1)',
+                border: 'none',
+                borderRadius: '6px',
+                padding: '9px 16px',
+                fontSize: '11px',
+                fontWeight: 700,
+                cursor: 'pointer'
+              }}>
+                Registrarme gratis
+              </button>
+            </div>
+          ) : loading ? (
             <div style={{ padding: '80px 20px', textAlign: 'center', color: 'var(--ws-text-3)' }}>
               <div style={{ display: 'inline-flex', alignItems: 'center', gap: '10px' }}>
                 <span style={{ color: 'var(--ws-accent)', fontSize: '11px' }}>▶</span>
@@ -551,7 +556,7 @@ export default function WorkspaceScreener() {
           )}
 
           {/* Empty State */}
-          {!loading && filtered.length === 0 && (
+          {!loading && !rateLimited && filtered.length === 0 && (
             <div style={{ padding: '60px 20px', textAlign: 'center', color: 'var(--ws-text-3)', fontSize: '12px' }}>
               No companies match your filters. Try resetting or adjusting the values.
             </div>
