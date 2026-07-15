@@ -948,7 +948,7 @@ export default function StockPage({ params }) {
                 <div key={s.label} style={{ background: s.highlight ? 'var(--ws-bg-2)' : 'var(--ws-bg-1)', padding: '12px 8px', textAlign: 'center' }}>
                   <div style={{ color: 'var(--ws-text-3)', fontSize: '8px', letterSpacing: '1px', marginBottom: '8px', lineHeight: 1.3 }}>{s.label}</div>
                   <div style={{ fontSize: s.text ? '18px' : s.highlight ? '36px' : '30px', fontWeight: 700, color: s.text ? s.color : scoreColor(s.score), letterSpacing: '-1px', lineHeight: 1, marginTop: s.text ? '9px' : 0 }}>
-                    {s.text || s.score.toFixed(1)}
+                    {s.text || Math.round(s.score * 20)}
                   </div>
                   <div style={{ color: 'var(--ws-text-3)', fontSize: '8px', marginTop: '4px', lineHeight: 1.3 }}>{s.desc}</div>
                   {!s.text && <ScoreBar score={s.score} />}
@@ -964,16 +964,16 @@ export default function StockPage({ params }) {
           <div className="text-ws-text-3 text-[10px] tracking-[2px] border-b border-ws-border pb-1.5 mb-3">CORE BUSINESS BREAKDOWN</div>
           <div className="grid-5" style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: '1px', background: 'var(--ws-border)', marginBottom: '24px' }}>
             {[
-              { label: 'ROIC', val: fmtP(data.roic), score: easyMode.roicScore, desc: `Threshold: ${(easyMode.roicThreshold * 100).toFixed(0)}% for ${data.sector || 'this sector'}` },
+              { label: 'ROIC', val: fmtP(easyMode.roicForScore), score: easyMode.roicScore, desc: `Threshold: ${(easyMode.roicThreshold * 100).toFixed(0)}% for ${data.sector || 'this sector'}` },
               { label: isFinancial ? 'NET MARGIN' : 'GROSS MARGIN', val: isFinancial ? fmtP(data.netMargin) : fmtP(data.grossMargin), score: easyMode.gmScore, desc: `Threshold: ${(easyMode.gmThreshold * 100).toFixed(0)}% for ${data.sector || 'this sector'}` },
               { label: 'OP. MARGIN', val: fmtP(data.opMargin), score: easyMode.omScore, desc: `Threshold: ${(easyMode.omThreshold * 100).toFixed(0)}% for ${data.sector || 'this sector'}` },
-              { label: 'DEBT/EQUITY', val: fmtN(data.debtToEquity), score: easyMode.deScore, desc: 'Lower is better' },
+              { label: 'DEBT/EQUITY', val: fmtN(easyMode.netDebtToEquity), score: easyMode.deScore, desc: 'Net of cash · lower is better' },
               { label: 'CURRENT RATIO', val: easyMode.currentRatio != null ? `${easyMode.currentRatio.toFixed(2)}x` : 'N/A', score: easyMode.crScore, desc: 'Current assets / liabilities' },
             ].map(m => (
               <div key={m.label} className="bg-ws-bg-1 p-4">
                 <div className="flex justify-between mb-2">
                   <span className="text-ws-text-3 text-[10px] tracking-[1px]">{m.label}</span>
-                  <span style={{ color: scoreColor(m.score), fontSize: '10px' }}>{m.score.toFixed(1)}/5</span>
+                  <span style={{ color: scoreColor(m.score), fontSize: '10px' }}>{Math.round(m.score * 20)}/100</span>
                 </div>
                 <div style={{ fontSize: '28px', fontWeight: 600, color: scoreColor(m.score), marginBottom: '4px' }}>{m.val}</div>
                 <div className="text-ws-text-3 text-[10px]">{m.desc}</div>
@@ -990,7 +990,7 @@ export default function StockPage({ params }) {
               <div key={m.label} className="bg-ws-bg-1 p-4">
                 <div className="flex justify-between mb-2">
                   <span className="text-ws-text-3 text-[10px] tracking-[1px]">{m.label}</span>
-                  <span style={{ color: scoreColor(m.score), fontSize: '10px' }}>{m.score.toFixed(1)}/5</span>
+                  <span style={{ color: scoreColor(m.score), fontSize: '10px' }}>{Math.round(m.score * 20)}/100</span>
                 </div>
                 <div style={{ fontSize: '28px', fontWeight: 600, color: scoreColor(m.score), marginBottom: '4px' }}>{m.val}</div>
                 <div className="text-ws-text-3 text-[10px]">{m.desc}</div>
@@ -1025,7 +1025,7 @@ export default function StockPage({ params }) {
             <div className="bg-ws-bg-1 p-4">
               <div className="flex justify-between mb-2">
                 <span className="text-ws-text-3 text-[10px] tracking-[1px]">REVENUE GROWTH</span>
-                <span style={{ color: scoreColor(easyMode.revGrowthScore), fontSize: '10px' }}>{easyMode.revGrowthScore.toFixed(1)}/5</span>
+                <span style={{ color: scoreColor(easyMode.revGrowthScore), fontSize: '10px' }}>{Math.round(easyMode.revGrowthScore * 20)}/100</span>
               </div>
               <div style={{ fontSize: '22px', fontWeight: 600, color: scoreColor(easyMode.revGrowthScore), marginBottom: '8px' }}>
                 {data.revGrowth !== null ? `${data.revGrowth > 0 ? '+' : ''}${data.revGrowth}%` : 'N/A'}
