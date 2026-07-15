@@ -715,8 +715,12 @@ export async function GET(request) {
         eps: eps ?? yh?.eps ?? null,
         pe: pe ?? yh?.pe ?? null,
         forwardPE: yh?.forwardPE ?? null,
-        high52: m['52WeekHigh'] || yh?.high52 || null,
-        low52: m['52WeekLow'] || yh?.low52 || null,
+        // Same Finnhub foreign-listing mismatch as marketCap above: /stock/metric's 52-week
+        // range for NVO came back 224.25-464.6 against a $49.07 USD quote — Copenhagen DKK
+        // range, not USD (Novo's actual USD 52-week range is far narrower). Gated on the same
+        // profile-currency check since both Finnhub endpoints resolve the symbol the same way.
+        high52: fhProfile.currency && fhProfile.currency !== 'USD' ? (yh?.high52 ?? null) : (m['52WeekHigh'] || yh?.high52 || null),
+        low52: fhProfile.currency && fhProfile.currency !== 'USD' ? (yh?.low52 ?? null) : (m['52WeekLow'] || yh?.low52 || null),
         beta: m.beta || yh?.beta || null,
         sharesOutstanding: sharesOutstanding ?? yh?.sharesOutstanding ?? null,
         dividendYield: m.dividendYieldIndicatedAnnual || yh?.dividendYield || null,
@@ -735,11 +739,22 @@ export async function GET(request) {
         oiVal: yh?.oiVal ?? null, fcfVal: yh?.fcfVal ?? null,
         assetsVal: yh?.assetsVal ?? null, equityVal: yh?.equityVal ?? null,
         debtVal: yh?.debtVal ?? null, cashVal: yh?.cashVal ?? null,
-        // ebtVal/taxVal/daVal: computed by fetchYahooFundamentals but previously dropped here,
-        // so computeWACC's tax-rate calc and computeReinvestmentGrowth silently fell back to
-        // defaults for every ticker on this path (all foreign ADRs, i.e. exactly the tickers
-        // needing the real numbers most).
+        // The rest of fetchYahooFundamentals's computed scalars, same story as ebtVal/taxVal/
+        // daVal above — dropped here even though the function already returns them, so
+        // computeEasyMode's Quality-tab breakdown (R&D/Revenue, SBC/Revenue, Current Ratio)
+        // silently showed "N/A" for every ticker on this path regardless of whether Yahoo
+        // actually had the data.
         ebtVal: yh?.ebtVal ?? null, taxVal: yh?.taxVal ?? null, daVal: yh?.daVal ?? null,
+        sharesVal: yh?.sharesVal ?? null, rdVal: yh?.rdVal ?? null,
+        cogsVal: yh?.cogsVal ?? null, sgaVal: yh?.sgaVal ?? null, interestVal: yh?.interestVal ?? null,
+        sharesBasicVal: yh?.sharesBasicVal ?? null, sharesDilutedVal: yh?.sharesDilutedVal ?? null,
+        currentAssetsVal: yh?.currentAssetsVal ?? null, currentLiabilitiesVal: yh?.currentLiabilitiesVal ?? null,
+        totalLiabilitiesVal: yh?.totalLiabilitiesVal ?? null, retainedEarningsVal: yh?.retainedEarningsVal ?? null,
+        capexVal: yh?.capexVal ?? null, investingCFVal: yh?.investingCFVal ?? null, financingCFVal: yh?.financingCFVal ?? null,
+        inventoryVal: yh?.inventoryVal ?? null, receivablesVal: yh?.receivablesVal ?? null, payablesVal: yh?.payablesVal ?? null,
+        sbcVal: yh?.sbcVal ?? null, dividendsPaidVal: yh?.dividendsPaidVal ?? null,
+        dso: yh?.dso ?? null, dio: yh?.dio ?? null, dpo: yh?.dpo ?? null, ccc: yh?.ccc ?? null,
+        inventoryTurnover: yh?.inventoryTurnover ?? null, operatingCFVal: yh?.operatingCFVal ?? null,
         netDebt: yh?.netDebt ?? null,
         pfcf: yh?.pfcf ?? null, fcfYield: yh?.fcfYield ?? null,
         revHistory: yh?.revHistory ?? [], niHistory: yh?.niHistory ?? [],
