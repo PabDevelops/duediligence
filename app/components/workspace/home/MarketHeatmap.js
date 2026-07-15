@@ -1,7 +1,41 @@
 'use client';
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { Treemap, ResponsiveContainer } from 'recharts';
+import { Treemap, ResponsiveContainer, Tooltip } from 'recharts';
+
+const fmtCap = (n) => {
+  if (n == null) return '—';
+  if (n >= 1e12) return `$${(n / 1e12).toFixed(2)}T`;
+  if (n >= 1e9) return `$${(n / 1e9).toFixed(1)}B`;
+  return `$${(n / 1e6).toFixed(0)}M`;
+};
+
+// Recharts' Tooltip renders outside the SVG (its own positioned div), so unlike HeatCell it
+// doesn't need the depth workaround — payload[0].payload is always the specific node under the
+// cursor, leaf or group. Skip group (sector) hovers entirely; only stock leaves have a ticker.
+function HeatTooltip({ active, payload }) {
+  const d = payload?.[0]?.payload;
+  if (!active || !d || !d.ticker) return null;
+  const pct = d.priceChangePct;
+  const pctColor = pct == null ? '#8a97a8' : pct >= 0 ? '#1D9E75' : '#c43e3e';
+  return (
+    <div style={{
+      background: '#14171c', border: '1px solid #2a2e35', borderRadius: '4px', padding: '10px 12px',
+      fontFamily: "'JetBrains Mono', monospace", minWidth: '160px',
+    }}>
+      <div style={{ fontSize: '13px', fontWeight: 700, color: '#fff', marginBottom: '2px' }}>{d.ticker}</div>
+      {d.companyName && <div style={{ fontSize: '10px', color: '#8a97a8', marginBottom: '6px' }}>{d.companyName}</div>}
+      <div style={{ display: 'flex', justifyContent: 'space-between', gap: '16px', fontSize: '11px' }}>
+        <span style={{ color: '#8a97a8' }}>Change</span>
+        <span style={{ color: pctColor, fontWeight: 700 }}>{pct == null ? '—' : `${pct > 0 ? '+' : ''}${pct.toFixed(2)}%`}</span>
+      </div>
+      <div style={{ display: 'flex', justifyContent: 'space-between', gap: '16px', fontSize: '11px' }}>
+        <span style={{ color: '#8a97a8' }}>Market cap</span>
+        <span style={{ color: '#fff' }}>{fmtCap(d.size)}</span>
+      </div>
+    </div>
+  );
+}
 
 // Fixed dark stops, independent of the app's light/dark theme toggle — like a candlestick
 // chart, this map is a self-contained colored canvas (Finviz's own map is dark regardless of
@@ -40,7 +74,7 @@ function HeatCell({ depth, x, y, width, height, name, priceChangePct, ticker, on
     );
   }
   const showTicker = width > 22 && height > 13;
-  const showPct = width > 46 && height > 30;
+  const showPct = width > 46 && height > 30 && priceChangePct != null;
   return (
     <g style={{ cursor: 'pointer' }} onClick={() => onSelect(ticker)}>
       <rect x={x} y={y} width={width} height={height} fill={heatColor(priceChangePct)} stroke="#0b0f0e" strokeWidth={1} />
@@ -85,7 +119,7 @@ export default function MarketHeatmap() {
   const bySector = {};
   stocks.forEach(s => {
     if (!s.sector) return;
-    (bySector[s.sector] ??= []).push({ name: s.ticker, ticker: s.ticker, size: s.marketCap, priceChangePct: s.priceChangePct });
+    (bySector[s.sector] ??= []).push({ name: s.ticker, ticker: s.ticker, companyName: s.name, size: s.marketCap, priceChangePct: s.priceChangePct });
   });
   const data = Object.entries(bySector).map(([name, children]) => ({ name, children }));
 
@@ -97,7 +131,9 @@ export default function MarketHeatmap() {
           dataKey="size"
           isAnimationActive={false}
           content={<HeatCell onSelect={(ticker) => router.push(`/stock/${ticker}`)} />}
-        />
+        >
+          <Tooltip content={<HeatTooltip />} />
+        </Treemap>
       </ResponsiveContainer>
     </div>
   );
