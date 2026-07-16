@@ -4,6 +4,8 @@ import { useRouter } from 'next/navigation';
 import { useUser } from '../../components/AuthProvider';
 import NewsletterForm from '../../components/NewsletterForm';
 import { WindowChrome, Shot } from '../../components/WindowChrome';
+import { PrimaryButton, SecondaryButton } from '../../components/marketing/Buttons';
+import Footer from '../../components/marketing/Footer';
 import { localizeHref } from '../../../lib/i18n/locale';
 
 // Switching away from Spanish must explicitly clear the cookie — the
@@ -42,62 +44,6 @@ const PRODUCT_TOUR_STOPS = [
   { route: '/radar', windowTitle: 'terminal.traqcker.com/radar — Market Radar' },
   { route: '/calendar', windowTitle: 'terminal.traqcker.com/calendar — Earnings & Filings Calendar' },
 ];
-
-function PrimaryButton({ href: to, children, style, ...rest }) {
-  return (
-    <a href={to} style={{
-      display: 'inline-flex',
-      alignItems: 'center',
-      justifyContent: 'center',
-      height: '46px',
-      padding: '0 24px',
-      fontSize: '14px',
-      fontWeight: 700,
-      background: 'var(--accent)',
-      color: '#ffffff',
-      borderRadius: '10px',
-      textDecoration: 'none',
-      boxShadow: '0 4px 14px rgba(15, 118, 110, 0.25)',
-      transition: 'opacity 0.15s',
-      whiteSpace: 'nowrap',
-      ...style,
-    }}
-      onMouseEnter={e => e.currentTarget.style.opacity = 0.92}
-      onMouseLeave={e => e.currentTarget.style.opacity = 1}
-      {...rest}
-    >
-      {children}
-    </a>
-  );
-}
-
-function SecondaryButton({ href: to, children, style, ...rest }) {
-  return (
-    <a href={to} style={{
-      display: 'inline-flex',
-      alignItems: 'center',
-      justifyContent: 'center',
-      height: '46px',
-      padding: '0 24px',
-      fontSize: '14px',
-      fontWeight: 600,
-      background: 'transparent',
-      color: 'var(--text)',
-      border: '1px solid var(--border)',
-      borderRadius: '10px',
-      textDecoration: 'none',
-      transition: 'background 0.15s, border-color 0.15s',
-      whiteSpace: 'nowrap',
-      ...style,
-    }}
-      onMouseEnter={e => { e.currentTarget.style.background = 'var(--accent-dim)'; e.currentTarget.style.borderColor = 'var(--accent)'; }}
-      onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.borderColor = 'var(--border)'; }}
-      {...rest}
-    >
-      {children}
-    </a>
-  );
-}
 
 export default function HomeView({ dict, locale }) {
   const router = useRouter();
@@ -141,7 +87,7 @@ export default function HomeView({ dict, locale }) {
                 real navigation so middleware.js's host redirect fires. */}
             {/* eslint-disable-next-line @next/next/no-html-link-for-pages */}
             <a href="/home" style={navLink}>{t.openApp}</a>
-            <PrimaryButton href={href('/pricing')} style={{ height: '38px', padding: '0 16px', borderRadius: '0', boxShadow: 'none' }}>{t.startFreeTrial}</PrimaryButton>
+            <PrimaryButton href={href('/sign-up')} style={{ height: '38px', padding: '0 16px', borderRadius: '0', boxShadow: 'none' }}>{t.startFreeTrial}</PrimaryButton>
           </div>
 
           <button
@@ -181,7 +127,7 @@ export default function HomeView({ dict, locale }) {
             <a href="#product-tour" onClick={closeMenu} style={mobileNavLink}>{t.nav.useCases}</a>
             <div style={{ height: '1px', background: 'var(--border)', margin: '8px 0 16px' }} />
             <SecondaryButton href="/home" onClick={closeMenu} style={{ width: '100%', marginBottom: '10px' }}>{t.openApp}</SecondaryButton>
-            <PrimaryButton href={href('/pricing')} onClick={closeMenu} style={{ width: '100%', marginBottom: '16px' }}>{t.startFreeTrial}</PrimaryButton>
+            <PrimaryButton href={href('/sign-up')} onClick={closeMenu} style={{ width: '100%', marginBottom: '16px' }}>{t.startFreeTrial}</PrimaryButton>
             <a href={langToggle.otherLocaleHref} onClick={() => { langToggle.onClick(); closeMenu(); }} style={{ textDecoration: 'none', color: 'var(--text-3)', fontSize: '13px', fontWeight: 700 }}>
               {locale === 'es' ? 'Switch to English' : 'Cambiar a Español'}
             </a>
@@ -213,7 +159,7 @@ export default function HomeView({ dict, locale }) {
         </p>
 
         <div style={{ display: 'flex', gap: '12px', justifyContent: 'center', marginBottom: 'clamp(40px, 8vw, 64px)', flexWrap: 'wrap' }}>
-          <PrimaryButton href={href('/pricing')}>{t.hero.ctaPrimary}</PrimaryButton>
+          <PrimaryButton href={href('/sign-up')}>{t.hero.ctaPrimary}</PrimaryButton>
           <SecondaryButton href="/home">{t.hero.ctaSecondary}</SecondaryButton>
         </div>
 
@@ -240,6 +186,41 @@ export default function HomeView({ dict, locale }) {
         </div>
       </section>
 
+      {/* FREEMIUM TIERS — Guest → Free account → Pro */}
+      <section style={{ background: '#fafafa', borderTop: '1px solid var(--border)', borderBottom: '1px solid var(--border)', padding: 'clamp(56px, 9vw, 100px) 0' }}>
+        <div style={CONTAINER}>
+          <div style={{ textAlign: 'center', marginBottom: 'clamp(36px, 6vw, 56px)' }}>
+            <span style={{ fontFamily: MONO, fontSize: '11px', color: 'var(--accent)', fontWeight: 700, letterSpacing: '1px', textTransform: 'uppercase' }}>{t.tiers.eyebrow}</span>
+            <h2 style={{ fontSize: 'clamp(24px, 4.5vw, 36px)', fontWeight: 900, letterSpacing: '-1px', color: 'var(--text)', marginTop: '8px', marginBottom: '14px' }}>
+              {t.tiers.title}
+            </h2>
+            <p style={{ fontSize: '15px', color: 'var(--text-2)', maxWidth: '580px', margin: '0 auto' }}>
+              {t.tiers.subtitle}
+            </p>
+          </div>
+
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '20px', marginBottom: 'clamp(32px, 6vw, 48px)' }}>
+            {t.tiers.items.map((item) => (
+              <div key={item.step} style={{
+                background: '#ffffff',
+                border: '1px solid var(--border)',
+                borderRadius: '16px',
+                padding: 'clamp(22px, 3.5vw, 28px)',
+              }}>
+                <div style={{ fontFamily: MONO, fontSize: '12px', color: 'var(--accent)', fontWeight: 700, marginBottom: '14px' }}>{item.step}</div>
+                <h3 style={{ fontSize: '17px', fontWeight: 800, color: 'var(--text)', marginBottom: '10px' }}>{item.title}</h3>
+                <p style={{ fontSize: '13px', color: 'var(--text-2)', lineHeight: 1.7 }}>{item.desc}</p>
+              </div>
+            ))}
+          </div>
+
+          <div style={{ display: 'flex', justifyContent: 'center', gap: '12px', flexWrap: 'wrap' }}>
+            <PrimaryButton href={href('/sign-up')}>{t.tiers.ctaFree}</PrimaryButton>
+            <SecondaryButton href={href('/pricing')}>{t.tiers.ctaPro}</SecondaryButton>
+          </div>
+        </div>
+      </section>
+
       {/* CORE CAPABILITIES */}
       <section style={{ ...CONTAINER, padding: 'clamp(56px, 9vw, 100px) clamp(16px, 5vw, 24px) clamp(40px, 6vw, 60px)' }}>
         <div style={{ textAlign: 'center', marginBottom: 'clamp(36px, 6vw, 56px)' }}>
@@ -249,7 +230,7 @@ export default function HomeView({ dict, locale }) {
 
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '20px' }}>
 
-          {/* CAPABILITY 1: PRO TERMINAL */}
+          {/* CAPABILITY 1: FREE WITH AN ACCOUNT */}
           <div className="landing-card" style={{
             border: '1px solid var(--border)',
             borderRadius: '16px',
@@ -278,7 +259,7 @@ export default function HomeView({ dict, locale }) {
             </SecondaryButton>
           </div>
 
-          {/* CAPABILITY 2: PORTFOLIO & WATCHLIST */}
+          {/* CAPABILITY 2: PORTFOLIO (PRO) */}
           <div className="landing-card" style={{
             border: '1px solid var(--border)',
             borderRadius: '16px',
@@ -413,26 +394,27 @@ export default function HomeView({ dict, locale }) {
       {/* FINAL CALL TO ACTION (CTA) */}
       <section style={{ ...CONTAINER, padding: 'clamp(56px, 9vw, 100px) clamp(16px, 5vw, 24px) clamp(64px, 10vw, 120px)', textAlign: 'center' }}>
         <div style={{
-          background: 'linear-gradient(135deg, #0b0d13 0%, #0f766e 100%)',
+          background: '#fafafa',
+          border: '1px solid var(--border)',
           borderRadius: '24px',
           padding: 'clamp(48px, 8vw, 80px) clamp(24px, 5vw, 40px)',
-          color: '#ffffff',
+          color: 'var(--text)',
           position: 'relative',
           overflow: 'hidden'
         }}>
           <div style={{ position: 'relative', zIndex: 1, maxWidth: '640px', margin: '0 auto' }}>
-            <h2 style={{ fontSize: 'clamp(26px, 5.5vw, 42px)', fontWeight: 900, letterSpacing: '-1.2px', marginBottom: '18px' }}>
+            <h2 style={{ fontSize: 'clamp(26px, 5.5vw, 42px)', fontWeight: 900, letterSpacing: '-1.2px', marginBottom: '18px', color: 'var(--text)' }}>
               {t.finalCta.title}
             </h2>
-            <p style={{ fontSize: '15px', color: 'rgba(255,255,255,0.8)', lineHeight: 1.6, marginBottom: '36px' }}>
+            <p style={{ fontSize: '15px', color: 'var(--text-2)', lineHeight: 1.6, marginBottom: '36px' }}>
               {t.finalCta.subtitle}
             </p>
 
             <div style={{ display: 'flex', justifyContent: 'center', gap: '12px', marginBottom: '48px', flexWrap: 'wrap' }}>
-              <PrimaryButton href={href('/pricing')} style={{ background: '#ffffff', color: '#0b0d13', boxShadow: '0 4px 14px rgba(0,0,0,0.15)' }}>
+              <PrimaryButton href={href('/sign-up')}>
                 {t.finalCta.ctaPrimary}
               </PrimaryButton>
-              <SecondaryButton href={href('/pricing')} style={{ color: '#ffffff', border: '1px solid rgba(255,255,255,0.3)' }}>
+              <SecondaryButton href={href('/pricing')}>
                 {t.finalCta.ctaSecondary}
               </SecondaryButton>
             </div>
@@ -444,35 +426,7 @@ export default function HomeView({ dict, locale }) {
         </div>
       </section>
 
-      {/* FOOTER */}
-      <footer style={{ borderTop: '1px solid var(--border)', background: '#fafafa', padding: 'clamp(40px, 6vw, 60px) clamp(16px, 5vw, 24px) clamp(56px, 8vw, 80px)' }}>
-        <div style={{ ...CONTAINER, padding: 0, display: 'flex', justifyContent: 'space-between', flexWrap: 'wrap', gap: '40px' }}>
-          <div style={{ maxWidth: '280px' }}>
-            <img src="/logo-traqcker-new.png" alt="Traqcker" style={{ height: '16px', width: 'auto', marginBottom: '16px' }} />
-            <p style={{ fontSize: '12px', color: 'var(--text-3)', lineHeight: 1.5 }}>
-              {t.footer.tagline}
-            </p>
-          </div>
-
-          <div style={{ display: 'flex', gap: 'clamp(32px, 8vw, 64px)', flexWrap: 'wrap' }}>
-            <div>
-              <div style={{ fontSize: '11px', fontWeight: 700, color: 'var(--text-3)', textTransform: 'uppercase', letterSpacing: '1px', marginBottom: '16px' }}>{t.footer.product}</div>
-              <ul style={{ listStyle: 'none', padding: 0, margin: 0, display: 'flex', flexDirection: 'column', gap: '10px', fontSize: '13px' }}>
-                <li><a href={href('/pricing')} style={{ textDecoration: 'none', color: 'var(--text-2)' }}>{t.footer.pricingLink}</a></li>
-                <li><a href={href('/about')} style={{ textDecoration: 'none', color: 'var(--text-2)' }}>{t.footer.proFeatures}</a></li>
-              </ul>
-            </div>
-            <div>
-              <div style={{ fontSize: '11px', fontWeight: 700, color: 'var(--text-3)', textTransform: 'uppercase', letterSpacing: '1px', marginBottom: '16px' }}>{t.footer.company}</div>
-              <ul style={{ listStyle: 'none', padding: 0, margin: 0, display: 'flex', flexDirection: 'column', gap: '10px', fontSize: '13px' }}>
-                <li><a href={href('/about')} style={{ textDecoration: 'none', color: 'var(--text-2)' }}>{t.footer.aboutUs}</a></li>
-                <li><a href={href('/privacy')} style={{ textDecoration: 'none', color: 'var(--text-2)' }}>{t.footer.privacyPolicy}</a></li>
-                <li><a href={href('/terms')} style={{ textDecoration: 'none', color: 'var(--text-2)' }}>{t.footer.termsOfService}</a></li>
-              </ul>
-            </div>
-          </div>
-        </div>
-      </footer>
+      <Footer dict={t.footer} locale={locale} />
 
     </div>
   );

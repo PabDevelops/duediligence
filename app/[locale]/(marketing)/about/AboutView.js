@@ -1,6 +1,7 @@
 'use client';
 import Topbar from '../../../components/Topbar';
-import { useRouter } from 'next/navigation';
+import Footer from '../../../components/marketing/Footer';
+import { PrimaryButton, SecondaryButton } from '../../../components/marketing/Buttons';
 import { WindowChrome, Shot } from '../../../components/WindowChrome';
 import { localizeHref } from '../../../../lib/i18n/locale';
 
@@ -16,7 +17,6 @@ const BENTO_SHOTS = [
 ];
 
 export default function AboutView({ dict, locale }) {
-  const router = useRouter();
   const t = dict.about;
   const href = (path) => localizeHref(path, locale);
   const bentoTiles = t.bento.tiles.map((tile, i) => ({ ...tile, ...BENTO_SHOTS[i] }));
@@ -25,9 +25,9 @@ export default function AboutView({ dict, locale }) {
     <div style={{ background: '#ffffff', minHeight: '100vh', color: 'var(--text)', fontFamily: 'Inter, sans-serif' }}>
       <Topbar />
 
-      {/* HERO — dark, Quartr-inspired */}
+      {/* HERO — light, matches the rest of the marketing site */}
       <section style={{
-        background: 'linear-gradient(180deg, #0b0d13 0%, #0d1017 100%)',
+        background: '#ffffff',
         borderBottom: '1px solid var(--border)',
         padding: '90px 24px 100px',
         position: 'relative',
@@ -41,42 +41,29 @@ export default function AboutView({ dict, locale }) {
           width: '70%',
           height: '60%',
           background: 'radial-gradient(circle, var(--accent) 0%, transparent 70%)',
-          opacity: 0.18,
+          opacity: 0.08,
           filter: 'blur(60px)',
           pointerEvents: 'none'
         }} />
 
         <div style={{ maxWidth: '820px', margin: '0 auto', textAlign: 'center', position: 'relative', zIndex: 1 }}>
-          <div style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', background: 'rgba(20,184,166,0.12)', border: '1px solid rgba(20,184,166,0.35)', padding: '4px 14px', borderRadius: '20px', marginBottom: '24px' }}>
-            <span style={{ width: 6, height: 6, borderRadius: '50%', background: '#14b8a6', display: 'inline-block' }} />
-            <span style={{ color: '#5eead4', fontSize: '11px', letterSpacing: '2px', fontWeight: 700 }}>{t.hero.eyebrow}</span>
+          <div style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', background: 'var(--accent-dim)', border: '1px solid rgba(15,118,110,0.35)', padding: '4px 14px', borderRadius: '20px', marginBottom: '24px' }}>
+            <span style={{ width: 6, height: 6, borderRadius: '50%', background: 'var(--accent)', display: 'inline-block' }} />
+            <span style={{ color: 'var(--accent)', fontSize: '11px', letterSpacing: '2px', fontWeight: 700 }}>{t.hero.eyebrow}</span>
           </div>
-          <h1 style={{ fontSize: '48px', fontWeight: 900, letterSpacing: '-1.5px', lineHeight: 1.1, marginBottom: '20px', color: '#ffffff' }}>
+          <h1 style={{ fontSize: '48px', fontWeight: 900, letterSpacing: '-1.5px', lineHeight: 1.1, marginBottom: '20px', color: 'var(--text)' }}>
             {t.hero.title}
           </h1>
-          <p style={{ color: 'rgba(255,255,255,0.65)', fontSize: '16px', lineHeight: 1.8, maxWidth: '640px', margin: '0 auto 36px' }}>
+          <p style={{ color: 'var(--text-2)', fontSize: '16px', lineHeight: 1.8, maxWidth: '640px', margin: '0 auto 36px' }}>
             {t.hero.subtitle}
           </p>
           <div style={{ display: 'flex', gap: '12px', justifyContent: 'center', flexWrap: 'wrap' }}>
-            <button className="btn-primary" onClick={() => router.push(href('/pricing'))} style={{ padding: '14px 28px', fontSize: '14px' }}>
+            <PrimaryButton href={href('/sign-up')} style={{ padding: '0 28px', height: '48px' }}>
               {t.hero.ctaPrimary}
-            </button>
-            <a href={`${href('/')}#product-tour`} style={{
-              padding: '14px 28px',
-              fontSize: '14px',
-              fontWeight: 600,
-              background: 'transparent',
-              color: '#ffffff',
-              border: '1px solid rgba(255,255,255,0.25)',
-              borderRadius: '12px',
-              textDecoration: 'none',
-              transition: 'background 0.15s'
-            }}
-              onMouseEnter={e => e.currentTarget.style.background = 'rgba(255,255,255,0.06)'}
-              onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
-            >
+            </PrimaryButton>
+            <SecondaryButton href={`${href('/')}#product-tour`} style={{ padding: '0 28px', height: '48px' }}>
               {t.hero.ctaSecondary}
-            </a>
+            </SecondaryButton>
           </div>
         </div>
 
@@ -129,7 +116,7 @@ export default function AboutView({ dict, locale }) {
       <section style={{ borderTop: '1px solid var(--border)', borderBottom: '1px solid var(--border)', background: '#fafafa', padding: '80px 24px' }}>
         <div style={{ maxWidth: '820px', margin: '0 auto' }}>
           <div style={{ fontSize: '28px', fontWeight: 800, letterSpacing: '-1px', color: 'var(--text)', marginBottom: '32px', borderLeft: '3px solid var(--accent)', paddingLeft: '24px', lineHeight: 1.3 }}>
-            "{t.letter.quote}"
+            &ldquo;{t.letter.quote}&rdquo;
           </div>
 
           <div style={{ color: 'var(--text-2)', fontSize: '15px', lineHeight: 1.8, display: 'flex', flexDirection: 'column', gap: '20px' }}>
@@ -175,16 +162,16 @@ export default function AboutView({ dict, locale }) {
 
       {/* FINAL CTA */}
       <section style={{ maxWidth: '820px', margin: '0 auto', padding: '80px 24px 100px' }}>
-        <div style={{ border: '1px solid var(--border)', borderRadius: '24px', padding: '48px 40px', textAlign: 'center', background: '#ffffff' }}>
+        <div style={{ border: '1px solid var(--border)', borderRadius: '24px', padding: '48px 40px', textAlign: 'center', background: '#fafafa' }}>
           <h2 style={{ fontSize: '28px', fontWeight: 900, letterSpacing: '-0.5px', marginBottom: '12px', color: 'var(--text)' }}>
             {t.finalCta.title}
           </h2>
           <p style={{ color: 'var(--text-2)', fontSize: '14px', marginBottom: '28px' }}>
             {t.finalCta.subtitle}
           </p>
-          <button className="btn-primary" onClick={() => router.push(href('/pricing'))} style={{ padding: '14px 36px', fontSize: '15px' }}>
+          <PrimaryButton href={href('/sign-up')} style={{ padding: '0 36px', height: '48px' }}>
             {t.finalCta.cta}
-          </button>
+          </PrimaryButton>
         </div>
 
         {/* Footer note */}
@@ -193,6 +180,8 @@ export default function AboutView({ dict, locale }) {
           <span>{t.footerNote.copyright}</span>
         </div>
       </section>
+
+      <Footer dict={dict.home.footer} locale={locale} />
 
     </div>
   );
