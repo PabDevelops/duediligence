@@ -344,7 +344,7 @@ export default function WorkspaceScreener() {
             flexShrink: 0
           }}>
             <span style={{ fontSize: '11px', color: 'var(--ws-text-2)', lineHeight: '1.5' }}>
-              Estás viendo las {ANON_RESULT_LIMIT} empresas más grandes por capitalización. Regístrate gratis para el screener completo, filtros avanzados y exportar a CSV.
+              You are viewing the top {ANON_RESULT_LIMIT} companies by market cap. Sign up free for the full screener, advanced filters and CSV export.
             </span>
             <div style={{ display: 'flex', gap: '8px', flexShrink: 0, alignItems: 'center' }}>
               <button onClick={() => router.push('/sign-up')} style={{
@@ -358,9 +358,9 @@ export default function WorkspaceScreener() {
                 cursor: 'pointer',
                 whiteSpace: 'nowrap'
               }}>
-                Registrarme gratis
+                Sign up free
               </button>
-              <button onClick={() => setBannerDismissed(true)} aria-label="Cerrar" style={{
+              <button onClick={() => setBannerDismissed(true)} aria-label="Close" style={{
                 background: 'none',
                 border: 'none',
                 color: 'var(--ws-text-3)',
@@ -456,10 +456,10 @@ export default function WorkspaceScreener() {
           {rateLimited ? (
             <div style={{ padding: '80px 20px', textAlign: 'center', color: 'var(--ws-text-3)' }}>
               <div style={{ fontSize: '13px', fontWeight: 700, color: 'var(--ws-text)', marginBottom: '8px' }}>
-                Has llegado al límite de exploración de esta hora
+                You have reached the browsing limit for this hour
               </div>
               <p style={{ fontSize: '11px', lineHeight: '1.6', maxWidth: '360px', margin: '0 auto 16px' }}>
-                Regístrate gratis para uso ilimitado del screener, o vuelve a intentarlo dentro de un rato.
+                Sign up free for unlimited screener use, or try again in a bit.
               </p>
               <button onClick={() => router.push('/sign-up')} style={{
                 background: 'var(--ws-accent)',
@@ -471,7 +471,7 @@ export default function WorkspaceScreener() {
                 fontWeight: 700,
                 cursor: 'pointer'
               }}>
-                Registrarme gratis
+                Sign up free
               </button>
             </div>
           ) : loading ? (

@@ -187,7 +187,7 @@ export default function WatchlistPage() {
       if (!isSignedIn) {
         const { added, atLimit } = addToGuestWatchlist(ticker);
         if (atLimit) {
-          setSearchError(`Límite de ${GUEST_WATCHLIST_LIMIT} valores temporales — regístrate para uso ilimitado`);
+          setSearchError(`Limit of ${GUEST_WATCHLIST_LIMIT} temporary tickers — sign up for unlimited use`);
         } else if (added) {
           setSearchQuery('');
           fetchWatchlist();
@@ -386,7 +386,7 @@ export default function WatchlistPage() {
           marginBottom: '20px'
         }}>
           <span style={{ fontSize: '11px', color: 'var(--ws-text-2)', lineHeight: '1.5' }}>
-            Esta watchlist es temporal y se borra al cerrar la pestaña. Regístrate gratis para guardarla permanentemente.
+            This watchlist is temporary and clears when you close the tab. Sign up free to save it permanently.
           </span>
           <Link href="/sign-up" style={{
             background: 'var(--ws-accent)',
@@ -398,7 +398,7 @@ export default function WatchlistPage() {
             textDecoration: 'none',
             whiteSpace: 'nowrap'
           }}>
-            Registrarme gratis
+            Sign up free
           </Link>
         </div>
       )}
@@ -408,7 +408,7 @@ export default function WatchlistPage() {
       ) : tickers.length === 0 ? (
         <div className="border border-ws-border p-12 text-center">
           <div style={{ color: 'var(--ws-text)', fontSize: '14px', fontWeight: 600, marginBottom: '6px' }}>
-            {isSignedIn ? 'Your watchlist is empty' : 'Tu watchlist temporal está vacía'}
+            {isSignedIn ? 'Your watchlist is empty' : 'Your temporary watchlist is empty'}
           </div>
           <div style={{ color: 'var(--ws-text-3)', fontSize: '12px' }}>Add a symbol above to get started.</div>
         </div>

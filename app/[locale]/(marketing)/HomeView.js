@@ -7,18 +7,6 @@ import { PrimaryButton } from '../../components/marketing/Buttons';
 import Footer from '../../components/marketing/Footer';
 import { localizeHref } from '../../../lib/i18n/locale';
 
-// Switching away from Spanish must explicitly clear the cookie — the
-// middleware treats NEXT_LOCALE as authoritative, so without this a bare
-// link back would just get redirected straight back to /es.
-function useLangToggle(locale) {
-  const otherLocaleHref = locale === 'es' ? '/' : '/es';
-  const label = locale === 'es' ? 'EN' : 'ES';
-  const onClick = () => {
-    if (locale === 'es') document.cookie = 'NEXT_LOCALE=en; path=/; max-age=31536000';
-  };
-  return { otherLocaleHref, label, onClick };
-}
-
 const CONTAINER = { maxWidth: '1160px', margin: '0 auto', padding: '0 clamp(16px, 5vw, 24px)' };
 
 export default function HomeView({ dict, locale }) {
@@ -32,7 +20,6 @@ export default function HomeView({ dict, locale }) {
     if (isLoaded && isSignedIn) router.replace('/home');
   }, [isLoaded, isSignedIn, router]);
 
-  const langToggle = useLangToggle(locale);
   const closeMenu = () => setMenuOpen(false);
 
   const navLink = { textDecoration: 'none', color: 'var(--text-2)', fontSize: '13px', fontWeight: 600 };
@@ -54,7 +41,6 @@ export default function HomeView({ dict, locale }) {
           </nav>
 
           <div className="desktop-only" style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
-            <a href={langToggle.otherLocaleHref} onClick={langToggle.onClick} style={{ textDecoration: 'none', color: 'var(--text-3)', fontSize: '13px', fontWeight: 700 }}>{langToggle.label}</a>
             <a href={href('/sign-in')} style={navLink}>{t.signIn}</a>
             {/* PrimaryButton renders a plain <a>, not <Link> — this crosses
                 from the apex marketing domain to terminal.traqcker.com in

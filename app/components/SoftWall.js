@@ -67,7 +67,7 @@ export default function SoftWall({
 // Full replacement lock for content we don't want to reveal even blurred
 // (the real numbers/charts are never mounted) — use where the shape of the
 // data itself is the thing being sold, e.g. a DCF model or a fair-value call.
-export function LockedPanel({ title, description, compact = false, ctaLabel = 'Registrarme gratis', ctaHref = '/sign-up' }) {
+export function LockedPanel({ title, description, compact = false, ctaLabel = 'Sign up free', ctaHref = '/sign-up' }) {
   return (
     <div style={{
       background: 'var(--ws-bg-1)',

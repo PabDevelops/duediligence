@@ -818,7 +818,7 @@ export default function WorkspaceHome() {
               justifyContent: 'space-between',
               gap: '8px'
             }}>
-              <span>ℹ️ Utilizando portafolio local. Inicia sesión para sincronizar.</span>
+              <span>ℹ️ Using local portfolio. Sign in to sync.</span>
               <button
                 onClick={() => router.push('/sign-in')}
                 style={{

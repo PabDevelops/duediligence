@@ -8,17 +8,11 @@ const META = {
     ogTitle: 'Pricing & Plans | Traqcker',
     ogDescription: 'Free to start, no credit card. Upgrade to Pro for multi-currency Portfolio tracking, full ETF coverage, and unlimited daily stock discovery.',
   },
-  es: {
-    title: 'Precios y planes — Traqcker',
-    description: 'Crea una cuenta gratuita de Traqcker para la valoración DCF completa, proyecciones, Fair Value y un screener sin límite. Sin tarjeta. Mejora a Pro para Cartera, ETFs y descubrimiento sin límite.',
-    ogTitle: 'Precios y planes | Traqcker',
-    ogDescription: 'Gratis para empezar, sin tarjeta. Mejora a Pro para seguimiento de cartera multidivisa, cobertura completa de ETFs y descubrimiento diario sin límite.',
-  },
 };
 
 export async function generateMetadata({ params }) {
   const { locale } = await params;
-  const m = META[locale] || META.en;
+  const m = META.en;
   const path = locale === 'es' ? '/es/pricing' : '/pricing';
   return {
     title: m.title,
