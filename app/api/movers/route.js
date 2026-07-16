@@ -1,14 +1,16 @@
 import { supabase } from '../../../lib/supabase';
+import { currentTradingDayBoundaryUtc } from '../../../lib/marketStatus';
 
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;
 
 // Tickers only get re-fetched when someone actually views them (no bulk daily cron), so
-// stock_cache rows sit at wildly different ages. Without this filter, "today's movers"
-// would mix a % change from 5 minutes ago with one from last week. 24h matches the same
-// freshness window /api/stock already treats as "current" (see CACHE_HOURS there).
-const MAX_CACHE_AGE_HOURS = 24;
-
+// stock_cache rows sit at wildly different ages. A rolling hour window doesn't line up with
+// market sessions though: a row cached right after yesterday's close stays under any window
+// under ~24h for nearly a full extra session, so it can keep showing up as "today's" mover
+// even once today's price has moved on from it (e.g. a stock that closed +36% yesterday but
+// has since dropped 60% today would still flash as a big gainer). Bounding by the current
+// trading day's start instead means only rows actually fetched during today's session count.
 export async function GET() {
   try {
     const { data: rows } = await supabase
@@ -20,10 +22,8 @@ export async function GET() {
 
     if (!rows?.length) return Response.json({ gainers: [], losers: [], topRoic: [], topFcfYield: [], topRevGrowth: [], topScore: [], topQuality: [], topOppo: [], bigCapMovers: [] });
 
-    const freshRows = rows.filter(r => {
-      const hoursOld = (Date.now() - new Date(r.updated_at).getTime()) / (1000 * 60 * 60);
-      return hoursOld < MAX_CACHE_AGE_HOURS;
-    });
+    const sessionBoundary = currentTradingDayBoundaryUtc();
+    const freshRows = rows.filter(r => new Date(r.updated_at).getTime() >= sessionBoundary.getTime());
 
     const stocks = freshRows.map(r => ({
       ticker: r.ticker,
