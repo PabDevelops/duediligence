@@ -12,6 +12,13 @@ import StockLogo from '../../components/workspace/StockLogo';
 import NewsImage from '../../components/workspace/home/NewsImage';
 import Card from '../../components/workspace/home/Card';
 import OnboardingBanner from '../../components/OnboardingBanner';
+import SentimentBreadth from '../../components/workspace/compare/SentimentBreadth';
+import EconomicCalendar from '../../components/workspace/compare/EconomicCalendar';
+import TechnicalScanner from '../../components/workspace/compare/TechnicalScanner';
+import InsiderActivity from '../../components/workspace/compare/InsiderActivity';
+import MarketDiscovery from '../../components/workspace/home/MarketDiscovery';
+import SpotlightPanel from '../../components/workspace/home/SpotlightPanel';
+import { useSpotlight } from '../../../lib/hooks/useSpotlight';
 
 // Same set + localStorage key as the dedicated /portfolio page, so the display
 // currency preference stays in sync between that page and this dashboard widget.
@@ -20,11 +27,11 @@ const CURRENCIES = { USD: '$', EUR: '€', GBP: '£' };
 // Fixed dashboard layout — a new user with an empty portfolio/watchlist shouldn't have to
 // configure a dashboard before it's useful. Drag-to-reorder and per-widget visibility used
 // to live here; if a genuinely power-user "advanced mode" is worth building later, it should
-// be designed fresh for that purpose rather than re-enabling this. Market Intelligence,
-// Earnings Calendar and Stock of the Week were cut entirely — they duplicated content that
-// already lives (in more depth) on the Radar and Calendar pages, or added little beyond a
-// gimmick once the community-voting angle was removed. News stays: unlike those, it's
-// content the user actually comes back to Home to read.
+// be designed fresh for that purpose rather than re-enabling this. Earnings Calendar and
+// Stock of the Week were cut entirely — they added little beyond a gimmick once the
+// community-voting angle was removed. News stays, and the standalone Radar page's market
+// intelligence (sentiment, movers, sectors, baskets, Spotlight) was folded in below instead
+// of living behind a separate nav item — see the Market Intelligence section further down.
 const LEFT_WIDGETS = ['indices', 'portfolio', 'workspace'];
 const RIGHT_WIDGETS = ['secFeed'];
 
@@ -77,13 +84,18 @@ export default function WorkspaceHome() {
   const fxRate = currency === 'USD' ? 1 : (fxRates[currency] || 1);
   const currencySymbol = CURRENCIES[currency];
 
-  // Widget States — movers still feeds the top marquee ticker even though the Market
-  // Intelligence widget that used to also read from it was cut (see LEFT/RIGHT_WIDGETS above).
+  // Widget States — movers feeds the top marquee ticker as well as the Market
+  // Intelligence / Discovery sections and the Spotlight panel below.
   const [movers, setMovers] = useState(null);
   const [marqueeMode, setMarqueeMode] = useState('gainers'); // 'gainers' | 'losers' | 'bigCapMovers'
   const [watchlist, setWatchlist] = useState([]);
   const [recentViewed, setRecentViewed] = useState([]);
   const [activeWorkspaceTab, setActiveWorkspaceTab] = useState('watchlist');
+
+  // Ticker analyzer side panel — folded in from the old standalone Radar page. Any list
+  // on Home (movers, sectors, baskets, calendar, insider activity...) can pop a quick
+  // quote + Quality Score preview here via spotlight.trigger(ticker).
+  const spotlight = useSpotlight();
 
   // Live market and news states
   const [indices, setIndices] = useState([]);
@@ -217,6 +229,52 @@ export default function WorkspaceHome() {
   const quoteTickers = useMemo(() => {
     return [...new Set([...newsTickers, ...recentViewed])];
   }, [newsTickers, recentViewed]);
+
+  // Cheap ticker membership lookup for the Market Discovery tables and Spotlight panel's
+  // watchlist star — watchlist itself stays an array of {ticker, created_at, pie} rows
+  // (matches the Coverage Workspace table below), this is just a derived Set for .has().
+  const watchlistSet = useMemo(() => new Set(watchlist.map(w => w.ticker)), [watchlist]);
+
+  const toggleWatchlist = async (ticker) => {
+    if (!isSignedIn) {
+      router.push('/sign-in');
+      return;
+    }
+    const inWatchlist = watchlistSet.has(ticker);
+    const method = inWatchlist ? 'DELETE' : 'POST';
+    try {
+      await fetch('/api/watchlist', {
+        method,
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ticker })
+      });
+      setWatchlist(prev =>
+        inWatchlist ? prev.filter(w => w.ticker !== ticker) : [...prev, { ticker, created_at: new Date().toISOString(), pie: null }]
+      );
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  // Market Intelligence inputs — Fear & Greed gauge and breadth, ported from the old
+  // standalone Radar page. Both derive from data Home already fetches (indices, movers),
+  // no extra network calls needed.
+  const vixMarket = useMemo(() => indices.find(m => m.symbol === '^VIX'), [indices]);
+  const sp500Change = useMemo(() => {
+    const sp500 = indices.find(m => m.symbol === '^GSPC');
+    if (sp500 && sp500.candles?.length > 1) {
+      const startPrice = sp500.candles[0].c;
+      const endPrice = sp500.candles[sp500.candles.length - 1].c;
+      return ((endPrice - startPrice) / startPrice) * 100;
+    }
+    return 0;
+  }, [indices]);
+  const advanceDeclineRatio = useMemo(() => {
+    const gainersCount = movers?.gainers?.length || 0;
+    const losersCount = movers?.losers?.length || 0;
+    const totalMovers = gainersCount + losersCount;
+    return totalMovers > 0 ? gainersCount / totalMovers : 0.5;
+  }, [movers]);
 
   // Fetch personalized news whenever the holdings/watchlist ticker set changes
   useEffect(() => {
@@ -1320,7 +1378,8 @@ export default function WorkspaceHome() {
   const mobileWidgets = [...LEFT_WIDGETS, ...RIGHT_WIDGETS];
 
   return (
-    <div className="home-container" style={{ padding: '24px', display: 'flex', flexDirection: 'column', gap: '24px' }}>
+    <div style={{ display: 'flex', minHeight: 'calc(100vh - var(--topbar-height))', position: 'relative', overflowX: 'hidden' }}>
+    <div className="home-container" style={{ flex: 1, minWidth: 0, padding: '24px', display: 'flex', flexDirection: 'column', gap: '24px' }}>
       <OnboardingBanner />
 
       {/* Top Movers Marquee Ticker — pick Gainers/Losers/Big Cap Movers from the dropdown, all today-only (see MAX_CACHE_AGE_HOURS in /api/movers), auto-scrolls continuously */}
@@ -1393,6 +1452,26 @@ export default function WorkspaceHome() {
         );
       })()}
 
+      {/* Market Intelligence — sentiment/breadth, corporate calendar, technical scanner and
+          insider activity, folded in from the old standalone Radar page. All four read off
+          state Home already fetches (movers, indices), no dedicated data loading of their own
+          beyond the calendar's and insider activity's own lightweight fetches. */}
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '14px' }}>
+        <SentimentBreadth vixMarket={vixMarket} sp500Change={sp500Change} advanceDeclineRatio={advanceDeclineRatio} />
+        <EconomicCalendar triggerSpotlight={spotlight.trigger} />
+        <TechnicalScanner movers={movers} triggerSpotlight={spotlight.trigger} />
+        <InsiderActivity movers={movers} triggerSpotlight={spotlight.trigger} />
+      </div>
+
+      {/* Market Discovery — sector momentum, daily movers/fundamental leaders, and curated
+          thematic/industry baskets. Also folded in from Radar. */}
+      <MarketDiscovery
+        movers={movers}
+        watchlistSet={watchlistSet}
+        onToggleWatchlist={toggleWatchlist}
+        onSelectTicker={spotlight.trigger}
+      />
+
       {/* Main grid — mobile collapses to one fixed-order column; desktop keeps the
           fixed two-column split (see LEFT_WIDGETS/RIGHT_WIDGETS above). */}
       {isMobile ? (
@@ -1455,6 +1534,19 @@ export default function WorkspaceHome() {
           }
         }
       `}</style>
+    </div>
+
+    <SpotlightPanel
+      ticker={spotlight.ticker}
+      data={spotlight.data}
+      loading={spotlight.loading}
+      sparkline={spotlight.sparkline}
+      quality={spotlight.quality}
+      onSelect={spotlight.trigger}
+      onClose={spotlight.close}
+      watchlistSet={watchlistSet}
+      onToggleWatchlist={toggleWatchlist}
+    />
     </div>
   );
 }

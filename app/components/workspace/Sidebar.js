@@ -29,16 +29,6 @@ const NAV_ITEMS = [
       <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/>
     </svg>
   )},
-  { id: 'radar', href: '/radar', label: 'Radar', icon: (active) => (
-    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke={active ? 'var(--ws-accent)' : 'currentColor'} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-      <circle cx="12" cy="12" r="10" />
-      <circle cx="12" cy="12" r="6" />
-      <circle cx="12" cy="12" r="2" />
-      <path d="M12 2v20" />
-      <path d="M2 12h20" />
-      <path d="m19.07 4.93-14.14 14.14" />
-    </svg>
-  )},
   { id: 'portfolio', href: '/portfolio', label: 'Portfolio', icon: (active) => (
     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke={active ? 'var(--ws-accent)' : 'currentColor'} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
       <rect width="20" height="14" x="2" y="5" rx="2"/><line x1="2" x2="22" y1="10" y2="10"/>
