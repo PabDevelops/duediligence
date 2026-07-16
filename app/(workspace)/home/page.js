@@ -7,6 +7,7 @@ import MarketStatusDot from '../../components/workspace/MarketStatusDot';
 import { formatPriceWithSymbol as formatCurrency } from '../../../lib/formatters';
 import { useCurrencyRates } from '../../../lib/hooks/useCurrencyRates';
 import { distributeMasonryColumns } from '../../../lib/homeLayout';
+import { computeEasyMode } from '../../../lib/stockScoring';
 import StockLogo from '../../components/workspace/StockLogo';
 import NewsImage from '../../components/workspace/home/NewsImage';
 import Card from '../../components/workspace/home/Card';
@@ -26,6 +27,12 @@ const CURRENCIES = { USD: '$', EUR: '€', GBP: '£' };
 // content the user actually comes back to Home to read.
 const LEFT_WIDGETS = ['indices', 'portfolio', 'workspace'];
 const RIGHT_WIDGETS = ['secFeed'];
+
+// Same "is there enough fundamental data to score this" check used on the stock detail
+// page's Quality tab and the /watchlist table — avoids showing a fabricated-looking score
+// for recent IPOs / thinly-covered tickers with no SEC/Finnhub fundamentals yet.
+const hasFundamentals = (data) => data.revVal != null || data.niVal != null || data.marketCap != null
+  || data.roic != null || data.grossMargin != null || (data.revHistory?.length ?? 0) > 0;
 
 export default function WorkspaceHome() {
   const router = useRouter();
@@ -560,6 +567,7 @@ export default function WorkspaceHome() {
                       <th className="px-[18px] py-2.5 text-left font-semibold text-ws-text-3 text-[10px]">TICKER</th>
                       <th className="px-[18px] py-2.5 text-right font-semibold text-ws-text-3 text-[10px]">PRICE</th>
                       <th className="px-[18px] py-2.5 text-right font-semibold text-ws-text-3 text-[10px]">TODAY</th>
+                      <th className="px-[18px] py-2.5 text-right font-semibold text-ws-text-3 text-[10px]" title="Traqcker Quality Score">QUALITY</th>
                       <th className="px-[18px] py-2.5 text-left font-semibold text-ws-text-3 text-[10px]">ADDED</th>
                       <th className="px-[18px] py-2.5" />
                     </tr>
@@ -569,6 +577,8 @@ export default function WorkspaceHome() {
                       const price = prices[item.ticker];
                       const changePct = dayChanges[item.ticker];
                       const hasChange = changePct != null;
+                      const detail = stockDetails[item.ticker];
+                      const easyMode = detail ? computeEasyMode(detail, hasFundamentals(detail)) : null;
                       return (
                         <tr key={item.ticker} onClick={() => router.push(`/stock/${item.ticker}`)}
                           className="border-b border-ws-border cursor-pointer transition-[background] duration-150"
@@ -583,6 +593,9 @@ export default function WorkspaceHome() {
                           </td>
                           <td style={{ padding: '10px 18px', textAlign: 'right', fontWeight: 700, color: hasChange ? (changePct >= 0 ? '#10b981' : 'var(--ws-red)') : 'var(--ws-text-3)' }}>
                             {hasChange ? `${changePct >= 0 ? '+' : ''}${changePct.toFixed(2)}%` : '—'}
+                          </td>
+                          <td style={{ padding: '10px 18px', textAlign: 'right', fontWeight: 700, color: easyMode ? easyMode.verdictColor : 'var(--ws-text-3)' }} title={easyMode ? easyMode.verdict : 'Not enough fundamentals yet'}>
+                            {easyMode ? easyMode.score100 : '—'}
                           </td>
                           <td style={{ padding: '10px 18px', color: 'var(--ws-text-3)' }}>
                             {new Date(item.created_at).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}
@@ -612,6 +625,7 @@ export default function WorkspaceHome() {
                       <th className="px-[18px] py-2.5 text-left font-semibold text-ws-text-3 text-[10px]">TICKER</th>
                       <th className="px-[18px] py-2.5 text-right font-semibold text-ws-text-3 text-[10px]">PRICE</th>
                       <th className="px-[18px] py-2.5 text-right font-semibold text-ws-text-3 text-[10px]">TODAY</th>
+                      <th className="px-[18px] py-2.5 text-right font-semibold text-ws-text-3 text-[10px]" title="Traqcker Quality Score">QUALITY</th>
                       <th className="px-[18px] py-2.5" />
                     </tr>
                   </thead>
@@ -620,6 +634,8 @@ export default function WorkspaceHome() {
                       const price = prices[ticker];
                       const changePct = dayChanges[ticker];
                       const hasChange = changePct != null;
+                      const detail = stockDetails[ticker];
+                      const easyMode = detail ? computeEasyMode(detail, hasFundamentals(detail)) : null;
                       return (
                         <tr key={ticker} onClick={() => router.push(`/stock/${ticker}`)}
                           className="border-b border-ws-border cursor-pointer transition-[background] duration-150"
@@ -634,6 +650,9 @@ export default function WorkspaceHome() {
                           </td>
                           <td style={{ padding: '10px 18px', textAlign: 'right', fontWeight: 700, color: hasChange ? (changePct >= 0 ? '#10b981' : 'var(--ws-red)') : 'var(--ws-text-3)' }}>
                             {hasChange ? `${changePct >= 0 ? '+' : ''}${changePct.toFixed(2)}%` : '—'}
+                          </td>
+                          <td style={{ padding: '10px 18px', textAlign: 'right', fontWeight: 700, color: easyMode ? easyMode.verdictColor : 'var(--ws-text-3)' }} title={easyMode ? easyMode.verdict : 'Not enough fundamentals yet'}>
+                            {easyMode ? easyMode.score100 : '—'}
                           </td>
                           <td className="px-[18px] py-2.5 text-right font-semibold text-ws-accent">
                             →
