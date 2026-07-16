@@ -10,9 +10,20 @@ export async function GET(req) {
       const from = searchParams.get('from') || new Date(today.getTime() - 14 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10);
       const to = searchParams.get('to') || new Date(today.getTime() + 90 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10);
 
-      const fhRes = await fetch(`https://finnhub.io/api/v1/calendar/earnings?symbol=${ticker}&from=${from}&to=${to}&token=${FH_KEY}`, {
+      const fhRawRes = await fetch(`https://finnhub.io/api/v1/calendar/earnings?symbol=${ticker}&from=${from}&to=${to}&token=${FH_KEY}`, {
         headers: { 'User-Agent': 'Mozilla/5.0' },
-      }).then(r => r.json());
+      });
+      const fhRes = await fhRawRes.json().catch(() => ({}));
+
+      // A rate-limited/unauthorized/plan-restricted Finnhub response silently degraded to
+      // "no earnings" before — `(fhRes.earningsCalendar || [])` can't tell an empty calendar
+      // apart from a failed request. Logging the raw failure here at least makes that
+      // distinguishable server-side (check Vercel logs) instead of looking identical to a
+      // ticker that genuinely has no upcoming earnings date on file.
+      const fhFailed = !fhRawRes.ok || !!fhRes.error;
+      if (fhFailed) {
+        console.error(`[earnings] Finnhub calendar/earnings failed for symbol=${ticker}: status=${fhRawRes.status} body=${JSON.stringify(fhRes).slice(0, 300)}`);
+      }
 
       const earnings = (fhRes.earningsCalendar || [])
         .filter(e => e.symbol === ticker && e.date)
@@ -23,7 +34,12 @@ export async function GET(req) {
           hour: e.hour,
         }));
 
-      return Response.json({ earnings });
+      // Surfaced only on a genuine upstream failure (bad/rate-limited key, plan restriction,
+      // etc.) so hitting this URL directly distinguishes "Finnhub errored" from "Finnhub
+      // returned zero events for this ticker" — the two used to look identical.
+      return Response.json(fhFailed
+        ? { earnings, debug: { finnhubStatus: fhRawRes.status, finnhubError: fhRes.error || null } }
+        : { earnings });
     }
 
     const from = searchParams.get('from') || today.toISOString().slice(0, 10);
@@ -65,8 +81,11 @@ export async function GET(req) {
         fetch(`https://finnhub.io/api/v1/calendar/earnings?from=${chunk.from}&to=${chunk.to}&token=${FH_KEY}`, {
           headers: { 'User-Agent': 'Mozilla/5.0' },
         })
-        .then(r => r.json())
-        .then(d => d.earningsCalendar || [])
+        .then(async r => {
+          const d = await r.json().catch(() => ({}));
+          if (!r.ok || d.error) console.error(`[earnings] Finnhub calendar/earnings failed for ${chunk.from}..${chunk.to}: status=${r.status} body=${JSON.stringify(d).slice(0, 300)}`);
+          return d.earningsCalendar || [];
+        })
         .catch(() => [])
       );
     } else {
@@ -74,8 +93,11 @@ export async function GET(req) {
         fetch(`https://finnhub.io/api/v1/calendar/earnings?from=${from}&to=${to}&token=${FH_KEY}`, {
           headers: { 'User-Agent': 'Mozilla/5.0' },
         })
-        .then(r => r.json())
-        .then(d => d.earningsCalendar || [])
+        .then(async r => {
+          const d = await r.json().catch(() => ({}));
+          if (!r.ok || d.error) console.error(`[earnings] Finnhub calendar/earnings failed for ${from}..${to}: status=${r.status} body=${JSON.stringify(d).slice(0, 300)}`);
+          return d.earningsCalendar || [];
+        })
         .catch(() => [])
       ];
     }
