@@ -610,6 +610,12 @@ export default function StockPage({ params }) {
     fcfMarginRampYears: dcfValue.fcfMarginRampYears,
   }) : null;
 
+  // International stocks (sourced via the Yahoo fallback, not SEC EDGAR) are the
+  // freemium wedge: header, sparkline and the hero Quality Score stay free, but every
+  // tab requires a free account to view.
+  const isInternational = data.internationalSource === 'yahoo';
+  const tabsLocked = isInternational && !isSignedIn;
+
   return (
     <div className="p-6">
 
@@ -777,7 +783,12 @@ export default function StockPage({ params }) {
         </div>
 
         {/* OVERVIEW TAB — 2-column layout */}
-        {tab === 'overview' && (
+        {tab === 'overview' && (tabsLocked ? (
+          <LockedPanel
+            title="Overview"
+            description="Los datos completos de este mercado internacional se desbloquean con una cuenta gratuita."
+          />
+        ) : (
           <div className="stock-overview-grid">
 
             {/* Left column: vote + numbers + chart */}
@@ -1119,10 +1130,15 @@ export default function StockPage({ params }) {
 
             </div>
           </div>
-        )}
+        ))}
 
         {/* QUALITY TAB */}
-        {tab === 'quality' && easyMode && (
+        {tab === 'quality' && easyMode && (tabsLocked ? (
+          <LockedPanel
+            title="Quality Score"
+            description="El desglose completo del Quality Score se desbloquea con una cuenta gratuita."
+          />
+        ) : (
   <div>
     {(() => {
       const isFinancial = (data.sector || '').toLowerCase().includes('bank')
@@ -1266,10 +1282,15 @@ export default function StockPage({ params }) {
       );
     })()}
   </div>
-)}
+))}
 
         {/* FINANCIALS TAB */}
-        {tab === 'financials' && (
+        {tab === 'financials' && (tabsLocked ? (
+          <LockedPanel
+            title="Financials"
+            description="Los estados financieros completos se desbloquean con una cuenta gratuita."
+          />
+        ) : (
   <div>
     <div style={{ display: 'flex', gap: '8px', marginBottom: '16px' }}>
       {[['snapshot', 'SNAPSHOT'], ['income', 'INCOME'], ['balance', 'BALANCE'], ['cashflow', 'CASH FLOW']].map(([key, label]) => (
@@ -1599,7 +1620,7 @@ export default function StockPage({ params }) {
       SOURCE: SEC EDGAR (XBRL) · FINNHUB · NOT INVESTMENT ADVICE
     </div>
   </div>
-)}
+))}
 
         {/* DCF TAB — locked entirely for guests, not just blurred: the valuation
             call itself is the product. */}
@@ -1810,7 +1831,12 @@ export default function StockPage({ params }) {
         ))}
 
         {/* INSIDERS TAB — Form 3/4/5 buy/sell activity, SEC EDGAR primary / Finnhub fallback */}
-        {tab === 'insiders' && (
+        {tab === 'insiders' && (tabsLocked ? (
+          <LockedPanel
+            title="Insiders"
+            description="La actividad de insiders (Form 3/4/5) se desbloquea con una cuenta gratuita."
+          />
+        ) : (
           <div>
             <div className="text-ws-text-3 text-[10px] tracking-[2px] border-b border-ws-border pb-1.5 mb-3 mt-6">
               INSIDER TRANSACTIONS — LAST REPORTED FORM 4 FILINGS
@@ -2005,7 +2031,7 @@ export default function StockPage({ params }) {
               SOURCE: SEC EDGAR FORM 4 (PRIMARY) · FINNHUB (FALLBACK FOR NON-SEC TICKERS) · ★ = OFFICER TITLE MATCHES CEO/CFO · GRAY LABELS (GRANT/EXERCISE/TAX WITHHOLD/GIFT) ARE NOT OPEN-MARKET TRADES · NOT INVESTMENT ADVICE
             </div>
           </div>
-        )}
+        ))}
 
       </div>
 
