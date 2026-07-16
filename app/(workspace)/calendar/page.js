@@ -214,7 +214,7 @@ export default function WorkspaceCalendar() {
           <div>
             <div style={{ fontSize: '10px', color: 'var(--ws-text-3)', fontWeight: 700, letterSpacing: '0.5px', marginBottom: '4px' }}>EARNINGS THIS MONTH</div>
             <div style={{ fontSize: '24px', fontWeight: 800, color: 'var(--ws-text)' }}>{earnings === null ? '—' : stats.totalEarnings}</div>
-            <div style={{ fontSize: '11px', color: 'var(--ws-text-2)', marginTop: '2px' }}>Covered companies reporting</div>
+            <div style={{ fontSize: '11px', color: 'var(--ws-text-2)', marginTop: '2px' }}>Companies reporting</div>
           </div>
           <div style={{ width: '40px', height: '40px', borderRadius: '8px', background: 'rgba(20, 184, 166, 0.08)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--ws-accent)' }}>
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="20" x2="18" y2="10"></line><line x1="12" y1="20" x2="12" y2="4"></line><line x1="6" y1="20" x2="6" y2="14"></line></svg>

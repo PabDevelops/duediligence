@@ -1,5 +1,3 @@
-import { supabase } from '../../../lib/supabase';
-
 const FH_KEY = process.env.FINNHUB_API_KEY;
 
 export async function GET(req) {
@@ -82,21 +80,22 @@ export async function GET(req) {
       ];
     }
 
-    const [earningsResults, ipoRes, coverage] = await Promise.all([
+    const [earningsResults, ipoRes] = await Promise.all([
       Promise.all(earningsPromises).then(results => results.flat()),
       fetch(`https://finnhub.io/api/v1/calendar/ipo?from=${from}&to=${to}&token=${FH_KEY}`, {
         headers: { 'User-Agent': 'Mozilla/5.0' },
       }).then(r => r.json()).catch(() => ({})),
-      supabase.from('stock_cache').select('ticker'),
     ]);
 
-    const covered = new Set((coverage.data || []).map(r => r.ticker));
-
-    // Deduplicate just in case
+    // Previously restricted to tickers already present in stock_cache ("covered" companies) —
+    // that silently dropped real earnings dates for any ticker nobody had viewed/cached yet
+    // (e.g. NOK's own July earnings never showed up because no one had opened /stock/NOK
+    // recently). Clicking an event still routes to /stock/[ticker], which fetches fresh data
+    // on a cache miss, so there's no reason to gate the calendar on caching state.
     const seen = new Set();
     const earnings = [];
     for (const e of earningsResults) {
-      if (e.symbol && e.date && covered.has(e.symbol)) {
+      if (e.symbol && e.date) {
         const key = `${e.symbol}-${e.date}`;
         if (!seen.has(key)) {
           seen.add(key);

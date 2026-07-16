@@ -19,15 +19,27 @@ export async function GET(request) {
   }
 
   try {
-    const { data, error } = await supabase
-      .from('stock_cache')
-      .select('ticker, data, updated_at')
-      .neq('ticker', 'INHD')
-      .order('updated_at', { ascending: false });
+    // Supabase/PostgREST caps a single select at 1000 rows by default with no error — once
+    // stock_cache grows past that, a plain .select() here would silently drop whichever
+    // tickers didn't land in that first page, with no stable order guaranteed across
+    // requests. Page through with .range() until a page comes back short, so every cached
+    // ticker reaches the screener regardless of table size.
+    const PAGE_SIZE = 1000;
+    const rows = [];
+    for (let offset = 0; ; offset += PAGE_SIZE) {
+      const { data: page, error } = await supabase
+        .from('stock_cache')
+        .select('ticker, data, updated_at')
+        .neq('ticker', 'INHD')
+        .order('updated_at', { ascending: false })
+        .range(offset, offset + PAGE_SIZE - 1);
 
-    if (error) throw error;
+      if (error) throw error;
+      rows.push(...(page || []));
+      if (!page || page.length < PAGE_SIZE) break;
+    }
 
-    let stocks = (data || []).map(row => ({
+    let stocks = rows.map(row => ({
       ticker: row.ticker,
       name: row.data.name,
       sector: row.data.sector,
