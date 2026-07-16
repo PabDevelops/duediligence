@@ -3,16 +3,16 @@ import PricingView from './PricingView';
 
 const META = {
   en: {
-    title: 'Pricing & Plans — Traqcker Pro',
-    description: 'Try Traqcker Pro free for 14 days. Access institutional-grade stock screeners, full financial statement histories, and advanced valuation tools.',
+    title: 'Pricing & Plans — Traqcker',
+    description: 'Create a free Traqcker account for full DCF valuation, projections, Fair Value, and an uncapped stock screener. No credit card. Upgrade to Pro for Portfolio, ETFs, and unlimited discovery.',
     ogTitle: 'Pricing & Plans | Traqcker',
-    ogDescription: 'Start your 14-day free trial of Traqcker Pro. Unlock advanced screeners, full financial history, and comprehensive intrinsic valuation modeling.',
+    ogDescription: 'Free to start, no credit card. Upgrade to Pro for multi-currency Portfolio tracking, full ETF coverage, and unlimited daily stock discovery.',
   },
   es: {
-    title: 'Precios y planes — Traqcker Pro',
-    description: 'Prueba Traqcker Pro gratis durante 14 días. Accede a screeners de nivel institucional, historiales de estados financieros completos y herramientas de valoración avanzadas.',
+    title: 'Precios y planes — Traqcker',
+    description: 'Crea una cuenta gratuita de Traqcker para la valoración DCF completa, proyecciones, Fair Value y un screener sin límite. Sin tarjeta. Mejora a Pro para Cartera, ETFs y descubrimiento sin límite.',
     ogTitle: 'Precios y planes | Traqcker',
-    ogDescription: 'Empieza tu prueba gratis de 14 días de Traqcker Pro. Desbloquea screeners avanzados, historial financiero completo y modelización de valor intrínseco.',
+    ogDescription: 'Gratis para empezar, sin tarjeta. Mejora a Pro para seguimiento de cartera multidivisa, cobertura completa de ETFs y descubrimiento diario sin límite.',
   },
 };
 
