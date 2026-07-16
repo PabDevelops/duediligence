@@ -99,10 +99,7 @@ export default function HomeView({ dict, locale }) {
             <a href={href('/pricing')} onClick={closeMenu} style={mobileNavLink}>{t.nav.pricing}</a>
             <a href={href('/sign-in')} onClick={closeMenu} style={mobileNavLink}>{t.signIn}</a>
             <div style={{ height: '1px', background: 'var(--border)', margin: '8px 0 16px' }} />
-            <PrimaryButton href="/home" onClick={closeMenu} style={{ width: '100%', marginBottom: '10px' }}>{t.cta}</PrimaryButton>
-            <a href={langToggle.otherLocaleHref} onClick={() => { langToggle.onClick(); closeMenu(); }} style={{ textDecoration: 'none', color: 'var(--text-3)', fontSize: '13px', fontWeight: 700 }}>
-              {locale === 'es' ? 'Switch to English' : 'Cambiar a Español'}
-            </a>
+            <PrimaryButton href="/home" onClick={closeMenu} style={{ width: '100%' }}>{t.cta}</PrimaryButton>
           </div>
         </div>
       </header>
