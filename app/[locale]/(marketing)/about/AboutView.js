@@ -151,9 +151,9 @@ export default function AboutView({ dict, locale }) {
               <p style={{ color: 'var(--text-2)', fontSize: '13px', lineHeight: 1.7, marginBottom: '12px', maxWidth: '440px' }}>
                 {t.team.bio}
               </p>
-              <a href="https://twitter.com/PabloDevelops" target="_blank" rel="noopener noreferrer"
+              <a href="https://twitter.com/pabloinvesting_" target="_blank" rel="noopener noreferrer"
                 style={{ color: 'var(--accent)', fontSize: '13px', fontWeight: 600, textDecoration: 'none' }}>
-                @PabloDevelops ↗
+                @pabloinvesting_ ↗
               </a>
             </div>
           </div>
