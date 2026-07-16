@@ -799,9 +799,8 @@ tr:hover td.sticky-col {
   }
 }
 
-/* Spotlight Panel Drawer styles — ticker analyzer side panel, used on Home (folded in
-   from the old standalone Radar page). */
-.spotlight-panel {
+/* Market Radar Spotlight Panel Drawer styles */
+.radar-spotlight-panel {
   width: 360px;
   flex-shrink: 0;
   background: var(--ws-bg-1);
@@ -818,7 +817,7 @@ tr:hover td.sticky-col {
   transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 @media (max-width: 1023px) {
-  .spotlight-panel {
+  .radar-spotlight-panel {
     position: fixed !important;
     top: 48px !important; /* height of mobile topbar */
     bottom: 0 !important;
@@ -827,16 +826,16 @@ tr:hover td.sticky-col {
     height: auto !important;
     box-shadow: -10px 0 30px rgba(0,0,0,0.15) !important;
   }
-  .spotlight-panel.open {
+  .radar-spotlight-panel.open {
     transform: translateX(-360px) !important;
   }
 }
 
-.spotlight-backdrop {
+.radar-spotlight-backdrop {
   display: none;
 }
 @media (max-width: 1023px) {
-  .spotlight-backdrop {
+  .radar-spotlight-backdrop {
     display: block;
     position: fixed;
     inset: 48px 0 0 0;

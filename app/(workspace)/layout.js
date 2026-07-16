@@ -8,7 +8,7 @@ import { useUser } from '../components/AuthProvider';
 // part of the anonymous-access exploration flow. Watchlist is included here
 // too — signed-out users get a session-only watchlist there, gated inside
 // the page itself, not at this layout level.
-const PUBLIC_ROUTES = ['/home', '/search', '/stock', '/screener', '/calendar', '/watchlist'];
+const PUBLIC_ROUTES = ['/home', '/search', '/stock', '/screener', '/radar', '/calendar', '/watchlist'];
 
 function isPublicPath(path) {
   return PUBLIC_ROUTES.some(r => path === r || path.startsWith(r + '/'));

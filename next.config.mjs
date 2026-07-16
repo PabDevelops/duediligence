@@ -12,12 +12,7 @@ const nextConfig = {
     return [
       {
         source: '/compare',
-        destination: '/home',
-        permanent: true,
-      },
-      {
-        source: '/radar',
-        destination: '/home',
+        destination: '/radar',
         permanent: true,
       },
     ];
