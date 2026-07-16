@@ -29,13 +29,17 @@ const VALUE_PROP_SHOTS = [
   { windowTitle: 'terminal.traqcker.com/screener — Quantitative Universe Filter', src: '/screenshots/screener.png', alt: 'Quantitative stock screener grid' },
 ];
 
-const PRODUCT_TOUR_SHOTS = [
-  { src: '/screenshots/home.png', alt: 'Traqcker home dashboard with market snapshot', windowTitle: 'terminal.traqcker.com/home — Market Overview Dashboard' },
-  { src: '/screenshots/portfolio.png', alt: 'Traqcker multi-currency portfolio tracker', windowTitle: 'terminal.traqcker.com/portfolio — Multi-Currency Portfolio' },
-  { src: '/screenshots/stock.png', alt: 'Traqcker stock analysis page verified against SEC filings', windowTitle: 'terminal.traqcker.com/stock/AAPL — SEC Source Reference' },
-  { src: '/screenshots/screener.png', alt: 'Traqcker quantitative stock screener', windowTitle: 'terminal.traqcker.com/screener — Quantitative Universe Filter' },
-  { src: '/screenshots/radar.png', alt: 'Traqcker Radar market intelligence dashboard', windowTitle: 'terminal.traqcker.com/radar — Market Radar' },
-  { src: '/screenshots/calendar.png', alt: 'Traqcker earnings and filings calendar', windowTitle: 'terminal.traqcker.com/calendar — Earnings & Filings Calendar' },
+// Product Tour no longer shows screenshots — each step links straight into
+// the real, now-anonymous-accessible route instead of a static image of it.
+// windowTitle stays as the WindowChrome "browser bar" label so the fake-URL
+// framing (and the implicit "this is a real page" cue) is preserved.
+const PRODUCT_TOUR_STOPS = [
+  { route: '/home', windowTitle: 'terminal.traqcker.com/home — Market Overview Dashboard' },
+  { route: '/portfolio', windowTitle: 'terminal.traqcker.com/portfolio — Multi-Currency Portfolio' },
+  { route: '/stock/AAPL', windowTitle: 'terminal.traqcker.com/stock/AAPL — SEC Source Reference' },
+  { route: '/screener', windowTitle: 'terminal.traqcker.com/screener — Quantitative Universe Filter' },
+  { route: '/radar', windowTitle: 'terminal.traqcker.com/radar — Market Radar' },
+  { route: '/calendar', windowTitle: 'terminal.traqcker.com/calendar — Earnings & Filings Calendar' },
 ];
 
 export default function HomeView({ dict, locale }) {
@@ -358,8 +362,30 @@ export default function HomeView({ dict, locale }) {
                   <p style={{ fontSize: '14px', color: 'var(--text-2)', lineHeight: 1.7 }}>{s.desc}</p>
                 </div>
                 <div style={{ flex: '1.4 1 420px' }}>
-                  <WindowChrome title={PRODUCT_TOUR_SHOTS[idx].windowTitle}>
-                    <Shot src={PRODUCT_TOUR_SHOTS[idx].src} alt={PRODUCT_TOUR_SHOTS[idx].alt} />
+                  <WindowChrome title={PRODUCT_TOUR_STOPS[idx].windowTitle}>
+                    <div style={{ padding: '64px 32px', textAlign: 'center' }}>
+                      <div style={{ fontSize: '12px', color: 'var(--text-3)', marginBottom: '18px' }}>
+                        {t.productTour.liveNote}
+                      </div>
+                      <a href={PRODUCT_TOUR_STOPS[idx].route} style={{
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: '8px',
+                        padding: '12px 24px',
+                        background: 'var(--accent)',
+                        color: '#ffffff',
+                        fontSize: '13px',
+                        fontWeight: 700,
+                        borderRadius: '8px',
+                        textDecoration: 'none',
+                        transition: 'opacity 0.15s'
+                      }}
+                        onMouseEnter={e => e.currentTarget.style.opacity = 0.9}
+                        onMouseLeave={e => e.currentTarget.style.opacity = 1}
+                      >
+                        {t.productTour.liveCta}
+                      </a>
+                    </div>
                   </WindowChrome>
                 </div>
               </div>
