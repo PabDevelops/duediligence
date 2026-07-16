@@ -38,6 +38,7 @@ export default function HomeView({ dict, locale }) {
           <nav className="desktop-only" style={{ display: 'flex', gap: '32px', alignItems: 'center' }}>
             <a href={href('/about')} style={navLink}>{t.nav.product}</a>
             <a href={href('/pricing')} style={navLink}>{t.nav.pricing}</a>
+            <a href={href('/faq')} style={navLink}>{t.nav.faq}</a>
           </nav>
 
           <div className="desktop-only" style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
@@ -83,6 +84,7 @@ export default function HomeView({ dict, locale }) {
           <div style={{ display: 'flex', flexDirection: 'column', padding: '8px clamp(16px, 5vw, 24px) 20px' }}>
             <a href={href('/about')} onClick={closeMenu} style={mobileNavLink}>{t.nav.product}</a>
             <a href={href('/pricing')} onClick={closeMenu} style={mobileNavLink}>{t.nav.pricing}</a>
+            <a href={href('/faq')} onClick={closeMenu} style={mobileNavLink}>{t.nav.faq}</a>
             <a href={href('/sign-in')} onClick={closeMenu} style={mobileNavLink}>{t.signIn}</a>
             <div style={{ height: '1px', background: 'var(--border)', margin: '8px 0 16px' }} />
             <PrimaryButton href="/home" onClick={closeMenu} style={{ width: '100%' }}>{t.cta}</PrimaryButton>

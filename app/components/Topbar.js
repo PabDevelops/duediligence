@@ -44,6 +44,7 @@ export default function Topbar() {
         <div className="desktop-nav" style={{ display: 'flex', alignItems: 'center', gap: '20px', flex: 1, justifyContent: 'flex-end' }}>
           {navItem('/about', t.about)}
           {navItem('/pricing', t.pricing)}
+          {navItem('/faq', t.faq)}
 
           {isSignedIn ? (
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
@@ -69,7 +70,7 @@ export default function Topbar() {
       {/* Mobile dropdown menu */}
       {menuOpen && (
         <div className="topbar-mobile-menu mobile-menu">
-          {[['/', t.home], ['/about', t.about], ['/pricing', t.pricing]].map(([p, label]) => {
+          {[['/', t.home], ['/about', t.about], ['/pricing', t.pricing], ['/faq', t.faq]].map(([p, label]) => {
             const target = href(p);
             return (
               <a key={p} href={target} onClick={() => setMenuOpen(false)}

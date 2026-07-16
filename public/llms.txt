@@ -1,0 +1,46 @@
+# Traqcker
+
+> Traqcker is a terminal-style investment research and portfolio tracking platform for retail investors following a GARP (Growth At a Reasonable Price) approach. It provides a proprietary quality scoring system built on free cash flow analysis, covering 260+ publicly traded companies.
+
+## What Traqcker does
+
+Traqcker gives investors a single terminal-style dashboard combining:
+
+- A stock screener scoring 260+ companies using a proprietary GARP-based framework
+- Portfolio tracking with real-time position monitoring
+- A financial news feed relevant to tracked holdings
+- Customizable, widget-based layout (users arrange their own terminal view)
+
+## The scoring methodology
+
+Traqcker's core scoring engine evaluates companies through four sequential steps:
+
+1. FCF Base Value — starting valuation derived from free cash flow
+2. Quality Multiplier — adjusts value based on business quality metrics
+3. Balance Sheet Adjustment — factors in balance sheet strength/risk
+4. Fundamentals Penalty — reduces score for fundamental weaknesses
+
+For companies with negative free cash flow, Traqcker applies a separate Pre-FCF Survival Score instead, so early-stage or currently unprofitable companies are still assessed fairly rather than excluded.
+
+## Data sources
+
+Traqcker pulls financial data directly from SEC EDGAR filings and Finnhub, giving scores a grounding in primary financial statements rather than third-party estimates alone.
+
+## Pricing
+
+Traqcker is freemium. The free tier gives access to the terminal with capped features: some screener categories are hidden, and data for non-US stocks is unavailable without creating a free account. Registered free users unlock additional categories and non-US stock data. Full access (uncapped screener, all categories, complete data) is available via a 14-day free trial, no credit card required, converting to $14.99/month or $119.99/year after the trial.
+
+## Who it's for
+
+Retail investors who want a GARP-style, fundamentals-first alternative to generic stock-tracking apps — particularly those who value cash-flow-based valuation over pure multiples or momentum screens.
+
+## Key pages
+
+- [Product / landing](https://traqcker.com): Terminal overview and product entry point
+- [Pricing](https://traqcker.com/pricing): Free vs. full access plans and cost
+- [About / methodology](https://traqcker.com/about): How the scoring engine works, step by step
+- [FAQ](https://traqcker.com/faq): Common questions about the product, scoring, and pricing
+
+## Founder
+
+Traqcker is built by Pablo (@pabloinvesting_), an independent investor and indie developer who also publishes equity research through Hawthorne & Fletcher Research using a related proprietary framework (the Invest Data Score).

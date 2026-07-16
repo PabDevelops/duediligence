@@ -28,6 +28,7 @@ export default function Footer({ dict, locale }) {
             <div style={{ fontSize: '11px', fontWeight: 700, color: 'var(--text-3)', textTransform: 'uppercase', letterSpacing: '1px', marginBottom: '16px' }}>{dict.company}</div>
             <ul style={{ listStyle: 'none', padding: 0, margin: 0, display: 'flex', flexDirection: 'column', gap: '10px', fontSize: '13px' }}>
               <li><a href={href('/about')} style={{ textDecoration: 'none', color: 'var(--text-2)' }}>{dict.aboutUs}</a></li>
+              <li><a href={href('/faq')} style={{ textDecoration: 'none', color: 'var(--text-2)' }}>{dict.faqLink}</a></li>
               <li><a href={href('/privacy')} style={{ textDecoration: 'none', color: 'var(--text-2)' }}>{dict.privacyPolicy}</a></li>
               <li><a href={href('/terms')} style={{ textDecoration: 'none', color: 'var(--text-2)' }}>{dict.termsOfService}</a></li>
             </ul>

@@ -6,7 +6,7 @@ import { getCookieDomain } from './lib/cookieDomain';
 // Everything else is the app/workspace terminal, served from
 // terminal.traqcker.com instead.
 const MARKETING_PREFIXES = [
-  '/', '/about', '/pricing', '/privacy', '/terms',
+  '/', '/about', '/pricing', '/faq', '/privacy', '/terms',
   '/sign-in', '/sign-up', '/auth', '/start-trial', '/success',
 ];
 
@@ -14,7 +14,7 @@ const MARKETING_PREFIXES = [
 // /auth is excluded — it's an OAuth callback URL with no UI, registered as-is
 // with the auth provider, and must never move under a locale prefix.
 const LOCALIZABLE_PREFIXES = [
-  '/', '/about', '/pricing', '/privacy', '/terms',
+  '/', '/about', '/pricing', '/faq', '/privacy', '/terms',
   '/sign-in', '/sign-up', '/start-trial', '/success',
 ];
 

@@ -139,6 +139,45 @@ export default function AboutView({ dict, locale }) {
         </div>
       </section>
 
+      {/* METHODOLOGY / SCORING */}
+      <section style={{ borderTop: '1px solid var(--border)', maxWidth: '820px', margin: '0 auto', padding: '80px 24px' }}>
+        <div style={{ color: 'var(--text-3)', fontSize: '11px', letterSpacing: '2px', fontWeight: 700, marginBottom: '12px' }}>{t.methodology.eyebrow}</div>
+        <h2 style={{ fontSize: '28px', fontWeight: 800, letterSpacing: '-0.8px', color: 'var(--text)', marginBottom: '10px' }}>{t.methodology.title}</h2>
+        <p style={{ color: 'var(--text-2)', fontSize: '15px', lineHeight: 1.7, marginBottom: '40px' }}>{t.methodology.capsule}</p>
+
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '28px', marginBottom: '40px' }}>
+          {t.methodology.steps.map(step => (
+            <div key={step.title}>
+              <h3 style={{ fontSize: '16px', fontWeight: 800, color: 'var(--text)', marginBottom: '8px' }}>{step.title}</h3>
+              <p style={{ color: 'var(--text)', fontSize: '13px', lineHeight: 1.7, marginBottom: '6px', fontWeight: 500 }}>{step.capsule}</p>
+              <p style={{ color: 'var(--text-2)', fontSize: '13px', lineHeight: 1.7 }}>{step.desc}</p>
+            </div>
+          ))}
+        </div>
+
+        <div style={{ marginBottom: '32px' }}>
+          <h3 style={{ fontSize: '16px', fontWeight: 800, color: 'var(--text)', marginBottom: '8px' }}>{t.methodology.survival.title}</h3>
+          <p style={{ color: 'var(--text)', fontSize: '13px', lineHeight: 1.7, marginBottom: '6px', fontWeight: 500 }}>{t.methodology.survival.capsule}</p>
+          <p style={{ color: 'var(--text-2)', fontSize: '13px', lineHeight: 1.7 }}>{t.methodology.survival.desc}</p>
+        </div>
+
+        <div>
+          <h3 style={{ fontSize: '16px', fontWeight: 800, color: 'var(--text)', marginBottom: '8px' }}>{t.methodology.sources.title}</h3>
+          <p style={{ color: 'var(--text)', fontSize: '13px', lineHeight: 1.7, marginBottom: '6px', fontWeight: 500 }}>{t.methodology.sources.capsule}</p>
+          <p style={{ color: 'var(--text-2)', fontSize: '13px', lineHeight: 1.7 }}>{t.methodology.sources.desc}</p>
+        </div>
+      </section>
+
+      {/* TL;DR — short, citable, self-contained summary */}
+      <section style={{ borderTop: '1px solid var(--border)', background: '#fafafa', padding: '56px 24px' }}>
+        <div style={{ maxWidth: '820px', margin: '0 auto' }}>
+          <h2 style={{ fontSize: '13px', fontWeight: 800, letterSpacing: '1.5px', color: 'var(--accent)', marginBottom: '18px', textTransform: 'uppercase' }}>{t.tldr.title}</h2>
+          <ul style={{ margin: 0, padding: '0 0 0 20px', color: 'var(--text-2)', fontSize: '14px', lineHeight: 1.9 }}>
+            {t.tldr.items.map((item, i) => <li key={i}>{item}</li>)}
+          </ul>
+        </div>
+      </section>
+
       {/* TEAM SECTION */}
       <section style={{ borderTop: '1px solid var(--border)', background: '#fafafa', padding: '80px 24px' }}>
         <div style={{ maxWidth: '820px', margin: '0 auto' }}>
