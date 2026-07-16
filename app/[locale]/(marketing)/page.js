@@ -44,6 +44,15 @@ const softwareAppJsonLd = {
   },
 };
 
+const organizationJsonLd = {
+  '@context': 'https://schema.org',
+  '@type': 'Organization',
+  name: 'Traqcker',
+  url: 'https://traqcker.com',
+  logo: 'https://traqcker.com/icon-512.png',
+  sameAs: ['https://twitter.com/pabloinvesting_'],
+};
+
 const authorJsonLd = {
   '@context': 'https://schema.org',
   '@type': 'Person',
@@ -65,6 +74,7 @@ export default async function Home({ params }) {
   return (
     <>
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(softwareAppJsonLd) }} />
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(organizationJsonLd) }} />
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(authorJsonLd) }} />
       <HomeView dict={dict} locale={locale} />
     </>
