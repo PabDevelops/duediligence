@@ -138,7 +138,7 @@ export default function HomeView({ dict, locale }) {
           >
             {t.hero.ctaPrimary}
           </a>
-          <a href="#product-tour" style={{
+          <a href="/home" style={{
             padding: '14px 28px',
             fontSize: '14px',
             fontWeight: 600,
