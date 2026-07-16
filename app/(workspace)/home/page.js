@@ -34,6 +34,10 @@ const RIGHT_WIDGETS = ['secFeed'];
 const hasFundamentals = (data) => data.revVal != null || data.niVal != null || data.marketCap != null
   || data.roic != null || data.grossMargin != null || (data.revHistory?.length ?? 0) > 0;
 
+// Same 1-5 -> color mapping as the Quality tab's ScoreBar/grid on the stock detail page
+// and the /watchlist table's CBS/OPPO/GQS columns.
+const scoreColor = (s) => s >= 4 ? 'var(--ws-accent)' : s >= 3 ? 'var(--ws-text)' : 'var(--ws-red)';
+
 export default function WorkspaceHome() {
   const router = useRouter();
   
@@ -567,7 +571,10 @@ export default function WorkspaceHome() {
                       <th className="px-[18px] py-2.5 text-left font-semibold text-ws-text-3 text-[10px]">TICKER</th>
                       <th className="px-[18px] py-2.5 text-right font-semibold text-ws-text-3 text-[10px]">PRICE</th>
                       <th className="px-[18px] py-2.5 text-right font-semibold text-ws-text-3 text-[10px]">TODAY</th>
-                      <th className="px-[18px] py-2.5 text-right font-semibold text-ws-text-3 text-[10px]" title="Traqcker Quality Score">QUALITY</th>
+                      <th className="px-[18px] py-2.5 text-right font-semibold text-ws-text-3 text-[10px]" title="Core Business Score · ROIC · Margins · Liquidity">CBS</th>
+                      <th className="px-[18px] py-2.5 text-right font-semibold text-ws-text-3 text-[10px]" title="Opportunity Score · P/FCF · FCF Yield">OPPO</th>
+                      <th className="px-[18px] py-2.5 text-right font-semibold text-ws-text-3 text-[10px]" title="Growth Quality Score · Revenue · R&D · SBC">GQS</th>
+                      <th className="px-[18px] py-2.5 text-right font-semibold text-ws-text-3 text-[10px]" title="Final Note · Traqcker Score · Weighted composite (CBS 45% · OPPO 30% · GQS 25% · Moat ±20%)">QUALITY</th>
                       <th className="px-[18px] py-2.5 text-left font-semibold text-ws-text-3 text-[10px]">ADDED</th>
                       <th className="px-[18px] py-2.5" />
                     </tr>
@@ -593,6 +600,15 @@ export default function WorkspaceHome() {
                           </td>
                           <td style={{ padding: '10px 18px', textAlign: 'right', fontWeight: 700, color: hasChange ? (changePct >= 0 ? '#10b981' : 'var(--ws-red)') : 'var(--ws-text-3)' }}>
                             {hasChange ? `${changePct >= 0 ? '+' : ''}${changePct.toFixed(2)}%` : '—'}
+                          </td>
+                          <td style={{ padding: '10px 18px', textAlign: 'right', fontWeight: 600, color: easyMode ? scoreColor(easyMode.cbs) : 'var(--ws-text-3)' }}>
+                            {easyMode ? Math.round(easyMode.cbs * 20) : '—'}
+                          </td>
+                          <td style={{ padding: '10px 18px', textAlign: 'right', fontWeight: 600, color: easyMode ? scoreColor(easyMode.oppo) : 'var(--ws-text-3)' }}>
+                            {easyMode ? Math.round(easyMode.oppo * 20) : '—'}
+                          </td>
+                          <td style={{ padding: '10px 18px', textAlign: 'right', fontWeight: 600, color: easyMode ? scoreColor(easyMode.gqs) : 'var(--ws-text-3)' }}>
+                            {easyMode ? Math.round(easyMode.gqs * 20) : '—'}
                           </td>
                           <td style={{ padding: '10px 18px', textAlign: 'right', fontWeight: 700, color: easyMode ? easyMode.verdictColor : 'var(--ws-text-3)' }} title={easyMode ? easyMode.verdict : 'Not enough fundamentals yet'}>
                             {easyMode ? easyMode.score100 : '—'}
@@ -625,7 +641,10 @@ export default function WorkspaceHome() {
                       <th className="px-[18px] py-2.5 text-left font-semibold text-ws-text-3 text-[10px]">TICKER</th>
                       <th className="px-[18px] py-2.5 text-right font-semibold text-ws-text-3 text-[10px]">PRICE</th>
                       <th className="px-[18px] py-2.5 text-right font-semibold text-ws-text-3 text-[10px]">TODAY</th>
-                      <th className="px-[18px] py-2.5 text-right font-semibold text-ws-text-3 text-[10px]" title="Traqcker Quality Score">QUALITY</th>
+                      <th className="px-[18px] py-2.5 text-right font-semibold text-ws-text-3 text-[10px]" title="Core Business Score · ROIC · Margins · Liquidity">CBS</th>
+                      <th className="px-[18px] py-2.5 text-right font-semibold text-ws-text-3 text-[10px]" title="Opportunity Score · P/FCF · FCF Yield">OPPO</th>
+                      <th className="px-[18px] py-2.5 text-right font-semibold text-ws-text-3 text-[10px]" title="Growth Quality Score · Revenue · R&D · SBC">GQS</th>
+                      <th className="px-[18px] py-2.5 text-right font-semibold text-ws-text-3 text-[10px]" title="Final Note · Traqcker Score · Weighted composite (CBS 45% · OPPO 30% · GQS 25% · Moat ±20%)">QUALITY</th>
                       <th className="px-[18px] py-2.5" />
                     </tr>
                   </thead>
@@ -650,6 +669,15 @@ export default function WorkspaceHome() {
                           </td>
                           <td style={{ padding: '10px 18px', textAlign: 'right', fontWeight: 700, color: hasChange ? (changePct >= 0 ? '#10b981' : 'var(--ws-red)') : 'var(--ws-text-3)' }}>
                             {hasChange ? `${changePct >= 0 ? '+' : ''}${changePct.toFixed(2)}%` : '—'}
+                          </td>
+                          <td style={{ padding: '10px 18px', textAlign: 'right', fontWeight: 600, color: easyMode ? scoreColor(easyMode.cbs) : 'var(--ws-text-3)' }}>
+                            {easyMode ? Math.round(easyMode.cbs * 20) : '—'}
+                          </td>
+                          <td style={{ padding: '10px 18px', textAlign: 'right', fontWeight: 600, color: easyMode ? scoreColor(easyMode.oppo) : 'var(--ws-text-3)' }}>
+                            {easyMode ? Math.round(easyMode.oppo * 20) : '—'}
+                          </td>
+                          <td style={{ padding: '10px 18px', textAlign: 'right', fontWeight: 600, color: easyMode ? scoreColor(easyMode.gqs) : 'var(--ws-text-3)' }}>
+                            {easyMode ? Math.round(easyMode.gqs * 20) : '—'}
                           </td>
                           <td style={{ padding: '10px 18px', textAlign: 'right', fontWeight: 700, color: easyMode ? easyMode.verdictColor : 'var(--ws-text-3)' }} title={easyMode ? easyMode.verdict : 'Not enough fundamentals yet'}>
                             {easyMode ? easyMode.score100 : '—'}
