@@ -24,7 +24,7 @@ const THEMES = {
 
 export default function UserMenu({ variant = 'dark', dropUp = false }) {
   const theme = THEMES[variant];
-  const { user } = useUser();
+  const { user, isSignedIn } = useUser();
   const router = useRouter();
   const [open, setOpen] = useState(false);
 
@@ -35,6 +35,20 @@ export default function UserMenu({ variant = 'dark', dropUp = false }) {
     router.push('/');
     router.refresh();
   };
+
+  if (!isSignedIn) {
+    return (
+      <Link href="/sign-in"
+        style={{
+          display: 'inline-flex', alignItems: 'center', height: '30px', padding: '0 12px',
+          borderRadius: '20px', fontSize: '13px', fontWeight: 600, textDecoration: 'none',
+          color: variant === 'light' ? 'var(--ws-accent)' : theme.text,
+          border: `1px solid ${variant === 'light' ? 'var(--ws-accent)' : 'currentColor'}`,
+        }}>
+        Sign in
+      </Link>
+    );
+  }
 
   return (
     <div style={{ position: 'relative' }}>
