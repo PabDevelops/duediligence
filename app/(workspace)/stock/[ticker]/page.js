@@ -10,7 +10,7 @@ import ShareCardComponent from '../../../components/ShareCard';
 import AchievementToast from '../../../components/AchievementToast';
 import AddHoldingModal from '../../../components/workspace/portfolio/AddHoldingModal';
 import MarketStatusDot from '../../../components/workspace/MarketStatusDot';
-import SoftWall, { LockedPanel } from '../../../components/SoftWall';
+import { LockedPanel } from '../../../components/SoftWall';
 import { useUser } from '../../../components/AuthProvider';
 import { isInGuestWatchlist, addToGuestWatchlist, removeFromGuestWatchlist } from '../../../../lib/guestWatchlist';
 import { fmt as sharedFmt, fmtP as sharedFmtP, fmtN as sharedFmtN, formatCurrency } from '../../../../lib/formatters';
@@ -1133,7 +1133,7 @@ export default function StockPage({ params }) {
         ))}
 
         {/* QUALITY TAB */}
-        {tab === 'quality' && easyMode && (tabsLocked ? (
+        {tab === 'quality' && easyMode && (!isSignedIn ? (
           <LockedPanel
             title="Quality Score"
             description="El desglose completo del Quality Score se desbloquea con una cuenta gratuita."
@@ -1154,8 +1154,7 @@ export default function StockPage({ params }) {
 
       return (
         <>
-          <SoftWall active={!isSignedIn} label="REGÍSTRATE PARA VER LOS SCORES" ctaHref="/sign-up" style={{ marginBottom: '24px' }}>
-          <div style={{ background: 'var(--ws-bg-1)', border: '1px solid var(--ws-border)', padding: '24px', overflow: 'hidden' }}>
+          <div style={{ background: 'var(--ws-bg-1)', border: '1px solid var(--ws-border)', padding: '24px', overflow: 'hidden', marginBottom: '24px' }}>
             <div className="quality-score-grid" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr 1fr 1fr', gap: '1px', background: 'var(--ws-border)' }}>
               {[
                 { label: 'CORE BUSINESS', score: easyMode.cbs, desc: 'ROIC · Margins · Liquidity' },
@@ -1178,7 +1177,6 @@ export default function StockPage({ params }) {
               AUTOMATED SCORE · BASED ON SEC EDGAR & FINNHUB · NOT A BUY/SELL SIGNAL · CBS 45% · OPPO 30% · GQS 25% · MOAT ±20%
             </div>
           </div>
-          </SoftWall>
 
           <div className="text-ws-text-3 text-[10px] tracking-[2px] border-b border-ws-border pb-1.5 mb-3">CORE BUSINESS BREAKDOWN</div>
           <div className="grid-5" style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: '1px', background: 'var(--ws-border)', marginBottom: '24px' }}>
@@ -1831,7 +1829,7 @@ export default function StockPage({ params }) {
         ))}
 
         {/* INSIDERS TAB — Form 3/4/5 buy/sell activity, SEC EDGAR primary / Finnhub fallback */}
-        {tab === 'insiders' && (tabsLocked ? (
+        {tab === 'insiders' && (!isSignedIn ? (
           <LockedPanel
             title="Insiders"
             description="La actividad de insiders (Form 3/4/5) se desbloquea con una cuenta gratuita."
