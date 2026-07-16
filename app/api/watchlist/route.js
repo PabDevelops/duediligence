@@ -17,22 +17,12 @@ async function lookupGuestTickers(tickersParam) {
   const { data: cacheData } = await supabase.from('stock_cache').select('ticker, data').in('ticker', tickers);
   const byTicker = Object.fromEntries((cacheData || []).map(row => [row.ticker, row.data]));
 
-  const fullTickers = tickers.filter(t => byTicker[t]).map(t => {
-    const stock = byTicker[t];
-    return {
-      ticker: t,
-      created_at: null,
-      pie: null,
-      name: stock.name,
-      currentPrice: stock.currentPrice,
-      priceChangePct: stock.priceChangePct,
-      exchange: stock.exchange,
-      currency: stock.currency,
-      pe: stock.pe,
-      dividendYield: stock.dividendYield,
-      sector: stock.sector,
-    };
-  });
+  const fullTickers = tickers.filter(t => byTicker[t]).map(t => ({
+    ...byTicker[t],
+    ticker: t,
+    created_at: null,
+    pie: null,
+  }));
 
   return Response.json({ tickers: fullTickers });
 }
@@ -99,22 +89,12 @@ export async function GET(request) {
 
     const byTicker = Object.fromEntries((cacheData || []).map(row => [row.ticker, row.data]));
 
-    const fullTickers = watchlistData.map(d => {
-      const stock = byTicker[d.ticker] || {};
-      return {
-        ticker: d.ticker,
-        created_at: d.created_at,
-        pie: d.pie || null,
-        name: stock.name,
-        currentPrice: stock.currentPrice,
-        priceChangePct: stock.priceChangePct,
-        exchange: stock.exchange,
-        currency: stock.currency,
-        pe: stock.pe,
-        dividendYield: stock.dividendYield,
-        sector: stock.sector,
-      };
-    });
+    const fullTickers = watchlistData.map(d => ({
+      ...(byTicker[d.ticker] || {}),
+      ticker: d.ticker,
+      created_at: d.created_at,
+      pie: d.pie || null,
+    }));
 
     return Response.json({ tickers: fullTickers });
   }

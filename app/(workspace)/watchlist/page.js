@@ -9,6 +9,13 @@ import StockLogo from '../../components/workspace/StockLogo';
 import AllocationChart from '../../components/workspace/portfolio/AllocationChart';
 import { formatPrice as formatCurrency } from '../../../lib/formatters';
 import { getGuestWatchlist, addToGuestWatchlist, removeFromGuestWatchlist, GUEST_WATCHLIST_LIMIT } from '../../../lib/guestWatchlist';
+import { computeEasyMode } from '../../../lib/stockScoring';
+
+// Same "is there enough fundamental data to score this" check as the stock detail page
+// (app/(workspace)/stock/[ticker]/page.js) — recent IPOs / thinly-covered tickers would
+// otherwise get a fabricated-looking score built entirely from neutral-midpoint defaults.
+const hasFundamentals = (t) => t.revVal != null || t.niVal != null || t.marketCap != null
+  || t.roic != null || t.grossMargin != null || (t.revHistory?.length ?? 0) > 0;
 
 export default function WatchlistPage() {
   const { isSignedIn } = useUser();
@@ -210,7 +217,7 @@ export default function WatchlistPage() {
       <table className="responsive-table" style={{ fontSize: '12px' }}>
         <thead>
           <tr style={{ borderBottom: '1px solid var(--ws-border)', background: 'var(--ws-bg-1)' }}>
-            {['Stock', '1M', 'Price', 'Day', 'P/E', 'Div yield', 'Sector', ''].map(h => (
+            {['Stock', '1M', 'Price', 'Day', 'P/E', 'Div yield', 'Sector', 'Quality', ''].map(h => (
               <th key={h} className={h === 'Stock' ? 'sticky-col' : ''} style={{ padding: '9px 12px', textAlign: h === 'Stock' ? 'left' : h === '1M' ? 'center' : 'right', fontWeight: 600, fontSize: '10px', color: 'var(--ws-text-3)' }}>{h}</th>
             ))}
           </tr>
@@ -219,6 +226,7 @@ export default function WatchlistPage() {
           {items.map(t => {
             const isEditingPie = editingPieTicker === t.ticker;
             const dayChange = t.priceChangePct ?? 0;
+            const easyMode = computeEasyMode(t, hasFundamentals(t));
             return (
               <tr key={t.ticker} onClick={() => router.push(`/stock/${t.ticker}`)}
                 style={{ borderBottom: '1px solid var(--ws-border)', cursor: 'pointer', background: 'var(--ws-bg-1)' }}
@@ -248,6 +256,16 @@ export default function WatchlistPage() {
                 <td style={{ padding: '10px 12px', textAlign: 'right', color: 'var(--ws-text-2)' }}>{t.pe ? t.pe.toFixed(1) : '—'}</td>
                 <td style={{ padding: '10px 12px', textAlign: 'right', color: 'var(--ws-text-2)' }}>{t.dividendYield ? `${t.dividendYield.toFixed(2)}%` : '—'}</td>
                 <td style={{ padding: '10px 12px', textAlign: 'right', color: 'var(--ws-text-2)' }}>{t.sector || '—'}</td>
+                <td style={{ padding: '10px 12px', textAlign: 'right' }} title={easyMode ? `Traqcker Score · ${easyMode.verdict}` : 'Not enough fundamentals yet'}>
+                  {easyMode ? (
+                    <div style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', justifyContent: 'flex-end', whiteSpace: 'nowrap' }}>
+                      <span style={{ fontWeight: 700, color: easyMode.verdictColor }}>{easyMode.score100}</span>
+                      <span style={{ fontSize: '10px', color: 'var(--ws-text-3)' }}>{easyMode.verdict}</span>
+                    </div>
+                  ) : (
+                    <span style={{ color: 'var(--ws-text-3)' }}>—</span>
+                  )}
+                </td>
                 <td style={{ padding: '10px 12px', textAlign: 'right', whiteSpace: 'nowrap' }} onClick={e => e.stopPropagation()}>
                   {isSignedIn && (isEditingPie ? (
                     <div style={{ position: 'relative', display: 'inline-block' }}>
