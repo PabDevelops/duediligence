@@ -23,12 +23,23 @@ export default function WorkspaceCalendar() {
   const [selectedDate, setSelectedDate] = useState(null);
   const [togglingWatchlist, setTogglingWatchlist] = useState(null);
 
+  // Sorted/joined so it's a stable primitive for the effect dependency array below —
+  // watchlistTickers itself is a Set, and Sets don't compare usefully with ===.
+  const watchlistKey = useMemo(() => [...watchlistTickers].sort().join(','), [watchlistTickers]);
+
   // Fetch Calendar Data (Earnings & IPOs)
   const fetchCalendarData = () => {
     const from = toKey(startOfMonth(cursor));
     const to = toKey(endOfMonth(cursor));
     setEarnings(null);
-    fetch(`/api/earnings?from=${from}&to=${to}`)
+    const qs = new URLSearchParams({ from, to });
+    // Finnhub's bulk calendar has thin coverage for foreign private issuers (Nokia's July
+    // earnings never showed up because Finnhub simply doesn't have that date on file) — the
+    // backend falls back to Yahoo for watchlisted tickers specifically, so pass them along
+    // instead of eating that fallback's latency for every one of the thousands of cached
+    // tickers nobody asked about.
+    if (watchlistKey) qs.set('watchlist', watchlistKey);
+    fetch(`/api/earnings?${qs.toString()}`)
       .then(r => r.json())
       .then(d => {
         setEarnings(d.earnings || []);
@@ -42,7 +53,7 @@ export default function WorkspaceCalendar() {
 
   useEffect(() => {
     fetchCalendarData();
-  }, [cursor]);
+  }, [cursor, watchlistKey]);
 
   // Fetch Watchlist Tickers
   const fetchWatchlist = () => {
@@ -473,6 +484,7 @@ export default function WorkspaceCalendar() {
                             </div>
                             <div style={{ fontSize: '11px', color: 'var(--ws-text-3)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', marginTop: '1px' }}>
                               {e.type === 'ipo' ? e.name : (e.hour === 'bmo' ? 'Before Open' : e.hour === 'amc' ? 'After Close' : 'Time TBD')}
+                              {e.source === 'yahoo' && <span title="Not yet confirmed by our primary data source — estimated date"> · Est. date</span>}
                             </div>
                           </div>
 
