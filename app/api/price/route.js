@@ -4,8 +4,8 @@ export async function GET(request) {
   const { searchParams } = new URL(request.url);
   const ticker = searchParams.get('ticker')?.toUpperCase();
 
-  if (!ticker) return Response.json({ error: 'Ticker requerido' }, { status: 400 });
-  if (!AV_KEY) return Response.json({ error: 'ALPHA_VANTAGE_API_KEY no está configurada' }, { status: 500 });
+  if (!ticker) return Response.json({ error: 'Ticker required' }, { status: 400 });
+  if (!AV_KEY) return Response.json({ error: 'ALPHA_VANTAGE_API_KEY is not configured' }, { status: 500 });
 
   try {
     const res = await fetch(
@@ -14,11 +14,11 @@ export async function GET(request) {
     const data = await res.json();
 
     if (data['Note'] || data['Information']) {
-      return Response.json({ error: 'Límite de API alcanzado, intenta en 1 minuto' }, { status: 429 });
+      return Response.json({ error: 'API limit reached, try again in 1 minute' }, { status: 429 });
     }
 
     const series = data['Time Series (Daily)'];
-    if (!series) return Response.json({ error: 'No hay datos de precio' }, { status: 404 });
+    if (!series) return Response.json({ error: 'No price data available' }, { status: 404 });
 
     const candles = Object.entries(series)
       .map(([date, v]) => ({
@@ -33,6 +33,6 @@ export async function GET(request) {
 
     return Response.json({ candles });
   } catch (e) {
-    return Response.json({ error: 'Error al cargar precio' }, { status: 500 });
+    return Response.json({ error: 'Error loading price' }, { status: 500 });
   }
 }

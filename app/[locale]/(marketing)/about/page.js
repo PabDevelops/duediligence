@@ -7,16 +7,11 @@ const META = {
     description: 'Traqcker analyses stocks from SEC EDGAR filings and gives you a simple quality score and fair value estimate. No finance degree needed.',
     ogDescription: 'Real data from company filings. Simple quality score and fair value. No jargon.',
   },
-  es: {
-    title: 'Sobre Traqcker — Cómo funciona',
-    description: 'Traqcker analiza acciones a partir de los informes de SEC EDGAR y te da un quality score sencillo y una estimación de valor razonable. No hace falta ser experto en finanzas.',
-    ogDescription: 'Datos reales de los informes de las empresas. Quality score y valor razonable sencillos. Sin jerga.',
-  },
 };
 
 export async function generateMetadata({ params }) {
   const { locale } = await params;
-  const m = META[locale] || META.en;
+  const m = META.en;
   const path = locale === 'es' ? '/es/about' : '/about';
   return {
     title: m.title,

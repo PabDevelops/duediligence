@@ -786,7 +786,7 @@ export default function StockPage({ params }) {
         {tab === 'overview' && (tabsLocked ? (
           <LockedPanel
             title="Overview"
-            description="Los datos completos de este mercado internacional se desbloquean con una cuenta gratuita."
+            description="Full data for this international market unlocks with a free account."
           />
         ) : (
           <div className="stock-overview-grid">
@@ -1005,7 +1005,7 @@ export default function StockPage({ params }) {
                   </div>
                 </div>
               ) : (
-                <LockedPanel compact title="Fair value" description="Regístrate gratis para ver si esta acción cotiza barata, justa o cara según nuestro modelo." />
+                <LockedPanel compact title="Fair value" description="Sign up free to see whether this stock trades cheap, fair or expensive according to our model." />
               ))}
 
               {/* Upcoming Event */}
@@ -1136,7 +1136,7 @@ export default function StockPage({ params }) {
         {tab === 'quality' && easyMode && (!isSignedIn ? (
           <LockedPanel
             title="Quality Score"
-            description="El desglose completo del Quality Score se desbloquea con una cuenta gratuita."
+            description="The full Quality Score breakdown unlocks with a free account."
           />
         ) : (
   <div>
@@ -1286,7 +1286,7 @@ export default function StockPage({ params }) {
         {tab === 'financials' && (tabsLocked ? (
           <LockedPanel
             title="Financials"
-            description="Los estados financieros completos se desbloquean con una cuenta gratuita."
+            description="Full financial statements unlock with a free account."
           />
         ) : (
   <div>
@@ -1625,7 +1625,7 @@ export default function StockPage({ params }) {
         {tab === 'dcf' && (!isSignedIn ? (
           <LockedPanel
             title="Valuation (DCF)"
-            description="El modelo DCF completo — rango de valoración, escenarios bull/bear y stress test — se desbloquea con una cuenta gratuita."
+            description="The full DCF model — valuation range, bull/bear scenarios and stress test — unlocks with a free account."
           />
         ) : (
           <div>
@@ -1822,7 +1822,7 @@ export default function StockPage({ params }) {
         {tab === 'projection' && (!isSignedIn ? (
           <LockedPanel
             title="Projections"
-            description="Las proyecciones de precio a futuro (Monte Carlo + banda de confianza) se desbloquean con una cuenta gratuita."
+            description="Future price projections (Monte Carlo + confidence band) unlock with a free account."
           />
         ) : (
           <ProjectionChart ticker={ticker} data={data} dcfValue={dcfValue} price={price} currency={data.currency} />
@@ -1832,7 +1832,7 @@ export default function StockPage({ params }) {
         {tab === 'insiders' && (!isSignedIn ? (
           <LockedPanel
             title="Insiders"
-            description="La actividad de insiders (Form 3/4/5) se desbloquea con una cuenta gratuita."
+            description="Insider activity (Form 3/4/5) unlocks with a free account."
           />
         ) : (
           <div>
