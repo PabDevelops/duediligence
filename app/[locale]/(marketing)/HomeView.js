@@ -211,7 +211,7 @@ export default function HomeView({ dict, locale }) {
                 {t.capabilities.terminal.desc}
               </p>
             </div>
-            <a href={href('/pricing')} style={{
+            <a href="/screener" style={{
               height: '44px',
               border: '1px solid var(--text)',
                 display: 'flex',
