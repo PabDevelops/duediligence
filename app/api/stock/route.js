@@ -899,7 +899,11 @@ export async function GET(request) {
     const currentLiabilities = getMetric(['LiabilitiesCurrent']);
     const totalLiabilities = getMetric(['Liabilities']);
     const retainedEarnings = getMetric(['RetainedEarningsAccumulatedDeficit']);
-    const capex = getMetric(['PaymentsToAcquirePropertyPlantAndEquipment', 'CapitalExpenditureDiscontinuedOperations', 'PaymentsForProceedsFromProductiveAssets']);
+    // PaymentsToAcquireProductiveAssets is the tag department-store retailers (Kohl's, Macy's)
+    // report capex under — without it, the getMetric() lookup below finds nothing for them, and
+    // FCF silently defaults to 0 capex (see capexByEnd below), making FCF == raw operating cash
+    // flow. That inflated FCF alone was enough to produce a >1900% "undervalued" DCF for KSS.
+    const capex = getMetric(['PaymentsToAcquirePropertyPlantAndEquipment', 'CapitalExpenditureDiscontinuedOperations', 'PaymentsForProceedsFromProductiveAssets', 'PaymentsToAcquireProductiveAssets']);
     const inventory     = getMetric(['InventoryNet','InventoryGross']);
     const receivables   = getMetric(['AccountsReceivableNetCurrent','ReceivablesNetCurrent']);
     const payables      = getMetric(['AccountsPayableCurrent', 'AccountsPayable', 'AccountsPayableAndAccruedLiabilitiesCurrent']);
@@ -928,9 +932,24 @@ export async function GET(request) {
 
     // SEC's own tag only carries operating cash flow — FCF is OCF minus CapEx, matched by
     // fiscal period end so a year missing a capex filing doesn't get double-counted from
-    // a different year. Missing capex for a given period defaults to 0 (no PP&E purchases
-    // reported), not "no data" — the tag is genuinely omitted by plenty of asset-light filers.
+    // a different year. Missing capex for a *specific* period defaults to 0 (no PP&E
+    // purchases reported) — true for plenty of asset-light filers. But zero capex matched
+    // across EVERY period (capexByEnd empty despite having cash-flow data) is a different
+    // signal: almost certainly a filer reporting capex under a tag not in getMetric()'s list
+    // above (e.g. PaymentsToAcquireProductiveAssets — Kohl's, Macy's), not a company that
+    // truly spends nothing. Only in that all-missing case, fall back to Yahoo's own capex
+    // figures instead of silently overstating FCF by the full capex spend for every year.
     const capexByEnd = new Map((capex || []).map(u => [u.end, u.val]));
+    if (capexByEnd.size === 0 && (cashFlows || []).length > 0) {
+      const yhCapexFallback = await fetchYahooFundamentals(ticker).catch(() => null);
+      (yhCapexFallback?.capexHistory || []).forEach(pt => {
+        const match = (cashFlows || []).find(u => u.end.slice(0, 4) === pt.year);
+        // Yahoo's capex sign varies by source field; SEC's tag (and capexByEnd everywhere
+        // else) is a positive spend amount — normalize with Math.abs(), same convention
+        // ocfMinusCapex() above already uses for the same reason.
+        if (match) capexByEnd.set(match.end, Math.abs(pt.val));
+      });
+    }
     const freeCashFlows = (cashFlows || []).map(u => ({ ...u, val: u.val - (capexByEnd.get(u.end) ?? 0) }));
 
     const revVal   = latest(revenues);
