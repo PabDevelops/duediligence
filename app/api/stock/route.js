@@ -531,9 +531,9 @@ export async function GET(request) {
       // financial fields to be populated too, so a partial failure falls through to a re-fetch
       // instead of being trusted as a complete snapshot.
       const KEY_FIN_FIELDS = ['revVal', 'niVal', 'fcfVal', 'assetsVal', 'debtVal', 'cashVal'];
-      const hasFinancials = KEY_FIN_FIELDS.filter(k => cached.data?.[k] != null).length >= 3;
-      if (hoursOld < CACHE_HOURS && cached.data?.description && cached.data?.marketCap != null && hasFinancials) {
-        const normData = normalizeStockData(cached.data);
+      const normData = normalizeStockData(cached.data);
+      const hasCompleteFinancials = hasFinancials && normData?.debtToEquity != null;
+      if (hoursOld < CACHE_HOURS && cached.data?.description && cached.data?.marketCap != null && hasCompleteFinancials) {
         const minsOld = hoursOld * 60;
         if (minsOld < 2) {
           return Response.json({ ...normData, cached: true });
