@@ -9,49 +9,63 @@ function scoreToConsensus(score) {
   return 'strong_sell';
 }
 
+function parseRatings(rec) {
+  if (!rec) return null;
+  const ratings = {
+    strongBuy: Number(rec.strongBuy) || 0,
+    buy: Number(rec.buy) || 0,
+    hold: Number(rec.hold) || 0,
+    sell: Number(rec.sell) || 0,
+    strongSell: Number(rec.strongSell) || 0,
+  };
+  const total = ratings.strongBuy + ratings.buy + ratings.hold + ratings.sell + ratings.strongSell;
+  if (total === 0) return null;
+  return { ratings, total };
+}
+
 export async function GET(req) {
   try {
     const { searchParams } = new URL(req.url);
     const ticker = searchParams.get('ticker')?.toUpperCase();
     if (!ticker) return Response.json({ error: 'ticker required' }, { status: 400 });
 
-    // Finnhub's free plan only covers US-listed tickers, so international ones
-    // (LLOY.L, SAP.DE, ...) fall back to Yahoo's recommendation trend, which reports
-    // the same strongBuy/buy/hold/sell/strongSell shape.
-    let rec = null;
-    let source = 'none';
-    try {
-      const fhRes = await fetch(
+    // Fetch both Finnhub and Yahoo Finance in parallel to compare coverage
+    const [fhResult, yahooResult] = await Promise.allSettled([
+      fetch(
         `https://finnhub.io/api/v1/stock/recommendation?symbol=${ticker}&token=${process.env.FINNHUB_API_KEY}`,
         { next: { revalidate: 3600 } }
-      );
-      const fhData = await fhRes.json();
-      rec = Array.isArray(fhData) && fhData[0] ? fhData[0] : null;
-      if (rec) source = 'finnhub';
-    } catch { /* try Yahoo below */ }
+      ).then(r => r.json()).then(data => (Array.isArray(data) && data[0] ? data[0] : null)),
+      fetchYahooRecommendationTrend(ticker),
+    ]);
 
-    if (!rec) {
-      rec = await fetchYahooRecommendationTrend(ticker);
-      if (rec) source = 'yahoo';
+    const fhRec = fhResult.status === 'fulfilled' ? parseRatings(fhResult.value) : null;
+    const yahooRec = yahooResult.status === 'fulfilled' ? parseRatings(yahooResult.value) : null;
+
+    // Select whichever source returns the maximum total analyst count
+    let best = null;
+    let source = 'none';
+
+    if (fhRec && yahooRec) {
+      if (yahooRec.total > fhRec.total) {
+        best = yahooRec;
+        source = 'yahoo';
+      } else {
+        best = fhRec;
+        source = 'finnhub';
+      }
+    } else if (yahooRec) {
+      best = yahooRec;
+      source = 'yahoo';
+    } else if (fhRec) {
+      best = fhRec;
+      source = 'finnhub';
     }
 
-    if (!rec) {
+    if (!best || best.total === 0) {
       return Response.json({ ticker, ratings: null, total: 0, consensus: null, score: null, source: 'none' });
     }
 
-    const ratings = {
-      strongBuy: rec.strongBuy || 0,
-      buy: rec.buy || 0,
-      hold: rec.hold || 0,
-      sell: rec.sell || 0,
-      strongSell: rec.strongSell || 0,
-    };
-    const total = ratings.strongBuy + ratings.buy + ratings.hold + ratings.sell + ratings.strongSell;
-
-    if (total === 0) {
-      return Response.json({ ticker, ratings: null, total: 0, consensus: null, score: null, source: 'none' });
-    }
-
+    const { ratings, total } = best;
     const score = (
       ratings.strongBuy * 5 +
       ratings.buy * 4 +
