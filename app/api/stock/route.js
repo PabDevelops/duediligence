@@ -73,6 +73,19 @@ function tsSeries(tsJson, ...candidateTypes) {
   return [];
 }
 
+// Joins operating cash flow and capex by year to derive free cash flow (OCF - capex) when
+// Yahoo's own annualFreeCashFlow field isn't populated for this ticker. Yahoo reports capex as
+// a negative (cash outflow); Math.abs guards against a source that instead reports it positive.
+// Only returns years present in both series — a year missing capex data shouldn't silently
+// pass its full operating cash flow through as if no capex had been spent.
+function ocfMinusCapex(ocfSeries, capexSeries) {
+  const capexByYear = {};
+  capexSeries.forEach(c => { capexByYear[c.year] = c.val; });
+  return ocfSeries
+    .filter(o => capexByYear[o.year] != null)
+    .map(o => ({ year: o.year, val: o.val - Math.abs(capexByYear[o.year]) }));
+}
+
 // Same ratio/margin/history math as the SEC-EDGAR path below, but operating on
 // ascending { year, val } arrays (latest = last element) instead of raw XBRL facts.
 function computeDerivedFinancials(h) {
@@ -239,11 +252,27 @@ async function fetchYahooFundamentals(ticker) {
       .filter(s => s[key]?.raw != null)
       .map(s => ({ year: new Date(s.endDate.raw * 1000).getFullYear().toString(), val: s[key].raw }));
 
+    // True free cash flow (OCF - capex), not operating cash flow alone. Prefer Yahoo's own
+    // annualFreeCashFlow when it's populated; otherwise join OCF and capex by year via
+    // ocfMinusCapex; only fall all the way back to raw OCF (still technically mislabeled, but
+    // better than nothing) when capex data isn't available at all for this ticker. Previously
+    // this field defaulted straight to annualOperatingCashFlow with capex never subtracted —
+    // every DCF valuation (which discounts this number directly) was discounting operating
+    // cash flow, overstating true free cash flow by the full capex spend every single year.
+    const capexSeries = tsSeries(ts, 'annualCapitalExpenditure').length ? tsSeries(ts, 'annualCapitalExpenditure') : cfSeries('capitalExpenditures');
+    const ocfSeries = tsSeries(ts, 'annualOperatingCashFlow');
+    const fcfDirect = tsSeries(ts, 'annualFreeCashFlow');
+    const fcfDerived = ocfMinusCapex(ocfSeries, capexSeries);
+
     const histories = {
       revHistory: tsSeries(ts, 'annualTotalRevenue'),
       niHistory: tsSeries(ts, 'annualNetIncomeCommonStockholders', 'annualNetIncome'),
       oiHistory: tsSeries(ts, 'annualOperatingIncome'),
-      fcfHistory: tsSeries(ts, 'annualOperatingCashFlow'),
+      fcfHistory: fcfDirect.length ? fcfDirect : (fcfDerived.length ? fcfDerived : ocfSeries),
+      // Genuine operating cash flow, kept separate from fcfHistory above — the Financials tab's
+      // "Operating Cash Flow" row displays this, and it should never silently become free cash
+      // flow (or vice versa) just because one of them happened to be easier to source.
+      ocfHistory: ocfSeries,
       assetsHistory: tsSeries(ts, 'annualTotalAssets').length ? tsSeries(ts, 'annualTotalAssets') : bsSeries('totalAssets'),
       equityHistory: tsSeries(ts, 'annualStockholdersEquity').length ? tsSeries(ts, 'annualStockholdersEquity') : bsSeries('totalStockholderEquity'),
       debtHistory: tsSeries(ts, 'annualTotalDebt', 'annualLongTermDebt').length ? tsSeries(ts, 'annualTotalDebt', 'annualLongTermDebt') : bsSeries('longTermDebt'),
@@ -258,7 +287,7 @@ async function fetchYahooFundamentals(ticker) {
       sharesHistory: tsSeries(ts, 'annualDilutedAverageShares', 'annualBasicAverageShares'),
       sharesBasicHistory: tsSeries(ts, 'annualBasicAverageShares'),
       sharesDilutedHistory: tsSeries(ts, 'annualDilutedAverageShares'),
-      capexHistory: tsSeries(ts, 'annualCapitalExpenditure').length ? tsSeries(ts, 'annualCapitalExpenditure') : cfSeries('capitalExpenditures'),
+      capexHistory: capexSeries,
       investingCFHistory: tsSeries(ts, 'annualInvestingCashFlow').length ? tsSeries(ts, 'annualInvestingCashFlow') : cfSeries('totalCashFromInvestingActivities'),
       financingCFHistory: tsSeries(ts, 'annualFinancingCashFlow').length ? tsSeries(ts, 'annualFinancingCashFlow') : cfSeries('totalCashFlowsFromFinancingActivities'),
       currentAssetsHistory: tsSeries(ts, 'annualCurrentAssets').length ? tsSeries(ts, 'annualCurrentAssets') : bsSeries('totalCurrentAssets'),
@@ -287,6 +316,9 @@ async function fetchYahooFundamentals(ticker) {
           const capex = s.capitalExpenditures?.raw ?? 0;
           return { year: new Date(s.endDate.raw * 1000).getFullYear().toString(), val: ocf + capex };
         });
+    }
+    if (!histories.ocfHistory.length && cfStatements.length) {
+      histories.ocfHistory = cfSeries('totalCashFromOperatingActivities');
     }
 
     // For international tickers (e.g. Nokia ADR) where Yahoo's fundamentals-timeseries
@@ -392,7 +424,7 @@ async function fetchYahooFundamentals(ticker) {
       currentAssetsHistory: histories.currentAssetsHistory,
       currentLiabilitiesHistory: histories.currentLiabilitiesHistory,
       totalLiabilitiesHistory: histories.totalLiabilitiesHistory,
-      capexHistory: histories.capexHistory, operatingCFHistory: histories.fcfHistory,
+      capexHistory: histories.capexHistory, operatingCFHistory: histories.ocfHistory,
       investingCFHistory: histories.investingCFHistory, financingCFHistory: histories.financingCFHistory,
       daHistory: histories.daHistory, debtHistory: histories.debtHistory,
       equityHistory: histories.equityHistory, wcChangeHistory: histories.wcChangeHistory,
@@ -413,7 +445,7 @@ async function fetchYahooFundamentals(ticker) {
       evEbitda: num(keyStats.enterpriseToEbitda) ?? null,
       priceToBook: num(keyStats.priceToBook) ?? null,
       analystTarget,
-      operatingCFVal: d.fcfVal,
+      operatingCFVal: histories.ocfHistory.length ? histories.ocfHistory[histories.ocfHistory.length - 1].val : null,
     };
   } catch (e) {
     return null;
