@@ -288,6 +288,62 @@ const ScoreBox = ({ score, size = 48 }) => {
   );
 };
 
+// Half-circle speedometer for the analyst consensus, with a second needle for Traqcker's
+// own Quality Score overlaid on the same dial. `score` is the 1 (strong sell) to 5 (strong
+// buy) weighted average from /api/analyst-rating; `qualityScore100` is easyMode.score100
+// (0-100), linearly rescaled to the same 1-5 axis so both needles share one angle formula.
+// Needle angles are derived from the continuous scores directly, not the discrete labels,
+// so the dial reads as continuous rather than a 5-position switch. Rotation math: the
+// needle SVG is authored pointing straight up (12 o'clock); rotating it by 45°*(score-1) -
+// 90 lands it at -90° (left, score=1) through 0° (up, score=3) to +90° (right, score=5).
+const ANALYST_GAUGE_SEGMENTS = [
+  { key: 'strongSell', color: '#ef4444' },
+  { key: 'sell', color: '#f97316' },
+  { key: 'hold', color: '#eab308' },
+  { key: 'buy', color: '#84cc16' },
+  { key: 'strongBuy', color: '#0d9488' },
+];
+const QUALITY_NEEDLE_COLOR = '#6366f1';
+function AnalystGauge({ score, qualityScore100 }) {
+  const cx = 120, cy = 108, r = 90, strokeWidth = 18;
+  const toPoint = (angleDeg) => {
+    const rad = (angleDeg * Math.PI) / 180;
+    return [cx + r * Math.cos(rad), cy - r * Math.sin(rad)];
+  };
+  const arcs = ANALYST_GAUGE_SEGMENTS.map((seg, i) => {
+    const startAngle = 180 - i * 36;
+    const endAngle = 180 - (i + 1) * 36;
+    const [x1, y1] = toPoint(startAngle);
+    const [x2, y2] = toPoint(endAngle);
+    return { ...seg, d: `M ${x1} ${y1} A ${r} ${r} 0 0 1 ${x2} ${y2}` };
+  });
+  const rotationFor = (s) => s == null ? null : 45 * (Math.max(1, Math.min(5, s)) - 1) - 90;
+  const analystRotation = rotationFor(score) ?? 0;
+  const qualityScore5 = qualityScore100 == null ? null : 1 + (qualityScore100 / 100) * 4;
+  const qualityRotation = rotationFor(qualityScore5);
+  return (
+    <svg viewBox="0 0 240 122" width="100%" height="122" style={{ display: 'block', overflow: 'visible' }}>
+      {arcs.map(a => (
+        <path key={a.key} d={a.d} fill="none" stroke={a.color} strokeWidth={strokeWidth} strokeLinecap="butt" />
+      ))}
+      {/* Analyst consensus — the primary pointer, a long tapered blade. */}
+      <g transform={`rotate(${analystRotation} ${cx} ${cy})`} style={{ transition: 'transform 0.6s cubic-bezier(0.16, 1, 0.3, 1)' }}>
+        <polygon points={`${cx - 4},${cy} ${cx + 4},${cy} ${cx},${cy - 76}`} fill="var(--ws-text)" />
+      </g>
+      <circle cx={cx} cy={cy} r="7" fill="var(--ws-text)" />
+      {/* Traqcker Quality Score — a short pin+dot marker, always drawn on top of the main
+          needle (not underneath it) so the dot stays visible even when the two scores
+          nearly agree and the pointers land at almost the same angle. */}
+      {qualityRotation != null && (
+        <g transform={`rotate(${qualityRotation} ${cx} ${cy})`} style={{ transition: 'transform 0.6s cubic-bezier(0.16, 1, 0.3, 1)' }}>
+          <line x1={cx} y1={cy} x2={cx} y2={cy - 50} stroke={QUALITY_NEEDLE_COLOR} strokeWidth="3" strokeLinecap="round" />
+          <circle cx={cx} cy={cy - 50} r="5" fill={QUALITY_NEEDLE_COLOR} stroke="var(--ws-bg-1)" strokeWidth="1.5" />
+        </g>
+      )}
+    </svg>
+  );
+}
+
 export default function StockPage({ params }) {
   const { ticker: rawTicker } = use(params);
   const ticker = rawTicker.toUpperCase();
@@ -321,8 +377,7 @@ export default function StockPage({ params }) {
   const [isPro, setIsPro] = useState(false);
   const [checkingPro, setCheckingPro] = useState(true);
   const [inWatchlist, setInWatchlist] = useState(false);
-  const [userVote, setUserVote] = useState(null);
-  const [voteConsensus, setVoteConsensus] = useState({ BUY: 0, HOLD: 0, SELL: 0, total: 0, source: 'none' });
+  const [analystRating, setAnalystRating] = useState({ ratings: null, total: 0, consensus: null, score: null, source: 'none' });
   const [expanded, setExpanded] = useState(false);
   const [sotw, setSotw] = useState(null);
   const [achievementToast, setAchievementToast] = useState(null);
@@ -474,12 +529,9 @@ export default function StockPage({ params }) {
   }, [ticker, isSignedIn]);
 
   useEffect(() => {
-    fetch(`/api/votes?ticker=${ticker}`)
+    fetch(`/api/analyst-rating?ticker=${ticker}`)
       .then(r => r.json())
-      .then(d => {
-        if (d.userVote) setUserVote(d.userVote);
-        setVoteConsensus({ ...d.percentages, total: d.total, source: d.source || 'none' });
-      })
+      .then(d => setAnalystRating({ ratings: d.ratings, total: d.total, consensus: d.consensus, score: d.score, source: d.source || 'none' }))
       .catch(() => {});
   }, [ticker]);
 
@@ -794,72 +846,89 @@ export default function StockPage({ params }) {
             {/* Left column: vote + numbers + chart */}
             <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
 
-              {/* Community vote */}
+              {/* Analyst rating */}
               <div style={{ background: 'var(--ws-bg-1)', border: '1px solid var(--ws-border)', padding: '20px' }}>
-                <div style={{ fontWeight: 700, fontSize: '13px', marginBottom: '6px', color: 'var(--ws-text)' }}>Your vote</div>
-                <div style={{ color: 'var(--ws-text-3)', fontSize: '11px', marginBottom: '14px' }}>
-                  {isSignedIn ? 'Choose your call' : 'Sign in to vote'}
+                <div style={{ fontWeight: 700, fontSize: '14px', marginBottom: '4px', color: 'var(--ws-text)' }}>
+                  Should I buy or sell {ticker} stock?
                 </div>
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '8px', marginBottom: '16px' }}>
-                  {['BUY', 'HOLD', 'SELL'].map(v => {
-                    const active = userVote === v;
-                    const activeColor = v === 'BUY' ? 'var(--ws-accent)' : v === 'SELL' ? 'var(--ws-red)' : 'var(--ws-text-2)';
-                    const activeDim = v === 'BUY' ? 'var(--ws-accent-dim)' : v === 'SELL' ? 'var(--ws-bg-2)' : 'var(--ws-bg-2)';
-                    return (
-                      <button key={v} onClick={async () => {
-                        if (!isSignedIn) { window.location.href = '/sign-in'; return; }
-                        setUserVote(v);
-                        fetch('/api/votes', {
-                          method: 'POST',
-                          headers: { 'Content-Type': 'application/json' },
-                          body: JSON.stringify({ ticker, vote: v }),
-                        }).then(r => r.json()).then(async (voteData) => {
-                          fetch(`/api/votes?ticker=${ticker}`)
-                            .then(r => r.json())
-                            .then(d => setVoteConsensus({ ...d.percentages, total: d.total }))
-                            .catch(() => {});
-                          if (user?.id && voteData.voteCount) {
-                            const voteCount = voteData.voteCount;
-                            if (voteData.isNewVote && voteCount === 1) unlockAchievement('first_vote');
-                            if (voteCount >= 5) unlockAchievement('serial_voter');
-                            fetch(`/api/votes?ticker=${ticker}`)
-                              .then(r => r.json())
-                              .then(d => {
-                                const majorityVote = Object.keys(d.percentages).reduce((a, b) => d.percentages[a] > d.percentages[b] ? a : b);
-                                if (v !== majorityVote && d.percentages[v] < 25) unlockAchievement('contrarian');
-                              }).catch(() => {});
-                          }
-                        }).catch(() => {});
-                      }}
-                        style={{ padding: '14px 8px', textAlign: 'center', border: `1px solid ${active ? activeColor : 'var(--ws-border)'}`, background: active ? activeDim : 'var(--ws-bg-2)', color: active ? activeColor : 'var(--ws-text-2)', fontWeight: 700, fontSize: '13px', cursor: 'pointer' }}>
-                        {v}
-                      </button>
-                    );
-                  })}
-                </div>
-                {voteConsensus.source === 'none' ? (
-                  <div style={{ fontSize: '11px', color: 'var(--ws-text-3)', textAlign: 'center', padding: '8px 0' }}>
-                    No votes or analyst coverage yet — be the first to weigh in.
+                {analystRating.source === 'none' || !analystRating.ratings ? (
+                  <div style={{ fontSize: '11px', color: 'var(--ws-text-3)', padding: '8px 0' }}>
+                    No analyst coverage available for this ticker.
                   </div>
-                ) : (
-                  <>
-                    <div style={{ display: 'flex', height: '10px', overflow: 'hidden', marginBottom: '8px' }}>
-                      <div style={{ background: 'var(--ws-accent)', width: `${voteConsensus.BUY}%` }} />
-                      <div style={{ background: 'var(--ws-text-3)', width: `${voteConsensus.HOLD}%` }} />
-                      <div style={{ background: 'var(--ws-red)', width: `${voteConsensus.SELL}%` }} />
-                    </div>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '11px', color: 'var(--ws-text-3)', fontWeight: 600 }}>
-                      <span style={{ color: 'var(--ws-accent)' }}>● {voteConsensus.BUY}% Buy</span>
-                      <span style={{ color: 'var(--ws-text-2)' }}>● {voteConsensus.HOLD}% Hold</span>
-                      <span style={{ color: 'var(--ws-red)' }}>● {voteConsensus.SELL}% Sell</span>
-                    </div>
-                    <div style={{ marginTop: '6px', fontSize: '10px', color: 'var(--ws-text-3)', textAlign: 'center' }}>
-                      {voteConsensus.source === 'analysts'
-                        ? `Analyst consensus · ${voteConsensus.total} analysts`
-                        : `${voteConsensus.total} ${voteConsensus.total === 1 ? 'person' : 'people'} voted`}
-                    </div>
-                  </>
-                )}
+                ) : (() => {
+                  const r = analystRating.ratings;
+                  const total = analystRating.total;
+                  const pct = (n) => Math.round((n / total) * 100);
+                  const CONSENSUS_LABELS = {
+                    strong_buy: { label: 'Strong Buy', color: '#0d9488' },
+                    buy: { label: 'Buy', color: '#84cc16' },
+                    hold: { label: 'Hold', color: '#eab308' },
+                    sell: { label: 'Sell', color: '#f97316' },
+                    strong_sell: { label: 'Strong Sell', color: '#ef4444' },
+                  };
+                  const c = CONSENSUS_LABELS[analystRating.consensus];
+                  const rows = [
+                    { key: 'strongBuy', label: 'Strong Buy', color: '#0d9488' },
+                    { key: 'buy', label: 'Buy', color: '#84cc16' },
+                    { key: 'hold', label: 'Hold', color: '#eab308' },
+                    { key: 'sell', label: 'Sell', color: '#f97316' },
+                    { key: 'strongSell', label: 'Strong Sell', color: '#ef4444' },
+                  ];
+                  return (
+                    <>
+                      <div style={{ fontSize: '11px', color: 'var(--ws-text-3)', marginBottom: '10px' }}>
+                        Based on {total} analyst{total === 1 ? '' : 's'} offering ratings for {data.name}.
+                      </div>
+                      <AnalystGauge score={analystRating.score} qualityScore100={easyMode?.score100} />
+                      {c && (
+                        <div style={{ textAlign: 'center', fontSize: '20px', fontWeight: 800, color: c.color, margin: '4px 0 4px' }}>
+                          {c.label}
+                        </div>
+                      )}
+                      {easyMode && (
+                        <div style={{ textAlign: 'center', fontSize: '10px', color: 'var(--ws-text-3)', marginBottom: '16px' }}>
+                          <span style={{ color: QUALITY_NEEDLE_COLOR }}>●</span> Traqcker Quality Score ({easyMode.score100}/100)
+                        </div>
+                      )}
+                      <div style={{ borderTop: '1px solid var(--ws-border)', paddingTop: '14px', display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', rowGap: '14px' }}>
+                        {rows.map(row => (
+                          <div key={row.key}>
+                            <div style={{ fontSize: '11px', color: 'var(--ws-text-2)', marginBottom: '3px' }}>
+                              <span style={{ color: row.color }}>●</span> {row.label}
+                            </div>
+                            <div style={{ fontSize: '12px', fontWeight: 700, color: 'var(--ws-text)' }}>
+                              {r[row.key]} <span style={{ fontWeight: 400, color: 'var(--ws-text-3)' }}>analyst{r[row.key] === 1 ? '' : 's'}</span>{' '}
+                              <span style={{ color: row.color }}>{pct(r[row.key])}%</span>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                      <div style={{ marginTop: '10px', fontSize: '10px', color: 'var(--ws-text-3)', textAlign: 'center' }}>
+                        Source: {analystRating.source === 'finnhub' ? 'Finnhub' : 'Yahoo Finance'}
+                      </div>
+                      {easyMode && c && (() => {
+                        // Collapse both scales to Buy/Hold/Sell to compare directional
+                        // agreement — Quality Score measures business quality/valuation,
+                        // analyst consensus measures Street sentiment; they're different
+                        // instruments and won't line up to the same 5-way granularity.
+                        const qualityCall = easyMode.score100 >= 70 ? 'Buy' : easyMode.score100 >= 40 ? 'Hold' : 'Sell';
+                        const analystCall = analystRating.consensus === 'strong_buy' || analystRating.consensus === 'buy' ? 'Buy'
+                          : analystRating.consensus === 'hold' ? 'Hold' : 'Sell';
+                        const agrees = qualityCall === analystCall;
+                        return (
+                          <div style={{ marginTop: '14px', background: 'var(--ws-bg-2)', border: '1px solid var(--ws-border)', padding: '12px 14px', fontSize: '11px', color: 'var(--ws-text-2)', lineHeight: 1.5, display: 'flex', gap: '8px' }}>
+                            <span style={{ color: 'var(--ws-text-3)', flexShrink: 0 }}>ⓘ</span>
+                            <span>
+                              Our Quality Score model (<strong style={{ color: easyMode.verdictColor }}>{easyMode.verdict}</strong>, {easyMode.score100}/100)
+                              {' '}{agrees ? 'agrees' : 'disagrees'} with the analyst consensus{' '}
+                              (<strong style={{ color: c.color }}>{c.label}</strong>) rating.
+                            </span>
+                          </div>
+                        );
+                      })()}
+                    </>
+                  );
+                })()}
               </div>
 
               {/* Numbers, Simplified */}

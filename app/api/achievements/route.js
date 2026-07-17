@@ -1,9 +1,6 @@
 import { createClient } from '@supabase/supabase-js';
 
 const ACHIEVEMENTS = {
-  first_vote:        { title: 'First Vote',        description: 'Cast your first community vote',          icon: '🗳️', rarity: 'common' },
-  serial_voter:      { title: 'Serial Voter',       description: 'Vote 5 times on stocks',                 icon: '🔄', rarity: 'uncommon' },
-  contrarian:        { title: 'Contrarian',          description: 'Vote opposite to community consensus',   icon: '⚡', rarity: 'uncommon' },
   stock_explorer:    { title: 'Explorer',            description: 'Search 20+ different stocks',            icon: '🔍', rarity: 'common' },
   watchlist_builder: { title: 'Watchlist Builder',  description: 'Add 5 stocks to your watchlist',         icon: '⭐', rarity: 'common' },
   pro_subscriber:    { title: 'Pro Member',          description: 'Upgraded to Traqcker Pro',                icon: '💎', rarity: 'uncommon' },
