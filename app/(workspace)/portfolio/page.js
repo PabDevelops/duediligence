@@ -35,6 +35,8 @@ export default function WorkspacePortfolio() {
   const [sellPosition, setSellPosition] = useState(null);
   const [snapshots, setSnapshots] = useState([]);
   const [currency, setCurrency] = useState('USD');
+  const [editingPie, setEditingPie] = useState(null);
+  const [newPieName, setNewPieName] = useState('');
   const { rates, toUSD } = useCurrencyRates();
 
   useEffect(() => {
@@ -211,6 +213,26 @@ export default function WorkspacePortfolio() {
     }
   };
 
+  const handleRenamePie = async (oldPie, newPie) => {
+    if (!newPie || !newPie.trim() || newPie.trim() === oldPie) {
+      setEditingPie(null);
+      return;
+    }
+    try {
+      const res = await fetch('/api/portfolio', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ oldPie, newPie: newPie.trim() }),
+      });
+      if (res.ok) {
+        setEditingPie(null);
+        load();
+      }
+    } catch (err) {
+      console.error('Error renaming pie:', err);
+    }
+  };
+
   return (
     <div style={{ padding: '24px' }}>
       <div style={{ border: '1px solid var(--ws-border)', background: 'var(--ws-bg-1)', marginBottom: '20px', overflow: 'hidden' }}>
@@ -306,18 +328,68 @@ export default function WorkspacePortfolio() {
 
           {groupedByPie.map(group => {
             const groupAllocation = totals.value > 0 ? (group.value / totals.value) * 100 : 0;
+            const isEditing = editingPie === group.name;
             return (
               <div key={group.name} style={{ marginBottom: '18px' }}>
-                {hasPies && (
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '10px 4px', marginBottom: '2px' }}>
-                    <div style={{ fontSize: '13px', fontWeight: 700, color: 'var(--ws-text)' }}>{group.name}</div>
-                    <div style={{ fontSize: '11px', color: 'var(--ws-text-3)' }}>{group.items.length} holding{group.items.length !== 1 ? 's' : ''} · {groupAllocation.toFixed(1)}% of portfolio</div>
-                    <div style={{ marginLeft: 'auto', fontSize: '12px', fontWeight: 600, color: 'var(--ws-text)' }}>{fmtC(group.value)}</div>
-                    <div style={{ fontSize: '12px', fontWeight: 600, color: group.gain >= 0 ? 'var(--ws-accent)' : 'var(--ws-red)' }}>
-                      {group.gain >= 0 ? '+' : ''}{fmtC(group.gain)} ({group.gainPct >= 0 ? '+' : ''}{group.gainPct.toFixed(1)}%)
+                <div style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '10px 4px', marginBottom: '2px' }}>
+                  {isEditing ? (
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                      <input
+                        type="text"
+                        value={newPieName}
+                        onChange={e => setNewPieName(e.target.value)}
+                        onKeyDown={e => {
+                          if (e.key === 'Enter') handleRenamePie(group.name, newPieName);
+                          if (e.key === 'Escape') setEditingPie(null);
+                        }}
+                        autoFocus
+                        style={{
+                          background: 'var(--ws-bg-2)',
+                          border: '1px solid var(--ws-border)',
+                          color: 'var(--ws-text)',
+                          fontSize: '12px',
+                          fontWeight: 700,
+                          padding: '3px 8px',
+                          outline: 'none',
+                          borderRadius: '2px',
+                          width: '160px'
+                        }}
+                      />
+                      <button
+                        onClick={() => handleRenamePie(group.name, newPieName)}
+                        className="ws-btn"
+                        style={{ fontSize: '11px', padding: '2px 8px', height: '26px' }}
+                      >
+                        Save
+                      </button>
+                      <button
+                        onClick={() => setEditingPie(null)}
+                        className="ws-btn-secondary"
+                        style={{ fontSize: '11px', padding: '2px 8px', height: '26px' }}
+                      >
+                        Cancel
+                      </button>
                     </div>
+                  ) : (
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                      <div style={{ fontSize: '13px', fontWeight: 700, color: 'var(--ws-text)' }}>{group.name}</div>
+                      <button
+                        onClick={() => { setEditingPie(group.name); setNewPieName(group.name === 'Unassigned' ? '' : group.name); }}
+                        title={`Rename category "${group.name}"`}
+                        style={{ background: 'none', border: 'none', color: 'var(--ws-text-3)', cursor: 'pointer', fontSize: '12px', padding: '2px 4px' }}
+                        onMouseEnter={e => e.currentTarget.style.color = 'var(--ws-accent)'}
+                        onMouseLeave={e => e.currentTarget.style.color = 'var(--ws-text-3)'}
+                      >
+                        ✎
+                      </button>
+                    </div>
+                  )}
+                  <div style={{ fontSize: '11px', color: 'var(--ws-text-3)' }}>{group.items.length} holding{group.items.length !== 1 ? 's' : ''} · {groupAllocation.toFixed(1)}% of portfolio</div>
+                  <div style={{ marginLeft: 'auto', fontSize: '12px', fontWeight: 600, color: 'var(--ws-text)' }}>{fmtC(group.value)}</div>
+                  <div style={{ fontSize: '12px', fontWeight: 600, color: group.gain >= 0 ? 'var(--ws-accent)' : 'var(--ws-red)' }}>
+                    {group.gain >= 0 ? '+' : ''}{fmtC(group.gain)} ({group.gainPct >= 0 ? '+' : ''}{group.gainPct.toFixed(1)}%)
                   </div>
-                )}
+                </div>
                 <div className="responsive-table-container" style={{ border: '1px solid var(--ws-border)', background: 'var(--ws-bg-1)' }}>
                   <table className="responsive-table" style={{ fontSize: '12px' }}>
                     <thead>
