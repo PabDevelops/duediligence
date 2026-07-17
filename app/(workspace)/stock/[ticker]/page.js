@@ -1760,6 +1760,24 @@ export default function StockPage({ params }) {
                     </div>
                   )}
 
+                  {dcfValue.marginJustMatured && (
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px', background: 'rgba(217, 119, 6, 0.1)', border: '1px solid rgba(217, 119, 6, 0.35)', padding: '10px 14px', marginBottom: '16px', fontSize: '11px', color: 'var(--ws-text-2)' }}>
+                      <span style={{ fontWeight: 800, color: '#d97706', letterSpacing: '0.5px' }}>RECENT MARGIN RE-RATE</span>
+                      <span>
+                        the FCF margin expanded sharply over the last few years and has just leveled off near its own high — growth here uses revenue (not FCF-dollar growth, which would still carry that one-time re-rate) and the exit multiple carries a 25% durability discount, since a margin this fresh is not yet proven to hold for a decade the way a long-stable one has.
+                      </span>
+                    </div>
+                  )}
+
+                  {dcfValue.extremeUpside && (
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px', background: 'rgba(220, 38, 38, 0.1)', border: '1px solid rgba(220, 38, 38, 0.35)', padding: '10px 14px', marginBottom: '16px', fontSize: '11px', color: 'var(--ws-text-2)' }}>
+                      <span style={{ fontWeight: 800, color: 'var(--ws-red)', letterSpacing: '0.5px' }}>EXTREME RESULT — TREAT WITH CAUTION</span>
+                      <span>
+                        the base case implies more than 150% upside to the current price. That can be a genuine mispricing, but it is also the recurring signature of a modeling blind spot (a terminal-value-dominated projection off a fast-changing margin) — worth a manual sanity check against the company&apos;s own guidance and sell-side estimates before trusting this number at face value.
+                      </span>
+                    </div>
+                  )}
+
                   {price != null && (
                     <div style={{ background: 'var(--ws-bg-1)', border: '1px solid var(--ws-border)', padding: '18px 20px', marginBottom: '16px' }}>
                       <div style={{ fontSize: '10px', fontWeight: 800, color: 'var(--ws-text-3)', letterSpacing: '1.5px', marginBottom: '10px' }}>VALUATION RANGE</div>
