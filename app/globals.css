@@ -619,15 +619,21 @@ html, body {
   overflow-x: hidden;
 }
 
+/* Grid items default to a content-based automatic minimum size, so a single wide
+   widget (e.g. Coverage Workspace's 9-column table) can force its whole column
+   track wider than the viewport at any column count (2-col, 3-col) — not just
+   the mobile 1-col layout. Since .workspace clips overflow-x, that excess width
+   was being cut off invisibly instead of scrolling. Applies at every breakpoint. */
+.home-main-grid,
+.home-main-grid > div {
+  min-width: 0;
+  max-width: 100%;
+}
+
 /* Home dashboard's custom grid collapses below 1023px (mobile/tablet layout) */
 @media (max-width: 1023px) {
   .home-main-grid {
     grid-template-columns: 1fr !important;
-  }
-  .home-main-grid,
-  .home-main-grid > div {
-    min-width: 0;
-    max-width: 100%;
   }
   .home-main-grid > div {
     padding: 0 !important;
