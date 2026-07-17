@@ -13,21 +13,21 @@ import StockLogo from '../../components/workspace/StockLogo';
 import NewsImage from '../../components/workspace/home/NewsImage';
 import Card from '../../components/workspace/home/Card';
 import OnboardingBanner from '../../components/OnboardingBanner';
+import StockChart from '../../components/StockChart';
 
 // Same set + localStorage key as the dedicated /portfolio page, so the display
 // currency preference stays in sync between that page and this dashboard widget.
 const CURRENCIES = { USD: '$', EUR: '€', GBP: '£' };
 
 // Fixed dashboard layout — a new user with an empty portfolio/watchlist shouldn't have to
-// configure a dashboard before it's useful. Drag-to-reorder and per-widget visibility used
-// to live here; if a genuinely power-user "advanced mode" is worth building later, it should
-// be designed fresh for that purpose rather than re-enabling this. Market Intelligence,
-// Earnings Calendar and Stock of the Week were cut entirely — they duplicated content that
-// already lives (in more depth) on the Radar and Calendar pages, or added little beyond a
-// gimmick once the community-voting angle was removed. News stays: unlike those, it's
-// content the user actually comes back to Home to read.
-const LEFT_WIDGETS = ['indices', 'portfolio', 'workspace'];
-const RIGHT_WIDGETS = ['secFeed', 'leaders'];
+// configure a dashboard before it's useful. Market Intelligence, Earnings Calendar and Stock
+// of the Week were cut entirely — they duplicated content that already lives (in more depth)
+// on the Radar and Calendar pages, or added little beyond a gimmick once the community-voting
+// angle was removed. News stays: unlike those, it's content the user actually comes back to
+// Home to read. Advanced Mode (see below) replaces this whole grid with a terminal-style
+// chart view instead of customizing it, so there's no drag-to-reorder here anymore.
+const WIDGET_ORDER = ['indices', 'portfolio', 'workspace', 'secFeed', 'leaders'];
+const MAX_CHART_TICKERS = 8;
 
 const WIDGETS_METADATA = [
   { id: 'indices', label: 'Major Indices' },
@@ -59,12 +59,32 @@ export default function WorkspaceHome() {
   });
   const [showCustomizer, setShowCustomizer] = useState(false);
 
+  // Advanced Mode — opt-in, persisted. Replaces the widget grid below with a terminal-style
+  // view: a ticker rail, one big chart, and a detail panel — off by default so a new user's
+  // dashboard stays the plain, un-configured grid until they ask for more.
+  const [advancedMode, setAdvancedMode] = useState(false);
+
+  // Tickers the user has pinned to chart in the terminal view (Advanced Mode only).
+  const [chartTickers, setChartTickers] = useState([]);
+  const [newChartTicker, setNewChartTicker] = useState('');
+  // Which ticker the terminal's big chart is currently showing, which left-rail tab is active,
+  // and whether that rail is collapsed — same collapse pattern as the app's own Sidebar.
+  const [terminalTicker, setTerminalTicker] = useState(null);
+  const [terminalTab, setTerminalTab] = useState('watchlist');
+  const [terminalRailCollapsed, setTerminalRailCollapsed] = useState(false);
+
   useEffect(() => {
     try {
       const saved = localStorage.getItem('traqcker_widget_visibility');
       if (saved) {
-        setWidgetVisibility(JSON.parse(saved));
+        setWidgetVisibility(prev => ({ ...prev, ...JSON.parse(saved) }));
       }
+      const savedAdvanced = localStorage.getItem('traqcker_advanced_mode');
+      if (savedAdvanced) setAdvancedMode(savedAdvanced === 'true');
+      const savedCharts = localStorage.getItem('traqcker_chart_tickers');
+      if (savedCharts) setChartTickers(JSON.parse(savedCharts));
+      const savedCollapsed = localStorage.getItem('traqcker_terminal_rail_collapsed');
+      if (savedCollapsed) setTerminalRailCollapsed(savedCollapsed === 'true');
     } catch (e) {}
   }, []);
 
@@ -77,7 +97,40 @@ export default function WorkspaceHome() {
       return updated;
     });
   };
-  
+
+  const toggleAdvancedMode = () => {
+    setAdvancedMode(prev => {
+      const next = !prev;
+      try { localStorage.setItem('traqcker_advanced_mode', String(next)); } catch (e) {}
+      return next;
+    });
+  };
+
+  const toggleTerminalRail = () => {
+    setTerminalRailCollapsed(prev => {
+      const next = !prev;
+      try { localStorage.setItem('traqcker_terminal_rail_collapsed', String(next)); } catch (e) {}
+      return next;
+    });
+  };
+
+  const addChartTicker = (e) => {
+    e.preventDefault();
+    const t = newChartTicker.toUpperCase().trim();
+    if (!t || chartTickers.includes(t) || chartTickers.length >= MAX_CHART_TICKERS) return;
+    const updated = [...chartTickers, t];
+    setChartTickers(updated);
+    try { localStorage.setItem('traqcker_chart_tickers', JSON.stringify(updated)); } catch (e) {}
+    setNewChartTicker('');
+    setTerminalTicker(t);
+  };
+
+  const removeChartTicker = (ticker) => {
+    const updated = chartTickers.filter(t => t !== ticker);
+    setChartTickers(updated);
+    try { localStorage.setItem('traqcker_chart_tickers', JSON.stringify(updated)); } catch (e) {}
+  };
+
   // Responsive layout columns detector: 1 (<1024px), 2 (1024px-1600px), 3 (>1600px)
   const [columns, setColumns] = useState(1);
   useEffect(() => {
@@ -121,7 +174,7 @@ export default function WorkspaceHome() {
   const currencySymbol = CURRENCIES[currency];
 
   // Widget States — movers still feeds the top marquee ticker even though the Market
-  // Intelligence widget that used to also read from it was cut (see LEFT/RIGHT_WIDGETS above).
+  // Intelligence widget that used to also read from it was cut (see WIDGET_ORDER above).
   const [movers, setMovers] = useState(null);
   const [marqueeMode, setMarqueeMode] = useState('gainers'); // 'gainers' | 'losers' | 'bigCapMovers'
   const [watchlist, setWatchlist] = useState([]);
@@ -262,11 +315,20 @@ export default function WorkspaceHome() {
     return [...new Set([...activeTickers, ...watchlist.map(w => w.ticker)])];
   }, [activeTickers, watchlist]);
 
-  // Every ticker we need a live price/day-change quote for — portfolio, watchlist, AND
-  // recently viewed — so the Coverage Workspace table can show price/today alongside them.
+  // Every ticker we need a live price/day-change quote for — portfolio, watchlist, recently
+  // viewed, AND the terminal's pinned chart tickers — so both the Coverage Workspace table and
+  // the Advanced Mode ticker rail can show price/today without a separate fetch per widget.
   const quoteTickers = useMemo(() => {
-    return [...new Set([...newsTickers, ...recentViewed])];
-  }, [newsTickers, recentViewed]);
+    return [...new Set([...newsTickers, ...recentViewed, ...chartTickers])];
+  }, [newsTickers, recentViewed, chartTickers]);
+
+  // Pick a sensible default for the terminal's big chart the first time there's anything to
+  // show — watchlist first (most intentional signal), then pinned charts, then a holding.
+  useEffect(() => {
+    if (terminalTicker) return;
+    const first = watchlist[0]?.ticker || chartTickers[0] || activeTickers[0];
+    if (first) setTerminalTicker(first);
+  }, [watchlist, chartTickers, activeTickers, terminalTicker]);
 
   // Fetch personalized news whenever the holdings/watchlist ticker set changes
   useEffect(() => {
@@ -1448,28 +1510,27 @@ export default function WorkspaceHome() {
     }
   };
 
-  // Mobile collapses to one fixed-order column; desktop keeps the two-column split.
-  const mobileWidgets = [...LEFT_WIDGETS, ...RIGHT_WIDGETS];
-
   const visibleIds = useMemo(() => {
-    return mobileWidgets.filter(id => widgetVisibility[id] !== false);
-  }, [mobileWidgets, widgetVisibility]);
+    return WIDGET_ORDER.filter(id => widgetVisibility[id] !== false);
+  }, [widgetVisibility]);
 
   const layoutColumns = useMemo(() => {
     const colsCount = columns; // 1, 2, or 3
     const cols = Array.from({ length: colsCount }, () => []);
-    
-    visibleIds.forEach(id => {
-      if (colsCount === 1) {
-        cols[0].push(id);
-      } else if (colsCount === 2) {
+
+    if (colsCount === 1) {
+      visibleIds.forEach(id => cols[0].push(id));
+    } else if (colsCount === 2) {
+      visibleIds.forEach(id => {
         if (id === 'indices' || id === 'portfolio' || id === 'workspace') {
           cols[0].push(id);
         } else {
           cols[1].push(id);
         }
-      } else {
-        // 3 columns
+      });
+    } else {
+      // 3 columns
+      visibleIds.forEach(id => {
         if (id === 'indices' || id === 'portfolio') {
           cols[0].push(id);
         } else if (id === 'workspace') {
@@ -1477,11 +1538,406 @@ export default function WorkspaceHome() {
         } else {
           cols[2].push(id);
         }
-      }
-    });
+      });
+    }
 
     return cols.filter(c => c.length > 0);
   }, [visibleIds, columns]);
+
+  const renderTerminal = () => {
+    if (!terminalTicker) {
+      return (
+        <div style={{
+          textAlign: 'center',
+          padding: '80px 24px',
+          border: '1px dashed var(--ws-border)',
+          borderRadius: '8px',
+          color: 'var(--ws-text-3)',
+          background: 'var(--ws-bg-1)',
+          fontSize: '13px'
+        }}>
+          No ticker selected. Add a ticker or select from your watchlist to load the terminal.
+        </div>
+      );
+    }
+
+    // Determine the list of tickers for the active rail tab
+    let railTickers = [];
+    if (terminalTab === 'watchlist') {
+      railTickers = watchlist.map(w => w.ticker);
+    } else if (terminalTab === 'portfolio') {
+      railTickers = activeTickers;
+    } else {
+      railTickers = chartTickers;
+    }
+
+    const detailData = stockDetails[terminalTicker];
+    const easyMode = detailData ? computeEasyMode(detailData, hasFundamentals(detailData)) : null;
+
+    const isSmallScreen = columns === 1;
+    const isMediumScreen = columns === 2;
+
+    return (
+      <div style={{
+        display: 'grid',
+        gridTemplateColumns: isSmallScreen ? '1fr' : (terminalRailCollapsed ? '60px 1fr' : '260px 1fr'),
+        gap: '20px',
+        minHeight: '600px',
+        alignItems: 'stretch',
+        transition: 'grid-template-columns 0.2s ease'
+      }}>
+        {/* LEFT RAIL */}
+        <div style={{
+          background: 'var(--ws-bg-1)',
+          border: '1px solid var(--ws-border)',
+          borderRadius: '8px',
+          display: 'flex',
+          flexDirection: 'column',
+          maxHeight: isSmallScreen ? '300px' : 'none',
+          overflow: 'hidden'
+        }}>
+          {/* Rail Header */}
+          {(!terminalRailCollapsed || isSmallScreen) ? (
+            <div style={{ padding: '12px', borderBottom: '1px solid var(--ws-border)' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
+                <span style={{ fontSize: '11px', fontWeight: 800, color: 'var(--ws-text-3)', letterSpacing: '0.5px', textTransform: 'uppercase' }}>Terminal Rail</span>
+                {!isSmallScreen && (
+                  <button 
+                    onClick={toggleTerminalRail}
+                    style={{ background: 'none', border: 'none', color: 'var(--ws-text-3)', cursor: 'pointer', display: 'flex', alignItems: 'center', padding: '2px' }}
+                  >
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                      <line x1="19" y1="12" x2="5" y2="12"></line>
+                      <polyline points="12 19 5 12 12 5"></polyline>
+                    </svg>
+                  </button>
+                )}
+              </div>
+              
+              {/* Tab Selector Buttons */}
+              <div style={{ display: 'flex', gap: '2px', background: 'var(--ws-bg-2)', padding: '2px', borderRadius: '6px' }}>
+                {['watchlist', 'portfolio', 'charts'].map(tab => (
+                  <button
+                    key={tab}
+                    onClick={() => setTerminalTab(tab)}
+                    style={{
+                      flex: 1,
+                      padding: '5px 0',
+                      fontSize: '9px',
+                      fontWeight: 700,
+                      textTransform: 'uppercase',
+                      border: 'none',
+                      borderRadius: '4px',
+                      background: terminalTab === tab ? 'var(--ws-bg-1)' : 'transparent',
+                      color: terminalTab === tab ? 'var(--ws-text)' : 'var(--ws-text-3)',
+                      cursor: 'pointer',
+                      transition: 'all 0.1s'
+                    }}
+                  >
+                    {tab === 'charts' ? 'Pinned' : tab}
+                  </button>
+                ))}
+              </div>
+            </div>
+          ) : (
+            <div style={{ padding: '12px', borderBottom: '1px solid var(--ws-border)', display: 'flex', justifyContent: 'center' }}>
+              <button 
+                onClick={toggleTerminalRail}
+                style={{ background: 'none', border: 'none', color: 'var(--ws-text-3)', cursor: 'pointer', display: 'flex', alignItems: 'center', padding: '2px' }}
+              >
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                  <line x1="5" y1="12" x2="19" y2="12"></line>
+                  <polyline points="12 5 19 12 12 19"></polyline>
+                </svg>
+              </button>
+            </div>
+          )}
+
+          {/* Ticker List Container */}
+          <div style={{ flex: 1, overflowY: 'auto', padding: '8px', display: 'flex', flexDirection: 'column', gap: '4px' }}>
+            {railTickers.map(ticker => {
+              const price = prices[ticker];
+              const pct = dayChanges[ticker];
+              const isActive = terminalTicker === ticker;
+              const hasChange = pct != null;
+              const isPositive = pct >= 0;
+
+              return (
+                <div
+                  key={ticker}
+                  onClick={() => setTerminalTicker(ticker)}
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: (terminalRailCollapsed && !isSmallScreen) ? 'center' : 'space-between',
+                    padding: '8px',
+                    borderRadius: '6px',
+                    background: isActive ? 'var(--ws-bg-2)' : 'transparent',
+                    border: `1px solid ${isActive ? 'var(--ws-border)' : 'transparent'}`,
+                    cursor: 'pointer',
+                    transition: 'all 0.15s'
+                  }}
+                  onMouseEnter={e => { if(!isActive) e.currentTarget.style.background = 'var(--ws-bg-2)'; }}
+                  onMouseLeave={e => { if(!isActive) e.currentTarget.style.background = 'transparent'; }}
+                >
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <StockLogo ticker={ticker} size={18} />
+                    {(!terminalRailCollapsed || isSmallScreen) && (
+                      <span style={{ fontSize: '12px', fontWeight: 700, color: 'var(--ws-text)' }}>{ticker}</span>
+                    )}
+                  </div>
+                  
+                  {(!terminalRailCollapsed || isSmallScreen) && (
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'end' }}>
+                        <span style={{ fontSize: '11px', fontWeight: 600, color: 'var(--ws-text)' }}>
+                          {price ? `${currencySymbol}${price.toFixed(2)}` : '—'}
+                        </span>
+                        {hasChange && (
+                          <span style={{ fontSize: '9px', fontWeight: 700, color: isPositive ? '#10b981' : 'var(--ws-red)' }}>
+                            {isPositive ? '+' : ''}{pct.toFixed(2)}%
+                          </span>
+                        )}
+                      </div>
+
+                      {/* Remove button for Pinned Charts */}
+                      {terminalTab === 'charts' && (
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            removeChartTicker(ticker);
+                          }}
+                          style={{
+                            background: 'none',
+                            border: 'none',
+                            color: 'var(--ws-text-3)',
+                            cursor: 'pointer',
+                            padding: '4px',
+                            display: 'flex',
+                            alignItems: 'center'
+                          }}
+                          onMouseEnter={e => e.currentTarget.style.color = 'var(--ws-red)'}
+                          onMouseLeave={e => e.currentTarget.style.color = 'var(--ws-text-3)'}
+                        >
+                          <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+                            <line x1="18" y1="6" x2="6" y2="18"></line>
+                            <line x1="6" y1="6" x2="18" y2="18"></line>
+                          </svg>
+                        </button>
+                      )}
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+
+            {railTickers.length === 0 && (
+              <div style={{ padding: '24px 12px', textAlign: 'center', color: 'var(--ws-text-3)', fontSize: '10px' }}>
+                No tickers in this tab.
+              </div>
+            )}
+          </div>
+
+          {/* Add Pinned Chart Input (charts tab only, expanded only) */}
+          {(!terminalRailCollapsed || isSmallScreen) && terminalTab === 'charts' && (
+            <form 
+              onSubmit={addChartTicker}
+              style={{
+                padding: '10px',
+                borderTop: '1px solid var(--ws-border)',
+                display: 'flex',
+                gap: '6px'
+              }}
+            >
+              <input
+                type="text"
+                value={newChartTicker}
+                onChange={e => setNewChartTicker(e.target.value)}
+                placeholder="ADD TICKER..."
+                maxLength="6"
+                style={{
+                  flex: 1,
+                  background: 'var(--ws-bg-2)',
+                  border: '1px solid var(--ws-border)',
+                  borderRadius: '4px',
+                  padding: '5px 8px',
+                  fontSize: '10px',
+                  fontWeight: 600,
+                  color: 'var(--ws-text)',
+                  outline: 'none',
+                  textTransform: 'uppercase'
+                }}
+              />
+              <button
+                type="submit"
+                style={{
+                  background: 'var(--ws-accent)',
+                  color: '#fff',
+                  border: 'none',
+                  borderRadius: '4px',
+                  padding: '5px 10px',
+                  fontSize: '10px',
+                  fontWeight: 700,
+                  cursor: 'pointer'
+                }}
+              >
+                ADD
+              </button>
+            </form>
+          )}
+        </div>
+
+        {/* CENTER & RIGHT CONTENT */}
+        <div style={{
+          display: 'grid',
+          gridTemplateColumns: (isSmallScreen || isMediumScreen) ? '1fr' : '2fr 1fr',
+          gap: '20px',
+          alignItems: 'stretch'
+        }}>
+          {/* BIG CHART PANEL */}
+          <div style={{
+            background: 'var(--ws-bg-1)',
+            border: '1px solid var(--ws-border)',
+            borderRadius: '8px',
+            padding: '16px',
+            display: 'flex',
+            flexDirection: 'column',
+            gap: '12px',
+            minHeight: '450px'
+          }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                <StockLogo ticker={terminalTicker} size={28} />
+                <div>
+                  <h2 style={{ fontSize: '15px', fontWeight: 800, color: 'var(--ws-text)', margin: 0 }}>
+                    {terminalTicker}
+                  </h2>
+                  <p style={{ fontSize: '10px', color: 'var(--ws-text-3)', margin: '2px 0 0' }}>
+                    {detailData?.companyName || 'Loading company info...'}
+                  </p>
+                </div>
+              </div>
+              <div style={{ textAlign: 'right' }}>
+                <span style={{ fontSize: '16px', fontWeight: 800, color: 'var(--ws-text)' }}>
+                  {prices[terminalTicker] ? `${currencySymbol}${prices[terminalTicker].toFixed(2)}` : '—'}
+                </span>
+                {dayChanges[terminalTicker] != null && (
+                  <div style={{ fontSize: '11px', fontWeight: 700, color: dayChanges[terminalTicker] >= 0 ? '#10b981' : 'var(--ws-red)' }}>
+                    {dayChanges[terminalTicker] >= 0 ? '+' : ''}{dayChanges[terminalTicker].toFixed(2)}% Today
+                  </div>
+                )}
+              </div>
+            </div>
+
+            <div style={{ flex: 1, position: 'relative', minHeight: '300px' }}>
+              <StockChart ticker={terminalTicker} currency={currency} />
+            </div>
+          </div>
+
+          {/* DETAIL SUMMARY PANEL */}
+          <div style={{
+            background: 'var(--ws-bg-1)',
+            border: '1px solid var(--ws-border)',
+            borderRadius: '8px',
+            padding: '16px',
+            display: 'flex',
+            flexDirection: 'column',
+            gap: '16px',
+            justifyContent: 'space-between'
+          }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+              <div>
+                <span style={{ fontSize: '10px', fontWeight: 700, color: 'var(--ws-text-3)', letterSpacing: '1px', textTransform: 'uppercase' }}>
+                  Fundamental Quality
+                </span>
+                {easyMode ? (
+                  <div style={{ marginTop: '10px' }}>
+                    <div style={{ display: 'flex', alignItems: 'baseline', gap: '8px' }}>
+                      <span style={{ fontSize: '32px', fontWeight: 900, color: easyMode.scoreColor, letterSpacing: '-1px' }}>
+                        {easyMode.score100}
+                      </span>
+                      <span style={{ fontSize: '14px', fontWeight: 700, color: 'var(--ws-text-3)' }}>/100</span>
+                    </div>
+                    <div style={{ 
+                      fontSize: '11px', 
+                      fontWeight: 700, 
+                      color: easyMode.scoreColor, 
+                      marginTop: '4px',
+                      textTransform: 'uppercase',
+                      letterSpacing: '0.5px'
+                    }}>
+                      {easyMode.verdict}
+                    </div>
+                  </div>
+                ) : (
+                  <div style={{ fontSize: '12px', color: 'var(--ws-text-3)', marginTop: '10px' }}>
+                    No fundamental data available for scoring.
+                  </div>
+                )}
+              </div>
+
+              {/* Analyst Summary sentence */}
+              {easyMode?.summary && (
+                <div style={{ 
+                  background: 'var(--ws-bg-2)', 
+                  border: '1px solid var(--ws-border)', 
+                  borderRadius: '6px', 
+                  padding: '12px',
+                  fontSize: '11px',
+                  lineHeight: '1.5',
+                  color: 'var(--ws-text-2)',
+                  fontStyle: 'italic'
+                }}>
+                  {easyMode.summary}
+                </div>
+              )}
+
+              {/* Basic Metrics Grid */}
+              {detailData && (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', borderTop: '1px solid var(--ws-border)', paddingTop: '16px' }}>
+                  <span style={{ fontSize: '9px', fontWeight: 700, color: 'var(--ws-text-3)', letterSpacing: '0.5px', textTransform: 'uppercase' }}>Key Ratios</span>
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
+                    {[
+                      { label: 'P/E Ratio', val: detailData.pe != null ? parseFloat(detailData.pe).toFixed(1) : '—' },
+                      { label: 'P/FCF Ratio', val: detailData.pfcf != null ? parseFloat(detailData.pfcf).toFixed(1) : '—' },
+                      { label: 'ROIC', val: detailData.roic != null ? `${(parseFloat(detailData.roic)).toFixed(1)}%` : '—' },
+                      { label: 'Debt to Equity', val: detailData.debtToEquity != null ? parseFloat(detailData.debtToEquity).toFixed(2) : '—' }
+                    ].map(m => (
+                      <div key={m.label} style={{ background: 'var(--ws-bg-2)', padding: '8px', borderRadius: '4px', border: '1px solid var(--ws-border)' }}>
+                        <div style={{ fontSize: '9px', color: 'var(--ws-text-3)', fontWeight: 600 }}>{m.label}</div>
+                        <div style={{ fontSize: '12px', color: 'var(--ws-text)', fontWeight: 700, marginTop: '2px' }}>{m.val}</div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+
+            <Link
+              href={`/stock/${terminalTicker}`}
+              style={{
+                display: 'block',
+                textAlign: 'center',
+                background: 'var(--ws-bg-2)',
+                border: '1px solid var(--ws-border)',
+                borderRadius: '6px',
+                padding: '10px',
+                fontSize: '11px',
+                fontWeight: 700,
+                color: 'var(--ws-text)',
+                textDecoration: 'none',
+                transition: 'all 0.15s'
+              }}
+              onMouseEnter={e => { e.currentTarget.style.background = 'var(--ws-bg-1)'; e.currentTarget.style.borderColor = 'var(--ws-accent)'; }}
+              onMouseLeave={e => { e.currentTarget.style.background = 'var(--ws-bg-2)'; e.currentTarget.style.borderColor = 'var(--ws-border)'; }}
+            >
+              Analyze Detail Page →
+            </Link>
+          </div>
+        </div>
+      </div>
+    );
+  };
 
   return (
     <div className="home-container" style={{ padding: '24px', display: 'flex', flexDirection: 'column', gap: '24px' }}>
@@ -1494,9 +1950,53 @@ export default function WorkspaceHome() {
           <p style={{ fontSize: '11px', color: 'var(--ws-text-3)', margin: '2px 0 0' }}>Real-time overview of indices, portfolios, watchlists, and filings.</p>
         </div>
         
-        {/* Customize Layout Dropdown */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+          {/* Advanced Mode toggle — unlocks drag-to-reorder + Custom Charts widget */}
+          <button
+            onClick={toggleAdvancedMode}
+            title="Advanced Mode: drag to reorder widgets, add custom ticker charts"
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '7px',
+              padding: '6px 12px',
+              fontSize: '11px',
+              fontWeight: 600,
+              color: advancedMode ? 'var(--ws-accent)' : 'var(--ws-text-2)',
+              background: advancedMode ? 'var(--ws-accent-dim)' : 'var(--ws-bg-1)',
+              border: `1px solid ${advancedMode ? 'var(--ws-accent)' : 'var(--ws-border)'}`,
+              borderRadius: '6px',
+              cursor: 'pointer',
+              transition: 'all 0.15s ease'
+            }}
+          >
+            <span style={{
+              width: '26px',
+              height: '14px',
+              borderRadius: '7px',
+              background: advancedMode ? 'var(--ws-accent)' : 'var(--ws-border)',
+              position: 'relative',
+              transition: 'background 0.15s ease',
+              flexShrink: 0
+            }}>
+              <span style={{
+                position: 'absolute',
+                top: '2px',
+                left: advancedMode ? '13px' : '2px',
+                width: '10px',
+                height: '10px',
+                borderRadius: '50%',
+                background: '#fff',
+                transition: 'left 0.15s ease'
+              }} />
+            </span>
+            Advanced
+          </button>
+
+        {/* Customize Layout Dropdown — hidden in Advanced Mode, which replaces this grid entirely */}
+        {!advancedMode && (
         <div style={{ position: 'relative' }}>
-          <button 
+          <button
             onClick={() => setShowCustomizer(!showCustomizer)}
             style={{
               display: 'flex',
@@ -1581,6 +2081,8 @@ export default function WorkspaceHome() {
             </>
           )}
         </div>
+        )}
+        </div>
       </div>
 
       {/* Top Movers Marquee Ticker — pick Gainers/Losers/Big Cap Movers from the dropdown, all today-only (see MAX_CACHE_AGE_HOURS in /api/movers), auto-scrolls continuously */}
@@ -1653,37 +2155,40 @@ export default function WorkspaceHome() {
         );
       })()}
 
-      {/* Main grid — dynamically renders 1, 2, or 3 columns based on screen width and visibility */}
-      {visibleIds.length === 0 ? (
-        <div style={{
-          textAlign: 'center',
-          padding: '60px 24px',
-          border: '1px dashed var(--ws-border)',
-          borderRadius: '8px',
-          color: 'var(--ws-text-3)',
-          background: 'var(--ws-bg-1)',
-          fontSize: '12px',
-          marginTop: '12px'
-        }}>
-          All widgets hidden. Click "Customize Layout" to restore widget visibility.
-        </div>
-      ) : (
-        <div className="home-main-grid" style={{
-          display: 'grid',
-          gridTemplateColumns: layoutColumns.length === 1 ? '1fr' : `repeat(${layoutColumns.length}, 1fr)`,
-          gap: '20px',
-          alignItems: 'start'
-        }}>
-          {layoutColumns.map((colWidgets, colIndex) => (
-            <div key={colIndex} style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
-              {colWidgets.map(id => (
-                <div key={id}>
-                  {renderWidget(id)}
-                </div>
-              ))}
-            </div>
-          ))}
-        </div>
+      {/* Advanced Mode replaces the widget grid entirely with a terminal-style chart view;
+          otherwise render the normal 1/2/3-column grid based on screen width and visibility. */}
+      {advancedMode ? renderTerminal() : (
+        visibleIds.length === 0 ? (
+          <div style={{
+            textAlign: 'center',
+            padding: '60px 24px',
+            border: '1px dashed var(--ws-border)',
+            borderRadius: '8px',
+            color: 'var(--ws-text-3)',
+            background: 'var(--ws-bg-1)',
+            fontSize: '12px',
+            marginTop: '12px'
+          }}>
+            All widgets hidden. Click "Customize Layout" to restore widget visibility.
+          </div>
+        ) : (
+          <div className="home-main-grid" style={{
+            display: 'grid',
+            gridTemplateColumns: layoutColumns.length === 1 ? '1fr' : `repeat(${layoutColumns.length}, 1fr)`,
+            gap: '20px',
+            alignItems: 'start'
+          }}>
+            {layoutColumns.map((colWidgets, colIndex) => (
+              <div key={colIndex} style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+                {colWidgets.map(id => (
+                  <div key={id}>
+                    {renderWidget(id)}
+                  </div>
+                ))}
+              </div>
+            ))}
+          </div>
+        )
       )}
 
       {/* Slide & Fade Animation styles for the Customize Dropdown */}
@@ -1712,3 +2217,4 @@ export default function WorkspaceHome() {
     </div>
   );
 }
+

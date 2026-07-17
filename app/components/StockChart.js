@@ -1,4 +1,5 @@
 'use client';
+
 import { useState, useEffect, useRef } from 'react';
 
 const RANGES = [
@@ -32,6 +33,7 @@ export default function StockChart({ ticker, currency }) {
   const containerRef = useRef(null);
   const chartRef = useRef(null);
   const seriesRef = useRef(null);
+  const resizeObserverRef = useRef(null);
   const [range, setRange] = useState('1y');
   const [mode, setMode] = useState('line');
   const [candles, setCandles] = useState([]);
@@ -67,6 +69,21 @@ export default function StockChart({ ticker, currency }) {
     return () => {
       active = false;
     };
+  }, [ticker, range]);
+
+  // Keep the chart reasonably live without a full reload — refetch every 15min,
+  // skipped while the tab is in the background (same visibility-aware polling
+  // pattern as Home's other live widgets, see app/(workspace)/home/page.js).
+  // No loading flag here so a background refresh doesn't flash "LOADING..." over the chart.
+  useEffect(() => {
+    const interval = setInterval(() => {
+      if (document.visibilityState !== 'visible') return;
+      fetch(`/api/chart?ticker=${ticker}&range=${range}`)
+        .then(r => r.json())
+        .then(d => setCandles(d.candles || []))
+        .catch(() => {});
+    }, 15 * 60 * 1000);
+    return () => clearInterval(interval);
   }, [ticker, range]);
 
   // Create/update chart when data arrives
@@ -160,17 +177,25 @@ export default function StockChart({ ticker, currency }) {
 
       chart.timeScale().fitContent();
 
-      const handleResize = () => {
+      // ResizeObserver instead of a window 'resize' listener: this chart's container can
+      // change width without the window itself resizing — e.g. Home's chart-layout picker
+      // changing the grid's column count, or the sidebar collapsing.
+      const resizeObserver = new ResizeObserver(() => {
         if (containerRef.current && chartRef.current) {
           chartRef.current.applyOptions({ width: containerRef.current.clientWidth });
         }
-      };
-      window.addEventListener('resize', handleResize);
+      });
+      resizeObserver.observe(containerRef.current);
+      resizeObserverRef.current = resizeObserver;
     };
 
     init();
 
     return () => {
+      if (resizeObserverRef.current) {
+        resizeObserverRef.current.disconnect();
+        resizeObserverRef.current = null;
+      }
       if (chartRef.current) {
         chartRef.current.remove();
         chartRef.current = null;
