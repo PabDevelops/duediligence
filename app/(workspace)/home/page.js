@@ -2741,10 +2741,10 @@ export default function WorkspaceHome() {
         )}
         
         <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-          {/* Advanced Mode toggle — unlocks drag-to-reorder + Custom Charts widget */}
+          {/* Advanced Mode toggle — replaces the widget grid with the multi-chart terminal */}
           <button
             onClick={toggleAdvancedMode}
-            title="Advanced Mode: drag to reorder widgets, add custom ticker charts"
+            title="Advanced Mode: multi-chart terminal with watchlist rail and quality snapshot"
             style={{
               display: 'flex',
               alignItems: 'center',
