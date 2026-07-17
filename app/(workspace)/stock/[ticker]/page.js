@@ -1407,8 +1407,8 @@ export default function StockPage({ params }) {
           <div className="text-ws-text-3 text-[10px] tracking-[2px] border-b border-ws-border pb-1.5 mb-3">OPPORTUNITY BREAKDOWN</div>
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '1px', background: 'var(--ws-border)', marginBottom: '24px' }}>
             {[
-              { label: 'P/FCF', val: fmtN(data.pfcf), score: easyMode.pfcfScore, desc: data.pfcf < 20 ? 'Attractive entry' : data.pfcf < 35 ? 'Fair valuation' : 'Expensive' },
-              { label: 'FCF YIELD', val: data.fcfYield ? `${data.fcfYield}%` : 'N/A', score: easyMode.fcfYieldScore, desc: data.fcfYield > 5 ? 'Strong yield' : data.fcfYield > 2 ? 'Moderate yield' : 'Low yield' },
+              { label: 'P/FCF', val: fmtN(easyMode.truePfcf), score: easyMode.pfcfScore, desc: easyMode.truePfcf < 20 ? 'Attractive entry' : easyMode.truePfcf < 35 ? 'Fair valuation' : 'Expensive' },
+              { label: 'FCF YIELD', val: easyMode.trueFcfYield != null ? `${easyMode.trueFcfYield.toFixed(2)}%` : 'N/A', score: easyMode.fcfYieldScore, desc: easyMode.trueFcfYield > 5 ? 'Strong yield' : easyMode.trueFcfYield > 2 ? 'Moderate yield' : 'Low yield' },
             ].map(m => (
               <div key={m.label} className="bg-ws-bg-1 p-4">
                 <div className="flex justify-between mb-2">
@@ -1516,10 +1516,10 @@ export default function StockPage({ params }) {
           {[
             { label: 'Market Cap', val: fmt(data.marketCap) },
             { label: 'P/E', val: fmtN(data.pe), color: data.pe > 0 && data.pe < 20 ? 'var(--ws-accent)' : data.pe > 40 ? 'var(--ws-red)' : 'var(--ws-text)' },
-            { label: 'P/FCF', val: fmtN(data.pfcf), color: data.pfcf > 0 && data.pfcf < 20 ? 'var(--ws-accent)' : data.pfcf > 40 ? 'var(--ws-red)' : 'var(--ws-text)' },
+            { label: 'P/FCF', val: fmtN(easyMode?.truePfcf ?? data.pfcf), color: (easyMode?.truePfcf ?? data.pfcf) > 0 && (easyMode?.truePfcf ?? data.pfcf) < 20 ? 'var(--ws-accent)' : (easyMode?.truePfcf ?? data.pfcf) > 40 ? 'var(--ws-red)' : 'var(--ws-text)' },
             { label: 'EV/EBITDA', val: fmtN(data.evEbitda) },
             { label: 'P/B', val: fmtN(data.priceToBook) },
-            { label: 'FCF Yield', val: data.fcfYield ? `${data.fcfYield}%` : 'N/A', color: data.fcfYield > 5 ? 'var(--ws-accent)' : data.fcfYield > 0 ? 'var(--ws-text-2)' : 'var(--ws-red)' },
+            { label: 'FCF Yield', val: (easyMode?.trueFcfYield ?? data.fcfYield) ? `${(easyMode?.trueFcfYield ?? data.fcfYield).toFixed(2)}%` : 'N/A', color: (easyMode?.trueFcfYield ?? data.fcfYield) > 5 ? 'var(--ws-accent)' : (easyMode?.trueFcfYield ?? data.fcfYield) > 0 ? 'var(--ws-text-2)' : 'var(--ws-red)' },
             { label: 'Div. Yield', val: data.dividendYield ? `${(+data.dividendYield).toFixed(2)}%` : '—' },
           ].map(r => (
             <tr key={r.label} className="border-b border-ws-border">
