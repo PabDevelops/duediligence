@@ -1,4 +1,5 @@
 'use client';
+
 import { useState, useEffect, useMemo, useRef, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
@@ -219,7 +220,6 @@ export default function WorkspaceHome() {
   const [layoutMode, setLayoutMode] = useState('1');
   const [slotTickers, setSlotTickers] = useState(['AAPL', 'MSFT', 'NVDA', 'TSLA', 'AMZN', 'META', 'GOOGL', 'NFLX']);
   const [activeSlot, setActiveSlot] = useState(0);
-  const [railPage, setRailPage] = useState(0);
   const [slotRanges, setSlotRanges] = useState(['1w', '1w', '1w', '1w', '1w', '1w', '1w', '1w']);
   const [slotModes, setSlotModes] = useState(['line', 'line', 'line', 'line', 'line', 'line', 'line', 'line']);
 
@@ -262,6 +262,15 @@ export default function WorkspaceHome() {
     } catch (e) {}
   }, []);
 
+  // Advanced Mode's toggle lives in the sidebar footer (Sidebar.js), not on this page —
+  // it writes to the same localStorage key and dispatches this event so the terminal can
+  // appear/disappear live without a reload while already on Home.
+  useEffect(() => {
+    const handler = (e) => setAdvancedMode(e.detail);
+    window.addEventListener('traqcker-advanced-mode-changed', handler);
+    return () => window.removeEventListener('traqcker-advanced-mode-changed', handler);
+  }, []);
+
   const changeLayoutMode = (mode) => {
     setLayoutMode(mode);
     try { localStorage.setItem('traqcker_layout_mode', mode); } catch (e) {}
@@ -290,15 +299,6 @@ export default function WorkspaceHome() {
       return updated;
     });
   };
-
-  const toggleAdvancedMode = () => {
-    setAdvancedMode(prev => {
-      const next = !prev;
-      try { localStorage.setItem('traqcker_advanced_mode', String(next)); } catch (e) {}
-      return next;
-    });
-  };
-
 
   const addChartTicker = (e) => {
     e.preventDefault();
@@ -1757,11 +1757,9 @@ export default function WorkspaceHome() {
       railTickers = chartTickers;
     }
 
-    // Pagination for Left Rail
-    const itemsPerPage = 8;
-    const pageCount = Math.ceil(railTickers.length / itemsPerPage);
-    const safePage = Math.min(railPage, Math.max(0, pageCount - 1));
-    const displayedTickers = railTickers.slice(safePage * itemsPerPage, (safePage + 1) * itemsPerPage);
+    // No pagination — the list scrolls internally and always fills the rail's height,
+    // instead of capping at a page size and leaving dead space below a short list.
+    const displayedTickers = railTickers;
 
     const detailData = stockDetails[terminalTicker];
     const easyMode = detailData ? computeEasyMode(detailData, hasFundamentals(detailData)) : null;
@@ -2128,7 +2126,7 @@ export default function WorkspaceHome() {
           </div>
 
           {/* Ticker List Container */}
-          <div style={{ flex: 1, overflowY: 'hidden', padding: '8px', display: 'flex', flexDirection: 'column', gap: '4px' }}>
+          <div style={{ flex: 1, overflowY: 'auto', padding: '8px', display: 'flex', flexDirection: 'column', gap: '4px' }}>
             {displayedTickers.map(ticker => {
               const price = prices[ticker];
               const pct = dayChanges[ticker];
@@ -2229,51 +2227,6 @@ export default function WorkspaceHome() {
               </div>
             )}
           </div>
-
-          {/* Pagination Controls */}
-          {pageCount > 1 && (
-            <div style={{
-              display: 'flex',
-              justifyContent: 'space-between',
-              alignItems: 'center',
-              padding: '10px 12px',
-              borderTop: '1px solid var(--ws-border)',
-              fontSize: '10px',
-              fontWeight: 700,
-              color: 'var(--ws-text-3)',
-              background: 'var(--ws-bg-2)'
-            }}>
-              <button
-                disabled={safePage === 0}
-                onClick={() => setRailPage(prev => Math.max(0, prev - 1))}
-                style={{
-                  background: 'none',
-                  border: 'none',
-                  color: safePage === 0 ? 'var(--ws-text-3)' : 'var(--ws-text)',
-                  cursor: safePage === 0 ? 'default' : 'pointer',
-                  fontWeight: 700,
-                  fontSize: '10px'
-                }}
-              >
-                PREV
-              </button>
-              <span>{safePage + 1} / {pageCount}</span>
-              <button
-                disabled={safePage >= pageCount - 1}
-                onClick={() => setRailPage(prev => Math.min(pageCount - 1, prev + 1))}
-                style={{
-                  background: 'none',
-                  border: 'none',
-                  color: safePage >= pageCount - 1 ? 'var(--ws-text-3)' : 'var(--ws-text)',
-                  cursor: safePage >= pageCount - 1 ? 'default' : 'pointer',
-                  fontWeight: 700,
-                  fontSize: '10px'
-                }}
-              >
-                NEXT
-              </button>
-            </div>
-          )}
 
           {/* Add Pinned Chart Input (charts tab only, expanded only) */}
           {(!terminalRailCollapsed || isSmallScreen) && terminalTab === 'charts' && (
@@ -2616,6 +2569,51 @@ export default function WorkspaceHome() {
                 </div>
               )}
 
+              {/* Quality Breakdown — same CBS/OPPO/GQS/Moat/Final Note tiles as the Quality tab
+                  on the stock detail page (app/(workspace)/stock/[ticker]/page.js), stacked
+                  vertically here instead of a 5-column grid since this panel is narrow. */}
+              {easyMode && (
+                <div>
+                  <span style={{ fontSize: '9px', fontWeight: 700, color: 'var(--ws-text-3)', letterSpacing: '0.5px', textTransform: 'uppercase', display: 'block', marginBottom: '8px' }}>
+                    Quality Breakdown
+                  </span>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                    {[
+                      { label: 'Core Business', score: easyMode.cbs, desc: 'ROIC · Margins · Liquidity' },
+                      { label: 'Opportunity', score: easyMode.oppo, desc: 'P/FCF · FCF Yield' },
+                      { label: 'Growth Quality', score: easyMode.gqs, desc: 'Revenue · R&D · SBC' },
+                      { label: 'Moat', text: easyMode.moat, color: easyMode.moatColor, desc: 'ROIC · Op. margin' },
+                      { label: 'Final Note', score: easyMode.finalNote, desc: 'Weighted composite', highlight: true },
+                    ].map(s => (
+                      <div key={s.label} style={{
+                        background: s.highlight ? 'var(--ws-accent-dim)' : 'var(--ws-bg-2)',
+                        border: '1px solid var(--ws-border)',
+                        padding: '8px 10px',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'space-between',
+                        gap: '10px'
+                      }}>
+                        <div style={{ minWidth: 0 }}>
+                          <div style={{ fontSize: '9px', color: 'var(--ws-text-3)', letterSpacing: '0.5px', fontWeight: 700 }}>{s.label.toUpperCase()}</div>
+                          <div style={{ fontSize: '8px', color: 'var(--ws-text-3)', marginTop: '2px' }}>{s.desc}</div>
+                        </div>
+                        <div style={{ textAlign: 'right', flexShrink: 0 }}>
+                          <div style={{ fontSize: '18px', fontWeight: 700, color: s.text ? s.color : scoreColor(s.score) }}>
+                            {s.text || Math.round(s.score * 20)}
+                          </div>
+                          {!s.text && (
+                            <div style={{ width: '50px', height: '3px', background: 'var(--ws-border)', borderRadius: '2px', marginTop: '4px' }}>
+                              <div style={{ width: `${(s.score / 5) * 100}%`, height: '100%', background: scoreColor(s.score), borderRadius: '2px' }} />
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
               {/* Basic Metrics Grid */}
               {detailData && (
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', borderTop: '1px solid var(--ws-border)', paddingTop: '12px' }}>
@@ -2729,62 +2727,17 @@ export default function WorkspaceHome() {
     }}>
       <OnboardingBanner />
 
-      {/* Dashboard Title & Customize Layout Control */}
+      {/* Dashboard Title & Customize Layout Control — the Advanced Mode toggle itself now
+          lives in the sidebar footer (Sidebar.js), so this whole header (and the vertical
+          space it takes up) is skipped entirely once the terminal takes over. */}
+      {!advancedMode && (
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '-8px' }}>
-        {!advancedMode ? (
-          <div>
-            <h1 style={{ fontSize: '18px', fontWeight: 800, color: 'var(--ws-text)', letterSpacing: '-0.5px', margin: 0 }}>Terminal Dashboard</h1>
-            <p style={{ fontSize: '11px', color: 'var(--ws-text-3)', margin: '2px 0 0' }}>Real-time overview of indices, portfolios, watchlists, and filings.</p>
-          </div>
-        ) : (
-          <div />
-        )}
-        
-        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-          {/* Advanced Mode toggle — replaces the widget grid with the multi-chart terminal */}
-          <button
-            onClick={toggleAdvancedMode}
-            title="Advanced Mode: multi-chart terminal with watchlist rail and quality snapshot"
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: '7px',
-              padding: '6px 12px',
-              fontSize: '11px',
-              fontWeight: 600,
-              color: advancedMode ? 'var(--ws-accent)' : 'var(--ws-text-2)',
-              background: advancedMode ? 'var(--ws-accent-dim)' : 'var(--ws-bg-1)',
-              border: `1px solid ${advancedMode ? 'var(--ws-accent)' : 'var(--ws-border)'}`,
-              borderRadius: '6px',
-              cursor: 'pointer',
-              transition: 'all 0.15s ease'
-            }}
-          >
-            <span style={{
-              width: '26px',
-              height: '14px',
-              borderRadius: '7px',
-              background: advancedMode ? 'var(--ws-accent)' : 'var(--ws-border)',
-              position: 'relative',
-              transition: 'background 0.15s ease',
-              flexShrink: 0
-            }}>
-              <span style={{
-                position: 'absolute',
-                top: '2px',
-                left: advancedMode ? '13px' : '2px',
-                width: '10px',
-                height: '10px',
-                borderRadius: '50%',
-                background: '#fff',
-                transition: 'left 0.15s ease'
-              }} />
-            </span>
-            Advanced
-          </button>
+        <div>
+          <h1 style={{ fontSize: '18px', fontWeight: 800, color: 'var(--ws-text)', letterSpacing: '-0.5px', margin: 0 }}>Terminal Dashboard</h1>
+          <p style={{ fontSize: '11px', color: 'var(--ws-text-3)', margin: '2px 0 0' }}>Real-time overview of indices, portfolios, watchlists, and filings.</p>
+        </div>
 
-        {/* Customize Layout Dropdown — hidden in Advanced Mode, which replaces this grid entirely */}
-        {!advancedMode && (
+        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
         <div style={{ position: 'relative' }}>
           <button
             onClick={() => setShowCustomizer(!showCustomizer)}
@@ -2871,9 +2824,9 @@ export default function WorkspaceHome() {
             </>
           )}
         </div>
-        )}
         </div>
       </div>
+      )}
 
       {/* Top Movers Marquee Ticker — pick Gainers/Losers/Big Cap Movers from the dropdown, all today-only (see MAX_CACHE_AGE_HOURS in /api/movers), auto-scrolls continuously */}
       {movers && (() => {

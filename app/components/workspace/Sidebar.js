@@ -61,6 +61,26 @@ export default function Sidebar({ theme, onToggleTheme, collapsed = false, onTog
   const [navOrder, setNavOrder] = useState(DEFAULT_NAV_ORDER);
   const [draggedId, setDraggedId] = useState(null);
 
+  // Advanced Mode (Home's multi-chart terminal) lives here rather than on the Home page
+  // itself, since the toggle needs to sit in the sidebar footer — home/page.js reads the
+  // same localStorage key and listens for this event to stay in sync live.
+  const [advancedMode, setAdvancedMode] = useState(false);
+  useEffect(() => {
+    try {
+      setAdvancedMode(localStorage.getItem('traqcker_advanced_mode') === 'true');
+    } catch (e) {}
+  }, []);
+  const toggleAdvancedMode = () => {
+    setAdvancedMode(prev => {
+      const next = !prev;
+      try {
+        localStorage.setItem('traqcker_advanced_mode', String(next));
+        window.dispatchEvent(new CustomEvent('traqcker-advanced-mode-changed', { detail: next }));
+      } catch (e) {}
+      return next;
+    });
+  };
+
   useEffect(() => {
     fetch('/api/subscription').then(r => r.json()).then(setPlan).catch(() => {});
   }, []);
@@ -285,6 +305,34 @@ export default function Sidebar({ theme, onToggleTheme, collapsed = false, onTog
               onMouseEnter={e => e.currentTarget.style.color = 'var(--ws-text-2)'}
               onMouseLeave={e => e.currentTarget.style.color = 'var(--ws-text-3)'}>Support</a>
           </div>
+        )}
+
+        {/* Advanced Mode (Home's multi-chart terminal) — only meaningful on /home, so only
+            shown there rather than sitting as a dead toggle on every other page. */}
+        {path === '/home' && (
+          <button
+            onClick={toggleAdvancedMode}
+            title={collapsed ? (advancedMode ? 'Advanced Mode: on' : 'Advanced Mode: off') : undefined}
+            style={{
+              padding: collapsed ? '8px' : '8px 12px', borderRadius: 'var(--ws-radius)', border: 'none',
+              fontSize: '13px', color: advancedMode ? 'var(--ws-accent)' : 'var(--ws-text-2)',
+              background: advancedMode ? 'var(--ws-accent-dim)' : 'transparent',
+              fontWeight: advancedMode ? 600 : 400,
+              display: 'flex', alignItems: 'center', justifyContent: collapsed ? 'center' : 'flex-start', gap: collapsed ? '0' : '10px',
+              cursor: 'pointer', transition: 'all 0.15s ease', width: '100%',
+            }}
+            onMouseEnter={(e) => { if (!advancedMode) { e.currentTarget.style.background = 'var(--ws-bg-2)'; e.currentTarget.style.color = 'var(--ws-text)'; } }}
+            onMouseLeave={(e) => { if (!advancedMode) { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = 'var(--ws-text-2)'; } }}
+          >
+            <span style={{ display: 'flex', alignItems: 'center', flexShrink: 0, opacity: advancedMode ? 1 : 0.75 }}>
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke={advancedMode ? 'var(--ws-accent)' : 'currentColor'} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <rect x="3" y="12" width="4" height="8" />
+                <rect x="10" y="7" width="4" height="13" />
+                <rect x="17" y="3" width="4" height="17" />
+              </svg>
+            </span>
+            {!collapsed && <span style={{ flex: 1, minWidth: 0, textAlign: 'left' }}>Advanced</span>}
+          </button>
         )}
 
         {/* Settings */}
