@@ -141,6 +141,39 @@ export async function PATCH(request) {
   return Response.json({ success: true });
 }
 
+// Rename an entire pie category in the watchlist across all tickers
+export async function PUT(request) {
+  const userId = await getUserId();
+  if (!userId) return Response.json({ error: 'Not authenticated' }, { status: 401 });
+
+  const { oldPie, newPie } = await request.json();
+  if (!oldPie || !newPie || !newPie.trim()) {
+    return Response.json({ error: 'Old and new pie names required' }, { status: 400 });
+  }
+
+  const trimmedNewPie = newPie.trim();
+
+  let query = supabase
+    .from('watchlists')
+    .update({ pie: trimmedNewPie })
+    .eq('user_id', userId);
+
+  if (oldPie === 'General') {
+    query = query.is('pie', null);
+  } else {
+    query = query.eq('pie', oldPie);
+  }
+
+  const { error } = await query;
+
+  if (error) {
+    console.error('watchlist PUT rename pie error:', error);
+    return Response.json({ error: error.message || 'Failed to rename watchlist category' }, { status: 500 });
+  }
+
+  return Response.json({ success: true });
+}
+
 export async function DELETE(request) {
   const userId = await getUserId();
   if (!userId) return Response.json({ error: 'Not authenticated' }, { status: 401 });

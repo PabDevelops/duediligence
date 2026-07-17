@@ -38,6 +38,8 @@ export default function WatchlistPage() {
   const [editingPieTicker, setEditingPieTicker] = useState(null);
   const [pieDraft, setPieDraft] = useState('');
   const [showPieSuggestions, setShowPieSuggestions] = useState(false);
+  const [editingPieGroup, setEditingPieGroup] = useState(null);
+  const [newPieGroupName, setNewPieGroupName] = useState('');
 
   // Pies render as a grid of clickable cards, collapsed by default — the stock table for a
   // pie only shows once you click its card. Doesn't apply when nothing's grouped yet (see
@@ -173,6 +175,32 @@ export default function WatchlistPage() {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ ticker, pie }),
     });
+  };
+
+  // Rename an entire watchlist pie category
+  const handleRenamePieGroup = async (oldPie, newPie) => {
+    const trimmed = newPie?.trim();
+    if (!trimmed || trimmed === oldPie) {
+      setEditingPieGroup(null);
+      return;
+    }
+    setEditingPieGroup(null);
+    if (!isSignedIn) {
+      setTickers(prev => prev.map(t => (t.pie || 'General') === oldPie ? { ...t, pie: trimmed } : t));
+      return;
+    }
+    try {
+      const res = await fetch('/api/watchlist', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ oldPie, newPie: trimmed }),
+      });
+      if (res.ok) {
+        fetchWatchlist();
+      }
+    } catch (err) {
+      console.error('Error renaming watchlist category:', err);
+    }
   };
 
   // Add ticker
@@ -448,31 +476,97 @@ export default function WatchlistPage() {
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(240px, 1fr))', gap: '12px', marginBottom: '18px' }}>
                 {groups.map(group => {
                   const isOpen = expandedPies.has(group.name);
-                  if (group.items.length > 1) {
-                    // Each ticker in the group counts equally (watchlist has no dollar weight
-                    // to split by) — this is "what's inside this pie", as opposed to the
-                    // ALLOCATION BY PIE donut above, which is "how tickers split across pies".
-                    const groupChart = group.items.map(t => ({ name: t.ticker, value: (1 / group.items.length) * 100 }));
+                  const isEditingGroup = editingPieGroup === group.name;
+
+                  if (isEditingGroup) {
                     return (
-                      <AllocationChart
-                        key={group.name}
-                        title={`${group.name.toUpperCase()} · ${group.items.length} TICKERS`}
-                        data={groupChart}
-                        onClick={() => togglePie(group.name)}
-                        open={isOpen}
-                      />
+                      <div key={group.name} className="border p-4" style={{ borderColor: 'var(--ws-accent)', background: 'var(--ws-bg-1)' }}>
+                        <div style={{ fontSize: '11px', color: 'var(--ws-text-3)', marginBottom: '6px' }}>Rename List</div>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                          <input
+                            type="text"
+                            value={newPieGroupName}
+                            onChange={e => setNewPieGroupName(e.target.value)}
+                            onKeyDown={e => {
+                              if (e.key === 'Enter') handleRenamePieGroup(group.name, newPieGroupName);
+                              if (e.key === 'Escape') setEditingPieGroup(null);
+                            }}
+                            autoFocus
+                            style={{
+                              background: 'var(--ws-bg-2)',
+                              border: '1px solid var(--ws-border)',
+                              color: 'var(--ws-text)',
+                              fontSize: '12px',
+                              fontWeight: 700,
+                              padding: '4px 8px',
+                              outline: 'none',
+                              borderRadius: '2px',
+                              width: '100%'
+                            }}
+                          />
+                          <button
+                            onClick={() => handleRenamePieGroup(group.name, newPieGroupName)}
+                            className="ws-btn"
+                            style={{ fontSize: '11px', padding: '2px 8px', height: '26px' }}
+                          >
+                            Save
+                          </button>
+                          <button
+                            onClick={() => setEditingPieGroup(null)}
+                            className="ws-btn-secondary"
+                            style={{ fontSize: '11px', padding: '2px 8px', height: '26px' }}
+                          >
+                            Cancel
+                          </button>
+                        </div>
+                      </div>
                     );
                   }
-                  // AllocationChart returns null for a single ticker (no meaningful split), so
-                  // single-ticker pies get a plain compact clickable card instead.
+
+                  if (group.items.length > 1) {
+                    const groupChart = group.items.map(t => ({ name: t.ticker, value: (1 / group.items.length) * 100 }));
+                    return (
+                      <div key={group.name} style={{ position: 'relative' }}>
+                        <AllocationChart
+                          title={`${group.name.toUpperCase()} · ${group.items.length} TICKERS`}
+                          data={groupChart}
+                          onClick={() => togglePie(group.name)}
+                          open={isOpen}
+                        />
+                        <button
+                          onClick={(e) => { e.stopPropagation(); setEditingPieGroup(group.name); setNewPieGroupName(group.name === 'General' ? '' : group.name); }}
+                          title={`Rename list "${group.name}"`}
+                          style={{ position: 'absolute', top: '10px', right: '36px', background: 'none', border: 'none', color: 'var(--ws-text-3)', cursor: 'pointer', fontSize: '12px', padding: '2px 4px', zIndex: 5 }}
+                          onMouseEnter={e => e.currentTarget.style.color = 'var(--ws-accent)'}
+                          onMouseLeave={e => e.currentTarget.style.color = 'var(--ws-text-3)'}
+                        >
+                          ✎
+                        </button>
+                      </div>
+                    );
+                  }
+
                   return (
-                    <div key={group.name} className="border p-4" onClick={() => togglePie(group.name)}
-                      style={{ borderColor: isOpen ? 'var(--ws-accent)' : 'var(--ws-border)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                      <div>
-                        <div style={{ fontSize: '13px', fontWeight: 700, color: 'var(--ws-text)' }}>{group.name}</div>
+                    <div key={group.name} className="border p-4"
+                      style={{ borderColor: isOpen ? 'var(--ws-accent)' : 'var(--ws-border)', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                      <div style={{ cursor: 'pointer', flex: 1 }} onClick={() => togglePie(group.name)}>
+                        <div style={{ fontSize: '13px', fontWeight: 700, color: 'var(--ws-text)', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                          {group.name}
+                        </div>
                         <div style={{ fontSize: '11px', color: 'var(--ws-text-3)' }}>{group.items.length} ticker</div>
                       </div>
-                      <span style={{ fontSize: '11px', color: isOpen ? 'var(--ws-accent)' : 'var(--ws-text-3)' }}>{isOpen ? '▾' : '▸'}</span>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                        <button
+                          onClick={(e) => { e.stopPropagation(); setEditingPieGroup(group.name); setNewPieGroupName(group.name === 'General' ? '' : group.name); }}
+                          title={`Rename list "${group.name}"`}
+                          style={{ background: 'none', border: 'none', color: 'var(--ws-text-3)', cursor: 'pointer', fontSize: '12px', padding: '2px 4px' }}
+                          onMouseEnter={e => e.currentTarget.style.color = 'var(--ws-accent)'}
+                          onMouseLeave={e => e.currentTarget.style.color = 'var(--ws-text-3)'}
+                        >
+                          ✎
+                        </button>
+                        <span onClick={() => togglePie(group.name)} style={{ fontSize: '11px', color: isOpen ? 'var(--ws-accent)' : 'var(--ws-text-3)', cursor: 'pointer' }}>{isOpen ? '▾' : '▸'}</span>
+                      </div>
                     </div>
                   );
                 })}
@@ -480,13 +574,83 @@ export default function WatchlistPage() {
 
               {groups.filter(g => expandedPies.has(g.name)).map(group => (
                 <div key={group.name} style={{ marginBottom: '18px' }}>
-                  <div style={{ fontSize: '11px', fontWeight: 700, color: 'var(--ws-text-3)', letterSpacing: '1px', marginBottom: '8px' }}>{group.name.toUpperCase()}</div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px' }}>
+                    <div style={{ fontSize: '11px', fontWeight: 700, color: 'var(--ws-text-3)', letterSpacing: '1px' }}>{group.name.toUpperCase()}</div>
+                    <button
+                      onClick={() => { setEditingPieGroup(group.name); setNewPieGroupName(group.name === 'General' ? '' : group.name); }}
+                      title={`Rename list "${group.name}"`}
+                      style={{ background: 'none', border: 'none', color: 'var(--ws-text-3)', cursor: 'pointer', fontSize: '12px', padding: '0 4px' }}
+                      onMouseEnter={e => e.currentTarget.style.color = 'var(--ws-accent)'}
+                      onMouseLeave={e => e.currentTarget.style.color = 'var(--ws-text-3)'}
+                    >
+                      ✎
+                    </button>
+                  </div>
                   {renderTable(group.items)}
                 </div>
               ))}
             </>
           ) : (
-            renderTable(tickers)
+            <div style={{ marginBottom: '18px' }}>
+              {tickers.length > 0 && (
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px' }}>
+                  {editingPieGroup === 'General' ? (
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                      <input
+                        type="text"
+                        value={newPieGroupName}
+                        onChange={e => setNewPieGroupName(e.target.value)}
+                        onKeyDown={e => {
+                          if (e.key === 'Enter') handleRenamePieGroup('General', newPieGroupName);
+                          if (e.key === 'Escape') setEditingPieGroup(null);
+                        }}
+                        autoFocus
+                        placeholder="Category name..."
+                        style={{
+                          background: 'var(--ws-bg-2)',
+                          border: '1px solid var(--ws-border)',
+                          color: 'var(--ws-text)',
+                          fontSize: '12px',
+                          fontWeight: 700,
+                          padding: '3px 8px',
+                          outline: 'none',
+                          borderRadius: '2px',
+                          width: '160px'
+                        }}
+                      />
+                      <button
+                        onClick={() => handleRenamePieGroup('General', newPieGroupName)}
+                        className="ws-btn"
+                        style={{ fontSize: '11px', padding: '2px 8px', height: '26px' }}
+                      >
+                        Save
+                      </button>
+                      <button
+                        onClick={() => setEditingPieGroup(null)}
+                        className="ws-btn-secondary"
+                        style={{ fontSize: '11px', padding: '2px 8px', height: '26px' }}
+                      >
+                        Cancel
+                      </button>
+                    </div>
+                  ) : (
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                      <div style={{ fontSize: '11px', fontWeight: 700, color: 'var(--ws-text-3)', letterSpacing: '1px' }}>ALL TICKERS</div>
+                      <button
+                        onClick={() => { setEditingPieGroup('General'); setNewPieGroupName(''); }}
+                        title="Group into a category"
+                        style={{ background: 'none', border: 'none', color: 'var(--ws-text-3)', cursor: 'pointer', fontSize: '12px', padding: '0 4px' }}
+                        onMouseEnter={e => e.currentTarget.style.color = 'var(--ws-accent)'}
+                        onMouseLeave={e => e.currentTarget.style.color = 'var(--ws-text-3)'}
+                      >
+                        ✎
+                      </button>
+                    </div>
+                  )}
+                </div>
+              )}
+              {renderTable(tickers)}
+            </div>
           )}
         </>
       )}
