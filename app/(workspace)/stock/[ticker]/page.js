@@ -1045,11 +1045,7 @@ export default function StockPage({ params }) {
                             : de < 2
                             ? 'Carries some debt — worth watching'
                             : 'Highly leveraged — significant risk',
-                          value: de != null
-                            ? de === 0
-                              ? '0.00x (Debt free)'
-                              : `${de.toFixed(2)}x equity`
-                            : 'N/A',
+                          value: de != null ? `${de.toFixed(2)}x equity` : 'N/A',
                           pct: de != null ? (de === 0 ? 100 : Math.max(4, Math.min(100, 100 - de * 30))) : 0,
                           color: de == null
                             ? 'var(--ws-text-3)'
