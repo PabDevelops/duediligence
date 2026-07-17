@@ -15,17 +15,22 @@ export async function GET(request) {
   const limit = Math.min(Number(searchParams.get('limit')) || 8, 24);
 
   try {
+    // Only the fields the search dropdown actually renders — selecting individual jsonb
+    // paths instead of the whole `data` blob (which also carries multi-year history
+    // arrays) avoids pulling that weight over the wire on every keystroke.
+    const SEARCH_FIELDS = 'ticker, name:data->name, sector:data->sector, exchange:data->exchange, currentPrice:data->currentPrice, priceChangePct:data->priceChangePct';
+
     // First try to search by ticker (exact or prefix match)
     const tickerQuery = supabase
       .from('stock_cache')
-      .select('ticker, data')
+      .select(SEARCH_FIELDS)
       .ilike('ticker', `${q}%`)
       .limit(limit);
 
     // Then search by company name
     const nameQuery = supabase
       .from('stock_cache')
-      .select('ticker, data')
+      .select(SEARCH_FIELDS)
       .ilike('data->>name', `%${q}%`)
       .limit(limit);
 
@@ -45,11 +50,11 @@ export async function GET(request) {
         uniqueTickers.add(r.ticker);
         results.push({
           ticker: r.ticker,
-          name: r.data?.name || 'N/A',
-          sector: r.data?.sector,
-          exchange: r.data?.exchange || 'US',
-          currentPrice: r.data?.currentPrice ?? null,
-          priceChangePct: r.data?.priceChangePct ?? null,
+          name: r.name || 'N/A',
+          sector: r.sector,
+          exchange: r.exchange || 'US',
+          currentPrice: r.currentPrice ?? null,
+          priceChangePct: r.priceChangePct ?? null,
         });
       }
       if (results.length >= limit) break;

@@ -83,10 +83,19 @@ export default function WatchlistPage() {
     fetchWatchlist();
   }, [fetchWatchlist]);
 
-  // Keep prices reasonably live, same cadence as Portfolio.
+  // Keep prices reasonably live, same cadence as Portfolio. Paused while the tab is
+  // backgrounded, and re-run immediately on refocus.
   useEffect(() => {
-    const interval = setInterval(fetchWatchlist, 60000);
-    return () => clearInterval(interval);
+    const refresh = () => {
+      if (document.visibilityState !== 'visible') return;
+      fetchWatchlist();
+    };
+    const interval = setInterval(refresh, 180000);
+    document.addEventListener('visibilitychange', refresh);
+    return () => {
+      clearInterval(interval);
+      document.removeEventListener('visibilitychange', refresh);
+    };
   }, [fetchWatchlist]);
 
   // Picks up tickers added from elsewhere (e.g. the stock detail page) while

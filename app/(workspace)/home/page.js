@@ -154,15 +154,22 @@ export default function WorkspaceHome() {
       });
   }, []);
 
-  // Keep the "LIVE" data fresh: re-poll indices, movers and market news every 60s
+  // Keep the "LIVE" data fresh: re-poll indices, movers and market news every 3min.
+  // Skipped while the tab is in the background, and re-run immediately on becoming
+  // visible again, to avoid burning Supabase egress on idle background tabs.
   useEffect(() => {
     const refreshLiveData = () => {
+      if (document.visibilityState !== 'visible') return;
       fetch('/api/movers').then(r => r.json()).then(setMovers).catch(() => {});
       fetch('/api/market').then(r => r.json()).then(d => { if (d.markets) setIndices(d.markets); }).catch(() => {});
       fetch('/api/filings').then(r => r.json()).then(d => { if (d.filings) setSecFeed(d.filings); }).catch(() => {});
     };
-    const interval = setInterval(refreshLiveData, 60000);
-    return () => clearInterval(interval);
+    const interval = setInterval(refreshLiveData, 180000);
+    document.addEventListener('visibilitychange', refreshLiveData);
+    return () => {
+      clearInterval(interval);
+      document.removeEventListener('visibilitychange', refreshLiveData);
+    };
   }, []);
 
   // Load portfolio from localStorage or Database on mount / auth change
@@ -266,10 +273,20 @@ export default function WorkspaceHome() {
   }, [quoteTickers]);
 
   // Keep holding/watchlist prices reasonably live — mirrors the movers/market/filings poll above.
+  // Same visibility-aware pausing: no point re-fetching a per-ticker quote for every
+  // holding/watchlist/recent ticker while the tab isn't even in view.
   useEffect(() => {
     if (quoteTickers.length === 0) return;
-    const interval = setInterval(() => fetchQuotes(quoteTickers, { refresh: true }), 60000);
-    return () => clearInterval(interval);
+    const refresh = () => {
+      if (document.visibilityState !== 'visible') return;
+      fetchQuotes(quoteTickers, { refresh: true });
+    };
+    const interval = setInterval(refresh, 180000);
+    document.addEventListener('visibilitychange', refresh);
+    return () => {
+      clearInterval(interval);
+      document.removeEventListener('visibilitychange', refresh);
+    };
   }, [quoteTickers]);
 
   // Uniform display holdings: [{ ticker, shares, avgPrice, pie, costCurrency, avgPriceUSD }]

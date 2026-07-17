@@ -83,10 +83,20 @@ export default function WorkspacePortfolio() {
   }, [isSignedIn]);
 
   // Keep holding prices reasonably live — reload isn't the only way to see a move.
+  // Paused while the tab is backgrounded, and re-run immediately on refocus, so an idle
+  // background tab doesn't keep re-fetching a stock+sparkline call per holding every minute.
   useEffect(() => {
     if (!isSignedIn) return;
-    const interval = setInterval(() => load({ refresh: false }), 60000);
-    return () => clearInterval(interval);
+    const refresh = () => {
+      if (document.visibilityState !== 'visible') return;
+      load({ refresh: false });
+    };
+    const interval = setInterval(refresh, 180000);
+    document.addEventListener('visibilitychange', refresh);
+    return () => {
+      clearInterval(interval);
+      document.removeEventListener('visibilitychange', refresh);
+    };
   }, [isSignedIn]);
 
   const existingPies = useMemo(() => [...new Set(holdings.map(h => h.pie).filter(Boolean))].sort(), [holdings]);
