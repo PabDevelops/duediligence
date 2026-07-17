@@ -78,14 +78,20 @@ export default function WorkspaceHome() {
     });
   };
   
-  // Mobile collapses the two-column layout into a single fixed-order column.
-  const [isMobile, setIsMobile] = useState(false);
+  // Responsive layout columns detector: 1 (<1024px), 2 (1024px-1600px), 3 (>1600px)
+  const [columns, setColumns] = useState(1);
   useEffect(() => {
-    const check = () => setIsMobile(window.innerWidth < 1024);
+    const check = () => {
+      const w = window.innerWidth;
+      if (w < 1024) setColumns(1);
+      else if (w < 1600) setColumns(2);
+      else setColumns(3);
+    };
     check();
     window.addEventListener('resize', check);
     return () => window.removeEventListener('resize', check);
   }, []);
+  const isMobile = columns === 1;
 
   // Portfolio States
   const { isSignedIn } = useUser();
@@ -1445,6 +1451,38 @@ export default function WorkspaceHome() {
   // Mobile collapses to one fixed-order column; desktop keeps the two-column split.
   const mobileWidgets = [...LEFT_WIDGETS, ...RIGHT_WIDGETS];
 
+  const visibleIds = useMemo(() => {
+    return mobileWidgets.filter(id => widgetVisibility[id] !== false);
+  }, [mobileWidgets, widgetVisibility]);
+
+  const layoutColumns = useMemo(() => {
+    const colsCount = columns; // 1, 2, or 3
+    const cols = Array.from({ length: colsCount }, () => []);
+    
+    visibleIds.forEach(id => {
+      if (colsCount === 1) {
+        cols[0].push(id);
+      } else if (colsCount === 2) {
+        if (id === 'indices' || id === 'portfolio' || id === 'workspace') {
+          cols[0].push(id);
+        } else {
+          cols[1].push(id);
+        }
+      } else {
+        // 3 columns
+        if (id === 'indices' || id === 'portfolio') {
+          cols[0].push(id);
+        } else if (id === 'workspace') {
+          cols[1].push(id);
+        } else {
+          cols[2].push(id);
+        }
+      }
+    });
+
+    return cols.filter(c => c.length > 0);
+  }, [visibleIds, columns]);
+
   return (
     <div className="home-container" style={{ padding: '24px', display: 'flex', flexDirection: 'column', gap: '24px' }}>
       <OnboardingBanner />
@@ -1615,9 +1653,8 @@ export default function WorkspaceHome() {
         );
       })()}
 
-      {/* Main grid — mobile collapses to one fixed-order column; desktop keeps the
-          fixed two-column split (see LEFT_WIDGETS/RIGHT_WIDGETS above). */}
-      {mobileWidgets.filter(id => widgetVisibility[id] !== false).length === 0 ? (
+      {/* Main grid — dynamically renders 1, 2, or 3 columns based on screen width and visibility */}
+      {visibleIds.length === 0 ? (
         <div style={{
           textAlign: 'center',
           padding: '60px 24px',
@@ -1630,40 +1667,22 @@ export default function WorkspaceHome() {
         }}>
           All widgets hidden. Click "Customize Layout" to restore widget visibility.
         </div>
-      ) : isMobile ? (
-        <div className="home-main-grid" style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
-          {mobileWidgets.filter(id => widgetVisibility[id] !== false).map((id) => (
-            <div key={id}>
-              {renderWidget(id)}
-            </div>
-          ))}
-        </div>
       ) : (
         <div className="home-main-grid" style={{
           display: 'grid',
-          gridTemplateColumns: '1fr 1fr',
+          gridTemplateColumns: layoutColumns.length === 1 ? '1fr' : `repeat(${layoutColumns.length}, 1fr)`,
           gap: '20px',
           alignItems: 'start'
         }}>
-
-          {/* LEFT COLUMN */}
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
-            {LEFT_WIDGETS.filter(id => widgetVisibility[id] !== false).map((id) => (
-              <div key={id}>
-                {renderWidget(id)}
-              </div>
-            ))}
-          </div>
-
-          {/* RIGHT COLUMN */}
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
-            {RIGHT_WIDGETS.filter(id => widgetVisibility[id] !== false).map((id) => (
-              <div key={id}>
-                {renderWidget(id)}
-              </div>
-            ))}
-          </div>
-
+          {layoutColumns.map((colWidgets, colIndex) => (
+            <div key={colIndex} style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+              {colWidgets.map(id => (
+                <div key={id}>
+                  {renderWidget(id)}
+                </div>
+              ))}
+            </div>
+          ))}
         </div>
       )}
 
