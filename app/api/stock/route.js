@@ -858,7 +858,20 @@ export async function GET(request) {
     const cashFlows     = getMetric(['NetCashProvidedByUsedInOperatingActivities']);
     const assets        = getMetric(['Assets']);
     const equity        = getMetric(['StockholdersEquity','StockholdersEquityIncludingPortionAttributableToNoncontrollingInterest']);
-    const debt          = getMetric(['LongTermDebt','LongTermDebtNoncurrent']);
+    // LongTermDebt/LongTermDebtNoncurrent alone miss real, non-trivial debt balances filed
+    // under a more specific concept — convertible notes (common for growth/tech issuers,
+    // verified against real data: WIX), or a combined current+noncurrent tag (verified: DECK's
+    // capital structure isn't captured by either of the first two tags at all). This still
+    // doesn't guarantee a hit for a genuinely debt-free balance sheet — Deckers in particular
+    // has been carrying ~zero long-term debt for years — in which case null here is the
+    // correct "no debt" answer, not a data gap; XBRL filers typically omit a concept entirely
+    // rather than tag an explicit zero, so this function can't reliably tell the two cases
+    // apart from absence alone.
+    const debt          = getMetric([
+      'LongTermDebt','LongTermDebtNoncurrent','DebtLongtermAndShorttermCombinedAmount',
+      'LongTermDebtAndCapitalLeaseObligations','ConvertibleNotesPayable','ConvertibleDebtNoncurrent',
+      'ConvertibleLongTermNotesPayable','NotesPayableNoncurrent','SecuredDebtNoncurrent','UnsecuredDebtNoncurrent',
+    ]);
     const cash          = getMetric(['CashAndCashEquivalentsAtCarryingValue','CashCashEquivalentsAndShortTermInvestments']);
     const shares        = getMetric(['CommonStockSharesOutstanding','WeightedAverageNumberOfSharesOutstandingBasic']);
     const grossProfit   = getMetric(['GrossProfit']);
