@@ -526,47 +526,38 @@ export default function WatchlistPage() {
                   if (group.items.length > 1) {
                     const groupChart = group.items.map(t => ({ name: t.ticker, value: (1 / group.items.length) * 100 }));
                     return (
-                      <div key={group.name} style={{ position: 'relative' }}>
-                        <AllocationChart
-                          title={`${group.name.toUpperCase()} · ${group.items.length} TICKERS`}
-                          data={groupChart}
-                          onClick={() => togglePie(group.name)}
-                          open={isOpen}
-                        />
-                        <button
-                          onClick={(e) => { e.stopPropagation(); setEditingPieGroup(group.name); setNewPieGroupName(group.name === 'General' ? '' : group.name); }}
-                          title={`Rename list "${group.name}"`}
-                          style={{ position: 'absolute', top: '10px', right: '36px', background: 'none', border: 'none', color: 'var(--ws-text-3)', cursor: 'pointer', fontSize: '12px', padding: '2px 4px', zIndex: 5 }}
-                          onMouseEnter={e => e.currentTarget.style.color = 'var(--ws-accent)'}
-                          onMouseLeave={e => e.currentTarget.style.color = 'var(--ws-text-3)'}
-                        >
-                          ✎
-                        </button>
-                      </div>
+                      <AllocationChart
+                        key={group.name}
+                        title={`${group.name.toUpperCase()} · ${group.items.length} TICKERS`}
+                        data={groupChart}
+                        onClick={() => togglePie(group.name)}
+                        open={isOpen}
+                        onRename={() => { setEditingPieGroup(group.name); setNewPieGroupName(group.name === 'General' ? '' : group.name); }}
+                      />
                     );
                   }
 
                   return (
                     <div key={group.name} className="border p-4"
-                      style={{ borderColor: isOpen ? 'var(--ws-accent)' : 'var(--ws-border)', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                      <div style={{ cursor: 'pointer', flex: 1 }} onClick={() => togglePie(group.name)}>
+                      style={{ borderColor: isOpen ? 'var(--ws-accent)' : 'var(--ws-border)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '8px' }}>
+                      <div style={{ cursor: 'pointer', flex: 1, minWidth: 0 }} onClick={() => togglePie(group.name)}>
                         <div style={{ fontSize: '13px', fontWeight: 700, color: 'var(--ws-text)', display: 'flex', alignItems: 'center', gap: '6px' }}>
-                          {group.name}
+                          <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{group.name}</span>
+                          <button
+                            onClick={(e) => { e.stopPropagation(); setEditingPieGroup(group.name); setNewPieGroupName(group.name === 'General' ? '' : group.name); }}
+                            title={`Rename list "${group.name}"`}
+                            style={{ background: 'none', border: 'none', color: 'var(--ws-text-3)', cursor: 'pointer', opacity: 0.5, padding: '2px', display: 'inline-flex', alignItems: 'center', flexShrink: 0 }}
+                            onMouseEnter={e => { e.currentTarget.style.opacity = 1; e.currentTarget.style.color = 'var(--ws-accent)'; }}
+                            onMouseLeave={e => { e.currentTarget.style.opacity = 0.5; e.currentTarget.style.color = 'var(--ws-text-3)'; }}
+                          >
+                            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                              <path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"/>
+                            </svg>
+                          </button>
                         </div>
                         <div style={{ fontSize: '11px', color: 'var(--ws-text-3)' }}>{group.items.length} ticker</div>
                       </div>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                        <button
-                          onClick={(e) => { e.stopPropagation(); setEditingPieGroup(group.name); setNewPieGroupName(group.name === 'General' ? '' : group.name); }}
-                          title={`Rename list "${group.name}"`}
-                          style={{ background: 'none', border: 'none', color: 'var(--ws-text-3)', cursor: 'pointer', fontSize: '12px', padding: '2px 4px' }}
-                          onMouseEnter={e => e.currentTarget.style.color = 'var(--ws-accent)'}
-                          onMouseLeave={e => e.currentTarget.style.color = 'var(--ws-text-3)'}
-                        >
-                          ✎
-                        </button>
-                        <span onClick={() => togglePie(group.name)} style={{ fontSize: '11px', color: isOpen ? 'var(--ws-accent)' : 'var(--ws-text-3)', cursor: 'pointer' }}>{isOpen ? '▾' : '▸'}</span>
-                      </div>
+                      <span onClick={() => togglePie(group.name)} style={{ fontSize: '11px', color: isOpen ? 'var(--ws-accent)' : 'var(--ws-text-3)', cursor: 'pointer', flexShrink: 0 }}>{isOpen ? '▾' : '▸'}</span>
                     </div>
                   );
                 })}
@@ -579,11 +570,13 @@ export default function WatchlistPage() {
                     <button
                       onClick={() => { setEditingPieGroup(group.name); setNewPieGroupName(group.name === 'General' ? '' : group.name); }}
                       title={`Rename list "${group.name}"`}
-                      style={{ background: 'none', border: 'none', color: 'var(--ws-text-3)', cursor: 'pointer', fontSize: '12px', padding: '0 4px' }}
-                      onMouseEnter={e => e.currentTarget.style.color = 'var(--ws-accent)'}
-                      onMouseLeave={e => e.currentTarget.style.color = 'var(--ws-text-3)'}
+                      style={{ background: 'none', border: 'none', color: 'var(--ws-text-3)', cursor: 'pointer', opacity: 0.5, padding: '2px', display: 'inline-flex', alignItems: 'center', flexShrink: 0 }}
+                      onMouseEnter={e => { e.currentTarget.style.opacity = 1; e.currentTarget.style.color = 'var(--ws-accent)'; }}
+                      onMouseLeave={e => { e.currentTarget.style.opacity = 0.5; e.currentTarget.style.color = 'var(--ws-text-3)'; }}
                     >
-                      ✎
+                      <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"/>
+                      </svg>
                     </button>
                   </div>
                   {renderTable(group.items)}
@@ -639,11 +632,13 @@ export default function WatchlistPage() {
                       <button
                         onClick={() => { setEditingPieGroup('General'); setNewPieGroupName(''); }}
                         title="Group into a category"
-                        style={{ background: 'none', border: 'none', color: 'var(--ws-text-3)', cursor: 'pointer', fontSize: '12px', padding: '0 4px' }}
-                        onMouseEnter={e => e.currentTarget.style.color = 'var(--ws-accent)'}
-                        onMouseLeave={e => e.currentTarget.style.color = 'var(--ws-text-3)'}
+                        style={{ background: 'none', border: 'none', color: 'var(--ws-text-3)', cursor: 'pointer', opacity: 0.5, padding: '2px', display: 'inline-flex', alignItems: 'center', flexShrink: 0 }}
+                        onMouseEnter={e => { e.currentTarget.style.opacity = 1; e.currentTarget.style.color = 'var(--ws-accent)'; }}
+                        onMouseLeave={e => { e.currentTarget.style.opacity = 0.5; e.currentTarget.style.color = 'var(--ws-text-3)'; }}
                       >
-                        ✎
+                        <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                          <path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"/>
+                        </svg>
                       </button>
                     </div>
                   )}

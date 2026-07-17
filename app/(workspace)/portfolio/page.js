@@ -376,11 +376,13 @@ export default function WorkspacePortfolio() {
                       <button
                         onClick={() => { setEditingPie(group.name); setNewPieName(group.name === 'Unassigned' ? '' : group.name); }}
                         title={`Rename category "${group.name}"`}
-                        style={{ background: 'none', border: 'none', color: 'var(--ws-text-3)', cursor: 'pointer', fontSize: '12px', padding: '2px 4px' }}
-                        onMouseEnter={e => e.currentTarget.style.color = 'var(--ws-accent)'}
-                        onMouseLeave={e => e.currentTarget.style.color = 'var(--ws-text-3)'}
+                        style={{ background: 'none', border: 'none', color: 'var(--ws-text-3)', cursor: 'pointer', opacity: 0.5, padding: '2px', display: 'inline-flex', alignItems: 'center', flexShrink: 0 }}
+                        onMouseEnter={e => { e.currentTarget.style.opacity = 1; e.currentTarget.style.color = 'var(--ws-accent)'; }}
+                        onMouseLeave={e => { e.currentTarget.style.opacity = 0.5; e.currentTarget.style.color = 'var(--ws-text-3)'; }}
                       >
-                        ✎
+                        <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                          <path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"/>
+                        </svg>
                       </button>
                     </div>
                   )}
