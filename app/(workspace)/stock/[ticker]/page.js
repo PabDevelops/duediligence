@@ -332,8 +332,8 @@ function AnalystGauge({ score, qualityScore100, ratings, total }) {
     return { ...seg, d: `M ${x1} ${y1} A ${r} ${r} 0 0 1 ${x2} ${y2}` };
   });
 
-  // Position percentage labels floating directly above each arc segment's midpoint
-  const textR = 112;
+  // Position percentage labels floating further above each arc segment's midpoint
+  const textR = 124;
   const labels = ANALYST_GAUGE_SEGMENTS.map((seg, i) => {
     const midAngle = 180 - (i + 0.5) * 36;
     const rad = (midAngle * Math.PI) / 180;
@@ -353,7 +353,7 @@ function AnalystGauge({ score, qualityScore100, ratings, total }) {
   const qualityRotation = rotationFor(qualityScore5);
 
   return (
-    <svg viewBox="-20 -24 280 148" width="100%" height="148" style={{ display: 'block', overflow: 'visible' }}>
+    <svg viewBox="-25 -28 290 156" width="100%" height="156" style={{ display: 'block', overflow: 'visible' }}>
       {/* Percentages positioned above each segment arc */}
       {labels.map(l => l.pct != null && (
         <text key={`pct-${l.key}`}
