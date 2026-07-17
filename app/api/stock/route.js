@@ -512,7 +512,16 @@ export async function GET(request) {
       // served as-is for the full CACHE_HOURS window (verified against real data: DECK sat
       // cached for hours with marketCap/beta/sector/52w all null while description was fine).
       // marketCap is the cheapest reliable proxy for "did that call actually succeed."
-      if (hoursOld < CACHE_HOURS && cached.data?.description && cached.data?.marketCap != null) {
+      // marketCap/description alone still isn't enough — they come from Finnhub, which is
+      // independent of the SEC EDGAR fetch that supplies fcfVal/debtVal/revVal/etc. A snapshot
+      // where SEC EDGAR timed out or returned no usable tags for this filer still passes the
+      // marketCap check and got cached with every financial field null, showing N/A on every
+      // subsequent open for the full CACHE_HOURS window. Require a minimum number of the core
+      // financial fields to be populated too, so a partial failure falls through to a re-fetch
+      // instead of being trusted as a complete snapshot.
+      const KEY_FIN_FIELDS = ['revVal', 'niVal', 'fcfVal', 'assetsVal', 'debtVal', 'cashVal'];
+      const hasFinancials = KEY_FIN_FIELDS.filter(k => cached.data?.[k] != null).length >= 3;
+      if (hoursOld < CACHE_HOURS && cached.data?.description && cached.data?.marketCap != null && hasFinancials) {
         const minsOld = hoursOld * 60;
         if (minsOld < 2) {
           return Response.json({ ...cached.data, cached: true });
