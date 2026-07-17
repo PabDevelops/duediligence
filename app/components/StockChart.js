@@ -86,18 +86,24 @@ export default function StockChart({
     };
   }, [ticker, range]);
 
-  // Keep the chart reasonably live without a full reload — refetch every 15min,
-  // skipped while the tab is in the background (same visibility-aware polling
-  // pattern as Home's other live widgets, see app/(workspace)/home/page.js).
-  // No loading flag here so a background refresh doesn't flash "LOADING..." over the chart.
+  // Keep the chart reasonably live without a full reload — skipped while the tab is in the
+  // background (same visibility-aware polling pattern as Home's other live widgets, see
+  // app/(workspace)/home/page.js). No loading flag here so a background refresh doesn't flash
+  // "LOADING..." over the chart.
+  //
+  // Poll interval matches how often the underlying candles actually change (see intervalMap
+  // in app/api/chart/route.js): 1D/1W use 5m/15m candles, so a 1min check catches a new one
+  // promptly. Everything else (1M and up) is daily-or-coarser data — polling that every minute
+  // would just refetch identical candles, so those stay at a slower 15min.
   useEffect(() => {
+    const pollMs = (range === '1d' || range === '1w') ? 60 * 1000 : 15 * 60 * 1000;
     const interval = setInterval(() => {
       if (document.visibilityState !== 'visible') return;
       fetch(`/api/chart?ticker=${ticker}&range=${range}`)
         .then(r => r.json())
         .then(d => setCandles(d.candles || []))
         .catch(() => {});
-    }, 15 * 60 * 1000);
+    }, pollMs);
     return () => clearInterval(interval);
   }, [ticker, range]);
 
