@@ -1,6 +1,7 @@
 'use client';
 import { useState, useEffect, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
+import Link from 'next/link';
 import { useUser } from '../../components/AuthProvider';
 import Sparkline from '../../components/Sparkline';
 
@@ -11,6 +12,7 @@ import SentimentBreadth from '../../components/workspace/compare/SentimentBreadt
 import EconomicCalendar from '../../components/workspace/compare/EconomicCalendar';
 import TechnicalScanner from '../../components/workspace/compare/TechnicalScanner';
 import InsiderActivity from '../../components/workspace/compare/InsiderActivity';
+import { computeEasyMode } from '../../../lib/stockScoring';
 const fmtP = (v) => fmtPercent(v, { decimals: 1 });
 
 // Curated thematic/industry baskets — migrated in from the old standalone Explore page.
@@ -216,49 +218,9 @@ export default function MarketRadar() {
   // Compute local Traqcker Score 100 for Spotlight details
   const spotlightQuality = useMemo(() => {
     if (!spotlightData) return null;
-    const d = spotlightData;
-    // A recent IPO or thinly-covered ticker has no SEC/Finnhub fundamentals at all — every
-    // input below would default to its neutral midpoint, producing a plausible-looking but
-    // entirely made-up score. Same guard as the stock detail page's Quality Score.
-    const hasFundamentals = d.revVal != null || d.niVal != null || d.marketCap != null
-      || d.roic != null || d.grossMargin != null || (d.revHistory?.length ?? 0) > 0;
-    if (!hasFundamentals) return null;
-
-    const sector = (d.sector || '').toLowerCase();
-    const isFinancial = sector.includes('bank') || sector.includes('insurance') || sector.includes('financial');
-    const isTech = sector.includes('tech') || sector.includes('software') || sector.includes('semi');
-    const isPharma = sector.includes('pharma') || sector.includes('biotech') || sector.includes('health');
-
-    const roicThreshold = isTech ? 0.25 : isPharma ? 0.20 : 0.15;
-    const gmThreshold = isTech ? 0.65 : isPharma ? 0.65 : isFinancial ? 0.30 : 0.35;
-    const omThreshold = isTech ? 0.20 : isPharma ? 0.20 : isFinancial ? 0.15 : 0.15;
-
-    const roicScore = d.roic == null ? 2.5 : d.roic / 100 >= roicThreshold * 2 ? 5 : d.roic / 100 >= roicThreshold * 1.5 ? 4.5 : d.roic / 100 >= roicThreshold ? 4 : d.roic / 100 >= roicThreshold * 0.7 ? 3 : d.roic / 100 >= roicThreshold * 0.4 ? 2 : 1;
-    const gmScore = d.grossMargin == null ? 2.5 : d.grossMargin / 100 >= gmThreshold * 1.4 ? 5 : d.grossMargin / 100 >= gmThreshold * 1.15 ? 4.5 : d.grossMargin / 100 >= gmThreshold ? 4 : d.grossMargin / 100 >= gmThreshold * 0.75 ? 3 : d.grossMargin / 100 >= gmThreshold * 0.5 ? 2 : 1;
-    const omScore = d.opMargin == null ? 2.5 : d.opMargin / 100 >= omThreshold * 2 ? 5 : d.opMargin / 100 >= omThreshold * 1.5 ? 4.5 : d.opMargin / 100 >= omThreshold ? 4 : d.opMargin / 100 >= omThreshold * 0.65 ? 3 : d.opMargin / 100 > 0 ? 2 : 1;
-    const deScore = d.debtToEquity == null ? 2.5 : d.debtToEquity < 0.3 ? 5 : d.debtToEquity < 0.7 ? 4.5 : d.debtToEquity < 1.2 ? 4 : d.debtToEquity < 2 ? 3 : d.debtToEquity < 3 ? 2 : 1;
-
-    const cbs = (roicScore * 0.4 + gmScore * 0.25 + omScore * 0.25 + deScore * 0.1);
-    const pfcfScore = d.pfcf == null || d.pfcf <= 0 ? 1 : d.pfcf < 12 ? 5 : d.pfcf < 18 ? 4.5 : d.pfcf < 25 ? 4 : d.pfcf < 35 ? 3 : d.pfcf < 50 ? 2 : 1;
-    const fcfYieldScore = d.fcfYield == null ? 1 : d.fcfYield > 8 ? 5 : d.fcfYield > 5 ? 4.5 : d.fcfYield > 3 ? 4 : d.fcfYield > 1.5 ? 3 : d.fcfYield > 0 ? 2 : 1;
-
-    const oppo = (pfcfScore * 0.55 + fcfYieldScore * 0.45);
-    const revGrowthScore = d.revGrowth == null ? 2.5 : d.revGrowth > 25 ? 5 : d.revGrowth > 15 ? 4.5 : d.revGrowth > 8 ? 4 : d.revGrowth > 3 ? 3 : d.revGrowth > 0 ? 2 : 1;
-
-    const fcfTrend = d.fcfHistory?.length >= 3 ? d.fcfHistory[d.fcfHistory.length - 1]?.val > d.fcfHistory[0]?.val ? 1 : 0 : null;
-    const marginTrend = d.marginHistory?.length >= 3 ? (d.marginHistory[d.marginHistory.length - 1]?.margin || 0) > (d.marginHistory[0]?.margin || 0) ? 1 : 0 : null;
-    const trendBonus = (fcfTrend === 1 ? 0.5 : 0) + (marginTrend === 1 ? 0.5 : 0);
-    const gqs = Math.min(5, revGrowthScore * 0.6 + (2.5 + trendBonus * 2) * 0.4);
-
-    const finalNote = (cbs * 0.45 + oppo * 0.30 + gqs * 0.25);
-    const score100 = Math.round((finalNote / 5) * 100);
-
-    let verdict, verdictColor;
-    if (score100 >= 70) { verdict = 'Solid & steady'; verdictColor = 'var(--ws-accent)'; }
-    else if (score100 >= 40) { verdict = 'Mixed signals'; verdictColor = 'var(--ws-text-2)'; }
-    else { verdict = 'Needs caution'; verdictColor = 'var(--ws-red)'; }
-
-    return { score100, verdict, verdictColor };
+    const hasFundamentals = spotlightData.revVal != null || spotlightData.niVal != null || spotlightData.marketCap != null
+      || spotlightData.roic != null || spotlightData.grossMargin != null || (spotlightData.revHistory?.length ?? 0) > 0;
+    return computeEasyMode(spotlightData, hasFundamentals);
   }, [spotlightData]);
 
   // Calculate VIX market
@@ -615,7 +577,16 @@ export default function MarketRadar() {
             </div>
           </div>
         ) : (
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '16px' }}>
+          <div>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '14px', flexWrap: 'wrap', gap: '10px' }}>
+              <div style={{ fontSize: '11px', color: 'var(--ws-text-3)', fontWeight: 500, letterSpacing: '0.3px' }}>
+                Ranked by unified Traqcker algorithms. Click any ticker to open analyzer sidebar.
+              </div>
+              <Link href="/radar/leaders" style={{ fontSize: '11px', fontWeight: 800, color: 'var(--ws-accent)', textDecoration: 'none', display: 'flex', alignItems: 'center', gap: '4px', letterSpacing: '1.2px', transition: 'opacity 0.15s' }} onMouseEnter={e => e.currentTarget.style.opacity = 0.85} onMouseLeave={e => e.currentTarget.style.opacity = 1}>
+                <span>VIEW TOP 100 LEADERBOARD →</span>
+              </Link>
+            </div>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '16px' }}>
             {/* Top Score */}
             <div className="bg-ws-bg-1 border border-ws-border p-4 flex flex-col gap-2.5">
               <div className="border-b border-ws-border pb-2">
@@ -736,7 +707,8 @@ export default function MarketRadar() {
               </div>
             </div>
           </div>
-        )}
+        </div>
+      )}
       </div>
 
       {/* Right Spotlight Panel Backdrop on Mobile */}

@@ -1,12 +1,12 @@
 # Traqcker
 
-> Traqcker is a terminal-style investment research and portfolio tracking platform for retail investors following a GARP (Growth At a Reasonable Price) approach. It provides a proprietary quality scoring system built on free cash flow analysis, covering 50,000+ publicly traded companies.
+> Traqcker is a terminal-style investment research and portfolio tracking platform for retail investors following a GARP (Growth At a Reasonable Price) approach. It provides a proprietary quality scoring system built on free cash flow analysis, covering 260+ publicly traded companies.
 
 ## What Traqcker does
 
 Traqcker gives investors a single terminal-style dashboard combining:
 
-- A stock screener scoring 50,000+ companies using a proprietary GARP-based framework
+- A stock screener scoring 260+ companies using a proprietary GARP-based framework
 - Portfolio tracking with real-time position monitoring
 - A financial news feed relevant to tracked holdings
 - Customizable, widget-based layout (users arrange their own terminal view)

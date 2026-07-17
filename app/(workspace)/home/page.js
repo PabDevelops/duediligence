@@ -1,6 +1,7 @@
 'use client';
 import { useState, useEffect, useMemo, useRef, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
+import Link from 'next/link';
 import { useUser } from '../../components/AuthProvider';
 import { PieChart, Pie, Cell, ResponsiveContainer } from 'recharts';
 import MarketStatusDot from '../../components/workspace/MarketStatusDot';
@@ -26,7 +27,7 @@ const CURRENCIES = { USD: '$', EUR: '€', GBP: '£' };
 // gimmick once the community-voting angle was removed. News stays: unlike those, it's
 // content the user actually comes back to Home to read.
 const LEFT_WIDGETS = ['indices', 'portfolio', 'workspace'];
-const RIGHT_WIDGETS = ['secFeed'];
+const RIGHT_WIDGETS = ['secFeed', 'leaders'];
 
 // Same "is there enough fundamental data to score this" check used on the stock detail
 // page's Quality tab and the /watchlist table — avoids showing a fabricated-looking score
@@ -1323,12 +1324,84 @@ export default function WorkspaceHome() {
     );
   };
 
+  const renderLeaders = () => {
+    if (!movers) {
+      return (
+        <Card title="Fundamental Leaders" subtitle="Top 10 high-scoring stocks.">
+          <div className="p-[30px] text-center text-ws-text-3 text-xs">
+            Loading leaders data...
+          </div>
+        </Card>
+      );
+    }
+
+    const top10 = movers.topScore || [];
+
+    return (
+      <Card
+        title="Fundamental Leaders"
+        subtitle="Top 10 highest-rated companies by Traqcker Score."
+        rightElement={
+          <Link href="/radar/leaders" style={{ fontSize: '10px', fontWeight: 700, color: 'var(--ws-accent)', textDecoration: 'none' }}>
+            See Top 100 →
+          </Link>
+        }
+      >
+        <div style={{ overflowX: 'auto' }}>
+          <table className="w-full border-collapse text-xs text-left">
+            <thead>
+              <tr className="border-b border-ws-border bg-black/[0.01]">
+                <th className="px-[18px] py-2.5 font-semibold text-ws-text-3 text-[10px]">RANK</th>
+                <th className="px-[18px] py-2.5 font-semibold text-ws-text-3 text-[10px]">TICKER</th>
+                <th className="px-[18px] py-2.5 text-right font-semibold text-ws-text-3 text-[10px]">SCORE</th>
+                <th className="px-[18px] py-2.5 text-right font-semibold text-ws-text-3 text-[10px]">QUALITY</th>
+                <th className="px-[18px] py-2.5 text-right font-semibold text-ws-text-3 text-[10px]">OPPO</th>
+                <th className="px-[18px] py-2.5 text-right font-semibold text-ws-text-3 text-[10px]">GROWTH</th>
+              </tr>
+            </thead>
+            <tbody>
+              {top10.map((s, index) => (
+                <tr
+                  key={s.ticker}
+                  onClick={() => router.push(`/stock/${s.ticker}`)}
+                  className="border-b border-ws-border cursor-pointer transition-[background] duration-150"
+                  onMouseEnter={e => e.currentTarget.style.background = 'var(--ws-bg-2)'}
+                  onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
+                >
+                  <td className="px-[18px] py-2.5 font-bold text-ws-text-3" style={{ color: index < 3 ? 'var(--ws-accent)' : 'inherit' }}>
+                    #{index + 1}
+                  </td>
+                  <td className="px-[18px] py-2.5 font-semibold text-ws-text">
+                    {s.ticker}
+                  </td>
+                  <td className="px-[18px] py-2.5 text-right font-bold text-ws-accent">
+                    {s.score ? `${Math.round(s.score * 20)}/100` : '—'}
+                  </td>
+                  <td className="px-[18px] py-2.5 text-right font-semibold text-ws-text">
+                    {s.cbs ? `${Math.round(s.cbs * 20)}/100` : '—'}
+                  </td>
+                  <td className="px-[18px] py-2.5 text-right font-semibold text-ws-text">
+                    {s.oppo ? `${Math.round(s.oppo * 20)}/100` : '—'}
+                  </td>
+                  <td className="px-[18px] py-2.5 text-right font-semibold text-ws-text">
+                    {s.gqs ? `${Math.round(s.gqs * 20)}/100` : '—'}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </Card>
+    );
+  };
+
   const renderWidget = (id) => {
     switch (id) {
       case 'indices': return renderIndices();
       case 'portfolio': return renderPortfolio();
       case 'workspace': return renderWorkspace();
       case 'secFeed': return renderSecFeed();
+      case 'leaders': return renderLeaders();
       default: return null;
     }
   };

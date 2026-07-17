@@ -1,0 +1,5 @@
+{
+  "apiUrl": "https://traqcker.com/api/admin/user-stats",
+  "secret": "pega-aqui-el-mismo-valor-de-WIDGET_ADMIN_SECRET",
+  "pollIntervalSeconds": 30
+}

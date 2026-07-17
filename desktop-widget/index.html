@@ -1,0 +1,34 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <title>Traqcker User Stats</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <div class="card" id="drag-region">
+    <div class="titlebar">
+      <span class="title">Traqcker</span>
+      <button id="close-btn" title="Cerrar">&times;</button>
+    </div>
+
+    <div class="stats">
+      <div class="stat">
+        <div class="value" id="total-value">--</div>
+        <div class="label">Registrados</div>
+      </div>
+      <div class="stat">
+        <div class="value" id="active-value">--</div>
+        <div class="label">Activos 24h</div>
+      </div>
+    </div>
+
+    <div class="footer">
+      <span class="dot" id="status-dot"></span>
+      <span id="updated-at">Cargando...</span>
+    </div>
+  </div>
+
+  <script src="renderer.js"></script>
+</body>
+</html>

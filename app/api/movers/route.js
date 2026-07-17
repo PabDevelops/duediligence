@@ -1,4 +1,5 @@
 import { supabase } from '../../../lib/supabase';
+import { computeEasyMode } from '../../../lib/stockScoring';
 
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;
@@ -24,7 +25,7 @@ async function loadMoversRows() {
   // what is otherwise a near-full-table scan.
   const { data: rows } = await supabase
     .from('stock_cache')
-    .select('ticker, updated_at, name:data->name, sector:data->sector, exchange:data->exchange, currentPrice:data->currentPrice, priceChangePct:data->priceChangePct, roic:data->roic, fcfYield:data->fcfYield, revGrowth:data->revGrowth, grossMargin:data->grossMargin, opMargin:data->opMargin, debtToEquity:data->debtToEquity, pfcf:data->pfcf, marketCap:data->marketCap')
+    .select('ticker, updated_at, name:data->name, sector:data->sector, industry:data->industry, exchange:data->exchange, currentPrice:data->currentPrice, priceChangePct:data->priceChangePct, roic:data->roic, fcfYield:data->fcfYield, revGrowth:data->revGrowth, grossMargin:data->grossMargin, opMargin:data->opMargin, debtToEquity:data->debtToEquity, pfcf:data->pfcf, marketCap:data->marketCap, debtVal:data->debtVal, equityVal:data->equityVal, cashVal:data->cashVal, ebtVal:data->ebtVal, taxVal:data->taxVal, oiVal:data->oiVal, currentAssetsVal:data->currentAssetsVal, currentLiabilitiesVal:data->currentLiabilitiesVal, fcfVal:data->fcfVal, rdVal:data->rdVal, revVal:data->revVal, sbcVal:data->sbcVal, fcfHistory:data->fcfHistory, marginHistory:data->marginHistory, revHistory:data->revHistory')
     .neq('ticker', 'INHD')
     .not('data->currentPrice', 'is', null)
     .not('data->priceChangePct', 'is', null);
@@ -34,8 +35,12 @@ async function loadMoversRows() {
   return moversRowsCache;
 }
 
-export async function GET() {
+export async function GET(request) {
   try {
+    const { searchParams } = new URL(request.url);
+    const isFull = searchParams.get('full') === 'true';
+    const limit = isFull ? 100 : 10;
+
     const rows = await loadMoversRows();
 
     if (!rows?.length) return Response.json({ gainers: [], losers: [], topRoic: [], topFcfYield: [], topRevGrowth: [], topScore: [], topQuality: [], topOppo: [], bigCapMovers: [] });
@@ -48,26 +53,17 @@ export async function GET() {
     const stocks = freshRows;
 
     const calcScore = (d) => {
-      if (!d) return null;
-      const sec = (d.sector || '').toLowerCase();
-      const isTech = sec.includes('tech') || sec.includes('software') || sec.includes('semi');
-      const isPharma = sec.includes('pharma') || sec.includes('biotech') || sec.includes('health');
-      const isFinancial = sec.includes('bank') || sec.includes('insurance') || sec.includes('financial');
-      const roicT = isTech ? 0.25 : isPharma ? 0.20 : 0.15;
-      const gmT = isTech ? 0.65 : isPharma ? 0.65 : isFinancial ? 0.30 : 0.35;
-      const omT = isTech ? 0.20 : isPharma ? 0.20 : 0.15;
-      const roicS = d.roic == null ? 2.5 : d.roic/100 >= roicT*2 ? 5 : d.roic/100 >= roicT*1.5 ? 4.5 : d.roic/100 >= roicT ? 4 : d.roic/100 >= roicT*0.7 ? 3 : 2;
-      const gmS = d.grossMargin == null ? 2.5 : d.grossMargin/100 >= gmT*1.4 ? 5 : d.grossMargin/100 >= gmT*1.15 ? 4.5 : d.grossMargin/100 >= gmT ? 4 : d.grossMargin/100 >= gmT*0.75 ? 3 : 2;
-      const omS = d.opMargin == null ? 2.5 : d.opMargin/100 >= omT*2 ? 5 : d.opMargin/100 >= omT*1.5 ? 4.5 : d.opMargin/100 >= omT ? 4 : d.opMargin/100 >= omT*0.65 ? 3 : 2;
-      const deS = d.debtToEquity == null ? 2.5 : d.debtToEquity < 0.3 ? 5 : d.debtToEquity < 0.7 ? 4.5 : d.debtToEquity < 1.2 ? 4 : d.debtToEquity < 2 ? 3 : 2;
-      const cbs = roicS*0.4 + gmS*0.25 + omS*0.25 + deS*0.1;
-      const pfcfS = d.pfcf == null || d.pfcf <= 0 ? 1 : d.pfcf < 12 ? 5 : d.pfcf < 18 ? 4.5 : d.pfcf < 25 ? 4 : d.pfcf < 35 ? 3 : 2;
-      const fcfYS = d.fcfYield == null ? 1 : d.fcfYield > 8 ? 5 : d.fcfYield > 5 ? 4.5 : d.fcfYield > 3 ? 4 : d.fcfYield > 1.5 ? 3 : 2;
-      const oppo = pfcfS*0.55 + fcfYS*0.45;
-      const revGS = d.revGrowth == null ? 2.5 : d.revGrowth > 25 ? 5 : d.revGrowth > 15 ? 4.5 : d.revGrowth > 8 ? 4 : d.revGrowth > 3 ? 3 : 2;
-      const gqs = Math.min(5, revGS*0.6 + 3*0.4);
-      const score = +((cbs*0.45 + oppo*0.30 + gqs*0.25)).toFixed(1);
-      return { score, cbs: +cbs.toFixed(1), oppo: +oppo.toFixed(1) };
+      if (!d) return { score: null, cbs: null, oppo: null, gqs: null };
+      const hasFundamentals = d.revVal != null || d.niVal != null || d.marketCap != null
+        || d.roic != null || d.grossMargin != null || (d.revHistory?.length ?? 0) > 0;
+      const easy = computeEasyMode(d, hasFundamentals);
+      if (!easy) return { score: null, cbs: null, oppo: null, gqs: null };
+      return {
+        score: +(easy.finalNote).toFixed(1),
+        cbs: +(easy.cbs).toFixed(1),
+        oppo: +(easy.oppo).toFixed(1),
+        gqs: +(easy.gqs).toFixed(1)
+      };
     };
 
     const withScore = stocks.map(s => ({ ...s, ...calcScore(s) }));
@@ -87,13 +83,14 @@ export async function GET() {
     return Response.json({
       gainers: sorted(withScore, 'priceChangePct').slice(0, 40),
       losers: sorted(withScore, 'priceChangePct', 'asc').slice(0, 40),
-      topRoic: sorted(withScore, 'roic', 'desc', 200).slice(0, 10),
-      topFcfYield: sorted(withScore, 'fcfYield', 'desc', 50).slice(0, 10),
-      topRevGrowth: sorted(withScore, 'revGrowth', 'desc', 300).slice(0, 10),
-      topScore: sorted(withScore, 'score').slice(0, 10),
-      topQuality: sorted(withScore, 'cbs').slice(0, 10),
-      topOppo: sorted(withScore, 'oppo').slice(0, 10),
+      topRoic: sorted(withScore, 'roic', 'desc', 200).slice(0, limit),
+      topFcfYield: sorted(withScore, 'fcfYield', 'desc', 50).slice(0, limit),
+      topRevGrowth: sorted(withScore, 'revGrowth', 'desc', 300).slice(0, limit),
+      topScore: sorted(withScore, 'score').slice(0, limit),
+      topQuality: sorted(withScore, 'cbs').slice(0, limit),
+      topOppo: sorted(withScore, 'oppo').slice(0, limit),
       bigCapMovers,
+      leaders: isFull ? withScore : undefined,
     });
   } catch (e) {
     console.error(e);

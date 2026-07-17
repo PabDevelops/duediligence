@@ -849,12 +849,27 @@ export default function StockPage({ params }) {
               {/* Analyst rating */}
               <div style={{ background: 'var(--ws-bg-1)', border: '1px solid var(--ws-border)', padding: '20px' }}>
                 <div style={{ fontWeight: 700, fontSize: '14px', marginBottom: '4px', color: 'var(--ws-text)' }}>
-                  Should I buy or sell {ticker} stock?
+                  Analyst Consensus
                 </div>
                 {analystRating.source === 'none' || !analystRating.ratings ? (
-                  <div style={{ fontSize: '11px', color: 'var(--ws-text-3)', padding: '8px 0' }}>
-                    No analyst coverage available for this ticker.
-                  </div>
+                  easyMode ? (
+                    <>
+                      <div style={{ fontSize: '11px', color: 'var(--ws-text-3)', marginBottom: '10px' }}>
+                        No analyst coverage available. Showing Traqcker model consensus.
+                      </div>
+                      <AnalystGauge score={easyMode.finalNote} qualityScore100={null} />
+                      <div style={{ textAlign: 'center', fontSize: '20px', fontWeight: 800, color: easyMode.verdictColor, margin: '4px 0 16px' }}>
+                        {easyMode.verdict}
+                      </div>
+                      <div style={{ borderTop: '1px solid var(--ws-border)', paddingTop: '14px', fontSize: '11px', color: 'var(--ws-text-2)', lineHeight: 1.6 }}>
+                        This automated consensus is calculated using Traqcker's quantitative quality score metrics (CBS, OPPO, GQS) and balance sheet health.
+                      </div>
+                    </>
+                  ) : (
+                    <div style={{ fontSize: '11px', color: 'var(--ws-text-3)', padding: '8px 0' }}>
+                      No analyst coverage or fundamental scoring available for this ticker.
+                    </div>
+                  )
                 ) : (() => {
                   const r = analystRating.ratings;
                   const total = analystRating.total;
