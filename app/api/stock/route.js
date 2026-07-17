@@ -505,7 +505,14 @@ export async function GET(request) {
     const forceRefresh = searchParams.get('refresh') === 'true';
     if (cached && !forceRefresh) {
       const hoursOld = (Date.now() - new Date(cached.updated_at).getTime()) / (1000 * 60 * 60);
-      if (hoursOld < CACHE_HOURS && cached.data?.description) {
+      // description alone isn't a strong enough signal that this snapshot is complete — a
+      // request where Finnhub's profile/metric calls partially failed (rate limit, timeout)
+      // still has a description (that comes from a separate source) but marketCap, beta,
+      // sector and the 52-week range all silently end up null, and used to get cached and
+      // served as-is for the full CACHE_HOURS window (verified against real data: DECK sat
+      // cached for hours with marketCap/beta/sector/52w all null while description was fine).
+      // marketCap is the cheapest reliable proxy for "did that call actually succeed."
+      if (hoursOld < CACHE_HOURS && cached.data?.description && cached.data?.marketCap != null) {
         const minsOld = hoursOld * 60;
         if (minsOld < 2) {
           return Response.json({ ...cached.data, cached: true });
