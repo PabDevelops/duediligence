@@ -395,6 +395,11 @@ export default function StockPage({ params }) {
   const [isPro, setIsPro] = useState(false);
   const [checkingPro, setCheckingPro] = useState(true);
   const [inWatchlist, setInWatchlist] = useState(false);
+  // Existing watchlist "pies" (groups) this user already has, so Add-to-Watchlist here can
+  // offer a picker instead of always dropping the ticker into General — same grouping concept
+  // as app/(workspace)/watchlist/page.js's existingPies.
+  const [watchlistPies, setWatchlistPies] = useState([]);
+  const [showPiePicker, setShowPiePicker] = useState(false);
   const [analystRating, setAnalystRating] = useState({ ratings: null, total: 0, consensus: null, score: null, source: 'none' });
   const [expanded, setExpanded] = useState(false);
   const [sotw, setSotw] = useState(null);
@@ -525,8 +530,9 @@ export default function StockPage({ params }) {
       fetch('/api/watchlist')
         .then(r => r.json())
         .then(d => {
-          const tickers = d.tickers?.map(t => t.ticker) || [];
-          setInWatchlist(tickers.includes(ticker));
+          const list = d.tickers || [];
+          setInWatchlist(list.some(t => t.ticker === ticker));
+          setWatchlistPies([...new Set(list.map(t => t.pie).filter(Boolean))].sort());
         })
         .catch(() => {});
     } else {
@@ -575,7 +581,10 @@ export default function StockPage({ params }) {
     .catch(() => {});
   };
 
-  const toggleWatchlist = async () => {
+  // `pie` only applies when adding (ignored on remove) — omitted entirely means General,
+  // same convention as the /watchlist page's moveToPie and the POST route itself.
+  const toggleWatchlist = async (pie) => {
+    setShowPiePicker(false);
     if (!isSignedIn) {
       if (inWatchlist) {
         removeFromGuestWatchlist(ticker);
@@ -588,16 +597,26 @@ export default function StockPage({ params }) {
       return;
     }
     const method = inWatchlist ? 'DELETE' : 'POST';
+    const body = inWatchlist ? { ticker } : { ticker, ...(pie ? { pie } : {}) };
     const res = await fetch('/api/watchlist', {
       method,
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ ticker }),
+      body: JSON.stringify(body),
     });
     if (method === 'POST') {
       const data = await res.json();
       if (data.watchlistCount >= 5) unlockAchievement('watchlist_builder');
+      if (pie) setWatchlistPies(prev => prev.includes(pie) ? prev : [...prev, pie].sort());
     }
     setInWatchlist(!inWatchlist);
+  };
+
+  // Clicking "Add to Watchlist" opens a pie picker when the user already has groups to
+  // choose from, instead of always silently landing the ticker in General; removing, or
+  // adding when there's nothing to pick from yet, stays a single click.
+  const handleWatchlistClick = () => {
+    if (inWatchlist || watchlistPies.length === 0) { toggleWatchlist(); return; }
+    setShowPiePicker(v => !v);
   };
 
   if (loading) return (
@@ -1228,12 +1247,42 @@ export default function StockPage({ params }) {
                   style={{ textAlign: 'center', fontSize: '12px', padding: '10px 8px', background: 'var(--ws-bg-1)', border: '1px solid var(--ws-border)', color: 'var(--ws-text)', textDecoration: 'none' }}>
                   SEC Filings ↗
                 </a>
-                <button onClick={toggleWatchlist}
-                  style={inWatchlist
-                    ? { fontSize: '12px', padding: '10px 8px', width: '100%', background: 'var(--ws-text)', color: 'var(--ws-bg)', border: 'none', fontWeight: 600, cursor: 'pointer' }
-                    : { fontSize: '12px', padding: '10px 8px', width: '100%', background: 'var(--ws-bg-1)', border: '1px solid var(--ws-border)', color: 'var(--ws-text)', cursor: 'pointer' }}>
-                  {inWatchlist ? 'Remove from Watchlist' : 'Add to Watchlist'}
-                </button>
+                <div style={{ position: 'relative' }}>
+                  <button onClick={handleWatchlistClick}
+                    style={inWatchlist
+                      ? { fontSize: '12px', padding: '10px 8px', width: '100%', background: 'var(--ws-text)', color: 'var(--ws-bg)', border: 'none', fontWeight: 600, cursor: 'pointer' }
+                      : { fontSize: '12px', padding: '10px 8px', width: '100%', background: 'var(--ws-bg-1)', border: '1px solid var(--ws-border)', color: 'var(--ws-text)', cursor: 'pointer' }}>
+                    {inWatchlist ? 'Remove from Watchlist' : 'Add to Watchlist'}
+                  </button>
+                  {showPiePicker && (
+                    <>
+                      <div onClick={() => setShowPiePicker(false)} style={{ position: 'fixed', inset: 0, zIndex: 998 }} />
+                      <div style={{
+                        position: 'absolute', top: 'calc(100% + 4px)', left: 0, right: 0, zIndex: 999,
+                        background: 'var(--ws-bg-1)', border: '1px solid var(--ws-border)',
+                        boxShadow: '0 8px 24px rgba(0,0,0,0.15)', maxHeight: '200px', overflowY: 'auto',
+                      }}>
+                        <div style={{ fontSize: '9px', color: 'var(--ws-text-3)', letterSpacing: '1px', padding: '8px 12px 4px' }}>
+                          ADD TO WATCHLIST
+                        </div>
+                        <button onClick={() => toggleWatchlist()}
+                          style={{ display: 'block', width: '100%', textAlign: 'left', padding: '8px 12px', fontSize: '11px', background: 'none', border: 'none', borderTop: '1px solid var(--ws-border)', color: 'var(--ws-text)', cursor: 'pointer' }}
+                          onMouseEnter={e => e.currentTarget.style.background = 'var(--ws-bg-2)'}
+                          onMouseLeave={e => e.currentTarget.style.background = 'none'}>
+                          General
+                        </button>
+                        {watchlistPies.map(p => (
+                          <button key={p} onClick={() => toggleWatchlist(p)}
+                            style={{ display: 'block', width: '100%', textAlign: 'left', padding: '8px 12px', fontSize: '11px', background: 'none', border: 'none', borderTop: '1px solid var(--ws-border)', color: 'var(--ws-text)', cursor: 'pointer' }}
+                            onMouseEnter={e => e.currentTarget.style.background = 'var(--ws-bg-2)'}
+                            onMouseLeave={e => e.currentTarget.style.background = 'none'}>
+                            {p}
+                          </button>
+                        ))}
+                      </div>
+                    </>
+                  )}
+                </div>
                 <button onClick={() => { if (!isSignedIn) { window.location.href = '/sign-in'; return; } setShowAddHolding(true); }}
                   style={{ fontSize: '12px', padding: '10px 8px', width: '100%', background: 'var(--ws-accent)', color: '#fff', border: 'none', fontWeight: 600, cursor: 'pointer' }}>
                   + Add to Portfolio
