@@ -400,6 +400,7 @@ export default function StockPage({ params }) {
   // as app/(workspace)/watchlist/page.js's existingPies.
   const [watchlistPies, setWatchlistPies] = useState([]);
   const [showPiePicker, setShowPiePicker] = useState(false);
+  const [customPieInput, setCustomPieInput] = useState('');
   const [analystRating, setAnalystRating] = useState({ ratings: null, total: 0, consensus: null, score: null, source: 'none' });
   const [expanded, setExpanded] = useState(false);
   const [sotw, setSotw] = useState(null);
@@ -585,6 +586,7 @@ export default function StockPage({ params }) {
   // same convention as the /watchlist page's moveToPie and the POST route itself.
   const toggleWatchlist = async (pie) => {
     setShowPiePicker(false);
+    setCustomPieInput('');
     if (!isSignedIn) {
       if (inWatchlist) {
         removeFromGuestWatchlist(ticker);
@@ -611,11 +613,10 @@ export default function StockPage({ params }) {
     setInWatchlist(!inWatchlist);
   };
 
-  // Clicking "Add to Watchlist" opens a pie picker when the user already has groups to
-  // choose from, instead of always silently landing the ticker in General; removing, or
-  // adding when there's nothing to pick from yet, stays a single click.
+  // Clicking "Add to Watchlist" opens a pie picker so the user can select or create a list/group;
+  // removing when already in watchlist stays a single click.
   const handleWatchlistClick = () => {
-    if (inWatchlist || watchlistPies.length === 0) { toggleWatchlist(); return; }
+    if (inWatchlist) { toggleWatchlist(); return; }
     setShowPiePicker(v => !v);
   };
 
@@ -1260,7 +1261,7 @@ export default function StockPage({ params }) {
                       <div style={{
                         position: 'absolute', top: 'calc(100% + 4px)', left: 0, right: 0, zIndex: 999,
                         background: 'var(--ws-bg-1)', border: '1px solid var(--ws-border)',
-                        boxShadow: '0 8px 24px rgba(0,0,0,0.15)', maxHeight: '200px', overflowY: 'auto',
+                        boxShadow: '0 8px 24px rgba(0,0,0,0.15)', maxHeight: '240px', overflowY: 'auto',
                       }}>
                         <div style={{ fontSize: '9px', color: 'var(--ws-text-3)', letterSpacing: '1px', padding: '8px 12px 4px' }}>
                           ADD TO WATCHLIST
@@ -1279,6 +1280,21 @@ export default function StockPage({ params }) {
                             {p}
                           </button>
                         ))}
+                        <div style={{ borderTop: '1px solid var(--ws-border)', padding: '6px 8px' }}>
+                          <form onSubmit={(e) => { e.preventDefault(); if (customPieInput.trim()) toggleWatchlist(customPieInput.trim()); }}>
+                            <input
+                              type="text"
+                              placeholder="+ Create new list..."
+                              value={customPieInput}
+                              onChange={e => setCustomPieInput(e.target.value)}
+                              style={{
+                                width: '100%', fontSize: '10px', padding: '5px 6px',
+                                background: 'var(--ws-bg-2)', border: '1px solid var(--ws-border)',
+                                color: 'var(--ws-text)', outline: 'none', fontFamily: "'JetBrains Mono', monospace"
+                              }}
+                            />
+                          </form>
+                        </div>
                       </div>
                     </>
                   )}
