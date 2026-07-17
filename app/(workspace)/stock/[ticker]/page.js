@@ -210,6 +210,20 @@ function GemRevealBar({ score100 }) {
 const CURRENCY_SYMBOLS = { USD: '$', EUR: '€', GBP: '£', JPY: '¥', CNY: '¥', CHF: 'CHF ', CAD: 'C$', AUD: 'A$', HKD: 'HK$', INR: '₹', KRW: '₩', SEK: 'kr', NOK: 'kr', DKK: 'kr' };
 const curSym = (code) => !code || code === 'USD' ? '$' : (CURRENCY_SYMBOLS[code] || `${code} `);
 
+// Standard market-cap tiers (Mega/Large/Mid/Small/Micro), same thresholds used by S&P/Russell
+// index providers and most brokerages. data.marketCap is a raw USD figure (e.g. 1e9 = $1B).
+const MARKET_CAP_TIERS = [
+  { min: 200e9, label: 'MEGA CAP', color: '#a855f7' },
+  { min: 10e9, label: 'LARGE CAP', color: 'var(--ws-accent)' },
+  { min: 2e9, label: 'MID CAP', color: 'var(--ws-text)' },
+  { min: 300e6, label: 'SMALL CAP', color: 'var(--ws-text-2)' },
+  { min: 0, label: 'MICRO CAP', color: 'var(--ws-text-3)' },
+];
+const marketCapTier = (marketCap) => {
+  if (marketCap == null) return null;
+  return MARKET_CAP_TIERS.find(t => marketCap >= t.min);
+};
+
 // SEC Form 4 transaction codes — P/S are genuine open-market trades, everything else
 // (grants, exercises, tax withholding, gifts...) moves shares for administrative reasons.
 const TXN_CODE_LABELS = {
@@ -758,8 +772,26 @@ export default function StockPage({ params }) {
                 />
               </div>
               <div style={{ minWidth: 0 }}>
-                <div style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: '10px', color: 'var(--ws-text-3)', letterSpacing: '1.5px', marginBottom: '5px' }}>
-                  {ticker} · {data.exchange || 'NASDAQ'}{data.sector ? ` · ${data.sector.toUpperCase()}` : ''}
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '5px', flexWrap: 'wrap' }}>
+                  <span style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: '10px', color: 'var(--ws-text-3)', letterSpacing: '1.5px' }}>
+                    {ticker} · {data.exchange || 'NASDAQ'}{data.sector ? ` · ${data.sector.toUpperCase()}` : ''}
+                  </span>
+                  {marketCapTier(data.marketCap) && (
+                    <span style={{
+                      fontFamily: "'JetBrains Mono', monospace",
+                      fontSize: '9px',
+                      fontWeight: 700,
+                      letterSpacing: '1px',
+                      color: marketCapTier(data.marketCap).color,
+                      border: `1px solid ${marketCapTier(data.marketCap).color}`,
+                      borderRadius: '4px',
+                      padding: '2px 6px',
+                    }}
+                      title={`Market cap: ${fmt(data.marketCap)}`}
+                    >
+                      {marketCapTier(data.marketCap).label}
+                    </span>
+                  )}
                 </div>
                 <h1 style={{ fontSize: '22px', fontWeight: 800, letterSpacing: '-0.5px', marginBottom: '10px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', lineHeight: 1.2, color: 'var(--ws-text)' }}>{data.name}</h1>
                 {price && (
