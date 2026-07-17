@@ -29,6 +29,14 @@ const CURRENCIES = { USD: '$', EUR: '€', GBP: '£' };
 const LEFT_WIDGETS = ['indices', 'portfolio', 'workspace'];
 const RIGHT_WIDGETS = ['secFeed', 'leaders'];
 
+const WIDGETS_METADATA = [
+  { id: 'indices', label: 'Major Indices' },
+  { id: 'portfolio', label: 'My Portfolio' },
+  { id: 'workspace', label: 'Coverage Workspace' },
+  { id: 'secFeed', label: 'SEC Filings & Alerts' },
+  { id: 'leaders', label: 'Fundamental Leaders' }
+];
+
 // Same "is there enough fundamental data to score this" check used on the stock detail
 // page's Quality tab and the /watchlist table — avoids showing a fabricated-looking score
 // for recent IPOs / thinly-covered tickers with no SEC/Finnhub fundamentals yet.
@@ -41,6 +49,34 @@ const scoreColor = (s) => s >= 4 ? 'var(--ws-accent)' : s >= 3 ? 'var(--ws-text)
 
 export default function WorkspaceHome() {
   const router = useRouter();
+
+  const [widgetVisibility, setWidgetVisibility] = useState({
+    indices: true,
+    portfolio: true,
+    workspace: true,
+    secFeed: true,
+    leaders: true
+  });
+  const [showCustomizer, setShowCustomizer] = useState(false);
+
+  useEffect(() => {
+    try {
+      const saved = localStorage.getItem('traqcker_widget_visibility');
+      if (saved) {
+        setWidgetVisibility(JSON.parse(saved));
+      }
+    } catch (e) {}
+  }, []);
+
+  const toggleWidget = (id) => {
+    setWidgetVisibility(prev => {
+      const updated = { ...prev, [id]: !prev[id] };
+      try {
+        localStorage.setItem('traqcker_widget_visibility', JSON.stringify(updated));
+      } catch (e) {}
+      return updated;
+    });
+  };
   
   // Mobile collapses the two-column layout into a single fixed-order column.
   const [isMobile, setIsMobile] = useState(false);
@@ -1413,6 +1449,102 @@ export default function WorkspaceHome() {
     <div className="home-container" style={{ padding: '24px', display: 'flex', flexDirection: 'column', gap: '24px' }}>
       <OnboardingBanner />
 
+      {/* Dashboard Title & Customize Layout Control */}
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '-8px' }}>
+        <div>
+          <h1 style={{ fontSize: '18px', fontWeight: 800, color: 'var(--ws-text)', letterSpacing: '-0.5px', margin: 0 }}>Terminal Dashboard</h1>
+          <p style={{ fontSize: '11px', color: 'var(--ws-text-3)', margin: '2px 0 0' }}>Real-time overview of indices, portfolios, watchlists, and filings.</p>
+        </div>
+        
+        {/* Customize Layout Dropdown */}
+        <div style={{ position: 'relative' }}>
+          <button 
+            onClick={() => setShowCustomizer(!showCustomizer)}
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '6px',
+              padding: '6px 12px',
+              fontSize: '11px',
+              fontWeight: 600,
+              color: 'var(--ws-text-2)',
+              background: 'var(--ws-bg-1)',
+              border: '1px solid var(--ws-border)',
+              borderRadius: '6px',
+              cursor: 'pointer',
+              transition: 'all 0.15s ease'
+            }}
+            onMouseEnter={e => { e.currentTarget.style.borderColor = 'var(--ws-accent)'; e.currentTarget.style.color = 'var(--ws-text)'; }}
+            onMouseLeave={e => { e.currentTarget.style.borderColor = 'var(--ws-border)'; e.currentTarget.style.color = 'var(--ws-text-2)'; }}
+          >
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <circle cx="12" cy="12" r="3" />
+              <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z" />
+            </svg>
+            Customize Layout
+          </button>
+          
+          {showCustomizer && (
+            <>
+              <div 
+                onClick={() => setShowCustomizer(false)}
+                style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, zIndex: 998 }}
+              />
+              <div style={{
+                position: 'absolute',
+                top: 'calc(100% + 6px)',
+                right: 0,
+                width: '220px',
+                background: 'var(--ws-bg-1)',
+                border: '1px solid var(--ws-border)',
+                borderRadius: '8px',
+                padding: '12px',
+                boxShadow: '0 8px 30px rgba(0,0,0,0.15)',
+                zIndex: 999,
+                animation: 'fadeInSlide 0.15s ease-out'
+              }}>
+                <div style={{ fontSize: '10px', fontWeight: 700, color: 'var(--ws-text-3)', letterSpacing: '1px', textTransform: 'uppercase', marginBottom: '8px' }}>
+                  Show/Hide Widgets
+                </div>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                  {WIDGETS_METADATA.map(w => (
+                    <label 
+                      key={w.id} 
+                      style={{ 
+                        display: 'flex', 
+                        alignItems: 'center', 
+                        gap: '8px', 
+                        fontSize: '11px', 
+                        fontWeight: 500, 
+                        color: 'var(--ws-text-2)', 
+                        cursor: 'pointer',
+                        padding: '4px 6px',
+                        borderRadius: '4px',
+                        transition: 'background 0.1s'
+                      }}
+                      onMouseEnter={e => e.currentTarget.style.background = 'var(--ws-bg-2)'}
+                      onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
+                    >
+                      <input 
+                        type="checkbox" 
+                        checked={widgetVisibility[w.id] !== false}
+                        onChange={() => toggleWidget(w.id)}
+                        style={{
+                          accentColor: 'var(--ws-accent)',
+                          cursor: 'pointer',
+                          margin: 0
+                        }}
+                      />
+                      {w.label}
+                    </label>
+                  ))}
+                </div>
+              </div>
+            </>
+          )}
+        </div>
+      </div>
+
       {/* Top Movers Marquee Ticker — pick Gainers/Losers/Big Cap Movers from the dropdown, all today-only (see MAX_CACHE_AGE_HOURS in /api/movers), auto-scrolls continuously */}
       {movers && (() => {
         const MARQUEE_SOURCES = {
@@ -1485,9 +1617,22 @@ export default function WorkspaceHome() {
 
       {/* Main grid — mobile collapses to one fixed-order column; desktop keeps the
           fixed two-column split (see LEFT_WIDGETS/RIGHT_WIDGETS above). */}
-      {isMobile ? (
+      {mobileWidgets.filter(id => widgetVisibility[id] !== false).length === 0 ? (
+        <div style={{
+          textAlign: 'center',
+          padding: '60px 24px',
+          border: '1px dashed var(--ws-border)',
+          borderRadius: '8px',
+          color: 'var(--ws-text-3)',
+          background: 'var(--ws-bg-1)',
+          fontSize: '12px',
+          marginTop: '12px'
+        }}>
+          All widgets hidden. Click "Customize Layout" to restore widget visibility.
+        </div>
+      ) : isMobile ? (
         <div className="home-main-grid" style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
-          {mobileWidgets.map((id) => (
+          {mobileWidgets.filter(id => widgetVisibility[id] !== false).map((id) => (
             <div key={id}>
               {renderWidget(id)}
             </div>
@@ -1503,7 +1648,7 @@ export default function WorkspaceHome() {
 
           {/* LEFT COLUMN */}
           <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
-            {LEFT_WIDGETS.map((id) => (
+            {LEFT_WIDGETS.filter(id => widgetVisibility[id] !== false).map((id) => (
               <div key={id}>
                 {renderWidget(id)}
               </div>
@@ -1512,7 +1657,7 @@ export default function WorkspaceHome() {
 
           {/* RIGHT COLUMN */}
           <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
-            {RIGHT_WIDGETS.map((id) => (
+            {RIGHT_WIDGETS.filter(id => widgetVisibility[id] !== false).map((id) => (
               <div key={id}>
                 {renderWidget(id)}
               </div>
