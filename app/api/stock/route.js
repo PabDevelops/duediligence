@@ -860,17 +860,20 @@ export async function GET(request) {
     const equity        = getMetric(['StockholdersEquity','StockholdersEquityIncludingPortionAttributableToNoncontrollingInterest']);
     // LongTermDebt/LongTermDebtNoncurrent alone miss real, non-trivial debt balances filed
     // under a more specific concept — convertible notes (common for growth/tech issuers,
-    // verified against real data: WIX), or a combined current+noncurrent tag (verified: DECK's
-    // capital structure isn't captured by either of the first two tags at all). This still
-    // doesn't guarantee a hit for a genuinely debt-free balance sheet — Deckers in particular
-    // has been carrying ~zero long-term debt for years — in which case null here is the
-    // correct "no debt" answer, not a data gap; XBRL filers typically omit a concept entirely
-    // rather than tag an explicit zero, so this function can't reliably tell the two cases
-    // apart from absence alone.
+    // verified against real data: WIX), a combined current+noncurrent tag, or long-term
+    // operating/finance lease liabilities. That last one matters a lot for retail-footprint
+    // companies: ASC 842 (effective fiscal 2019) put operating leases on the balance sheet as
+    // a liability, and Finviz-style D/E ratios count them as debt — verified against real
+    // data: Deckers (near-zero conventional long-term debt, hundreds of UGG/HOKA store leases)
+    // showed null here and 0.15 on Finviz before OperatingLeaseLiabilityNoncurrent was added.
+    // Even with all of these, a genuinely lease-light, debt-free balance sheet can still
+    // legitimately come back null — XBRL filers typically omit a concept entirely rather than
+    // tag an explicit zero, so absence alone can't fully distinguish "no debt" from "wrong tag."
     const debt          = getMetric([
       'LongTermDebt','LongTermDebtNoncurrent','DebtLongtermAndShorttermCombinedAmount',
       'LongTermDebtAndCapitalLeaseObligations','ConvertibleNotesPayable','ConvertibleDebtNoncurrent',
       'ConvertibleLongTermNotesPayable','NotesPayableNoncurrent','SecuredDebtNoncurrent','UnsecuredDebtNoncurrent',
+      'OperatingLeaseLiabilityNoncurrent','FinanceLeaseLiabilityNoncurrent',
     ]);
     const cash          = getMetric(['CashAndCashEquivalentsAtCarryingValue','CashCashEquivalentsAndShortTermInvestments']);
     const shares        = getMetric(['CommonStockSharesOutstanding','WeightedAverageNumberOfSharesOutstandingBasic']);
