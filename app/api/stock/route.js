@@ -878,7 +878,13 @@ export async function GET(request) {
     const operatingIncomes = getMetric(['OperatingIncomeLoss', 'IncomeLossFromContinuingOperationsBeforeIncomeTaxesExtraordinaryItemsNoncontrollingInterest']);
     const cashFlows     = getMetric(['NetCashProvidedByUsedInOperatingActivities']);
     const assets        = getMetric(['Assets']);
-    const equity        = getMetric(['StockholdersEquity','StockholdersEquityIncludingPortionAttributableToNoncontrollingInterest']);
+    const equity        = getMetric([
+      'StockholdersEquity',
+      'StockholdersEquityIncludingPortionAttributableToNoncontrollingInterest',
+      'PartnersCapital',
+      'PartnersCapitalIncludingPortionAttributableToNoncontrollingInterest',
+      'MembersEquity',
+    ]);
     // LongTermDebt/LongTermDebtNoncurrent alone miss real, non-trivial debt balances filed
     // under a more specific concept — convertible notes (common for growth/tech issuers,
     // verified against real data: WIX), a combined current+noncurrent tag, or long-term
@@ -1112,16 +1118,13 @@ const sharesForCalc = sharesValAdj || sharesFinnhub;
     const grossMarginFinal = grossMargin ?? (fhm.grossMarginTTM != null ? fhm.grossMarginTTM : null);
     const opMarginFinal = opMargin ?? (fhm.operatingMarginTTM != null ? fhm.operatingMarginTTM : null);
     const netMarginFinal = netMargin ?? (fhm.netProfitMarginTTM != null ? fhm.netProfitMarginTTM : null);
-    // Finnhub's roeTTM/roaTTM/roicTTM/revenueGrowthTTMYoy are already percentage points
-    // (e.g. AAPL's roeTTM is ~147, meaning 147%) — same convention as grossMarginTTM
-    // above, not a decimal fraction. Multiplying by 100 here was inflating these 100x
-    // whenever SEC EDGAR didn't have the value (silently, since it only shows up when
-    // this fallback actually fires — e.g. foreign filers on the ifrs-full taxonomy).
     const roeFinal = roe ?? (fhm.roeTTM != null ? +fhm.roeTTM.toFixed(1) : null);
     const roaFinal = roa ?? (fhm.roaTTM != null ? +fhm.roaTTM.toFixed(1) : null);
     const roicFinal = roic ?? (fhm.roicTTM != null ? +fhm.roicTTM.toFixed(1) : null);
     const revGrowthFinal = revGrowth ?? (fhm.revenueGrowthTTMYoy != null ? +fhm.revenueGrowthTTMYoy.toFixed(1) : null);
-    const debtToEquityFinal = debtToEquity ?? (fhm.totalDebt_totalEquityAnnual != null ? fhm.totalDebt_totalEquityAnnual : (equityVal != null ? 0 : null));
+    const fhDE = fhm.totalDebt_totalEquityAnnual ?? fhm.totalDebt_totalEquityQuarterly ?? null;
+    const fhDEAdj = fhDE != null ? (fhDE > 10 ? +(fhDE / 100).toFixed(2) : +fhDE.toFixed(2)) : null;
+    const debtToEquityFinal = debtToEquity ?? fhDEAdj ?? (equityVal != null ? 0 : null);
 
     const result = {
       riskFreeRate,
