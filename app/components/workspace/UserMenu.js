@@ -22,7 +22,7 @@ const THEMES = {
   },
 };
 
-export default function UserMenu({ variant = 'dark', dropUp = false }) {
+export default function UserMenu({ variant = 'dark', dropUp = false, collapsed = false }) {
   const theme = THEMES[variant];
   const { user, isSignedIn } = useUser();
   const router = useRouter();
@@ -39,13 +39,22 @@ export default function UserMenu({ variant = 'dark', dropUp = false }) {
   if (!isSignedIn) {
     return (
       <Link href="/sign-in"
+        title="Sign in"
         style={{
-          display: 'inline-flex', alignItems: 'center', height: '30px', padding: '0 12px',
+          display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
+          width: collapsed ? '30px' : 'auto',
+          height: '30px', padding: collapsed ? '0' : '0 12px',
           borderRadius: '20px', fontSize: '13px', fontWeight: 600, textDecoration: 'none',
           color: variant === 'light' ? 'var(--ws-accent)' : theme.text,
           border: `1px solid ${variant === 'light' ? 'var(--ws-accent)' : 'currentColor'}`,
         }}>
-        Sign in
+        {collapsed ? (
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4" />
+            <polyline points="10 17 15 12 10 7" />
+            <line x1="15" y1="12" x2="3" y2="12" />
+          </svg>
+        ) : 'Sign in'}
       </Link>
     );
   }

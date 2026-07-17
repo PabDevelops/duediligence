@@ -29,19 +29,34 @@ function cssVar(el, ...names) {
   return null;
 }
 
-export default function StockChart({ ticker, currency }) {
+export default function StockChart({
+  ticker,
+  currency,
+  height = 320,
+  isMultichart = false,
+  range: propRange,
+  mode: propMode
+}) {
   const containerRef = useRef(null);
   const chartRef = useRef(null);
   const seriesRef = useRef(null);
   const resizeObserverRef = useRef(null);
-  const [range, setRange] = useState('1y');
-  const [mode, setMode] = useState('line');
+  const [localRange, setLocalRange] = useState('1w');
+  const [localMode, setLocalMode] = useState('line');
+
+  const range = propRange !== undefined ? propRange : localRange;
+  const mode = propMode !== undefined ? propMode : localMode;
+  const setRange = propRange !== undefined ? () => {} : setLocalRange;
+  const setMode = propMode !== undefined ? () => {} : setLocalMode;
+
   const [candles, setCandles] = useState([]);
   const [loading, setLoading] = useState(true);
-  // Bumped whenever the workspace theme toggle flips data-ws-theme, so the effect below
-  // re-reads CSS vars and rebuilds the chart with the new theme's colors instead of being
-  // stuck with whatever was resolved at first mount.
   const [themeVersion, setThemeVersion] = useState(0);
+
+  const showSelectors = !isMultichart && height >= 180;
+  const paddingVal = isMultichart ? '8px' : '16px';
+  const marginBottomVal = isMultichart ? '6px' : '12px';
+  const canvasHeight = height - (showSelectors ? (isMultichart ? 46 : 60) : 0) - (isMultichart ? 16 : 32);
 
   useEffect(() => {
     const observer = new MutationObserver(() => setThemeVersion(v => v + 1));
@@ -139,7 +154,7 @@ export default function StockChart({ ticker, currency }) {
           },
         },
         width: containerRef.current.clientWidth,
-        height: 320,
+        height: canvasHeight,
       });
 
       chartRef.current = chart;
@@ -201,38 +216,40 @@ export default function StockChart({ ticker, currency }) {
         chartRef.current = null;
       }
     };
-  }, [candles, mode, loading, currency, themeVersion]);
+  }, [candles, mode, loading, currency, themeVersion, height]);
 
   // var(--ws-X, var(--X)) throughout: this component renders both inside .workspace
   // (stock page, where --ws-* carries the light/dark toggle) and on the blog (marketing-only
   // light theme, no --ws-* vars defined) — the fallback picks whichever is actually in scope.
   return (
-    <div style={{ background: 'var(--ws-bg-1, var(--bg-1))', padding: '16px', position: 'relative' }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '12px', alignItems: 'center' }}>
-        <div style={{ display: 'flex', gap: '1px', background: 'var(--ws-border, var(--border))' }}>
-          {RANGES.map(r => (
-            <button key={r.value} onClick={() => setRange(r.value)}
-              style={{ padding: '4px 8px', fontSize: '10px', letterSpacing: '1px', background: range === r.value ? 'var(--ws-accent, var(--accent))' : 'var(--ws-bg-2, var(--bg-2))', color: range === r.value ? '#000' : 'var(--ws-text-3, var(--text-3))', border: 'none', cursor: 'pointer', fontFamily: 'JetBrains Mono, monospace', fontWeight: range === r.value ? 600 : 400 }}>
-              {r.label}
-            </button>
-          ))}
+    <div style={{ background: 'var(--ws-bg-1, var(--bg-1))', padding: paddingVal, position: 'relative' }}>
+      {showSelectors && (
+        <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: marginBottomVal, alignItems: 'center' }}>
+          <div style={{ display: 'flex', gap: '1px', background: 'var(--ws-border, var(--border))' }}>
+            {RANGES.map(r => (
+              <button key={r.value} onClick={() => setRange(r.value)}
+                style={{ padding: '4px 8px', fontSize: '10px', letterSpacing: '1px', background: range === r.value ? 'var(--ws-accent, var(--accent))' : 'var(--ws-bg-2, var(--bg-2))', color: range === r.value ? '#000' : 'var(--ws-text-3, var(--text-3))', border: 'none', cursor: 'pointer', fontFamily: 'JetBrains Mono, monospace', fontWeight: range === r.value ? 600 : 400 }}>
+                {r.label}
+              </button>
+            ))}
+          </div>
+          <div style={{ display: 'flex', gap: '1px', background: 'var(--ws-border, var(--border))' }}>
+            {['line', 'candles'].map(m => (
+              <button key={m} onClick={() => setMode(m)}
+                style={{ padding: '4px 10px', fontSize: '10px', letterSpacing: '1px', background: mode === m ? 'var(--ws-accent, var(--accent))' : 'var(--ws-bg-2, var(--bg-2))', color: mode === m ? '#000' : 'var(--ws-text-3, var(--text-3))', border: 'none', cursor: 'pointer', fontFamily: 'JetBrains Mono, monospace', fontWeight: mode === m ? 600 : 400 }}>
+                {m.toUpperCase()}
+              </button>
+            ))}
+          </div>
         </div>
-        <div style={{ display: 'flex', gap: '1px', background: 'var(--ws-border, var(--border))' }}>
-          {['line', 'candles'].map(m => (
-            <button key={m} onClick={() => setMode(m)}
-              style={{ padding: '4px 10px', fontSize: '10px', letterSpacing: '1px', background: mode === m ? 'var(--ws-accent, var(--accent))' : 'var(--ws-bg-2, var(--bg-2))', color: mode === m ? '#000' : 'var(--ws-text-3, var(--text-3))', border: 'none', cursor: 'pointer', fontFamily: 'JetBrains Mono, monospace', fontWeight: mode === m ? 600 : 400 }}>
-              {m.toUpperCase()}
-            </button>
-          ))}
-        </div>
-      </div>
+      )}
 
       {loading && (
-  <div style={{ height: 320, display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--ws-text-3, var(--text-3))', fontSize: '11px', letterSpacing: '2px', position: 'absolute', width: '100%' }}>
-    LOADING...
-  </div>
-)}
-<div ref={containerRef} style={{ width: '100%', opacity: loading ? 0 : 1, position: 'relative' }} />
+        <div style={{ height: canvasHeight, display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--ws-text-3, var(--text-3))', fontSize: '11px', letterSpacing: '2px', position: 'absolute', width: '100%', left: 0, top: showSelectors ? (isMultichart ? '46px' : '60px') : 0 }}>
+          LOADING...
+        </div>
+      )}
+      <div ref={containerRef} style={{ width: '100%', opacity: loading ? 0 : 1, position: 'relative', height: canvasHeight }} />
     </div>
   );
 }

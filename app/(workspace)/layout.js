@@ -49,6 +49,21 @@ export default function WorkspaceLayout({ children }) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [scanlines, setScanlines] = useState(false);
 
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+
+  useEffect(() => {
+    const saved = localStorage.getItem('traqcker_sidebar_collapsed') === 'true';
+    setSidebarCollapsed(saved);
+  }, []);
+
+  const toggleSidebarCollapse = () => {
+    setSidebarCollapsed(prev => {
+      const next = !prev;
+      localStorage.setItem('traqcker_sidebar_collapsed', String(next));
+      return next;
+    });
+  };
+
   useEffect(() => {
     if (!isLoaded) return;
     if (isPublicPath(path)) { setAccess('granted'); return; }
@@ -108,7 +123,7 @@ export default function WorkspaceLayout({ children }) {
   const isDark = theme === 'dark';
 
   return (
-    <div className={`workspace ${theme}`} style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh', position: 'relative' }}>
+    <div className={`workspace ${theme}`} style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh', position: 'relative', '--ws-sidebar-width': sidebarCollapsed ? '68px' : '240px' }}>
       {scanlines && (
         <div style={{
           position: 'fixed',
@@ -151,7 +166,7 @@ export default function WorkspaceLayout({ children }) {
       <div style={{ display: 'flex', flex: 1, minHeight: 0 }}>
         {/* SIDEBAR SLOT */}
         <div className={`ws-sidebar-slot ${sidebarOpen ? 'open' : ''}`}>
-          <Sidebar theme={theme} onToggleTheme={toggleTheme} />
+          <Sidebar theme={theme} onToggleTheme={toggleTheme} collapsed={sidebarCollapsed} onToggleCollapse={toggleSidebarCollapse} />
         </div>
 
         {/* SIDEBAR BACKDROP */}

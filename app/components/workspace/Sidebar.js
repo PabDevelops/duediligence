@@ -54,7 +54,7 @@ const NAV_ITEMS = [
 const DEFAULT_NAV_ORDER = NAV_ITEMS.map(item => item.id);
 const NAV_ORDER_KEY = 'traqcker_sidebar_order';
 
-export default function Sidebar({ theme, onToggleTheme }) {
+export default function Sidebar({ theme, onToggleTheme, collapsed = false, onToggleCollapse }) {
   const path = usePathname();
   const router = useRouter();
   const [plan, setPlan] = useState(null);
@@ -123,28 +123,38 @@ export default function Sidebar({ theme, onToggleTheme }) {
       width: 'var(--ws-sidebar-width)', flexShrink: 0, borderRight: '1px solid var(--ws-border)',
       background: 'var(--ws-bg-1)', display: 'flex', flexDirection: 'column',
       position: 'sticky', top: 0, height: '100vh', overflow: 'hidden',
+      transition: 'width 0.2s ease',
     }}>
 
       {/* Logo */}
-      <div style={{ padding: '16px 16px 0' }}>
-        <Link href="/home" style={{ display: 'flex', alignItems: 'center', textDecoration: 'none', padding: '4px 8px', marginBottom: '14px' }}>
-          <img
-            src={theme === 'dark' ? '/logo-traqcker-new-w.png' : '/logo-traqcker-new.png'}
-            alt="Traqcker"
-            style={{ height: '16px', width: 'auto' }}
-          />
+      <div style={{ padding: collapsed ? '16px 8px 0' : '16px 16px 0', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+        <Link href="/home" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', textDecoration: 'none', padding: '4px 8px', marginBottom: '14px' }}>
+          {collapsed ? (
+            <img
+              src={theme === 'dark' ? '/logo-icon-new-w.png' : '/logo-icon-new.png'}
+              alt="Traqcker"
+              style={{ height: '22px', width: 'auto' }}
+            />
+          ) : (
+            <img
+              src={theme === 'dark' ? '/logo-traqcker-new-w.png' : '/logo-traqcker-new.png'}
+              alt="Traqcker"
+              style={{ height: '16px', width: 'auto' }}
+            />
+          )}
         </Link>
 
         {/* Random button */}
         <button
           onClick={runDiscover}
+          title="Random Stock Discover"
           style={{
-            width: '100%',
-            height: '26px',
+            width: collapsed ? '34px' : '100%',
+            height: collapsed ? '34px' : '26px',
             fontSize: '10px',
             fontFamily: "'JetBrains Mono', monospace",
             fontWeight: 700,
-            letterSpacing: '1.5px',
+            letterSpacing: collapsed ? '0' : '1.5px',
             color: 'var(--ws-text-3)',
             background: 'transparent',
             border: '1px solid var(--ws-border)',
@@ -152,6 +162,9 @@ export default function Sidebar({ theme, onToggleTheme }) {
             cursor: 'pointer',
             transition: 'all 0.15s ease',
             marginBottom: '16px',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
           }}
           onMouseEnter={e => {
             e.currentTarget.style.borderColor = 'var(--ws-accent)';
@@ -164,25 +177,35 @@ export default function Sidebar({ theme, onToggleTheme }) {
             e.currentTarget.style.background = 'transparent';
           }}
         >
-          RANDOM
+          {collapsed ? '?' : 'RANDOM'}
         </button>
 
       </div>
 
       {/* Nav items */}
-      <nav style={{ display: 'flex', flexDirection: 'column', gap: '4px', padding: '0 16px', flex: 1, overflowY: 'auto' }}>
+      <nav style={{ display: 'flex', flexDirection: 'column', gap: '4px', padding: collapsed ? '0 8px' : '0 16px', flex: 1, overflowY: 'auto' }}>
         {/* Search — fixed entry, navigates to the dedicated search page */}
         {(() => {
           const searchActive = path === '/search';
           return (
             <Link href="/search"
+              title={collapsed ? "Search" : undefined}
               style={{
-                fontSize: '13px', padding: '8px 12px', borderRadius: 'var(--ws-radius)', textDecoration: 'none',
+                fontSize: '13px',
+                padding: collapsed ? '8px' : '8px 12px',
+                borderRadius: 'var(--ws-radius)',
+                textDecoration: 'none',
                 color: searchActive ? 'var(--ws-text)' : 'var(--ws-text-2)',
                 background: searchActive ? 'var(--ws-bg-2)' : 'transparent',
                 fontWeight: searchActive ? 600 : 400,
-                display: 'flex', alignItems: 'center', gap: '10px', width: '100%',
-                cursor: 'pointer', transition: 'all 0.15s ease', textAlign: 'left',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: collapsed ? 'center' : 'flex-start',
+                gap: collapsed ? '0' : '10px',
+                width: '100%',
+                cursor: 'pointer',
+                transition: 'all 0.15s ease',
+                textAlign: 'left',
               }}
               onMouseEnter={(e) => { if (!searchActive) { e.currentTarget.style.background = 'var(--ws-bg-2)'; e.currentTarget.style.color = 'var(--ws-text)'; } }}
               onMouseLeave={(e) => { if (!searchActive) { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = 'var(--ws-text-2)'; } }}
@@ -193,12 +216,14 @@ export default function Sidebar({ theme, onToggleTheme }) {
                   <path d="m21 21-4.3-4.3" />
                 </svg>
               </span>
-              <span style={{ flex: 1, minWidth: 0 }}>Search</span>
-              <kbd style={{
-                fontSize: '9px', color: 'var(--ws-text-3)', background: 'var(--ws-bg-2)',
-                border: '1px solid var(--ws-border)', borderRadius: '3px', padding: '1px 5px',
-                fontFamily: "'JetBrains Mono', monospace", flexShrink: 0,
-              }}>/</kbd>
+              {!collapsed && <span style={{ flex: 1, minWidth: 0 }}>Search</span>}
+              {!collapsed && (
+                <kbd style={{
+                  fontSize: '9px', color: 'var(--ws-text-3)', background: 'var(--ws-bg-2)',
+                  border: '1px solid var(--ws-border)', borderRadius: '3px', padding: '1px 5px',
+                  fontFamily: "'JetBrains Mono', monospace", flexShrink: 0,
+                }}>/</kbd>
+              )}
             </Link>
           );
         })()}
@@ -209,27 +234,35 @@ export default function Sidebar({ theme, onToggleTheme }) {
           const active = path === href || path.startsWith(href + '/');
           return (
             <div key={id}
-              draggable
+              draggable={!collapsed}
               onDragStart={(e) => handleDragStart(e, id)}
               onDragEnd={handleDragEnd}
               onDragOver={(e) => handleDragOver(e, id)}
               style={{ opacity: draggedId === id ? 0.4 : 1, transition: 'opacity 0.15s ease' }}
             >
               <Link href={href}
+                title={collapsed ? label : undefined}
                 style={{
-                  fontSize: '13px', padding: '8px 12px', borderRadius: 'var(--ws-radius)', textDecoration: 'none',
+                  fontSize: '13px',
+                  padding: collapsed ? '8px' : '8px 12px',
+                  borderRadius: 'var(--ws-radius)',
+                  textDecoration: 'none',
                   color: active ? 'var(--ws-text)' : 'var(--ws-text-2)',
                   background: active ? 'var(--ws-bg-2)' : 'transparent',
                   fontWeight: active ? 600 : 400,
-                  display: 'flex', alignItems: 'center', gap: '10px',
-                  cursor: 'grab', transition: 'all 0.15s ease',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: collapsed ? 'center' : 'flex-start',
+                  gap: collapsed ? '0' : '10px',
+                  cursor: collapsed ? 'pointer' : 'grab',
+                  transition: 'all 0.15s ease',
                 }}
                 onMouseEnter={(e) => { if (!active) { e.currentTarget.style.background = 'var(--ws-bg-2)'; e.currentTarget.style.color = 'var(--ws-text)'; } }}
                 onMouseLeave={(e) => { if (!active) { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = 'var(--ws-text-2)'; } }}
               >
                 <span style={{ display: 'flex', alignItems: 'center', flexShrink: 0, opacity: active ? 1 : 0.75 }}>{icon(active)}</span>
-                <span style={{ flex: 1, minWidth: 0 }}>{label}</span>
-                <span style={{ color: 'var(--ws-text-3)', fontSize: '12px', flexShrink: 0 }}>⋮⋮</span>
+                {!collapsed && <span style={{ flex: 1, minWidth: 0 }}>{label}</span>}
+                {!collapsed && <span style={{ color: 'var(--ws-text-3)', fontSize: '12px', flexShrink: 0 }}>⋮⋮</span>}
               </Link>
             </div>
           );
@@ -237,29 +270,32 @@ export default function Sidebar({ theme, onToggleTheme }) {
       </nav>
 
       {/* Footer */}
-      <div style={{ padding: '16px', borderTop: '1px solid var(--ws-border)', display: 'flex', flexDirection: 'column', gap: '12px' }}>
+      <div style={{ padding: collapsed ? '12px 8px' : '16px', borderTop: '1px solid var(--ws-border)', display: 'flex', flexDirection: 'column', gap: '12px' }}>
 
         {/* Legal links */}
-        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px 12px' }}>
-          <Link href="/terms" style={{ fontSize: '10px', color: 'var(--ws-text-3)', textDecoration: 'none' }}
-            onMouseEnter={e => e.currentTarget.style.color = 'var(--ws-text-2)'}
-            onMouseLeave={e => e.currentTarget.style.color = 'var(--ws-text-3)'}>Terms</Link>
-          <Link href="/privacy" style={{ fontSize: '10px', color: 'var(--ws-text-3)', textDecoration: 'none' }}
-            onMouseEnter={e => e.currentTarget.style.color = 'var(--ws-text-2)'}
-            onMouseLeave={e => e.currentTarget.style.color = 'var(--ws-text-3)'}>Privacy</Link>
-          <a href="mailto:support@traqcker.com" style={{ fontSize: '10px', color: 'var(--ws-text-3)', textDecoration: 'none' }}
-            onMouseEnter={e => e.currentTarget.style.color = 'var(--ws-text-2)'}
-            onMouseLeave={e => e.currentTarget.style.color = 'var(--ws-text-3)'}>Support</a>
-        </div>
+        {!collapsed && (
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px 12px' }}>
+            <Link href="/terms" style={{ fontSize: '10px', color: 'var(--ws-text-3)', textDecoration: 'none' }}
+              onMouseEnter={e => e.currentTarget.style.color = 'var(--ws-text-2)'}
+              onMouseLeave={e => e.currentTarget.style.color = 'var(--ws-text-3)'}>Terms</Link>
+            <Link href="/privacy" style={{ fontSize: '10px', color: 'var(--ws-text-3)', textDecoration: 'none' }}
+              onMouseEnter={e => e.currentTarget.style.color = 'var(--ws-text-2)'}
+              onMouseLeave={e => e.currentTarget.style.color = 'var(--ws-text-3)'}>Privacy</Link>
+            <a href="mailto:support@traqcker.com" style={{ fontSize: '10px', color: 'var(--ws-text-3)', textDecoration: 'none' }}
+              onMouseEnter={e => e.currentTarget.style.color = 'var(--ws-text-2)'}
+              onMouseLeave={e => e.currentTarget.style.color = 'var(--ws-text-3)'}>Support</a>
+          </div>
+        )}
 
         {/* Settings */}
         <Link href="/profile"
+          title={collapsed ? "Profile & Settings" : undefined}
           style={{
-            padding: '8px 12px', borderRadius: 'var(--ws-radius)', textDecoration: 'none',
+            padding: collapsed ? '8px' : '8px 12px', borderRadius: 'var(--ws-radius)', textDecoration: 'none',
             fontSize: '13px', color: path === '/profile' ? 'var(--ws-text)' : 'var(--ws-text-2)',
             background: path === '/profile' ? 'var(--ws-bg-2)' : 'transparent',
             fontWeight: path === '/profile' ? 600 : 400,
-            display: 'flex', alignItems: 'center', gap: '10px', cursor: 'pointer', transition: 'all 0.15s ease',
+            display: 'flex', alignItems: 'center', justifyContent: collapsed ? 'center' : 'flex-start', gap: collapsed ? '0' : '10px', cursor: 'pointer', transition: 'all 0.15s ease',
           }}
           onMouseEnter={(e) => { if (path !== '/profile') { e.currentTarget.style.background = 'var(--ws-bg-2)'; e.currentTarget.style.color = 'var(--ws-text)'; } }}
           onMouseLeave={(e) => { if (path !== '/profile') { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = 'var(--ws-text-2)'; } }}
@@ -270,19 +306,22 @@ export default function Sidebar({ theme, onToggleTheme }) {
               <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z" />
             </svg>
           </span>
-          <span style={{ flex: 1, minWidth: 0 }}>Profile & Settings</span>
+          {!collapsed && <span style={{ flex: 1, minWidth: 0 }}>Profile & Settings</span>}
         </Link>
 
         {/* User + Theme row */}
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderTop: '1px solid var(--ws-border)', paddingTop: '12px' }}>
-          <UserMenu variant="light" dropUp />
+        <div style={{ display: 'flex', flexDirection: collapsed ? 'column' : 'row', alignItems: 'center', justifyContent: collapsed ? 'center' : 'space-between', borderTop: '1px solid var(--ws-border)', paddingTop: '12px', gap: '8px' }}>
+          <UserMenu variant="light" dropUp collapsed={collapsed} />
           <button
             onClick={onToggleTheme}
             id="theme-toggle-btn"
+            title={collapsed ? (theme === 'dark' ? 'Switch to Light' : 'Switch to Dark') : undefined}
             style={{
               background: 'var(--ws-bg-2)', border: '1px solid var(--ws-border)', borderRadius: '20px',
-              padding: '4px 10px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '6px',
+              padding: collapsed ? '0' : '4px 10px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px',
               color: 'var(--ws-text)', transition: 'all 0.15s ease', outline: 'none',
+              width: collapsed ? '32px' : 'auto',
+              height: collapsed ? '32px' : 'auto',
             }}
             onMouseEnter={e => { e.currentTarget.style.borderColor = 'var(--ws-accent)'; e.currentTarget.style.background = 'var(--ws-bg-1)'; }}
             onMouseLeave={e => { e.currentTarget.style.borderColor = 'var(--ws-border)'; e.currentTarget.style.background = 'var(--ws-bg-2)'; }}
@@ -290,16 +329,45 @@ export default function Sidebar({ theme, onToggleTheme }) {
             {theme === 'dark' ? (
               <>
                 <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/></svg>
-                <span style={{ fontSize: '10px', fontWeight: 700 }}>Dark</span>
+                {!collapsed && <span style={{ fontSize: '10px', fontWeight: 700 }}>Dark</span>}
               </>
             ) : (
               <>
                 <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2"/><path d="M12 20v2"/><path d="m4.93 4.93 1.41 1.41"/><path d="m17.66 17.66 1.41 1.41"/><path d="M2 12h2"/><path d="M20 12h2"/><path d="m6.34 17.66-1.41 1.41"/><path d="m19.07 4.93-1.41 1.41"/></svg>
-                <span style={{ fontSize: '10px', fontWeight: 700 }}>Light</span>
+                {!collapsed && <span style={{ fontSize: '10px', fontWeight: 700 }}>Light</span>}
               </>
             )}
           </button>
         </div>
+
+        {/* Collapse Sidebar Button */}
+        <button
+          onClick={onToggleCollapse}
+          title={collapsed ? "Expand Sidebar" : "Collapse Sidebar"}
+          style={{
+            background: 'transparent',
+            border: 'none',
+            color: 'var(--ws-text-3)',
+            cursor: 'pointer',
+            padding: '8px',
+            fontSize: '11px',
+            fontFamily: "'JetBrains Mono', monospace",
+            fontWeight: 700,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: collapsed ? 'center' : 'flex-start',
+            gap: '8px',
+            width: '100%',
+            outline: 'none',
+            borderTop: '1px solid var(--ws-border)',
+            paddingTop: '12px',
+          }}
+          onMouseEnter={e => e.currentTarget.style.color = 'var(--ws-accent)'}
+          onMouseLeave={e => e.currentTarget.style.color = 'var(--ws-text-3)'}
+        >
+          <span style={{ fontSize: '14px' }}>{collapsed ? '→' : '←'}</span>
+          {!collapsed && <span>Collapse Sidebar</span>}
+        </button>
 
       </div>
     </aside>

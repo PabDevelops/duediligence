@@ -27,7 +27,7 @@ const CURRENCIES = { USD: '$', EUR: '€', GBP: '£' };
 // Home to read. Advanced Mode (see below) replaces this whole grid with a terminal-style
 // chart view instead of customizing it, so there's no drag-to-reorder here anymore.
 const WIDGET_ORDER = ['indices', 'portfolio', 'workspace', 'secFeed', 'leaders'];
-const MAX_CHART_TICKERS = 8;
+const MAX_CHART_TICKERS = 16;
 
 const WIDGETS_METADATA = [
   { id: 'indices', label: 'Major Indices' },
@@ -46,6 +46,150 @@ const hasFundamentals = (data) => data.revVal != null || data.niVal != null || d
 // Same 1-5 -> color mapping as the Quality tab's ScoreBar/grid on the stock detail page
 // and the /watchlist table's CBS/OPPO/GQS columns.
 const scoreColor = (s) => s >= 4 ? 'var(--ws-accent)' : s >= 3 ? 'var(--ws-text)' : 'var(--ws-red)';
+
+// Animated fill bar for the main Quality Score.
+function QualityScoreBar({ score100, color }) {
+  const [width, setWidth] = useState(0);
+  useEffect(() => {
+    setWidth(0);
+    const t = setTimeout(() => setWidth(score100), 400);
+    return () => clearTimeout(t);
+  }, [score100]);
+  return (
+    <div style={{
+      position: 'relative', width: '150px', height: '18px', overflow: 'hidden', flexShrink: 0,
+      backgroundImage: `radial-gradient(circle, ${color} 1.1px, transparent 1.1px)`,
+      backgroundSize: '6px 6px', backgroundColor: 'var(--ws-bg-1)',
+    }}>
+      <div style={{ position: 'absolute', inset: 0, width: `${width}%`, background: color, transition: 'width 1.1s cubic-bezier(0.16, 1, 0.3, 1)' }} />
+      <div style={{ position: 'absolute', inset: 0, backgroundImage: 'repeating-linear-gradient(90deg, var(--ws-bg-1) 0px, var(--ws-bg-1) 2px, transparent 2px, transparent 15px)' }} />
+    </div>
+  );
+}
+
+// Faceted diamond icon
+function GemDiamondIcon({ size = 46 }) {
+  return (
+    <svg viewBox="0 0 231.884 231.884" width={size} height={size} style={{ overflow: 'visible' }}>
+      <defs>
+        <clipPath id="gemOutlineClip">
+          <polygon points="110.327,15.329 65.057,80.069 40.085,15.657" />
+          <polygon points="35.24,19.685 59.8,83.029 0,82.665" />
+          <polygon points="1.301,88.638 62.067,89.014 107.171,216.556" />
+          <polygon points="112.643,214.127 68.41,89.05 112.917,89.324" />
+          <polygon points="112.935,83.357 70.218,83.095 112.845,22.137 113.072,21.821 112.959,71.823" />
+          <polygon points="231.884,82.665 172.085,83.029 196.638,19.685" />
+          <polygon points="191.799,15.657 166.828,80.069 121.557,15.329" />
+          <polygon points="118.926,71.823 118.812,21.821 119.033,22.137 161.666,83.095 118.95,83.357" />
+          <polygon points="118.961,89.324 163.474,89.05 119.242,214.127" />
+          <polygon points="124.714,216.556 169.817,89.014 230.584,88.638" />
+        </clipPath>
+      </defs>
+      <polygon fill="#85B7EB" points="110.327,15.329 65.057,80.069 40.085,15.657" />
+      <polygon fill="#B5D4F4" points="35.24,19.685 59.8,83.029 0,82.665" />
+      <polygon fill="#378ADD" points="1.301,88.638 62.067,89.014 107.171,216.556" />
+      <polygon fill="#185FA5" points="112.643,214.127 68.41,89.05 112.917,89.324" />
+      <polygon fill="#E6F1FB" points="112.935,83.357 70.218,83.095 112.845,22.137 113.072,21.821 112.959,71.823" />
+      <polygon fill="#378ADD" points="231.884,82.665 172.085,83.029 196.638,19.685" />
+      <polygon fill="#185FA5" points="191.799,15.657 166.828,80.069 121.557,15.329" />
+      <polygon fill="#0C447C" points="118.926,71.823 118.812,21.821 119.033,22.137 161.666,83.095 118.95,83.357" />
+      <polygon fill="#042C53" points="118.961,89.324 163.474,89.05 119.242,214.127" />
+      <polygon fill="#0C447C" points="124.714,216.556 169.817,89.014 230.584,88.638" />
+      <polygon fill="none" stroke="#E6F1FB" strokeWidth="1.5" opacity="0.4"
+        points="110.327,15.329 191.799,15.657 231.884,82.665 230.584,88.638 169.817,89.014 124.714,216.556 107.171,216.556 62.067,89.014 1.301,88.638 0,82.665 40.085,15.657" />
+      <g clipPath="url(#gemOutlineClip)">
+        <rect x="-60" y="-20" width="50" height="280" fill="#ffffff" opacity="0.6" style={{ animation: 'gem-shine 1.8s ease-in-out 0.3s infinite' }} />
+      </g>
+    </svg>
+  );
+}
+
+// Blue Gem Reveal Animation
+function GemRevealBar({ score100 }) {
+  const [stage, setStage] = useState('filling'); // filling -> shaking -> exploding -> revealed
+  const [fillWidth, setFillWidth] = useState(0);
+  const [chunks, setChunks] = useState([]);
+  const [flash, setFlash] = useState(false);
+
+  useEffect(() => {
+    setStage('filling');
+    setFillWidth(0);
+    setChunks([]);
+    setFlash(false);
+
+    const tFill = setTimeout(() => setFillWidth(100), 400);
+    const tShake = setTimeout(() => setStage('shaking'), 1500);
+    const tExplode = setTimeout(() => {
+      const n = 5;
+      const colors = ['#5DCAA5', '#1D9E75', '#5DCAA5', '#1D9E75', '#9FE1CB'];
+      setChunks(Array.from({ length: n }, (_, i) => ({
+        left: (i * 130) / n, width: 130 / n, color: colors[i],
+        ex: (i - (n - 1) / 2) * 22 + (Math.random() * 10 - 5),
+        ey: -18 - Math.random() * 16,
+        rot: Math.random() * 140 - 70,
+        flying: false,
+      })));
+      setFlash(true);
+      setStage('exploding');
+      setTimeout(() => setFlash(false), 70);
+      setTimeout(() => {
+        setChunks(cs => cs.map(c => ({ ...c, flying: true })));
+      }, 30);
+    }, 2500);
+    const tReveal = setTimeout(() => setStage('revealed'), 2700);
+
+    return () => { clearTimeout(tFill); clearTimeout(tShake); clearTimeout(tExplode); clearTimeout(tReveal); };
+  }, [score100]);
+
+  const barHidden = stage === 'exploding' || stage === 'revealed';
+
+  return (
+    <div style={{ position: 'relative', height: '46px', display: 'flex', alignItems: 'center' }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: '14px', opacity: stage === 'revealed' ? 0 : 1, transition: 'opacity 0.2s' }}>
+        <div style={{
+          position: 'relative', width: '130px', height: '18px', flexShrink: 0, overflow: 'visible',
+          backgroundImage: 'radial-gradient(circle, #1D9E75 1.1px, transparent 1.1px)',
+          backgroundSize: '6px 6px', backgroundColor: 'var(--ws-bg-1)',
+          animation: stage === 'shaking' ? 'gem-escalate-shake 1s ease-in-out 1' : 'none',
+        }}>
+          <div style={{
+            position: 'absolute', inset: 0, background: '#1D9E75', width: `${fillWidth}%`,
+            opacity: barHidden ? 0 : 1,
+            transition: 'width 1.1s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.15s',
+          }} />
+          <div style={{ position: 'absolute', inset: '-6px', background: '#fff', opacity: flash ? 1 : 0, transition: flash ? 'opacity 0.06s' : 'opacity 0.3s' }} />
+          {chunks.map((c, i) => (
+            <div key={i} style={{
+              position: 'absolute', top: 0, height: '18px', left: `${c.left}px`, width: `${c.width}px`, background: c.color,
+              transform: c.flying ? `translate(${c.ex}px, ${c.ey}px) rotate(${c.rot}deg)` : 'translate(0, 0) rotate(0)',
+              opacity: c.flying ? 0 : 1,
+              transition: 'transform 0.5s cubic-bezier(0.3, 0, 0.7, 1), opacity 0.5s',
+            }} />
+          ))}
+        </div>
+        <span style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: '28px', fontWeight: 700, color: '#1D9E75', lineHeight: 1 }}>{score100}</span>
+      </div>
+
+      <div style={{
+        position: 'absolute', left: 0, top: '50%', marginTop: '-23px', display: 'flex', alignItems: 'center', gap: '12px',
+        opacity: stage === 'revealed' ? 1 : 0, transition: 'opacity 0.3s', pointerEvents: stage === 'revealed' ? 'auto' : 'none',
+      }}>
+        <div style={{
+          position: 'absolute', left: '4px', top: '50%', width: '64px', height: '64px', marginTop: '-32px', marginLeft: '-9px',
+          borderRadius: '50%', background: 'radial-gradient(circle, rgba(133,183,235,0.9) 0%, rgba(55,138,221,0.4) 45%, transparent 75%)',
+          animation: stage === 'revealed' ? 'gem-glow-pulse 0.9s ease-out 1' : 'none', pointerEvents: 'none',
+        }} />
+        <div style={{ width: '46px', height: '46px', flexShrink: 0, transform: stage === 'revealed' ? 'scale(1)' : 'scale(0)', transition: 'transform 0.55s cubic-bezier(0.34, 1.56, 0.64, 1)' }}>
+          <GemDiamondIcon size={46} />
+        </div>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
+          <span style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: '17px', fontWeight: 700, color: '#85B7EB', letterSpacing: '0.5px', lineHeight: 1.1 }}>HIDDEN GEM</span>
+          <span style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: '9px', color: '#5a7ba0', letterSpacing: '1px' }}>QUALITY OFF THE CHARTS</span>
+        </div>
+      </div>
+    </div>
+  );
+}
 
 export default function WorkspaceHome() {
   const router = useRouter();
@@ -71,7 +215,31 @@ export default function WorkspaceHome() {
   // and whether that rail is collapsed — same collapse pattern as the app's own Sidebar.
   const [terminalTicker, setTerminalTicker] = useState(null);
   const [terminalTab, setTerminalTab] = useState('watchlist');
-  const [terminalRailCollapsed, setTerminalRailCollapsed] = useState(false);
+  const terminalRailCollapsed = false;
+  const [layoutMode, setLayoutMode] = useState('1');
+  const [slotTickers, setSlotTickers] = useState(['AAPL', 'MSFT', 'NVDA', 'TSLA', 'AMZN', 'META', 'GOOGL', 'NFLX']);
+  const [activeSlot, setActiveSlot] = useState(0);
+  const [railPage, setRailPage] = useState(0);
+  const [slotRanges, setSlotRanges] = useState(['1w', '1w', '1w', '1w', '1w', '1w', '1w', '1w']);
+  const [slotModes, setSlotModes] = useState(['line', 'line', 'line', 'line', 'line', 'line', 'line', 'line']);
+
+  const handleRangeChange = (newRange) => {
+    setSlotRanges(prev => {
+      const next = [...prev];
+      next[activeSlot] = newRange;
+      try { localStorage.setItem('traqcker_slot_ranges', JSON.stringify(next)); } catch (e) {}
+      return next;
+    });
+  };
+
+  const handleModeChange = (newMode) => {
+    setSlotModes(prev => {
+      const next = [...prev];
+      next[activeSlot] = newMode;
+      try { localStorage.setItem('traqcker_slot_modes', JSON.stringify(next)); } catch (e) {}
+      return next;
+    });
+  };
 
   useEffect(() => {
     try {
@@ -83,10 +251,35 @@ export default function WorkspaceHome() {
       if (savedAdvanced) setAdvancedMode(savedAdvanced === 'true');
       const savedCharts = localStorage.getItem('traqcker_chart_tickers');
       if (savedCharts) setChartTickers(JSON.parse(savedCharts));
-      const savedCollapsed = localStorage.getItem('traqcker_terminal_rail_collapsed');
-      if (savedCollapsed) setTerminalRailCollapsed(savedCollapsed === 'true');
+      const savedLayout = localStorage.getItem('traqcker_layout_mode');
+      if (savedLayout) setLayoutMode(savedLayout);
+      const savedSlots = localStorage.getItem('traqcker_slot_tickers');
+      if (savedSlots) setSlotTickers(JSON.parse(savedSlots));
+      const savedRanges = localStorage.getItem('traqcker_slot_ranges');
+      if (savedRanges) setSlotRanges(JSON.parse(savedRanges));
+      const savedModes = localStorage.getItem('traqcker_slot_modes');
+      if (savedModes) setSlotModes(JSON.parse(savedModes));
     } catch (e) {}
   }, []);
+
+  const changeLayoutMode = (mode) => {
+    setLayoutMode(mode);
+    try { localStorage.setItem('traqcker_layout_mode', mode); } catch (e) {}
+  };
+
+  const updateSlotTicker = (slotIdx, ticker) => {
+    setSlotTickers(prev => {
+      const updated = [...prev];
+      updated[slotIdx] = ticker;
+      try { localStorage.setItem('traqcker_slot_tickers', JSON.stringify(updated)); } catch (e) {}
+      return updated;
+    });
+  };
+
+  const selectTerminalTicker = (ticker) => {
+    setTerminalTicker(ticker);
+    updateSlotTicker(activeSlot, ticker);
+  };
 
   const toggleWidget = (id) => {
     setWidgetVisibility(prev => {
@@ -106,13 +299,6 @@ export default function WorkspaceHome() {
     });
   };
 
-  const toggleTerminalRail = () => {
-    setTerminalRailCollapsed(prev => {
-      const next = !prev;
-      try { localStorage.setItem('traqcker_terminal_rail_collapsed', String(next)); } catch (e) {}
-      return next;
-    });
-  };
 
   const addChartTicker = (e) => {
     e.preventDefault();
@@ -122,7 +308,7 @@ export default function WorkspaceHome() {
     setChartTickers(updated);
     try { localStorage.setItem('traqcker_chart_tickers', JSON.stringify(updated)); } catch (e) {}
     setNewChartTicker('');
-    setTerminalTicker(t);
+    selectTerminalTicker(t);
   };
 
   const removeChartTicker = (ticker) => {
@@ -319,8 +505,8 @@ export default function WorkspaceHome() {
   // viewed, AND the terminal's pinned chart tickers — so both the Coverage Workspace table and
   // the Advanced Mode ticker rail can show price/today without a separate fetch per widget.
   const quoteTickers = useMemo(() => {
-    return [...new Set([...newsTickers, ...recentViewed, ...chartTickers])];
-  }, [newsTickers, recentViewed, chartTickers]);
+    return [...new Set([...newsTickers, ...recentViewed, ...chartTickers, terminalTicker, ...slotTickers].filter(Boolean))];
+  }, [newsTickers, recentViewed, chartTickers, terminalTicker, slotTickers]);
 
   // Pick a sensible default for the terminal's big chart the first time there's anything to
   // show — watchlist first (most intentional signal), then pinned charts, then a holding.
@@ -1551,7 +1737,7 @@ export default function WorkspaceHome() {
           textAlign: 'center',
           padding: '80px 24px',
           border: '1px dashed var(--ws-border)',
-          borderRadius: '8px',
+          borderRadius: '0px',
           color: 'var(--ws-text-3)',
           background: 'var(--ws-bg-1)',
           fontSize: '13px'
@@ -1571,107 +1757,399 @@ export default function WorkspaceHome() {
       railTickers = chartTickers;
     }
 
+    // Pagination for Left Rail
+    const itemsPerPage = 8;
+    const pageCount = Math.ceil(railTickers.length / itemsPerPage);
+    const safePage = Math.min(railPage, Math.max(0, pageCount - 1));
+    const displayedTickers = railTickers.slice(safePage * itemsPerPage, (safePage + 1) * itemsPerPage);
+
     const detailData = stockDetails[terminalTicker];
     const easyMode = detailData ? computeEasyMode(detailData, hasFundamentals(detailData)) : null;
+    const userHolding = displayHoldings.find(h => h.ticker === terminalTicker);
 
     const isSmallScreen = columns === 1;
     const isMediumScreen = columns === 2;
 
+    const LAYOUTS = [
+      { id: '1', label: '1 Chart', svg: (
+        <svg width="12" height="12" viewBox="0 0 12 12" fill="currentColor">
+          <rect x="0" y="0" width="12" height="12" />
+        </svg>
+      ) },
+      { id: '2c', label: '2 Columns', svg: (
+        <svg width="12" height="12" viewBox="0 0 12 12" fill="currentColor">
+          <rect x="0" y="0" width="5" height="12" />
+          <rect x="7" y="0" width="5" height="12" />
+        </svg>
+      ) },
+      { id: '2r', label: '2 Rows', svg: (
+        <svg width="12" height="12" viewBox="0 0 12 12" fill="currentColor">
+          <rect x="0" y="0" width="12" height="5" />
+          <rect x="0" y="7" width="12" height="5" />
+        </svg>
+      ) },
+      { id: '3c', label: '3 Columns', svg: (
+        <svg width="12" height="12" viewBox="0 0 12 12" fill="currentColor">
+          <rect x="0" y="0" width="3" height="12" />
+          <rect x="4.5" y="0" width="3" height="12" />
+          <rect x="9" y="0" width="3" height="12" />
+        </svg>
+      ) },
+      { id: '3r', label: '3 Rows', svg: (
+        <svg width="12" height="12" viewBox="0 0 12 12" fill="currentColor">
+          <rect x="0" y="0" width="12" height="3" />
+          <rect x="0" y="4.5" width="12" height="3" />
+          <rect x="0" y="9" width="12" height="3" />
+        </svg>
+      ) },
+      { id: '4g', label: '4 Grid', svg: (
+        <svg width="12" height="12" viewBox="0 0 12 12" fill="currentColor">
+          <rect x="0" y="0" width="5" height="5" />
+          <rect x="7" y="0" width="5" height="5" />
+          <rect x="0" y="7" width="5" height="5" />
+          <rect x="7" y="7" width="5" height="5" />
+        </svg>
+      ) },
+      { id: '3l', label: 'Left/Right Split', svg: (
+        <svg width="12" height="12" viewBox="0 0 12 12" fill="currentColor">
+          <rect x="0" y="0" width="5" height="12" />
+          <rect x="7" y="0" width="5" height="5" />
+          <rect x="7" y="7" width="5" height="5" />
+        </svg>
+      ) },
+      { id: '3t', label: 'Top/Bottom Split', svg: (
+        <svg width="12" height="12" viewBox="0 0 12 12" fill="currentColor">
+          <rect x="0" y="0" width="12" height="5" />
+          <rect x="0" y="7" width="5" height="5" />
+          <rect x="7" y="7" width="5" height="5" />
+        </svg>
+      ) },
+      { id: '5g', label: '5 Grid', svg: (
+        <svg width="12" height="12" viewBox="0 0 12 12" fill="currentColor">
+          <rect x="0" y="0" width="5" height="5" />
+          <rect x="7" y="0" width="5" height="5" />
+          <rect x="0" y="7" width="3.2" height="5" />
+          <rect x="4.4" y="7" width="3.2" height="5" />
+          <rect x="8.8" y="7" width="3.2" height="5" />
+        </svg>
+      ) },
+      { id: '6g', label: '6 Grid', svg: (
+        <svg width="12" height="12" viewBox="0 0 12 12" fill="currentColor">
+          <rect x="0" y="0" width="3.2" height="5" />
+          <rect x="4.4" y="0" width="3.2" height="5" />
+          <rect x="8.8" y="0" width="3.2" height="5" />
+          <rect x="0" y="7" width="3.2" height="5" />
+          <rect x="4.4" y="7" width="3.2" height="5" />
+          <rect x="8.8" y="7" width="3.2" height="5" />
+        </svg>
+      ) },
+      { id: '7g', label: '7 Grid', svg: (
+        <svg width="12" height="12" viewBox="0 0 12 12" fill="currentColor">
+          <rect x="0" y="0" width="3.2" height="5" />
+          <rect x="4.4" y="0" width="3.2" height="5" />
+          <rect x="8.8" y="0" width="3.2" height="5" />
+          <rect x="0" y="7" width="2.2" height="5" />
+          <rect x="3.2" y="7" width="2.2" height="5" />
+          <rect x="6.4" y="7" width="2.2" height="5" />
+          <rect x="9.6" y="7" width="2.2" height="5" />
+        </svg>
+      ) },
+      { id: '8g', label: '8 Grid', svg: (
+        <svg width="12" height="12" viewBox="0 0 12 12" fill="currentColor">
+          <rect x="0" y="0" width="2.2" height="5" />
+          <rect x="3.2" y="0" width="2.2" height="5" />
+          <rect x="6.4" y="0" width="2.2" height="5" />
+          <rect x="9.6" y="0" width="2.2" height="5" />
+          <rect x="0" y="7" width="2.2" height="5" />
+          <rect x="3.2" y="7" width="2.2" height="5" />
+          <rect x="6.4" y="7" width="2.2" height="5" />
+          <rect x="9.6" y="7" width="2.2" height="5" />
+        </svg>
+      ) }
+    ];
+
+    const renderChartSlot = (slotIdx, extraStyles = {}) => {
+      const slotTicker = slotTickers[slotIdx] || terminalTicker || 'AAPL';
+      const isActive = activeSlot === slotIdx;
+      const slotData = stockDetails[slotTicker];
+
+      // Calculate layout-specific chart height to prevent overflows
+      let chartHeight = 450; // Default height for 1 chart
+      if (layoutMode === '2r') {
+        chartHeight = 220;
+      } else if (layoutMode === '3r') {
+        chartHeight = 110;
+      } else if (layoutMode === '4g' || layoutMode === '5g' || layoutMode === '6g' || layoutMode === '7g' || layoutMode === '8g') {
+        chartHeight = 200;
+      } else if (layoutMode === '3l') {
+        chartHeight = slotIdx === 0 ? 450 : 200;
+      } else if (layoutMode === '3t') {
+        chartHeight = slotIdx === 0 ? 240 : 180;
+      }
+
+      return (
+        <div
+          key={slotIdx}
+          onClick={() => {
+            setActiveSlot(slotIdx);
+            setTerminalTicker(slotTicker);
+          }}
+          style={{
+            flex: 1,
+            minWidth: 0,
+            background: 'var(--ws-bg-1)',
+            border: isActive ? '2px solid var(--ws-accent)' : '1px solid var(--ws-border)',
+            borderRadius: '0px',
+            padding: '12px',
+            display: 'flex',
+            flexDirection: 'column',
+            gap: '8px',
+            cursor: 'pointer',
+            position: 'relative',
+            ...extraStyles
+          }}
+        >
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <StockLogo ticker={slotTicker} size={20} />
+              <span style={{ fontSize: '12px', fontWeight: 800, color: 'var(--ws-text)' }}>{slotTicker}</span>
+            </div>
+          </div>
+          <div style={{ flex: 1, position: 'relative', minHeight: `${chartHeight}px` }}>
+            <StockChart
+              ticker={slotTicker}
+              currency={currency}
+              height={chartHeight}
+              isMultichart={true}
+              range={slotRanges[slotIdx]}
+              mode={slotModes[slotIdx]}
+            />
+          </div>
+        </div>
+      );
+    };
+
+    const renderChartsLayout = () => {
+      if (layoutMode === '1') {
+        return (
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '10px', height: '100%' }}>
+            {renderChartSlot(0)}
+          </div>
+        );
+      }
+      if (layoutMode === '2c') {
+        return (
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px', height: '100%' }}>
+            {renderChartSlot(0)}
+            {renderChartSlot(1)}
+          </div>
+        );
+      }
+      if (layoutMode === '2r') {
+        return (
+          <div style={{ display: 'grid', gridTemplateRows: '1fr 1fr', gap: '10px', height: '100%' }}>
+            {renderChartSlot(0)}
+            {renderChartSlot(1)}
+          </div>
+        );
+      }
+      if (layoutMode === '3c') {
+        return (
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '10px', height: '100%' }}>
+            {renderChartSlot(0)}
+            {renderChartSlot(1)}
+            {renderChartSlot(2)}
+          </div>
+        );
+      }
+      if (layoutMode === '3r') {
+        return (
+          <div style={{ display: 'grid', gridTemplateRows: '1fr 1fr 1fr', gap: '10px', height: '100%' }}>
+            {renderChartSlot(0)}
+            {renderChartSlot(1)}
+            {renderChartSlot(2)}
+          </div>
+        );
+      }
+      if (layoutMode === '4g') {
+        return (
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gridTemplateRows: '1fr 1fr', gap: '10px', height: '100%' }}>
+            {renderChartSlot(0)}
+            {renderChartSlot(1)}
+            {renderChartSlot(2)}
+            {renderChartSlot(3)}
+          </div>
+        );
+      }
+      if (layoutMode === '3l') {
+        return (
+          <div style={{ display: 'grid', gridTemplateColumns: '1.2fr 1fr', gridTemplateRows: '1fr 1fr', gap: '10px', height: '100%' }}>
+            {renderChartSlot(0, { gridRow: '1 / 3' })}
+            {renderChartSlot(1)}
+            {renderChartSlot(2)}
+          </div>
+        );
+      }
+      if (layoutMode === '3t') {
+        return (
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gridTemplateRows: '1.2fr 1fr', gap: '10px', height: '100%' }}>
+            {renderChartSlot(0, { gridColumn: '1 / 3' })}
+            {renderChartSlot(1)}
+            {renderChartSlot(2)}
+          </div>
+        );
+      }
+      if (layoutMode === '5g') {
+        return (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', height: '100%' }}>
+            <div style={{ display: 'flex', gap: '10px', flex: 1, minHeight: 0 }}>
+              {renderChartSlot(0)}
+              {renderChartSlot(1)}
+            </div>
+            <div style={{ display: 'flex', gap: '10px', flex: 1, minHeight: 0 }}>
+              {renderChartSlot(2)}
+              {renderChartSlot(3)}
+              {renderChartSlot(4)}
+            </div>
+          </div>
+        );
+      }
+      if (layoutMode === '6g') {
+        return (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', height: '100%' }}>
+            <div style={{ display: 'flex', gap: '10px', flex: 1, minHeight: 0 }}>
+              {renderChartSlot(0)}
+              {renderChartSlot(1)}
+              {renderChartSlot(2)}
+            </div>
+            <div style={{ display: 'flex', gap: '10px', flex: 1, minHeight: 0 }}>
+              {renderChartSlot(3)}
+              {renderChartSlot(4)}
+              {renderChartSlot(5)}
+            </div>
+          </div>
+        );
+      }
+      if (layoutMode === '7g') {
+        return (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', height: '100%' }}>
+            <div style={{ display: 'flex', gap: '10px', flex: 1, minHeight: 0 }}>
+              {renderChartSlot(0)}
+              {renderChartSlot(1)}
+              {renderChartSlot(2)}
+            </div>
+            <div style={{ display: 'flex', gap: '10px', flex: 1, minHeight: 0 }}>
+              {renderChartSlot(3)}
+              {renderChartSlot(4)}
+              {renderChartSlot(5)}
+              {renderChartSlot(6)}
+            </div>
+          </div>
+        );
+      }
+      if (layoutMode === '8g') {
+        return (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', height: '100%' }}>
+            <div style={{ display: 'flex', gap: '10px', flex: 1, minHeight: 0 }}>
+              {renderChartSlot(0)}
+              {renderChartSlot(1)}
+              {renderChartSlot(2)}
+              {renderChartSlot(3)}
+            </div>
+            <div style={{ display: 'flex', gap: '10px', flex: 1, minHeight: 0 }}>
+              {renderChartSlot(4)}
+              {renderChartSlot(5)}
+              {renderChartSlot(6)}
+              {renderChartSlot(7)}
+            </div>
+          </div>
+        );
+      }
+      return null;
+    };
+
+    const selectTab = (tab) => {
+      setTerminalTab(tab);
+      setRailPage(0);
+    };
+
     return (
       <div style={{
         display: 'grid',
-        gridTemplateColumns: isSmallScreen ? '1fr' : (terminalRailCollapsed ? '60px 1fr' : '260px 1fr'),
+        gridTemplateColumns: isSmallScreen ? '1fr' : '260px 1fr',
         gap: '20px',
-        minHeight: '600px',
+        flex: 1,
+        minHeight: 0,
+        height: isSmallScreen ? 'auto' : '100%',
+        maxHeight: isSmallScreen ? 'none' : '100%',
         alignItems: 'stretch',
-        transition: 'grid-template-columns 0.2s ease'
       }}>
         {/* LEFT RAIL */}
         <div style={{
           background: 'var(--ws-bg-1)',
           border: '1px solid var(--ws-border)',
-          borderRadius: '8px',
+          borderRadius: '0px',
           display: 'flex',
           flexDirection: 'column',
-          maxHeight: isSmallScreen ? '300px' : 'none',
+          height: isSmallScreen ? 'auto' : '100%',
+          maxHeight: isSmallScreen ? '350px' : '100%',
           overflow: 'hidden'
         }}>
           {/* Rail Header */}
-          {(!terminalRailCollapsed || isSmallScreen) ? (
-            <div style={{ padding: '12px', borderBottom: '1px solid var(--ws-border)' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
-                <span style={{ fontSize: '11px', fontWeight: 800, color: 'var(--ws-text-3)', letterSpacing: '0.5px', textTransform: 'uppercase' }}>Terminal Rail</span>
-                {!isSmallScreen && (
-                  <button 
-                    onClick={toggleTerminalRail}
-                    style={{ background: 'none', border: 'none', color: 'var(--ws-text-3)', cursor: 'pointer', display: 'flex', alignItems: 'center', padding: '2px' }}
-                  >
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                      <line x1="19" y1="12" x2="5" y2="12"></line>
-                      <polyline points="12 19 5 12 12 5"></polyline>
-                    </svg>
-                  </button>
-                )}
-              </div>
-              
-              {/* Tab Selector Buttons */}
-              <div style={{ display: 'flex', gap: '2px', background: 'var(--ws-bg-2)', padding: '2px', borderRadius: '6px' }}>
-                {['watchlist', 'portfolio', 'charts'].map(tab => (
-                  <button
-                    key={tab}
-                    onClick={() => setTerminalTab(tab)}
-                    style={{
-                      flex: 1,
-                      padding: '5px 0',
-                      fontSize: '9px',
-                      fontWeight: 700,
-                      textTransform: 'uppercase',
-                      border: 'none',
-                      borderRadius: '4px',
-                      background: terminalTab === tab ? 'var(--ws-bg-1)' : 'transparent',
-                      color: terminalTab === tab ? 'var(--ws-text)' : 'var(--ws-text-3)',
-                      cursor: 'pointer',
-                      transition: 'all 0.1s'
-                    }}
-                  >
-                    {tab === 'charts' ? 'Pinned' : tab}
-                  </button>
-                ))}
-              </div>
+          <div style={{ padding: '12px', borderBottom: '1px solid var(--ws-border)' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
+              <span style={{ fontSize: '11px', fontWeight: 800, color: 'var(--ws-text-3)', letterSpacing: '0.5px', textTransform: 'uppercase' }}>Terminal Rail</span>
             </div>
-          ) : (
-            <div style={{ padding: '12px', borderBottom: '1px solid var(--ws-border)', display: 'flex', justifyContent: 'center' }}>
-              <button 
-                onClick={toggleTerminalRail}
-                style={{ background: 'none', border: 'none', color: 'var(--ws-text-3)', cursor: 'pointer', display: 'flex', alignItems: 'center', padding: '2px' }}
-              >
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                  <line x1="5" y1="12" x2="19" y2="12"></line>
-                  <polyline points="12 5 19 12 12 19"></polyline>
-                </svg>
-              </button>
+            
+            {/* Tab Selector Buttons */}
+            <div style={{ display: 'flex', gap: '2px', background: 'var(--ws-bg-2)', padding: '2px', borderRadius: '0px' }}>
+              {['watchlist', 'portfolio', 'charts'].map(tab => (
+                <button
+                  key={tab}
+                  onClick={() => selectTab(tab)}
+                  style={{
+                    flex: 1,
+                    padding: '5px 0',
+                    fontSize: '9px',
+                    fontWeight: 700,
+                    textTransform: 'uppercase',
+                    border: 'none',
+                    borderRadius: '0px',
+                    background: terminalTab === tab ? 'var(--ws-bg-1)' : 'transparent',
+                    color: terminalTab === tab ? 'var(--ws-text)' : 'var(--ws-text-3)',
+                    cursor: 'pointer',
+                    transition: 'all 0.1s'
+                  }}
+                >
+                  {tab === 'charts' ? 'Pinned' : tab}
+                </button>
+              ))}
             </div>
-          )}
+          </div>
 
           {/* Ticker List Container */}
-          <div style={{ flex: 1, overflowY: 'auto', padding: '8px', display: 'flex', flexDirection: 'column', gap: '4px' }}>
-            {railTickers.map(ticker => {
+          <div style={{ flex: 1, overflowY: 'hidden', padding: '8px', display: 'flex', flexDirection: 'column', gap: '4px' }}>
+            {displayedTickers.map(ticker => {
               const price = prices[ticker];
               const pct = dayChanges[ticker];
               const isActive = terminalTicker === ticker;
               const hasChange = pct != null;
               const isPositive = pct >= 0;
 
+              const tickerData = stockDetails[ticker];
+              const tickerEasyMode = tickerData ? computeEasyMode(tickerData, hasFundamentals(tickerData)) : null;
+              const score = tickerEasyMode?.score100;
+
               return (
                 <div
                   key={ticker}
-                  onClick={() => setTerminalTicker(ticker)}
+                  onClick={() => selectTerminalTicker(ticker)}
                   style={{
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: (terminalRailCollapsed && !isSmallScreen) ? 'center' : 'space-between',
                     padding: '8px',
-                    borderRadius: '6px',
+                    borderRadius: '0px',
                     background: isActive ? 'var(--ws-bg-2)' : 'transparent',
                     border: `1px solid ${isActive ? 'var(--ws-border)' : 'transparent'}`,
                     cursor: 'pointer',
@@ -1688,7 +2166,21 @@ export default function WorkspaceHome() {
                   </div>
                   
                   {(!terminalRailCollapsed || isSmallScreen) && (
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                      {score != null && (
+                        <span style={{ 
+                          fontSize: '9px', 
+                          fontWeight: 700, 
+                          color: tickerEasyMode.verdictColor || 'var(--ws-text-3)',
+                          fontFamily: 'JetBrains Mono, monospace',
+                          background: 'var(--ws-bg-2)',
+                          padding: '2px 5px',
+                          border: `1px solid ${tickerEasyMode.verdictColor || 'var(--ws-border)'}`,
+                          borderRadius: '0px'
+                        }}>
+                          QS {score}
+                        </span>
+                      )}
                       <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'end' }}>
                         <span style={{ fontSize: '11px', fontWeight: 600, color: 'var(--ws-text)' }}>
                           {price ? `${currencySymbol}${price.toFixed(2)}` : '—'}
@@ -1738,6 +2230,51 @@ export default function WorkspaceHome() {
             )}
           </div>
 
+          {/* Pagination Controls */}
+          {pageCount > 1 && (
+            <div style={{
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+              padding: '10px 12px',
+              borderTop: '1px solid var(--ws-border)',
+              fontSize: '10px',
+              fontWeight: 700,
+              color: 'var(--ws-text-3)',
+              background: 'var(--ws-bg-2)'
+            }}>
+              <button
+                disabled={safePage === 0}
+                onClick={() => setRailPage(prev => Math.max(0, prev - 1))}
+                style={{
+                  background: 'none',
+                  border: 'none',
+                  color: safePage === 0 ? 'var(--ws-text-3)' : 'var(--ws-text)',
+                  cursor: safePage === 0 ? 'default' : 'pointer',
+                  fontWeight: 700,
+                  fontSize: '10px'
+                }}
+              >
+                PREV
+              </button>
+              <span>{safePage + 1} / {pageCount}</span>
+              <button
+                disabled={safePage >= pageCount - 1}
+                onClick={() => setRailPage(prev => Math.min(pageCount - 1, prev + 1))}
+                style={{
+                  background: 'none',
+                  border: 'none',
+                  color: safePage >= pageCount - 1 ? 'var(--ws-text-3)' : 'var(--ws-text)',
+                  cursor: safePage >= pageCount - 1 ? 'default' : 'pointer',
+                  fontWeight: 700,
+                  fontSize: '10px'
+                }}
+              >
+                NEXT
+              </button>
+            </div>
+          )}
+
           {/* Add Pinned Chart Input (charts tab only, expanded only) */}
           {(!terminalRailCollapsed || isSmallScreen) && terminalTab === 'charts' && (
             <form 
@@ -1759,7 +2296,7 @@ export default function WorkspaceHome() {
                   flex: 1,
                   background: 'var(--ws-bg-2)',
                   border: '1px solid var(--ws-border)',
-                  borderRadius: '4px',
+                  borderRadius: '0px',
                   padding: '5px 8px',
                   fontSize: '10px',
                   fontWeight: 600,
@@ -1774,7 +2311,7 @@ export default function WorkspaceHome() {
                   background: 'var(--ws-accent)',
                   color: '#fff',
                   border: 'none',
-                  borderRadius: '4px',
+                  borderRadius: '0px',
                   padding: '5px 10px',
                   fontSize: '10px',
                   fontWeight: 700,
@@ -1790,47 +2327,177 @@ export default function WorkspaceHome() {
         {/* CENTER & RIGHT CONTENT */}
         <div style={{
           display: 'grid',
-          gridTemplateColumns: (isSmallScreen || isMediumScreen) ? '1fr' : '2fr 1fr',
+          gridTemplateColumns: (isSmallScreen || isMediumScreen) ? '1fr' : '2.2fr 1fr',
           gap: '20px',
-          alignItems: 'stretch'
+          alignItems: 'stretch',
+          flex: 1,
+          minHeight: 0,
+          height: isSmallScreen ? 'auto' : '100%'
         }}>
-          {/* BIG CHART PANEL */}
+          {/* CHARTS CONTAINER PANEL */}
           <div style={{
             background: 'var(--ws-bg-1)',
             border: '1px solid var(--ws-border)',
-            borderRadius: '8px',
+            borderRadius: '0px',
             padding: '16px',
             display: 'flex',
             flexDirection: 'column',
             gap: '12px',
-            minHeight: '450px'
+            height: '100%',
+            overflow: 'hidden'
           }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                <StockLogo ticker={terminalTicker} size={28} />
-                <div>
-                  <h2 style={{ fontSize: '15px', fontWeight: 800, color: 'var(--ws-text)', margin: 0 }}>
-                    {terminalTicker}
-                  </h2>
-                  <p style={{ fontSize: '10px', color: 'var(--ws-text-3)', margin: '2px 0 0' }}>
-                    {detailData?.companyName || 'Loading company info...'}
-                  </p>
+             {/* Header: Layout Toolbar */}
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid var(--ws-border)', paddingBottom: '10px', gap: '12px', flexWrap: 'wrap' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+                <span style={{ fontSize: '11px', fontWeight: 800, color: 'var(--ws-text-3)', letterSpacing: '0.5px', textTransform: 'uppercase' }}>
+                  Multi-Chart Terminal
+                </span>
+                
+                {/* Active Slot Timeframe/Range Selector */}
+                <div style={{ display: 'flex', gap: '1px', background: 'var(--ws-border)', padding: '1px', borderRadius: '0px' }}>
+                  {[
+                    { label: '1D', value: '1d' },
+                    { label: '1W', value: '1w' },
+                    { label: '1M', value: '1m' },
+                    { label: '3M', value: '3m' },
+                    { label: '1Y', value: '1y' },
+                    { label: 'YTD', value: 'ytd' },
+                    { label: 'MAX', value: 'max' }
+                  ].map(r => {
+                    const isActive = slotRanges[activeSlot] === r.value;
+                    return (
+                      <button
+                        key={r.value}
+                        onClick={() => handleRangeChange(r.value)}
+                        style={{
+                          padding: '3px 6px',
+                          fontSize: '9px',
+                          fontWeight: isActive ? 700 : 400,
+                          letterSpacing: '0.5px',
+                          background: isActive ? 'var(--ws-accent)' : 'var(--ws-bg-2)',
+                          color: isActive ? '#000' : 'var(--ws-text-3)',
+                          border: 'none',
+                          cursor: 'pointer',
+                          fontFamily: 'JetBrains Mono, monospace',
+                          transition: 'all 0.1s'
+                        }}
+                      >
+                        {r.label}
+                      </button>
+                    );
+                  })}
+                </div>
+
+                {/* Active Slot Mode Selector */}
+                <div style={{ display: 'flex', gap: '1px', background: 'var(--ws-border)', padding: '1px', borderRadius: '0px' }}>
+                  {['line', 'candles'].map(m => {
+                    const isActive = slotModes[activeSlot] === m;
+                    return (
+                      <button
+                        key={m}
+                        onClick={() => handleModeChange(m)}
+                        style={{
+                          padding: '3px 8px',
+                          fontSize: '9px',
+                          fontWeight: isActive ? 700 : 400,
+                          letterSpacing: '0.5px',
+                          background: isActive ? 'var(--ws-accent)' : 'var(--ws-bg-2)',
+                          color: isActive ? '#000' : 'var(--ws-text-3)',
+                          border: 'none',
+                          cursor: 'pointer',
+                          fontFamily: 'JetBrains Mono, monospace',
+                          transition: 'all 0.1s'
+                        }}
+                      >
+                        {m.toUpperCase()}
+                      </button>
+                    );
+                  })}
                 </div>
               </div>
-              <div style={{ textAlign: 'right' }}>
-                <span style={{ fontSize: '16px', fontWeight: 800, color: 'var(--ws-text)' }}>
-                  {prices[terminalTicker] ? `${currencySymbol}${prices[terminalTicker].toFixed(2)}` : '—'}
-                </span>
-                {dayChanges[terminalTicker] != null && (
-                  <div style={{ fontSize: '11px', fontWeight: 700, color: dayChanges[terminalTicker] >= 0 ? '#10b981' : 'var(--ws-red)' }}>
-                    {dayChanges[terminalTicker] >= 0 ? '+' : ''}{dayChanges[terminalTicker].toFixed(2)}% Today
-                  </div>
-                )}
+              
+              {/* 8 Grid layouts selector */}
+              <div style={{ display: 'flex', gap: '2px', background: 'var(--ws-bg-2)', padding: '2px', border: '1px solid var(--ws-border)', borderRadius: '0px' }}>
+                {LAYOUTS.map(layout => (
+                  <button
+                    key={layout.id}
+                    onClick={() => changeLayoutMode(layout.id)}
+                    title={layout.label}
+                    style={{
+                      width: '24px',
+                      height: '24px',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      border: 'none',
+                      background: layoutMode === layout.id ? 'var(--ws-accent)' : 'transparent',
+                      color: layoutMode === layout.id ? '#fff' : 'var(--ws-text-3)',
+                      cursor: 'pointer',
+                      borderRadius: '0px',
+                      transition: 'all 0.15s'
+                    }}
+                  >
+                    {layout.svg}
+                  </button>
+                ))}
               </div>
             </div>
 
-            <div style={{ flex: 1, position: 'relative', minHeight: '300px' }}>
-              <StockChart ticker={terminalTicker} currency={currency} />
+            {/* Layout Canvas */}
+            <div style={{ flex: 1, overflow: 'hidden' }}>
+              {renderChartsLayout()}
+            </div>
+
+            {/* Active Tickers Quick Nav Bar */}
+            <div style={{
+              display: 'flex',
+              alignItems: 'center',
+              flexWrap: 'wrap',
+              gap: '8px',
+              marginTop: '12px',
+              paddingTop: '12px',
+              borderTop: '1px solid var(--ws-border)',
+            }}>
+              <span style={{ fontSize: '10px', fontWeight: 800, color: 'var(--ws-text-3)', textTransform: 'uppercase', marginRight: '4px' }}>
+                Active Grid Tickers:
+              </span>
+              {Array.from({ length: 
+                layoutMode === '1' ? 1 :
+                (layoutMode === '2c' || layoutMode === '2r') ? 2 :
+                (layoutMode === '4g') ? 4 :
+                layoutMode === '5g' ? 5 :
+                layoutMode === '6g' ? 6 :
+                layoutMode === '7g' ? 7 :
+                layoutMode === '8g' ? 8 : 3
+              }).map((_, idx) => {
+                const ticker = slotTickers[idx] || 'AAPL';
+                const isActive = activeSlot === idx;
+                return (
+                  <button
+                    key={idx}
+                    onClick={() => {
+                      setActiveSlot(idx);
+                      setTerminalTicker(ticker);
+                    }}
+                    style={{
+                      background: isActive ? 'var(--ws-accent)' : 'var(--ws-bg-2)',
+                      color: isActive ? '#000' : 'var(--ws-text)',
+                      border: `1px solid ${isActive ? 'var(--ws-accent)' : 'var(--ws-border)'}`,
+                      padding: '4px 10px',
+                      fontSize: '11px',
+                      fontWeight: 700,
+                      cursor: 'pointer',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '6px',
+                      transition: 'all 0.15s',
+                    }}
+                  >
+                    <span style={{ opacity: isActive ? 0.6 : 0.4, fontSize: '9px' }}>#{idx + 1}</span>
+                    {ticker}
+                  </button>
+                );
+              })}
             </div>
           </div>
 
@@ -1838,40 +2505,97 @@ export default function WorkspaceHome() {
           <div style={{
             background: 'var(--ws-bg-1)',
             border: '1px solid var(--ws-border)',
-            borderRadius: '8px',
+            borderRadius: '0px',
             padding: '16px',
             display: 'flex',
             flexDirection: 'column',
-            gap: '16px',
-            justifyContent: 'space-between'
+            height: '100%',
+            overflow: 'hidden'
           }}>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+            {/* Pinned Stock Price & Change Header */}
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid var(--ws-border)', paddingBottom: '12px', flexShrink: 0 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <StockLogo ticker={terminalTicker} size={24} />
+                <div>
+                  <h3 style={{ fontSize: '14px', fontWeight: 800, color: 'var(--ws-text)', margin: 0 }}>{terminalTicker}</h3>
+                  <p style={{ fontSize: '9px', color: 'var(--ws-text-3)', margin: '2px 0 0' }}>
+                    {detailData?.name || 'Loading company info...'}
+                  </p>
+                </div>
+              </div>
+              <div style={{ textAlign: 'right' }}>
+                <div style={{ fontSize: '15px', fontWeight: 800, color: 'var(--ws-text)' }}>
+                  {prices[terminalTicker] ? `${currencySymbol}${prices[terminalTicker].toFixed(2)}` : '—'}
+                </div>
+                {dayChanges[terminalTicker] != null && (
+                  <div style={{ fontSize: '10px', fontWeight: 700, color: dayChanges[terminalTicker] >= 0 ? '#10b981' : 'var(--ws-red)' }}>
+                    {dayChanges[terminalTicker] >= 0 ? '+' : ''}{dayChanges[terminalTicker].toFixed(2)}% Today
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Scrollable Content Area */}
+            <div className="custom-scrollbar" style={{ flex: 1, overflowY: 'auto', paddingRight: '4px', margin: '12px 0', display: 'flex', flexDirection: 'column', gap: '14px' }}>
+              {/* Portfolio Holding status */}
+              {userHolding ? (
+                <div style={{
+                  background: 'var(--ws-accent-dim)',
+                  border: '1px solid var(--ws-accent)',
+                  padding: '10px',
+                  borderRadius: '0px',
+                  fontSize: '10px',
+                  fontWeight: 800,
+                  color: 'var(--ws-accent)',
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'center'
+                }}>
+                  <span>PORTFOLIO</span>
+                  <span>{userHolding.shares} Shares @ {currencySymbol}{userHolding.avgPrice != null ? userHolding.avgPrice.toFixed(2) : '—'}</span>
+                </div>
+              ) : (
+                <div style={{
+                  background: 'var(--ws-bg-2)',
+                  border: '1px solid var(--ws-border)',
+                  padding: '10px',
+                  borderRadius: '0px',
+                  fontSize: '10px',
+                  fontWeight: 800,
+                  color: 'var(--ws-text-3)',
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'center'
+                }}>
+                  <span>PORTFOLIO</span>
+                  <span>NOT OWNED</span>
+                </div>
+              )}
+
+              {/* Fundamental Quality Score */}
               <div>
-                <span style={{ fontSize: '10px', fontWeight: 700, color: 'var(--ws-text-3)', letterSpacing: '1px', textTransform: 'uppercase' }}>
-                  Fundamental Quality
+                <span style={{ fontSize: '9px', fontWeight: 700, color: 'var(--ws-text-3)', letterSpacing: '0.5px', textTransform: 'uppercase', display: 'block', marginBottom: '8px' }}>
+                  Quality Score
                 </span>
-                {easyMode ? (
-                  <div style={{ marginTop: '10px' }}>
-                    <div style={{ display: 'flex', alignItems: 'baseline', gap: '8px' }}>
-                      <span style={{ fontSize: '32px', fontWeight: 900, color: easyMode.scoreColor, letterSpacing: '-1px' }}>
-                        {easyMode.score100}
-                      </span>
-                      <span style={{ fontSize: '14px', fontWeight: 700, color: 'var(--ws-text-3)' }}>/100</span>
-                    </div>
-                    <div style={{ 
-                      fontSize: '11px', 
-                      fontWeight: 700, 
-                      color: easyMode.scoreColor, 
-                      marginTop: '4px',
-                      textTransform: 'uppercase',
-                      letterSpacing: '0.5px'
-                    }}>
-                      {easyMode.verdict}
-                    </div>
+                {!easyMode ? (
+                  <div style={{ fontSize: '11px', color: 'var(--ws-text-3)', marginTop: '8px' }}>
+                    No fundamental data available for scoring.
                   </div>
                 ) : (
-                  <div style={{ fontSize: '12px', color: 'var(--ws-text-3)', marginTop: '10px' }}>
-                    No fundamental data available for scoring.
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginTop: '8px' }}>
+                    {easyMode.isBlueGem ? (
+                      <GemRevealBar score100={easyMode.score100} />
+                    ) : (
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                        <QualityScoreBar score100={easyMode.score100} color={easyMode.verdictColor} />
+                        <span style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: '28px', fontWeight: 700, color: easyMode.verdictColor, lineHeight: 1 }}>
+                          {easyMode.score100}
+                        </span>
+                      </div>
+                    )}
+                    <div style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: '11px', fontWeight: 700, color: easyMode.verdictColor, letterSpacing: '1px', textTransform: 'uppercase' }}>
+                      {easyMode.verdict}
+                    </div>
                   </div>
                 )}
               </div>
@@ -1881,10 +2605,10 @@ export default function WorkspaceHome() {
                 <div style={{ 
                   background: 'var(--ws-bg-2)', 
                   border: '1px solid var(--ws-border)', 
-                  borderRadius: '6px', 
-                  padding: '12px',
+                  borderRadius: '0px', 
+                  padding: '10px',
                   fontSize: '11px',
-                  lineHeight: '1.5',
+                  lineHeight: '1.4',
                   color: 'var(--ws-text-2)',
                   fontStyle: 'italic'
                 }}>
@@ -1894,25 +2618,77 @@ export default function WorkspaceHome() {
 
               {/* Basic Metrics Grid */}
               {detailData && (
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', borderTop: '1px solid var(--ws-border)', paddingTop: '16px' }}>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', borderTop: '1px solid var(--ws-border)', paddingTop: '12px' }}>
                   <span style={{ fontSize: '9px', fontWeight: 700, color: 'var(--ws-text-3)', letterSpacing: '0.5px', textTransform: 'uppercase' }}>Key Ratios</span>
-                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
                     {[
                       { label: 'P/E Ratio', val: detailData.pe != null ? parseFloat(detailData.pe).toFixed(1) : '—' },
                       { label: 'P/FCF Ratio', val: detailData.pfcf != null ? parseFloat(detailData.pfcf).toFixed(1) : '—' },
                       { label: 'ROIC', val: detailData.roic != null ? `${(parseFloat(detailData.roic)).toFixed(1)}%` : '—' },
                       { label: 'Debt to Equity', val: detailData.debtToEquity != null ? parseFloat(detailData.debtToEquity).toFixed(2) : '—' }
                     ].map(m => (
-                      <div key={m.label} style={{ background: 'var(--ws-bg-2)', padding: '8px', borderRadius: '4px', border: '1px solid var(--ws-border)' }}>
-                        <div style={{ fontSize: '9px', color: 'var(--ws-text-3)', fontWeight: 600 }}>{m.label}</div>
-                        <div style={{ fontSize: '12px', color: 'var(--ws-text)', fontWeight: 700, marginTop: '2px' }}>{m.val}</div>
+                      <div key={m.label} style={{ background: 'var(--ws-bg-2)', padding: '6px', borderRadius: '0px', border: '1px solid var(--ws-border)' }}>
+                        <div style={{ fontSize: '8px', color: 'var(--ws-text-3)', fontWeight: 600 }}>{m.label}</div>
+                        <div style={{ fontSize: '11px', color: 'var(--ws-text)', fontWeight: 700, marginTop: '2px' }}>{m.val}</div>
                       </div>
                     ))}
                   </div>
                 </div>
               )}
+
+              {/* Numbers, Simplified */}
+              {detailData && (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', borderTop: '1px solid var(--ws-border)', paddingTop: '12px' }}>
+                  <span style={{ fontSize: '9px', fontWeight: 700, color: 'var(--ws-text-3)', letterSpacing: '0.5px', textTransform: 'uppercase' }}>
+                    The Numbers, Simplified
+                  </span>
+                  <div style={{ background: 'var(--ws-bg-2)', border: '1px solid var(--ws-border)', padding: '10px 12px', display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                    {(() => {
+                      const fcfMargin = detailData.fcfVal != null && detailData.revVal ? (detailData.fcfVal / detailData.revVal) * 100 : null;
+                      const rows = [
+                        {
+                          label: detailData.revGrowth == null ? 'Revenue data unavailable' : detailData.revGrowth > 10 ? 'Revenue growing fast' : detailData.revGrowth > 0 ? 'Revenue is growing' : 'Revenue is shrinking',
+                          value: detailData.revGrowth != null ? `${detailData.revGrowth > 0 ? '+' : ''}${detailData.revGrowth}%` : 'N/A',
+                          pct: detailData.revGrowth != null ? Math.max(4, Math.min(100, 50 + detailData.revGrowth * 2)) : 0,
+                          color: detailData.revGrowth == null ? 'var(--ws-text-3)' : detailData.revGrowth > 10 ? 'var(--ws-accent)' : detailData.revGrowth > 0 ? 'var(--ws-text-2)' : 'var(--ws-red)',
+                        },
+                        {
+                          label: detailData.opMargin == null ? 'Margin data unavailable' : detailData.opMargin > 15 ? 'Healthy profit margin' : detailData.opMargin > 0 ? 'Modest profit margin' : 'Operating at a loss',
+                          value: detailData.opMargin != null ? `${detailData.opMargin}%` : 'N/A',
+                          pct: detailData.opMargin != null ? Math.max(4, Math.min(100, detailData.opMargin * 2.5)) : 0,
+                          color: detailData.opMargin == null ? 'var(--ws-text-3)' : detailData.opMargin > 15 ? 'var(--ws-accent)' : detailData.opMargin > 0 ? 'var(--ws-text-2)' : 'var(--ws-red)',
+                        },
+                        {
+                          label: detailData.fcfVal == null ? 'Cash flow data unavailable' : fcfMargin != null && fcfMargin > 15 ? 'Strong cash generation' : detailData.fcfVal > 0 ? 'Positive cash flow' : 'Negative cash flow',
+                          value: detailData.fcfVal == null ? 'N/A' : fcfMargin != null && fcfMargin > 15 ? 'Strong' : detailData.fcfVal > 0 ? 'Positive' : 'Negative',
+                          pct: detailData.fcfVal == null ? 0 : fcfMargin != null && fcfMargin > 15 ? 90 : detailData.fcfVal > 0 ? 60 : 15,
+                          color: detailData.fcfVal == null ? 'var(--ws-text-3)' : fcfMargin != null && fcfMargin > 15 ? 'var(--ws-accent)' : detailData.fcfVal > 0 ? 'var(--ws-text-2)' : 'var(--ws-red)',
+                        },
+                        {
+                          label: detailData.debtToEquity == null ? 'Debt levels unavailable' : detailData.debtToEquity < 0 ? 'Negative equity (High Risk)' : detailData.debtToEquity < 1 ? 'Debt levels manageable' : detailData.debtToEquity < 2 ? 'Debt worth watching' : 'Highly leveraged',
+                          value: detailData.debtToEquity != null ? `${detailData.debtToEquity.toFixed(2)}x` : 'N/A',
+                          pct: detailData.debtToEquity != null ? Math.max(4, Math.min(100, 100 - detailData.debtToEquity * 30)) : 0,
+                          color: detailData.debtToEquity == null ? 'var(--ws-text-3)' : detailData.debtToEquity < 0 ? 'var(--ws-red)' : detailData.debtToEquity < 1 ? 'var(--ws-accent)' : detailData.debtToEquity < 2 ? 'var(--ws-text-2)' : 'var(--ws-red)',
+                        },
+                      ];
+                      return rows.map((m, i) => (
+                        <div key={i} style={{ display: 'flex', flexDirection: 'column', gap: '3px' }}>
+                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', gap: '8px' }}>
+                            <span style={{ fontSize: '10px', color: 'var(--ws-text-2)', lineHeight: 1.3 }}>{m.label}</span>
+                            <span style={{ fontSize: '9px', fontWeight: 700, flexShrink: 0, color: m.color, fontFamily: "'JetBrains Mono', monospace" }}>{m.value}</span>
+                          </div>
+                          <div style={{ height: '4px', background: 'var(--ws-bg-1)', overflow: 'hidden' }}>
+                            <div style={{ height: '100%', width: `${m.pct}%`, background: m.color }} />
+                          </div>
+                        </div>
+                      ));
+                    })()}
+                  </div>
+                </div>
+              )}
             </div>
 
+            {/* Pinned Bottom Button */}
             <Link
               href={`/stock/${terminalTicker}`}
               style={{
@@ -1920,13 +2696,15 @@ export default function WorkspaceHome() {
                 textAlign: 'center',
                 background: 'var(--ws-bg-2)',
                 border: '1px solid var(--ws-border)',
-                borderRadius: '6px',
-                padding: '10px',
-                fontSize: '11px',
+                borderRadius: '0px',
+                padding: '8px',
+                fontSize: '10px',
                 fontWeight: 700,
                 color: 'var(--ws-text)',
                 textDecoration: 'none',
-                transition: 'all 0.15s'
+                transition: 'all 0.15s',
+                marginTop: '12px',
+                flexShrink: 0
               }}
               onMouseEnter={e => { e.currentTarget.style.background = 'var(--ws-bg-1)'; e.currentTarget.style.borderColor = 'var(--ws-accent)'; }}
               onMouseLeave={e => { e.currentTarget.style.background = 'var(--ws-bg-2)'; e.currentTarget.style.borderColor = 'var(--ws-border)'; }}
@@ -1940,15 +2718,27 @@ export default function WorkspaceHome() {
   };
 
   return (
-    <div className="home-container" style={{ padding: '24px', display: 'flex', flexDirection: 'column', gap: '24px' }}>
+    <div className="home-container" style={{
+      padding: (advancedMode && !isMobile) ? '16px' : '24px',
+      display: 'flex',
+      flexDirection: 'column',
+      gap: (advancedMode && !isMobile) ? '12px' : '24px',
+      height: (advancedMode && !isMobile) ? '100vh' : 'auto',
+      boxSizing: 'border-box',
+      overflow: (advancedMode && !isMobile) ? 'hidden' : 'visible'
+    }}>
       <OnboardingBanner />
 
       {/* Dashboard Title & Customize Layout Control */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '-8px' }}>
-        <div>
-          <h1 style={{ fontSize: '18px', fontWeight: 800, color: 'var(--ws-text)', letterSpacing: '-0.5px', margin: 0 }}>Terminal Dashboard</h1>
-          <p style={{ fontSize: '11px', color: 'var(--ws-text-3)', margin: '2px 0 0' }}>Real-time overview of indices, portfolios, watchlists, and filings.</p>
-        </div>
+        {!advancedMode ? (
+          <div>
+            <h1 style={{ fontSize: '18px', fontWeight: 800, color: 'var(--ws-text)', letterSpacing: '-0.5px', margin: 0 }}>Terminal Dashboard</h1>
+            <p style={{ fontSize: '11px', color: 'var(--ws-text-3)', margin: '2px 0 0' }}>Real-time overview of indices, portfolios, watchlists, and filings.</p>
+          </div>
+        ) : (
+          <div />
+        )}
         
         <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
           {/* Advanced Mode toggle — unlocks drag-to-reorder + Custom Charts widget */}
