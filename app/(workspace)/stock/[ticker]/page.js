@@ -318,7 +318,7 @@ const ANALYST_GAUGE_SEGMENTS = [
   { key: 'strongBuy', color: '#0d9488' },
 ];
 const QUALITY_NEEDLE_COLOR = '#6366f1';
-function AnalystGauge({ score, qualityScore100 }) {
+function AnalystGauge({ score, qualityScore100, ratings, total }) {
   const cx = 120, cy = 108, r = 90, strokeWidth = 18;
   const toPoint = (angleDeg) => {
     const rad = (angleDeg * Math.PI) / 180;
@@ -331,12 +331,45 @@ function AnalystGauge({ score, qualityScore100 }) {
     const [x2, y2] = toPoint(endAngle);
     return { ...seg, d: `M ${x1} ${y1} A ${r} ${r} 0 0 1 ${x2} ${y2}` };
   });
+
+  // Position percentage labels floating directly above each arc segment's midpoint
+  const textR = 112;
+  const labels = ANALYST_GAUGE_SEGMENTS.map((seg, i) => {
+    const midAngle = 180 - (i + 0.5) * 36;
+    const rad = (midAngle * Math.PI) / 180;
+    const x = cx + textR * Math.cos(rad);
+    const y = cy - textR * Math.sin(rad);
+    let pct = null;
+    if (ratings && total > 0) {
+      const count = ratings[seg.key] || 0;
+      pct = Math.round((count / total) * 100);
+    }
+    return { ...seg, x, y, pct };
+  });
+
   const rotationFor = (s) => s == null ? null : 45 * (Math.max(1, Math.min(5, s)) - 1) - 90;
   const analystRotation = rotationFor(score) ?? 0;
   const qualityScore5 = qualityScore100 == null ? null : 1 + (qualityScore100 / 100) * 4;
   const qualityRotation = rotationFor(qualityScore5);
+
   return (
-    <svg viewBox="0 0 240 122" width="100%" height="122" style={{ display: 'block', overflow: 'visible' }}>
+    <svg viewBox="-20 -24 280 148" width="100%" height="148" style={{ display: 'block', overflow: 'visible' }}>
+      {/* Percentages positioned above each segment arc */}
+      {labels.map(l => l.pct != null && (
+        <text key={`pct-${l.key}`}
+          x={l.x}
+          y={l.y}
+          textAnchor="middle"
+          dominantBaseline="central"
+          fill={l.color}
+          fontSize="11"
+          fontWeight="800"
+          fontFamily="'JetBrains Mono', monospace"
+        >
+          {l.pct}%
+        </text>
+      ))}
+
       {arcs.map(a => (
         <path key={a.key} d={a.d} fill="none" stroke={a.color} strokeWidth={strokeWidth} strokeLinecap="butt" />
       ))}
@@ -950,7 +983,7 @@ export default function StockPage({ params }) {
                       <div style={{ fontSize: '11px', color: 'var(--ws-text-3)', marginBottom: '10px' }}>
                         Based on {total} analyst{total === 1 ? '' : 's'} offering ratings for {data.name}.
                       </div>
-                      <AnalystGauge score={analystRating.score} qualityScore100={easyMode?.score100} />
+                      <AnalystGauge score={analystRating.score} qualityScore100={easyMode?.score100} ratings={r} total={total} />
                       {c && (
                         <div style={{ textAlign: 'center', fontSize: '20px', fontWeight: 800, color: c.color, margin: '4px 0 4px' }}>
                           {c.label}
