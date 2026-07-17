@@ -326,20 +326,24 @@ function AnalystGauge({ score, qualityScore100 }) {
       {arcs.map(a => (
         <path key={a.key} d={a.d} fill="none" stroke={a.color} strokeWidth={strokeWidth} strokeLinecap="butt" />
       ))}
-      {/* Analyst consensus — the primary pointer, a long tapered blade. */}
-      <g transform={`rotate(${analystRotation} ${cx} ${cy})`} style={{ transition: 'transform 0.6s cubic-bezier(0.16, 1, 0.3, 1)' }}>
-        <polygon points={`${cx - 4},${cy} ${cx + 4},${cy} ${cx},${cy - 76}`} fill="var(--ws-text)" />
-      </g>
-      <circle cx={cx} cy={cy} r="7" fill="var(--ws-text)" />
-      {/* Traqcker Quality Score — a short pin+dot marker, always drawn on top of the main
-          needle (not underneath it) so the dot stays visible even when the two scores
-          nearly agree and the pointers land at almost the same angle. */}
+      
+      {/* Traqcker Quality Score — a shorter, thinner tapered blade in brand teal */}
       {qualityRotation != null && (
         <g transform={`rotate(${qualityRotation} ${cx} ${cy})`} style={{ transition: 'transform 0.6s cubic-bezier(0.16, 1, 0.3, 1)' }}>
-          <line x1={cx} y1={cy} x2={cx} y2={cy - 50} stroke={QUALITY_NEEDLE_COLOR} strokeWidth="3" strokeLinecap="round" />
-          <circle cx={cx} cy={cy - 50} r="5" fill={QUALITY_NEEDLE_COLOR} stroke="var(--ws-bg-1)" strokeWidth="1.5" />
+          <polygon points={`${cx - 2.5},${cy} ${cx + 2.5},${cy} ${cx},${cy - 62}`} fill="var(--ws-accent)" />
+          <circle cx={cx} cy={cy - 62} r="3" fill="var(--ws-accent)" stroke="var(--ws-bg-1)" strokeWidth="1" />
         </g>
       )}
+
+      {/* Analyst consensus — the primary pointer, a long tapered blade (only if coverage exists) */}
+      {score != null && (
+        <g transform={`rotate(${analystRotation} ${cx} ${cy})`} style={{ transition: 'transform 0.6s cubic-bezier(0.16, 1, 0.3, 1)' }}>
+          <polygon points={`${cx - 4},${cy} ${cx + 4},${cy} ${cx},${cy - 76}`} fill="var(--ws-text)" />
+        </g>
+      )}
+
+      {/* Center cap pivot pin — layered on top to seal the base of both needles */}
+      <circle cx={cx} cy={cy} r="7" fill="var(--ws-text)" stroke="var(--ws-bg-1)" strokeWidth="1.5" />
     </svg>
   );
 }
