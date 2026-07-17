@@ -134,11 +134,11 @@ function computeDerivedFinancials(h) {
   const grossMargin = revVal && gpVal ? +((gpVal / revVal) * 100).toFixed(1) : null;
   const revGrowth = revVal && revPrev ? +(((revVal - revPrev) / Math.abs(revPrev)) * 100).toFixed(1) : null;
   const roe = equityVal && niVal ? +((niVal / equityVal) * 100).toFixed(1) : null;
-  const roa = assetsVal && niVal ? +((niVal / assetsVal) * 100).toFixed(1) : null;
-  const investedCapital = (equityVal ?? 0) + (debtVal ?? 0);
+  const effectiveDebtVal = equityVal != null ? (debtVal ?? 0) : debtVal;
+  const investedCapital = (equityVal ?? 0) + (effectiveDebtVal ?? 0);
   const roic = investedCapital > 0 && oiVal !== null ? +((oiVal / investedCapital) * 100).toFixed(1) : null;
-  const debtToEquity = equityVal && debtVal ? +(debtVal / equityVal).toFixed(2) : null;
-  const netDebt = (debtVal ?? 0) - (cashVal ?? 0);
+  const debtToEquity = equityVal && effectiveDebtVal != null ? +(effectiveDebtVal / equityVal).toFixed(2) : null;
+  const netDebt = (effectiveDebtVal ?? 0) - (cashVal ?? 0);
 
   const marginHistory = h.revHistory.map((r, i) => {
     const oi = h.oiHistory[i];
@@ -998,10 +998,11 @@ export async function GET(request) {
     const revGrowth   = revVal && revPrev ? +(((revVal - revPrev) / Math.abs(revPrev)) * 100).toFixed(1) : null;
     const roe         = equityVal && niVal ? +((niVal / equityVal) * 100).toFixed(1) : null;
     const roa         = assetsVal && niVal ? +((niVal / assetsVal) * 100).toFixed(1) : null;
-    const investedCapital = (equityVal ?? 0) + (debtVal ?? 0);
-const roic        = investedCapital > 0 && oiVal !== null ? +((oiVal / investedCapital) * 100).toFixed(1) : null;
-    const debtToEquity = equityVal && debtVal ? +(debtVal / equityVal).toFixed(2) : null;
-    const netDebt     = (debtVal ?? 0) - (cashVal ?? 0);
+    const effectiveDebtVal = equityVal != null ? (debtVal ?? 0) : debtVal;
+    const investedCapital = (equityVal ?? 0) + (effectiveDebtVal ?? 0);
+    const roic        = investedCapital > 0 && oiVal !== null ? +((oiVal / investedCapital) * 100).toFixed(1) : null;
+    const debtToEquity = equityVal && effectiveDebtVal != null ? +(effectiveDebtVal / equityVal).toFixed(2) : null;
+    const netDebt     = (effectiveDebtVal ?? 0) - (cashVal ?? 0);
 
     const revHistory = buildHistory(revenues);
     const niHistory  = buildHistory(netIncomes);
@@ -1108,7 +1109,7 @@ const sharesForCalc = sharesValAdj || sharesFinnhub;
     const roaFinal = roa ?? (fhm.roaTTM != null ? +fhm.roaTTM.toFixed(1) : null);
     const roicFinal = roic ?? (fhm.roicTTM != null ? +fhm.roicTTM.toFixed(1) : null);
     const revGrowthFinal = revGrowth ?? (fhm.revenueGrowthTTMYoy != null ? +fhm.revenueGrowthTTMYoy.toFixed(1) : null);
-    const debtToEquityFinal = debtToEquity ?? (fhm.totalDebt_totalEquityAnnual != null ? fhm.totalDebt_totalEquityAnnual : null);
+    const debtToEquityFinal = debtToEquity ?? (fhm.totalDebt_totalEquityAnnual != null ? fhm.totalDebt_totalEquityAnnual : (equityVal != null ? 0 : null));
 
     const result = {
       riskFreeRate,
@@ -1121,7 +1122,7 @@ const sharesForCalc = sharesValAdj || sharesFinnhub;
       description: fhProfile.description || await fetchDescription(ticker),
       employees: fhProfile.employeeTotal || null,
       weburl: fhProfile.weburl || null,
-      revVal, niVal, oiVal, fcfVal, assetsVal, equityVal, debtVal, cashVal, sharesVal, rdVal,
+      revVal, niVal, oiVal, fcfVal, assetsVal, equityVal, debtVal: effectiveDebtVal, cashVal, sharesVal, rdVal,
       cogsVal, sgaVal, ebtVal, taxVal, interestVal, sharesBasicVal, sharesDilutedVal,
       currentAssetsVal, currentLiabilitiesVal, totalLiabilitiesVal, retainedEarningsVal,
       capexVal, investingCFVal, financingCFVal, daVal,

@@ -1032,10 +1032,32 @@ export default function StockPage({ params }) {
                         color: data.fcfVal == null ? 'var(--ws-text-3)' : fcfMargin != null && fcfMargin > 15 ? 'var(--ws-accent)' : data.fcfVal > 0 ? 'var(--ws-text-2)' : 'var(--ws-red)',
                       },
                       {
-                        label: data.debtToEquity == null ? 'Debt levels unavailable' : data.debtToEquity < 0 ? 'Negative equity — high risk' : data.debtToEquity < 1 ? 'Debt levels look manageable' : data.debtToEquity < 2 ? 'Carries some debt — worth watching' : 'Highly leveraged — significant risk',
-                        value: data.debtToEquity != null ? `${data.debtToEquity.toFixed(2)}x equity` : 'N/A',
+                        label: data.debtToEquity == null
+                          ? 'Debt levels unavailable'
+                          : data.debtToEquity < 0
+                          ? 'Negative equity — high risk'
+                          : data.debtToEquity === 0
+                          ? 'Debt free — clean balance sheet'
+                          : data.debtToEquity < 1
+                          ? 'Debt levels look manageable'
+                          : data.debtToEquity < 2
+                          ? 'Carries some debt — worth watching'
+                          : 'Highly leveraged — significant risk',
+                        value: data.debtToEquity != null
+                          ? data.debtToEquity === 0
+                            ? '0.00x (Debt free)'
+                            : `${data.debtToEquity.toFixed(2)}x equity`
+                          : 'N/A',
                         pct: data.debtToEquity != null ? Math.max(4, Math.min(100, 100 - data.debtToEquity * 30)) : 0,
-                        color: data.debtToEquity == null ? 'var(--ws-text-3)' : data.debtToEquity < 0 ? 'var(--ws-red)' : data.debtToEquity < 1 ? 'var(--ws-accent)' : data.debtToEquity < 2 ? 'var(--ws-text-2)' : 'var(--ws-red)',
+                        color: data.debtToEquity == null
+                          ? 'var(--ws-text-3)'
+                          : data.debtToEquity < 0
+                          ? 'var(--ws-red)'
+                          : data.debtToEquity <= 1
+                          ? 'var(--ws-accent)'
+                          : data.debtToEquity < 2
+                          ? 'var(--ws-text-2)'
+                          : 'var(--ws-red)',
                       },
                     ];
                   })().map((m, i) => (
