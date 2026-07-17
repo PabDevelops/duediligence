@@ -485,6 +485,17 @@ async function fetchRiskFreeRate() {
   }
 }
 
+function normalizeStockData(data) {
+  if (!data) return data;
+  if (data.equityVal != null && (data.debtToEquity == null || data.debtVal == null)) {
+    const debtVal = data.debtVal ?? 0;
+    const debtToEquity = data.debtToEquity ?? +(debtVal / data.equityVal).toFixed(2);
+    const netDebt = (debtVal ?? 0) - (data.cashVal ?? 0);
+    return { ...data, debtVal, debtToEquity, netDebt };
+  }
+  return data;
+}
+
 export async function GET(request) {
   const { searchParams } = new URL(request.url);
   const ticker = searchParams.get('ticker')?.toUpperCase();
@@ -522,9 +533,10 @@ export async function GET(request) {
       const KEY_FIN_FIELDS = ['revVal', 'niVal', 'fcfVal', 'assetsVal', 'debtVal', 'cashVal'];
       const hasFinancials = KEY_FIN_FIELDS.filter(k => cached.data?.[k] != null).length >= 3;
       if (hoursOld < CACHE_HOURS && cached.data?.description && cached.data?.marketCap != null && hasFinancials) {
+        const normData = normalizeStockData(cached.data);
         const minsOld = hoursOld * 60;
         if (minsOld < 2) {
-          return Response.json({ ...cached.data, cached: true });
+          return Response.json({ ...normData, cached: true });
         } else {
           // Cache is valid for heavy financials, but update the stock price in real-time
           try {
@@ -546,13 +558,13 @@ export async function GET(request) {
               }
             }
             if (freshPriceData && freshPriceData.currentPrice != null) {
-              const updatedData = {
+              const updatedData = normalizeStockData({
                 ...cached.data,
                 currentPrice: freshPriceData.currentPrice,
                 priceChange: freshPriceData.priceChange,
                 priceChangePct: freshPriceData.priceChangePct,
                 prevClose: freshPriceData.prevClose
-              };
+              });
               // Update DB cache in background asynchronously
               supabase
                 .from('stock_cache')
@@ -564,7 +576,7 @@ export async function GET(request) {
           } catch (err) {
             console.error('Error doing fast price update:', err);
           }
-          return Response.json({ ...cached.data, cached: true });
+          return Response.json({ ...normData, cached: true });
         }
       }
     }
