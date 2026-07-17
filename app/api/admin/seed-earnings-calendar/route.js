@@ -1,4 +1,5 @@
 import { checkIsAdmin } from '../../../../lib/isAdmin';
+import { isCronRequest } from '../../../../lib/verifyCronAuth';
 
 // The Calendar page's earnings list is deliberately decoupled from stock_cache (see the
 // comment in app/api/earnings/route.js) so it can show every upcoming earnings date, not
@@ -8,9 +9,8 @@ import { checkIsAdmin } from '../../../../lib/isAdmin';
 // seed-tickers, which already has the Finnhub-rate-limit-safe batching logic.
 const DAYS_AHEAD = 35;
 
-export async function POST(request) {
-  const cronToken = request.headers.get('X-Cron-Secret');
-  const isCron = cronToken && process.env.CRON_SECRET && cronToken === process.env.CRON_SECRET;
+async function handler(request) {
+  const isCron = isCronRequest(request);
 
   if (!isCron) {
     const isAdmin = await checkIsAdmin();
@@ -46,4 +46,12 @@ export async function POST(request) {
   const result = await seedRes.json().catch(() => ({}));
 
   return Response.json({ ticker_count: tickers.length, ...result });
+}
+
+export async function GET(request) {
+  return handler(request);
+}
+
+export async function POST(request) {
+  return handler(request);
 }

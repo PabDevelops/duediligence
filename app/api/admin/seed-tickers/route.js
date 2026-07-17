@@ -1,4 +1,5 @@
 import { checkIsAdmin } from '../../../../lib/isAdmin';
+import { isCronRequest } from '../../../../lib/verifyCronAuth';
 import { THEMES } from '../../explore/route';
 
 // Populates stock_cache for a batch of tickers proactively, instead of relying on a real
@@ -14,9 +15,8 @@ import { THEMES } from '../../explore/route';
 const CONCURRENCY = 2;
 const BATCH_DELAY_MS = 8000;
 
-export async function POST(request) {
-  const cronToken = request.headers.get('X-Cron-Secret');
-  const isCron = cronToken && process.env.CRON_SECRET && cronToken === process.env.CRON_SECRET;
+async function handler(request) {
+  const isCron = isCronRequest(request);
 
   if (!isCron) {
     const isAdmin = await checkIsAdmin();
@@ -55,4 +55,12 @@ export async function POST(request) {
   }
 
   return Response.json({ total: tickers.length, seeded, failed });
+}
+
+export async function GET(request) {
+  return handler(request);
+}
+
+export async function POST(request) {
+  return handler(request);
 }

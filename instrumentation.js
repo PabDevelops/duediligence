@@ -1,6 +1,1 @@
-export async function register() {
-  if (process.env.NEXT_RUNTIME === 'nodejs') {
-    const { initializeScheduler } = await import('./lib/scheduler.js');
-    initializeScheduler();
-  }
-}
+export async function register() {}

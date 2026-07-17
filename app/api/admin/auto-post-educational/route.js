@@ -1,5 +1,6 @@
 import { supabase } from '../../../../lib/supabase';
 import { checkIsAdmin } from '../../../../lib/isAdmin';
+import { isCronRequest } from '../../../../lib/verifyCronAuth';
 import Anthropic from '@anthropic-ai/sdk';
 
 const anthropic = new Anthropic({
@@ -79,9 +80,8 @@ Write 4-6 paragraphs/headings total. Keep paragraphs concise (2-3 sentences max)
   }
 }
 
-export async function POST(req) {
-  const cronToken = req.headers.get('X-Cron-Secret');
-  const isCron = cronToken && process.env.CRON_SECRET && cronToken === process.env.CRON_SECRET;
+async function handler(req) {
+  const isCron = isCronRequest(req);
 
   if (!isCron) {
     const isAdmin = await checkIsAdmin();
@@ -141,4 +141,12 @@ export async function POST(req) {
     console.error('Auto-post error:', error);
     return Response.json({ error: error.message }, { status: 500 });
   }
+}
+
+export async function GET(req) {
+  return handler(req);
+}
+
+export async function POST(req) {
+  return handler(req);
 }
