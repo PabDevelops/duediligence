@@ -161,6 +161,7 @@ function computeDerivedFinancials(h) {
   const grossMargin = revVal && gpVal ? +((gpVal / revVal) * 100).toFixed(1) : null;
   const revGrowth = revVal && revPrev ? +(((revVal - revPrev) / Math.abs(revPrev)) * 100).toFixed(1) : null;
   const roe = equityVal && niVal ? +((niVal / equityVal) * 100).toFixed(1) : null;
+  const roa = assetsVal && niVal ? +((niVal / assetsVal) * 100).toFixed(1) : null;
   const effectiveDebtVal = equityVal != null ? (debtVal ?? 0) : debtVal;
   const investedCapital = (equityVal ?? 0) + (effectiveDebtVal ?? 0);
   const roic = investedCapital > 0 && oiVal !== null ? +((oiVal / investedCapital) * 100).toFixed(1) : null;
@@ -559,7 +560,9 @@ export async function GET(request) {
       // instead of being trusted as a complete snapshot.
       const KEY_FIN_FIELDS = ['revVal', 'niVal', 'fcfVal', 'assetsVal', 'debtVal', 'cashVal'];
       const normData = normalizeStockData(cached.data);
-      const hasCompleteFinancials = hasFinancials && normData?.debtToEquity != null;
+      const hasFinancials = KEY_FIN_FIELDS.some(f => normData?.[f] != null);
+      const isFallbackOrEtf = cached.data?.finnhubFallback || cached.data?.internationalSource;
+      const hasCompleteFinancials = (hasFinancials && normData?.debtToEquity != null) || isFallbackOrEtf;
       if (hoursOld < CACHE_HOURS && cached.data?.description && cached.data?.marketCap != null && hasCompleteFinancials) {
         const minsOld = hoursOld * 60;
         if (minsOld < 2) {
