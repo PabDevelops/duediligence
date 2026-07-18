@@ -1,5 +1,5 @@
-import { supabase } from '../../../lib/supabase';
-import { getYahooAuth } from '../../../lib/yahooFinance';
+import { supabase } from '../../../lib/supabase.js';
+import { getYahooAuth } from '../../../lib/yahooFinance.js';
 
 const FH_KEY = process.env.FINNHUB_API_KEY;
 const AV_KEY = process.env.ALPHA_VANTAGE_API_KEY;
@@ -560,10 +560,10 @@ export async function GET(request) {
       // instead of being trusted as a complete snapshot.
       const KEY_FIN_FIELDS = ['revVal', 'niVal', 'fcfVal', 'assetsVal', 'debtVal', 'cashVal'];
       const normData = normalizeStockData(cached.data);
-      const hasFinancials = KEY_FIN_FIELDS.some(f => normData?.[f] != null);
-      const isFallbackOrEtf = cached.data?.finnhubFallback || cached.data?.internationalSource;
-      const hasCompleteFinancials = (hasFinancials && normData?.debtToEquity != null) || isFallbackOrEtf;
-      if (hoursOld < CACHE_HOURS && cached.data?.description && cached.data?.marketCap != null && hasCompleteFinancials) {
+      const validFinCount = KEY_FIN_FIELDS.filter(f => normData?.[f] != null).length;
+      const isEtf = cached.data?.sector === 'ETF' || cached.data?.industry === 'ETF';
+      const isComplete = validFinCount >= 2 || (isEtf && cached.data?.currentPrice != null);
+      if (hoursOld < CACHE_HOURS && cached.data?.marketCap != null && isComplete) {
         const minsOld = hoursOld * 60;
         if (minsOld < 2) {
           return Response.json({ ...normData, cached: true });
@@ -875,22 +875,34 @@ export async function GET(request) {
         yahooFundamentals: !!yh,
       };
 
-      try {
-        await supabase.from('stock_cache').upsert({ ticker, data: result, updated_at: new Date().toISOString() });
-      } catch (e) {}
+      const valCountFallback = [result.revVal, result.niVal, result.fcfVal, result.assetsVal, result.debtVal, result.cashVal].filter(v => v !== null).length;
+      const isEtfFallback = result.sector === 'ETF' || result.industry === 'ETF';
+      if (valCountFallback >= 2 || (isEtfFallback && result.currentPrice != null)) {
+        try {
+          await supabase.from('stock_cache').upsert({ ticker, data: result, updated_at: new Date().toISOString() });
+        } catch (e) {}
+      }
 
       return Response.json(result);
     }
 
     const usgaap = facts.facts?.['us-gaap'] || {};
 
-    const getMetric = (keys) => {
+    const getMetric = (keys, isFlow = true) => {
       for (const key of keys) {
         const metric = usgaap[key];
         if (!metric) continue;
         const units = metric.units?.USD || metric.units?.EUR || metric.units?.shares || metric.units?.pure;
         if (!units) continue;
-        const annual = units.filter(u => (u.form === '10-K' || u.form === '20-F')).sort((a, b) => b.end.localeCompare(a.end));
+        const annual = units.filter(u => {
+          const isForm = ['10-K', '20-F', '10-K/A', '20-F/A'].includes(u.form);
+          if (!isForm) return false;
+          if (isFlow && u.start && u.end) {
+            const days = (new Date(u.end) - new Date(u.start)) / (1000 * 60 * 60 * 24);
+            if (days < 300 && u.fp !== 'FY') return false;
+          }
+          return true;
+        }).sort((a, b) => b.end.localeCompare(a.end));
         if (annual.length > 0) return annual;
       }
       return null;
@@ -1211,18 +1223,78 @@ const sharesForCalc = sharesValAdj || sharesFinnhub;
       finnhubFallback: false,
     };
 
-    // Si menos de 2 campos clave tienen datos, marcar como fallback
+    // Si menos de 3 campos clave tienen datos o no hay ingresos/beneficios, combinar con Yahoo Fundamentals
     const dataQuality = [revVal, niVal, oiVal, fcfVal, assetsVal, equityVal, debtVal, cashVal].filter(v => v !== null).length;
-    if (dataQuality < 3) result.finnhubFallback = true;
+    if (dataQuality < 3 || (revVal == null && niVal == null)) {
+      result.finnhubFallback = true;
+      const yh = await fetchYahooFundamentals(ticker).catch(() => null);
+      if (yh) {
+        result.sector = result.sector || yh.sector;
+        result.industry = result.industry || yh.industry;
+        result.description = result.description || yh.description;
+        result.revVal = result.revVal ?? yh.revVal;
+        result.niVal = result.niVal ?? yh.niVal;
+        result.oiVal = result.oiVal ?? yh.oiVal;
+        result.fcfVal = result.fcfVal ?? yh.fcfVal;
+        result.assetsVal = result.assetsVal ?? yh.assetsVal;
+        result.equityVal = result.equityVal ?? yh.equityVal;
+        result.debtVal = result.debtVal ?? yh.debtVal;
+        result.cashVal = result.cashVal ?? yh.cashVal;
+        result.sharesVal = result.sharesVal ?? yh.sharesVal;
+        result.rdVal = result.rdVal ?? yh.rdVal;
+        result.cogsVal = result.cogsVal ?? yh.cogsVal;
+        result.sgaVal = result.sgaVal ?? yh.sgaVal;
+        result.ebtVal = result.ebtVal ?? yh.ebtVal;
+        result.taxVal = result.taxVal ?? yh.taxVal;
+        result.interestVal = result.interestVal ?? yh.interestVal;
+        result.operatingCFVal = result.operatingCFVal ?? yh.operatingCFVal;
+        result.capexVal = result.capexVal ?? yh.capexVal;
+        result.grossMargin = result.grossMargin ?? yh.grossMargin;
+        result.opMargin = result.opMargin ?? yh.opMargin;
+        result.netMargin = result.netMargin ?? yh.netMargin;
+        result.roe = result.roe ?? yh.roe;
+        result.roa = result.roa ?? yh.roa;
+        result.roic = result.roic ?? yh.roic;
+        result.revGrowth = result.revGrowth ?? yh.revGrowth;
+        result.debtToEquity = result.debtToEquity ?? yh.debtToEquity;
 
-    // Wikipedia description
-    
+        if (!result.revHistory || result.revHistory.length === 0) result.revHistory = yh.revHistory;
+        if (!result.niHistory || result.niHistory.length === 0) result.niHistory = yh.niHistory;
+        if (!result.fcfHistory || result.fcfHistory.length === 0) result.fcfHistory = yh.fcfHistory;
+        if (!result.oiHistory || result.oiHistory.length === 0) result.oiHistory = yh.oiHistory;
+        if (!result.sharesHistory || result.sharesHistory.length === 0) result.sharesHistory = yh.sharesHistory;
+        if (!result.gpHistory || result.gpHistory.length === 0) result.gpHistory = yh.gpHistory;
+        if (!result.marginHistory || result.marginHistory.length === 0) result.marginHistory = yh.marginHistory;
+        if (!result.epsHistory || result.epsHistory.length === 0) result.epsHistory = yh.epsHistory;
+        if (!result.cogsHistory || result.cogsHistory.length === 0) result.cogsHistory = yh.cogsHistory;
+        if (!result.sgaHistory || result.sgaHistory.length === 0) result.sgaHistory = yh.sgaHistory;
+        if (!result.rdHistory || result.rdHistory.length === 0) result.rdHistory = yh.rdHistory;
+        if (!result.ebtHistory || result.ebtHistory.length === 0) result.ebtHistory = yh.ebtHistory;
+        if (!result.taxHistory || result.taxHistory.length === 0) result.taxHistory = yh.taxHistory;
+        if (!result.capexHistory || result.capexHistory.length === 0) result.capexHistory = yh.capexHistory;
+        if (!result.operatingCFHistory || result.operatingCFHistory.length === 0) result.operatingCFHistory = yh.operatingCFHistory;
+        if (!result.investingCFHistory || result.investingCFHistory.length === 0) result.investingCFHistory = yh.investingCFHistory;
+        if (!result.financingCFHistory || result.financingCFHistory.length === 0) result.financingCFHistory = yh.financingCFHistory;
+        if (!result.daHistory || result.daHistory.length === 0) result.daHistory = yh.daHistory;
+        if (!result.debtHistory || result.debtHistory.length === 0) result.debtHistory = yh.debtHistory;
+        if (!result.equityHistory || result.equityHistory.length === 0) result.equityHistory = yh.equityHistory;
+        if (result.epsCagr == null) result.epsCagr = yh.epsCagr;
+        if (result.pe == null) result.pe = yh.pe;
+        if (result.eps == null) result.eps = yh.eps;
+        if (result.pfcf == null) result.pfcf = yh.pfcf;
+        if (result.fcfYield == null) result.fcfYield = yh.fcfYield;
+      }
+    }
 
-    try {
-      await supabase
-        .from('stock_cache')
-        .upsert({ ticker, data: result, updated_at: new Date().toISOString() });
-    } catch (e) {}
+    const finalValidCount = [result.revVal, result.niVal, result.fcfVal, result.assetsVal, result.debtVal, result.cashVal].filter(v => v !== null).length;
+    const isEtfSec = result.sector === 'ETF' || result.industry === 'ETF';
+    if (finalValidCount >= 2 || (isEtfSec && result.currentPrice != null)) {
+      try {
+        await supabase
+          .from('stock_cache')
+          .upsert({ ticker, data: result, updated_at: new Date().toISOString() });
+      } catch (e) {}
+    }
 
     return Response.json(result);
 
