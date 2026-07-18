@@ -38,7 +38,7 @@ const fmtOffset = (years) => {
   return `+${y}y${m}mo`;
 };
 
-export default function ProjectionChart({ ticker, data, dcfValue, price, currency }) {
+export default function ProjectionChart({ ticker, data, fundamentalGrowth, price, currency }) {
   const [horizonKey, setHorizonKey] = useState('1y');
   const [closes, setCloses] = useState(null);
   const [marketVolAnnual, setMarketVolAnnual] = useState(null);
@@ -74,9 +74,9 @@ export default function ProjectionChart({ ticker, data, dcfValue, price, currenc
   );
 
   const analystDrift = data.analystTarget && price ? (data.analystTarget / price) - 1 : null;
-  // The DCF tab's own (fundamentals-based, not market-implied) growth assumption — one of
-  // three independent drift signals blended below.
-  const dcfGrowth = dcfValue?.baseGrowth ?? null;
+  // The fundamentals-based (not market-implied) growth assumption — one of three independent
+  // drift signals blended below.
+  const dcfGrowth = fundamentalGrowth ?? null;
 
   const driftAnnual = useMemo(
     () => computeProjectionDrift({ impliedGrowth: dcfGrowth, historicalCagr, analystDrift }),
@@ -193,7 +193,7 @@ export default function ProjectionChart({ ticker, data, dcfValue, price, currenc
         </div>
         <div><span className="text-ws-text-3">Annual volatility</span> &nbsp;<b className="text-ws-text">{(volAnnual * 100).toFixed(1)}%</b></div>
         <div><span className="text-ws-text-3">Drift sources</span> &nbsp;<b className="text-ws-text">
-          {[dcfGrowth != null && 'DCF', historicalCagr != null && '1Y CAGR', analystDrift != null && 'Analyst target'].filter(Boolean).join(' + ') || '—'}
+          {[dcfGrowth != null && 'Fundamentals', historicalCagr != null && '1Y CAGR', analystDrift != null && 'Analyst target'].filter(Boolean).join(' + ') || '—'}
         </b></div>
         <div><span className="text-ws-text-3">Vol sources</span> &nbsp;<b className="text-ws-text">
           {[historicalVol != null && '1Y realized', (data.beta != null && marketVolAnnual != null) && 'Beta × VIX'].filter(Boolean).join(' + ') || '—'}

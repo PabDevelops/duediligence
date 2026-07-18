@@ -743,7 +743,13 @@ export async function GET(request) {
 
       const m = fhBasic?.metric || {};
       const currentPrice = fh.c || null;
-      const sharesOutstanding = m.sharesOutstanding ? m.sharesOutstanding * 1e6 : null;
+      // /stock/metric's sharesOutstanding is occasionally missing (verified against real data:
+      // NOK) even when /stock/profile2's shareOutstanding is populated — the latter is a plain
+      // share count with no currency exposure, safe to use regardless of which listing profile2
+      // resolves to (unlike marketCapitalization below, which is denominated in whatever
+      // currency that listing trades in).
+      const sharesOutstanding = (m.sharesOutstanding ? m.sharesOutstanding * 1e6 : null)
+        ?? (fhProfile.shareOutstanding ? fhProfile.shareOutstanding * 1e6 : null);
       // fhProfile can resolve to a foreign primary listing (e.g. ticker NVO -> Novo Nordisk's
       // Copenhagen listing, profile2 returns "currency":"DKK") even though /quote above
       // correctly returns the USD ADR price — mixing the two overstates market cap by the FX
@@ -771,7 +777,11 @@ export async function GET(request) {
         priceChange: fh.d || null,
         priceChangePct: fh.dp || null,
         prevClose: fh.pc || null,
-        marketCap: marketCap ?? yh?.marketCap ?? null,
+        // Last-resort fallback: currentPrice × sharesOutstanding, both already USD-safe by this
+        // point (verified against real data: NOK's Finnhub profile resolves to its Helsinki EUR
+        // listing so the currency-matched marketCap above is null, and Yahoo's quoteSummary has
+        // no marketCap for it either — this was the only path left to a usable number).
+        marketCap: marketCap ?? yh?.marketCap ?? (currentPrice && sharesOutstanding ? currentPrice * sharesOutstanding : null),
         eps: eps ?? yh?.eps ?? null,
         pe: pe ?? yh?.pe ?? null,
         forwardPE: yh?.forwardPE ?? null,

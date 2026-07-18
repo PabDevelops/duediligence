@@ -20,9 +20,8 @@ import {
   getDimScore as sharedGetDimScore,
   totalScore as sharedTotalScore,
   computeEasyMode,
-  computeDCFValue,
-  computeDCFStressGrid,
-  DCF_STRESS_TABLES,
+  computeRelativeValue,
+  computeFundamentalGrowth,
   computeFairValue,
 } from '../../../../lib/stockScoring';
 
@@ -387,7 +386,6 @@ export default function StockPage({ params }) {
   const [insiderTypeFilter, setInsiderTypeFilter] = useState('ALL');
   const [insiderRoleFilter, setInsiderRoleFilter] = useState('ALL');
   const [selectedInsiderName, setSelectedInsiderName] = useState(null);
-  const [stressTableKey, setStressTableKey] = useState('growthWacc');
   const [answers, setAnswers] = useState({});
   const [finTab, setFinTab] = useState('snapshot');
   const [evidence, setEvidence] = useState({});
@@ -687,18 +685,18 @@ export default function StockPage({ params }) {
     || data.roic != null || data.grossMargin != null || (data.revHistory?.length ?? 0) > 0;
 
   const easyMode = computeEasyMode(data, hasFundamentals);
-  // No user-facing knobs on the DCF — every assumption (FCF base, growth fade shape, margin
-  // recovery ramp) is decided automatically from the company's own reported history. See
-  // computeDCFValue in lib/stockScoring.js for exactly what triggers each adjustment.
-  const dcfValue = computeDCFValue(data, data.riskFreeRate);
-  const dcfBaseScenario = dcfValue?.scenarios.find(s => s.primary);
-  const fairValue = computeFairValue(dcfBaseScenario?.value, price);
-  const stressGrid = dcfValue ? computeDCFStressGrid(data, data.riskFreeRate, stressTableKey, {
-    fcfBase: dcfValue.fcfBase,
-    plateauYears: dcfValue.plateauYears,
-    matureFcfMargin: dcfValue.matureFcfMargin,
-    fcfMarginRampYears: dcfValue.fcfMarginRampYears,
-  }) : null;
+  // Quality-adjusted relative valuation — replaces the old 10-year forward DCF, which stacked
+  // 4-5 independently uncertain assumptions (WACC via beta, a decade of reinvestment×ROIC
+  // growth, a margin-recovery ramp, a terminal exit multiple) that compounded multiplicatively.
+  // See computeRelativeValue in lib/stockScoring.js for the full reasoning: it blends this
+  // company's own current P/FCF multiple with its sector's typical one, weighted by its own
+  // Quality Score (CBS/GQS) instead of assuming full reversion to a sector average regardless
+  // of who the company actually is.
+  const relativeValue = computeRelativeValue(data, easyMode);
+  const fairValue = computeFairValue(relativeValue?.fairValue, price);
+  // Kept separate from the valuation above — the Projection tab's drift blend only needs this
+  // one fundamentals-based growth number, not the old DCF's full parameter stack.
+  const fundamentalGrowth = computeFundamentalGrowth(data);
 
   // International stocks (sourced via the Yahoo fallback, not SEC EDGAR) are the
   // freemium wedge: header, sparkline and the hero Quality Score stay free, but every
@@ -1826,20 +1824,27 @@ export default function StockPage({ params }) {
   </div>
 ))}
 
-        {/* DCF TAB — locked entirely for guests, not just blurred: the valuation
+        {/* VALUATION TAB — locked entirely for guests, not just blurred: the valuation
             call itself is the product. */}
         {tab === 'dcf' && (!isSignedIn ? (
           <LockedPanel
-            title="Valuation (DCF)"
-            description="The full DCF model — valuation range, bull/bear scenarios and stress test — unlocks with a free account."
+            title="Relative Valuation"
+            description="The full valuation range, bull/bear scenarios and quality-weighted target multiple unlock with a free account."
           />
         ) : (
           <div>
-            {/* DCF MODEL — WACC-discounted 10yr FCF projection, primary estimate when available */}
-            <div className="text-ws-text-3 text-[10px] tracking-[2px] border-b border-ws-border pb-1.5 mb-3 mt-6">DCF MODEL</div>
+            {/* RELATIVE VALUATION — quality-adjusted target P/FCF multiple, primary estimate
+                when available. Replaces the old 10-year forward DCF (see computeRelativeValue
+                in lib/stockScoring.js for why: that model stacked 4-5 independently uncertain
+                assumptions that compounded multiplicatively over a decade). */}
+            <div className="text-ws-text-3 text-[10px] tracking-[2px] border-b border-ws-border pb-1.5 mb-3 mt-6">RELATIVE VALUATION</div>
 
-            {dcfValue ? (() => {
-              const scenarios = dcfValue.scenarios.map(s => {
+            {relativeValue ? (() => {
+              const scenarios = [
+                { key: 'bear', label: 'BEAR CASE', value: relativeValue.bearValue, primary: false },
+                { key: 'base', label: 'BASE CASE', value: relativeValue.fairValue, primary: true },
+                { key: 'bull', label: 'BULL CASE', value: relativeValue.bullValue, primary: false },
+              ].map(s => {
                 const diff = price ? +(((s.value - price) / price) * 100).toFixed(1) : null;
                 const underval = price ? s.value > price : null;
                 return { ...s, diff, underval };
@@ -1854,47 +1859,29 @@ export default function StockPage({ params }) {
               return (
                 <>
                   <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px 24px', background: 'var(--ws-bg-1)', border: '1px solid var(--ws-border)', padding: '14px 16px', marginBottom: '16px', fontSize: '11px' }}>
-                    <div><span className="text-ws-text-3">WACC</span> &nbsp;<b className="text-ws-text">{(dcfValue.wacc * 100).toFixed(1)}%</b></div>
-                    <div><span className="text-ws-text-3">Growth assumption</span> &nbsp;<b className="text-ws-text">{(dcfValue.baseGrowth * 100).toFixed(1)}%</b></div>
-                    <div><span className="text-ws-text-3">Exit multiple</span> &nbsp;<b className="text-ws-text">{dcfValue.exitMultiple.toFixed(1)}x FCF</b></div>
-                    <div><span className="text-ws-text-3">Risk-free rate</span> &nbsp;<b className="text-ws-text">{(data.riskFreeRate * 100).toFixed(2)}%</b></div>
-                    <div title={dcfValue.fcfBaseMethod === 'normalized' ? 'Average FCF-to-revenue margin over the trailing years, applied to current revenue — smooths out a single year of capex or working-capital timing noise.' : "The latest reported year's free cash flow."}>
-                      <span className="text-ws-text-3">FCF base</span> &nbsp;<b className="text-ws-text">{formatCurrency(dcfValue.fcfBase, curSym(data.currency))}</b> <span style={{ color: 'var(--ws-text-3)' }}>({dcfValue.fcfBaseMethod === 'normalized' ? 'normalized' : 'latest FY'})</span>
+                    <div title="Current true P/FCF (net of stock-based compensation) — the market's own read on this business today.">
+                      <span className="text-ws-text-3">Own multiple</span> &nbsp;<b className="text-ws-text">{relativeValue.ownMultiple != null ? `${relativeValue.ownMultiple.toFixed(1)}x` : 'N/A'}</b>
                     </div>
-                    {dcfValue.impliedGrowth != null && (
-                      <div title="The growth rate that would justify today's price — shown for context only, not used in this valuation.">
-                        <span className="text-ws-text-3">Market is pricing in</span> &nbsp;<b className="text-ws-text">{(dcfValue.impliedGrowth * 100).toFixed(1)}%</b>
+                    <div title="Rough long-run benchmark for this sector — not fitted to this company.">
+                      <span className="text-ws-text-3">Sector multiple</span> &nbsp;<b className="text-ws-text">{relativeValue.sectorMultiple.toFixed(1)}x</b>
+                    </div>
+                    <div title="How much this company's own Quality Score (CBS/GQS) supports trusting its current multiple over the sector benchmark, whichever direction it's priced.">
+                      <span className="text-ws-text-3">Quality weight</span> &nbsp;<b className="text-ws-text">{(relativeValue.qualityWeight * 100).toFixed(0)}%</b>
+                    </div>
+                    <div>
+                      <span className="text-ws-text-3">Target multiple</span> &nbsp;<b className="text-ws-text">{relativeValue.targetMultiple.toFixed(1)}x FCF</b>
+                    </div>
+                    {relativeValue.impliedGrowthPct != null && (
+                      <div title="Reverse-DCF: the single growth rate today's price already implies, at a plain CAPM discount rate — context only, not used to drive the valuation above.">
+                        <span className="text-ws-text-3">Market is pricing in</span> &nbsp;<b className="text-ws-text">{relativeValue.impliedGrowthPct.toFixed(1)}%</b>
+                      </div>
+                    )}
+                    {relativeValue.realGrowthPct != null && (
+                      <div title="This company's own recent, trailing revenue growth (3yr, stub/shock years excluded) — compare against 'Market is pricing in' above.">
+                        <span className="text-ws-text-3">Actually growing at</span> &nbsp;<b className="text-ws-text">{relativeValue.realGrowthPct.toFixed(1)}%</b>
                       </div>
                     )}
                   </div>
-
-                  {(dcfValue.reinvestmentPhase || dcfValue.marginDepressed) && (
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px', background: 'rgba(217, 119, 6, 0.1)', border: '1px solid rgba(217, 119, 6, 0.35)', padding: '10px 14px', marginBottom: '16px', fontSize: '11px', color: 'var(--ws-text-2)' }}>
-                      <span style={{ fontWeight: 800, color: '#d97706', letterSpacing: '0.5px' }}>MARGIN RECOVERY APPLIED</span>
-                      <span>
-                        {dcfValue.reinvestmentPhase ? 'capex/revenue is running well above its own trailing average' : "today's FCF margin sits well below this company's own best recent margin"}
-                        {' '}— the DCF uses a margin-normalized FCF base, a 3yr growth plateau, and ramps the FCF margin toward {(dcfValue.matureFcfMargin * 100).toFixed(1)}% over 6yrs (the best this company has already demonstrated) instead of assuming the current depressed conversion holds for all 10 years.
-                      </span>
-                    </div>
-                  )}
-
-                  {dcfValue.marginJustMatured && (
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px', background: 'rgba(217, 119, 6, 0.1)', border: '1px solid rgba(217, 119, 6, 0.35)', padding: '10px 14px', marginBottom: '16px', fontSize: '11px', color: 'var(--ws-text-2)' }}>
-                      <span style={{ fontWeight: 800, color: '#d97706', letterSpacing: '0.5px' }}>RECENT MARGIN RE-RATE</span>
-                      <span>
-                        the FCF margin expanded sharply over the last few years and has just leveled off near its own high — growth here uses revenue (not FCF-dollar growth, which would still carry that one-time re-rate) and the exit multiple carries a 25% durability discount, since a margin this fresh is not yet proven to hold for a decade the way a long-stable one has.
-                      </span>
-                    </div>
-                  )}
-
-                  {dcfValue.extremeUpside && (
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px', background: 'rgba(220, 38, 38, 0.1)', border: '1px solid rgba(220, 38, 38, 0.35)', padding: '10px 14px', marginBottom: '16px', fontSize: '11px', color: 'var(--ws-text-2)' }}>
-                      <span style={{ fontWeight: 800, color: 'var(--ws-red)', letterSpacing: '0.5px' }}>EXTREME RESULT — TREAT WITH CAUTION</span>
-                      <span>
-                        the base case implies more than 150% upside to the current price. That can be a genuine mispricing, but it is also the recurring signature of a modeling blind spot (a terminal-value-dominated projection off a fast-changing margin) — worth a manual sanity check against the company&apos;s own guidance and sell-side estimates before trusting this number at face value.
-                      </span>
-                    </div>
-                  )}
 
                   {price != null && (
                     <div style={{ background: 'var(--ws-bg-1)', border: '1px solid var(--ws-border)', padding: '18px 20px', marginBottom: '16px' }}>
@@ -1904,7 +1891,7 @@ export default function StockPage({ params }) {
                           {scenarios.map(s => (
                             <div key={s.key} style={{ position: 'absolute', left: `${pctOf(s.value)}%`, bottom: '6px', transform: 'translateX(-50%)', textAlign: 'center', whiteSpace: 'nowrap' }}>
                               <div style={{ fontSize: '11px', fontWeight: 700, color: s.primary ? 'var(--ws-text)' : 'var(--ws-text-3)', marginBottom: '4px' }}>
-                                {curSym(data.currency)}{s.value}
+                                {curSym(data.currency)}{s.value.toFixed(2)}
                               </div>
                               <div style={{ width: s.primary ? '3px' : '2px', height: '14px', margin: '0 auto', borderRadius: '2px', background: s.primary ? 'var(--ws-text)' : 'var(--ws-text-3)' }} />
                             </div>
@@ -1936,92 +1923,19 @@ export default function StockPage({ params }) {
                         )}
                         <div className="text-ws-text-3 text-[10px] tracking-[2px] mb-3">{s.label}</div>
                         <div style={{ fontSize: '30px', fontWeight: 700, letterSpacing: '-1px', marginBottom: '10px', color: 'var(--ws-text)' }}>
-                          {curSym(data.currency)}{s.value}
+                          {curSym(data.currency)}{s.value.toFixed(2)}
                         </div>
                         {s.diff !== null && (
                           <div style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', fontSize: '11px', fontWeight: 800, padding: '3px 8px', background: 'var(--ws-bg-2)', color: s.underval ? 'var(--ws-accent)' : 'var(--ws-red)', marginBottom: '12px' }}>
                             {s.underval ? '▲' : '▼'} {Math.abs(s.diff)}% {s.underval ? 'UPSIDE' : 'DOWNSIDE'}
                           </div>
                         )}
-                        <div style={{ display: 'flex', flexDirection: 'column', gap: '5px', borderTop: '1px solid var(--ws-border)', paddingTop: '10px' }}>
-                          <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '10px' }}>
-                            <span className="text-ws-text-3">WACC</span>
-                            <span style={{ fontWeight: 700 }}>{(s.wacc * 100).toFixed(1)}%</span>
-                          </div>
-                          <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '10px' }}>
-                            <span className="text-ws-text-3">FCF growth (10yr)</span>
-                            <span style={{ fontWeight: 700 }}>{s.growth >= 0 ? '+' : ''}{(s.growth * 100).toFixed(1)}%</span>
-                          </div>
-                        </div>
                       </div>
                     ))}
                   </div>
 
-                  {/* Stress test — all 6 grids sweep the same DCF formula across 2 of its
-                      5 inputs at a time; pick which pair to look at. */}
-                  {stressGrid && (
-                    <div style={{ background: 'var(--ws-bg-1)', border: '1px solid var(--ws-border)', padding: '18px 20px', marginBottom: '16px' }}>
-                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '10px', marginBottom: '14px' }}>
-                        <div style={{ fontSize: '10px', fontWeight: 800, color: 'var(--ws-text-3)', letterSpacing: '1.5px' }}>STRESS TEST</div>
-                        <select
-                          value={stressTableKey}
-                          onChange={(e) => setStressTableKey(e.target.value)}
-                          style={{ background: 'var(--ws-bg-2)', border: '1px solid var(--ws-border)', color: 'var(--ws-text)', fontSize: '11px', padding: '6px 10px', fontWeight: 600 }}
-                        >
-                          {Object.entries(DCF_STRESS_TABLES).map(([key, cfg]) => (
-                            <option key={key} value={key}>{cfg.label}</option>
-                          ))}
-                        </select>
-                      </div>
-
-                      <div style={{ overflowX: 'auto' }}>
-                        <table style={{ minWidth: `${130 + stressGrid.colAxis.length * 90}px`, borderCollapse: 'collapse', fontSize: '11px', tableLayout: 'fixed' }}>
-                          <colgroup>
-                            <col style={{ width: '130px' }} />
-                            {stressGrid.colAxis.map((col, i) => <col key={i} style={{ width: '90px' }} />)}
-                          </colgroup>
-                          <thead>
-                            <tr>
-                              <th style={{ padding: '6px 10px', textAlign: 'left', fontSize: '9px', color: 'var(--ws-text-3)', letterSpacing: '1px' }}>
-                                {stressGrid.rowLabel} \ {stressGrid.colLabel}
-                              </th>
-                              {stressGrid.colAxis.map(col => (
-                                <th key={col.label} style={{ padding: '6px 10px', textAlign: 'center', fontSize: '10px', color: 'var(--ws-text-2)', fontWeight: 700, whiteSpace: 'nowrap' }}>
-                                  {col.label}
-                                </th>
-                              ))}
-                            </tr>
-                          </thead>
-                          <tbody>
-                            {stressGrid.rowAxis.map((row, ri) => (
-                              <tr key={row.label}>
-                                <td style={{ padding: '6px 10px', fontSize: '10px', color: 'var(--ws-text-2)', fontWeight: 700, whiteSpace: 'nowrap' }}>{row.label}</td>
-                                {stressGrid.colAxis.map((col, ci) => {
-                                  const value = stressGrid.matrix[ri][ci];
-                                  const ratio = value != null && price ? value / price : null;
-                                  const bg = ratio == null ? 'var(--ws-bg-2)'
-                                    : ratio >= 1
-                                      ? `rgba(5, 150, 105, ${Math.min(0.45, 0.08 + Math.min(1, (ratio - 1) / 0.5) * 0.37)})`
-                                      : `rgba(220, 38, 38, ${Math.min(0.45, 0.08 + Math.min(1, (1 - ratio) / 0.5) * 0.37)})`;
-                                  return (
-                                    <td key={col.label} style={{ padding: '8px 10px', textAlign: 'center', background: bg, fontWeight: 600, whiteSpace: 'nowrap' }}>
-                                      {value != null ? `${curSym(data.currency)}${value.toFixed(2)}` : '⚠️'}
-                                    </td>
-                                  );
-                                })}
-                              </tr>
-                            ))}
-                          </tbody>
-                        </table>
-                      </div>
-                      <div style={{ fontSize: '10px', color: 'var(--ws-text-3)', marginTop: '10px' }}>
-                        Every cell is the same DCF, run with that row's {stressGrid.rowLabel.toLowerCase()} and column's {stressGrid.colLabel.toLowerCase()} — everything else stays at the base case. Green = above current price ({curSym(data.currency)}{price?.toFixed(2)}), red = below.
-                      </div>
-                    </div>
-                  )}
-
                   <div className="text-ws-text-3 text-[10px] tracking-[1px]">
-                    WACC-DISCOUNTED FCF (10YR, FADING TO A LONG-RUN RATE) + EXIT-MULTIPLE TERMINAL VALUE · GROWTH = FUNDAMENTALS-BASED (REINVESTMENT RATE × ROIC, FALLS BACK TO FCF CAGR) · FCF BASE AUTO-NORMALIZES DURING A DETECTED REINVESTMENT PHASE · NOT INVESTMENT ADVICE
+                    TARGET MULTIPLE = OWN CURRENT TRUE P/FCF BLENDED WITH SECTOR-TYPICAL, WEIGHTED BY THIS COMPANY'S OWN QUALITY SCORE (CBS/GQS) · FAIR VALUE = TARGET MULTIPLE × TRUE FCF PER SHARE · NOT INVESTMENT ADVICE
                   </div>
                 </>
               );
@@ -2029,12 +1943,10 @@ export default function StockPage({ params }) {
               <div style={{ background: 'var(--ws-bg-1)', border: '1px solid var(--ws-border)', padding: '40px', textAlign: 'center', marginBottom: '32px' }}>
                 <div style={{ color: 'var(--ws-accent)', fontSize: '24px', fontWeight: 600, letterSpacing: '4px', marginBottom: '8px' }}>N/A</div>
                 <div style={{ color: 'var(--ws-text-2)', fontSize: '12px', marginBottom: '4px' }}>
-                  {!data.fcfVal || data.fcfVal <= 0 ? 'NEGATIVE OR MISSING FREE CASH FLOW' : 'INSUFFICIENT DATA FOR A DCF'}
+                  {!data.marketCap || !data.currentPrice ? 'MISSING MARKET CAP OR PRICE' : 'NEGATIVE OR MISSING FREE CASH FLOW'}
                 </div>
                 <div style={{ color: 'var(--ws-text-3)', fontSize: '11px' }}>
-                  {!data.fcfVal || data.fcfVal <= 0
-                    ? "A WACC-discounted DCF isn't meaningful without positive free cash flow to project forward."
-                    : 'Requires free cash flow, market cap, and shares outstanding.'}
+                  A relative valuation isn&apos;t meaningful without a current market price and positive free cash flow to anchor to.
                 </div>
               </div>
             )}
@@ -2049,7 +1961,7 @@ export default function StockPage({ params }) {
             description="Future price projections (Monte Carlo + confidence band) unlock with a free account."
           />
         ) : (
-          <ProjectionChart ticker={ticker} data={data} dcfValue={dcfValue} price={price} currency={data.currency} />
+          <ProjectionChart ticker={ticker} data={data} fundamentalGrowth={fundamentalGrowth} price={price} currency={data.currency} />
         ))}
 
         {/* INSIDERS TAB — Form 3/4/5 buy/sell activity, SEC EDGAR primary / Finnhub fallback */}
