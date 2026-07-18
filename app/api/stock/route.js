@@ -5,6 +5,33 @@ const FH_KEY = process.env.FINNHUB_API_KEY;
 const AV_KEY = process.env.ALPHA_VANTAGE_API_KEY;
 const CACHE_HOURS = 24;
 
+// SEC's company_tickers.json is a large (~1-2MB), slow-changing file — re-fetching it fresh on
+// every single uncached stock lookup needlessly hammers SEC's rate limit (officially ~10
+// req/sec, shared across this server's *entire* traffic), and once that limit trips, SEC
+// returns an HTML "Request Rate Threshold Exceeded" page instead of JSON — which crashed the
+// *whole* request with an unrelated-looking JSON.parse error for any ticker not already in the
+// Supabase cache (verified against real data: this is exactly what broke a real ticker lookup
+// that had worked the day before). Cached in memory for a day; on a failed refetch, serves the
+// last good copy rather than erroring — and if there's no copy yet either, returns null so the
+// caller falls through to the Finnhub+Yahoo path below, which doesn't depend on this file.
+let tickerMapCache = null; // { map: Map<TICKER, company>, expires: number }
+async function getSecTickerMap() {
+  if (tickerMapCache && Date.now() < tickerMapCache.expires) return tickerMapCache.map;
+  try {
+    const res = await fetch('https://www.sec.gov/files/company_tickers.json', {
+      headers: { 'User-Agent': 'DueDiligenceApp contact@example.com' },
+    });
+    if (!res.ok) throw new Error(`SEC ticker list returned ${res.status}`);
+    const data = await res.json();
+    const map = new Map(Object.values(data).map(c => [c.ticker.toUpperCase(), c]));
+    tickerMapCache = { map, expires: Date.now() + 24 * 60 * 60 * 1000 };
+    return map;
+  } catch (e) {
+    console.error('SEC ticker list fetch failed, falling back:', e.message);
+    return tickerMapCache?.map ?? null;
+  }
+}
+
 // Unofficial endpoint (no key, no official support) — used only as a fallback for tickers
 // with an exchange suffix (e.g. LLOY.L) that Finnhub's free plan doesn't cover.
 async function fetchYahooQuote(ticker) {
@@ -583,13 +610,9 @@ export async function GET(request) {
   } catch (e) {}
 
   try {
-    const tickerRes = await fetch(
-      'https://www.sec.gov/files/company_tickers.json',
-      { headers: { 'User-Agent': 'DueDiligenceApp contact@example.com' } }
-    );
-    const tickerData = await tickerRes.json();
-    const company = Object.values(tickerData).find(c => c.ticker.toUpperCase() === ticker);
-    
+    const tickerMap = await getSecTickerMap();
+    const company = tickerMap?.get(ticker) ?? null;
+
     if (!company && ticker.includes('.')) {
       // International ticker with an exchange suffix (e.g. LLOY.L) — our Finnhub plan
       // doesn't cover non-US exchanges, so source price from Yahoo's chart endpoint and,
