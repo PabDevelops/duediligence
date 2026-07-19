@@ -12,6 +12,7 @@ import { useCurrencyRates } from '../../../lib/hooks/useCurrencyRates';
 import ImportCsvModal from '../../components/workspace/portfolio/ImportCsvModal';
 import AddHoldingModal from '../../components/workspace/portfolio/AddHoldingModal';
 import SellModal from '../../components/workspace/portfolio/SellModal';
+import TransferPieModal from '../../components/workspace/portfolio/TransferPieModal';
 import GrowthChart from '../../components/workspace/portfolio/GrowthChart';
 import AllocationChart from '../../components/workspace/portfolio/AllocationChart';
 
@@ -40,6 +41,7 @@ export default function WorkspacePortfolio() {
   const [snapshots, setSnapshots] = useState([]);
   const [currency, setCurrency] = useState('USD');
   const [editingPie, setEditingPie] = useState(null);
+  const [transferPie, setTransferPie] = useState(null);
   const [newPieName, setNewPieName] = useState('');
   const { rates, toUSD } = useCurrencyRates();
 
@@ -294,6 +296,7 @@ export default function WorkspacePortfolio() {
                   className="ws-input"
                   style={{ height: '30px', padding: '0 8px', fontSize: '13px', width: 'auto' }}
                 >
+                  <option value="all">Net Worth (All Portfolios)</option>
                   {portfolios.map(p => (
                     <option key={p.id} value={p.id}>{p.name}</option>
                   ))}
@@ -448,6 +451,20 @@ export default function WorkspacePortfolio() {
                           <path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"/>
                         </svg>
                       </button>
+                      {selectedPortfolioId !== 'all' && group.name !== 'Unassigned' && (
+                        <button
+                          onClick={() => setTransferPie(group.name)}
+                          title={`Transfer "${group.name}" to another portfolio`}
+                          style={{ background: 'none', border: 'none', color: 'var(--ws-text-3)', cursor: 'pointer', opacity: 0.5, padding: '2px', display: 'inline-flex', alignItems: 'center', flexShrink: 0 }}
+                          onMouseEnter={e => { e.currentTarget.style.opacity = 1; e.currentTarget.style.color = 'var(--ws-accent)'; }}
+                          onMouseLeave={e => { e.currentTarget.style.opacity = 0.5; e.currentTarget.style.color = 'var(--ws-text-3)'; }}
+                        >
+                          <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                            <path d="M17 3l4 4-14 14H3v-4L17 3z" display="none"/>
+                            <path d="M8 7h12m0 0l-4-4m4 4l-4 4m4 6H4m0 0l4 4m-4-4l4-4"/>
+                          </svg>
+                        </button>
+                      )}
                     </div>
                   )}
                   <div style={{ fontSize: '11px', color: 'var(--ws-text-3)' }}>{group.items.length} holding{group.items.length !== 1 ? 's' : ''} · {groupAllocation.toFixed(1)}% of portfolio</div>
@@ -538,6 +555,7 @@ export default function WorkspacePortfolio() {
       {showImport && <ImportCsvModal onClose={() => setShowImport(false)} onImported={() => { setShowImport(false); load(); }} defaultCurrency={currency} portfolioId={selectedPortfolioId} />}
       {editLot && <AddHoldingModal onClose={() => setEditLot(null)} onAdded={() => { setEditLot(null); load(); }} existingPies={existingPies} defaultCurrency={currency} editLot={editLot} portfolioId={selectedPortfolioId} />}
       {sellPosition && <SellModal position={sellPosition} onClose={() => setSellPosition(null)} onSold={() => { setSellPosition(null); load(); }} portfolioId={selectedPortfolioId} />}
+      {transferPie && <TransferPieModal pie={transferPie} sourcePortfolioId={selectedPortfolioId} portfolios={portfolios} onClose={() => setTransferPie(null)} onTransferred={() => { setTransferPie(null); load(); }} />}
     </div>
   );
 }

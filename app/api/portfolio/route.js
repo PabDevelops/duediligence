@@ -14,7 +14,7 @@ export async function GET(request) {
     .eq('user_id', userId)
     .order('created_at', { ascending: false });
 
-  if (portfolioId) {
+  if (portfolioId && portfolioId !== 'all') {
     query = query.eq('portfolio_id', portfolioId);
   }
 
