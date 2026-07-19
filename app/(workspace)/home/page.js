@@ -15,6 +15,7 @@ import NewsImage from '../../components/workspace/home/NewsImage';
 import Card from '../../components/workspace/home/Card';
 import OnboardingBanner from '../../components/OnboardingBanner';
 import StockChart from '../../components/StockChart';
+import AdSlot from '../../components/AdSlot';
 
 // Same set + localStorage key as the dedicated /portfolio page, so the display
 // currency preference stays in sync between that page and this dashboard widget.
@@ -2932,6 +2933,12 @@ export default function WorkspaceHome() {
             ))}
           </div>
         )
+      )}
+
+      {/* Signed-out visitors only — subscribers never see ads. Advanced Mode's terminal
+          view is a fixed-height, no-scroll layout, so there's no good spot for it there. */}
+      {!advancedMode && (
+        <AdSlot slot={process.env.NEXT_PUBLIC_ADSENSE_SLOT_HOME} style={{ minHeight: '90px' }} />
       )}
 
       {/* Slide & Fade Animation styles for the Customize Dropdown */}
