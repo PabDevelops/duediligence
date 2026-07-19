@@ -1,7 +1,7 @@
 'use client';
 import { useState } from 'react';
 
-export default function SellModal({ position, onClose, onSold }) {
+export default function SellModal({ position, onClose, onSold, portfolioId }) {
   const [shares, setShares] = useState('');
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState(null);
@@ -14,7 +14,7 @@ export default function SellModal({ position, onClose, onSold }) {
     setError(null);
     const res = await fetch('/api/portfolio/sell', {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ ticker: position.ticker, shares: n }),
+      body: JSON.stringify({ ticker: position.ticker, shares: n, portfolio_id: portfolioId }),
     });
     setSaving(false);
     if (!res.ok) {

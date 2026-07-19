@@ -6,7 +6,7 @@ import { useTickerSearch } from '../../../../lib/hooks/useTickerSearch';
 
 const CURRENCIES = { USD: '$', EUR: '€', GBP: '£' };
 
-export default function AddHoldingModal({ onClose, onAdded, existingPies, defaultCurrency, editLot, presetTicker }) {
+export default function AddHoldingModal({ onClose, onAdded, existingPies, defaultCurrency, editLot, presetTicker, portfolioId }) {
   const isEdit = !!editLot;
   const [query, setQuery] = useState(editLot?.ticker || presetTicker || '');
   const [selected, setSelected] = useState(
@@ -87,11 +87,11 @@ export default function AddHoldingModal({ onClose, onAdded, existingPies, defaul
     const res = isEdit
       ? await fetch('/api/portfolio', {
           method: 'PATCH', headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ id: editLot.id, shares, costBasis, purchaseDate, pie, costBasisCurrency }),
+          body: JSON.stringify({ id: editLot.id, shares, costBasis, purchaseDate, pie, costBasisCurrency, portfolio_id: portfolioId }),
         })
       : await fetch('/api/portfolio', {
           method: 'POST', headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ ticker: selected.ticker, shares, costBasis, purchaseDate, pie, costBasisCurrency }),
+          body: JSON.stringify({ ticker: selected.ticker, shares, costBasis, purchaseDate, pie, costBasisCurrency, portfolio_id: portfolioId }),
         });
     setSaving(false);
     if (!res.ok) {

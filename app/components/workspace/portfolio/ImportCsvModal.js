@@ -47,7 +47,7 @@ function parseCsv(text) {
   return { rows, errors, hasCurrencyColumn };
 }
 
-export default function ImportCsvModal({ onClose, onImported, defaultCurrency }) {
+export default function ImportCsvModal({ onClose, onImported, defaultCurrency, portfolioId }) {
   const [rows, setRows] = useState([]);
   const [errors, setErrors] = useState([]);
   const [fileName, setFileName] = useState('');
@@ -80,7 +80,7 @@ export default function ImportCsvModal({ onClose, onImported, defaultCurrency })
     setImporting(true);
     const res = await fetch('/api/portfolio/import', {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ rows }),
+      body: JSON.stringify({ rows, portfolio_id: portfolioId }),
     });
     setImporting(false);
     if (!res.ok) {

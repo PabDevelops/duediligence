@@ -1,15 +1,24 @@
 import { getUserId } from '../../../lib/auth';
 import { supabase } from '../../../lib/supabase';
 
-export async function GET() {
+export async function GET(request) {
   const userId = await getUserId();
   if (!userId) return Response.json({ holdings: [] });
 
-  const { data, error } = await supabase
+  const { searchParams } = new URL(request.url);
+  const portfolioId = searchParams.get('portfolioId');
+
+  let query = supabase
     .from('portfolio_holdings')
-    .select('id, ticker, shares, cost_basis, cost_basis_currency, purchase_date, pie, created_at')
+    .select('id, ticker, shares, cost_basis, cost_basis_currency, purchase_date, pie, created_at, portfolio_id')
     .eq('user_id', userId)
     .order('created_at', { ascending: false });
+
+  if (portfolioId) {
+    query = query.eq('portfolio_id', portfolioId);
+  }
+
+  const { data, error } = await query;
 
   if (error) {
     console.error('portfolio GET error:', error);
@@ -22,8 +31,8 @@ export async function POST(request) {
   const userId = await getUserId();
   if (!userId) return Response.json({ error: 'Not authenticated' }, { status: 401 });
 
-  const { ticker, shares, costBasis, purchaseDate, pie, costBasisCurrency } = await request.json();
-  if (!ticker || !shares || costBasis == null || Number(shares) <= 0 || Number(costBasis) < 0) {
+  const { ticker, shares, costBasis, purchaseDate, pie, costBasisCurrency, portfolio_id } = await request.json();
+  if (!ticker || !shares || costBasis == null || Number(shares) <= 0 || Number(costBasis) < 0 || !portfolio_id) {
     return Response.json({ error: 'Invalid input' }, { status: 400 });
   }
 
@@ -31,6 +40,7 @@ export async function POST(request) {
     .from('portfolio_holdings')
     .insert({
       user_id: userId,
+      portfolio_id: portfolio_id,
       ticker: ticker.toUpperCase(),
       shares: Number(shares),
       cost_basis: Number(costBasis),
@@ -93,9 +103,9 @@ export async function PUT(request) {
   const userId = await getUserId();
   if (!userId) return Response.json({ error: 'Not authenticated' }, { status: 401 });
 
-  const { oldPie, newPie } = await request.json();
-  if (!oldPie || !newPie || !newPie.trim()) {
-    return Response.json({ error: 'Old and new pie names required' }, { status: 400 });
+  const { oldPie, newPie, portfolio_id } = await request.json();
+  if (!oldPie || !newPie || !newPie.trim() || !portfolio_id) {
+    return Response.json({ error: 'Old and new pie names and portfolio_id required' }, { status: 400 });
   }
 
   const trimmedNewPie = newPie.trim();
@@ -103,7 +113,8 @@ export async function PUT(request) {
   let query = supabase
     .from('portfolio_holdings')
     .update({ pie: trimmedNewPie })
-    .eq('user_id', userId);
+    .eq('user_id', userId)
+    .eq('portfolio_id', portfolio_id);
 
   if (oldPie === 'Unassigned') {
     query = query.is('pie', null);
@@ -125,13 +136,13 @@ export async function DELETE(request) {
   const userId = await getUserId();
   if (!userId) return Response.json({ error: 'Not authenticated' }, { status: 401 });
 
-  const { id, ticker } = await request.json();
-  if (!id && !ticker) return Response.json({ error: 'id or ticker required' }, { status: 400 });
+  const { id, ticker, portfolio_id } = await request.json();
+  if (!id && (!ticker || !portfolio_id)) return Response.json({ error: 'id or (ticker and portfolio_id) required' }, { status: 400 });
 
   if (id) {
     await supabase.from('portfolio_holdings').delete().eq('id', id).eq('user_id', userId);
   } else if (ticker) {
-    await supabase.from('portfolio_holdings').delete().eq('ticker', ticker.toUpperCase()).eq('user_id', userId);
+    await supabase.from('portfolio_holdings').delete().eq('ticker', ticker.toUpperCase()).eq('portfolio_id', portfolio_id).eq('user_id', userId);
   }
   return Response.json({ success: true });
 }

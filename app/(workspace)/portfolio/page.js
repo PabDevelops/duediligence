@@ -27,6 +27,10 @@ export default function WorkspacePortfolio() {
   const [stocks, setStocks] = useState({});
   const [sparklines, setSparklines] = useState({});
   const [loading, setLoading] = useState(true);
+  const [portfolios, setPortfolios] = useState([]);
+  const [selectedPortfolioId, setSelectedPortfolioId] = useState(null);
+  const [creatingPortfolio, setCreatingPortfolio] = useState(false);
+  const [newPortfolioName, setNewPortfolioName] = useState('');
   const [loadError, setLoadError] = useState(null);
   const [showModal, setShowModal] = useState(false);
   const [buyTicker, setBuyTicker] = useState(null);
@@ -38,6 +42,38 @@ export default function WorkspacePortfolio() {
   const [editingPie, setEditingPie] = useState(null);
   const [newPieName, setNewPieName] = useState('');
   const { rates, toUSD } = useCurrencyRates();
+
+  const loadPortfolios = async () => {
+    if (!isSignedIn) return;
+    const r = await fetch('/api/portfolios');
+    const d = await r.json();
+    setPortfolios(d.portfolios || []);
+    if (d.portfolios?.length > 0 && !selectedPortfolioId) {
+      setSelectedPortfolioId(d.portfolios[0].id);
+    }
+  };
+
+  useEffect(() => {
+    loadPortfolios();
+  }, [isSignedIn]);
+
+  const createPortfolio = async () => {
+    if (!newPortfolioName.trim()) return;
+    const res = await fetch('/api/portfolios', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name: newPortfolioName })
+    });
+    if (res.ok) {
+      const d = await res.json();
+      setPortfolios(prev => [...prev, d.portfolio]);
+      setSelectedPortfolioId(d.portfolio.id);
+      setCreatingPortfolio(false);
+      setNewPortfolioName('');
+    } else {
+      const e = await res.json();
+      alert(e.error || 'Failed to create portfolio');
+    }
+  };
 
   useEffect(() => {
     const saved = localStorage.getItem('portfolio_currency');
@@ -65,8 +101,8 @@ export default function WorkspacePortfolio() {
   }, [isSignedIn]);
 
   const load = ({ refresh = false } = {}) => {
-    if (!isSignedIn) return;
-    fetch('/api/portfolio').then(async r => {
+    if (!isSignedIn || !selectedPortfolioId) return;
+    fetch(`/api/portfolio?portfolioId=${selectedPortfolioId}`).then(async r => {
       const d = await r.json();
       if (!r.ok) { setLoadError(d.error || 'Failed to load portfolio.'); setLoading(false); return; }
       setLoadError(null);
@@ -81,8 +117,8 @@ export default function WorkspacePortfolio() {
   };
 
   useEffect(() => {
-    load({ refresh: false });
-  }, [isSignedIn]);
+    if (selectedPortfolioId) load({ refresh: false });
+  }, [isSignedIn, selectedPortfolioId]);
 
   // Keep holding prices reasonably live — reload isn't the only way to see a move.
   // Paused while the tab is backgrounded, and re-run immediately on refocus, so an idle
@@ -243,8 +279,36 @@ export default function WorkspacePortfolio() {
         </div>
         <div style={{ padding: '18px 20px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '12px' }}>
           <div>
-            <div style={{ fontSize: '20px', fontWeight: 700, color: 'var(--ws-text)' }}>Portfolio</div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+              <div style={{ fontSize: '20px', fontWeight: 700, color: 'var(--ws-text)' }}>Portfolio</div>
+              {isSignedIn && portfolios.length > 0 && (
+                <select 
+                  value={selectedPortfolioId || ''} 
+                  onChange={e => {
+                    if (e.target.value === 'new') {
+                      setCreatingPortfolio(true);
+                    } else {
+                      setSelectedPortfolioId(e.target.value);
+                    }
+                  }}
+                  className="ws-input"
+                  style={{ height: '30px', padding: '0 8px', fontSize: '13px', width: 'auto' }}
+                >
+                  {portfolios.map(p => (
+                    <option key={p.id} value={p.id}>{p.name}</option>
+                  ))}
+                  {portfolios.length < 3 && <option value="new">+ Create Portfolio</option>}
+                </select>
+              )}
+            </div>
             <div style={{ fontSize: '13px', color: 'var(--ws-text-2)' }}>Track your holdings and performance.</div>
+            {creatingPortfolio && (
+              <div style={{ display: 'flex', gap: '6px', marginTop: '8px' }}>
+                <input autoFocus value={newPortfolioName} onChange={e => setNewPortfolioName(e.target.value)} placeholder="Portfolio Name" className="ws-input" style={{ height: '28px', fontSize: '12px' }} />
+                <button onClick={createPortfolio} disabled={!newPortfolioName.trim()} className="ws-btn" style={{ height: '28px', padding: '0 10px', fontSize: '11px' }}>Save</button>
+                <button onClick={() => setCreatingPortfolio(false)} className="ws-btn-secondary" style={{ height: '28px', padding: '0 10px', fontSize: '11px' }}>Cancel</button>
+              </div>
+            )}
           </div>
           {isSignedIn && (
             <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
@@ -470,10 +534,10 @@ export default function WorkspacePortfolio() {
         </>
       )}
 
-      {(showModal || buyTicker) && <AddHoldingModal presetTicker={buyTicker} onClose={() => { setShowModal(false); setBuyTicker(null); }} onAdded={() => { setShowModal(false); setBuyTicker(null); load(); }} existingPies={existingPies} defaultCurrency={currency} />}
-      {showImport && <ImportCsvModal onClose={() => setShowImport(false)} onImported={() => { setShowImport(false); load(); }} defaultCurrency={currency} />}
-      {editLot && <AddHoldingModal onClose={() => setEditLot(null)} onAdded={() => { setEditLot(null); load(); }} existingPies={existingPies} defaultCurrency={currency} editLot={editLot} />}
-      {sellPosition && <SellModal position={sellPosition} onClose={() => setSellPosition(null)} onSold={() => { setSellPosition(null); load(); }} />}
+      {(showModal || buyTicker) && <AddHoldingModal presetTicker={buyTicker} onClose={() => { setShowModal(false); setBuyTicker(null); }} onAdded={() => { setShowModal(false); setBuyTicker(null); load(); }} existingPies={existingPies} defaultCurrency={currency} portfolioId={selectedPortfolioId} />}
+      {showImport && <ImportCsvModal onClose={() => setShowImport(false)} onImported={() => { setShowImport(false); load(); }} defaultCurrency={currency} portfolioId={selectedPortfolioId} />}
+      {editLot && <AddHoldingModal onClose={() => setEditLot(null)} onAdded={() => { setEditLot(null); load(); }} existingPies={existingPies} defaultCurrency={currency} editLot={editLot} portfolioId={selectedPortfolioId} />}
+      {sellPosition && <SellModal position={sellPosition} onClose={() => setSellPosition(null)} onSold={() => { setSellPosition(null); load(); }} portfolioId={selectedPortfolioId} />}
     </div>
   );
 }

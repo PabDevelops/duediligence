@@ -7,9 +7,9 @@ export async function POST(request) {
   const userId = await getUserId();
   if (!userId) return Response.json({ error: 'Not authenticated' }, { status: 401 });
 
-  const { ticker, shares } = await request.json();
+  const { ticker, shares, portfolio_id } = await request.json();
   const sellShares = Number(shares);
-  if (!ticker || !(sellShares > 0)) {
+  if (!ticker || !(sellShares > 0) || !portfolio_id) {
     return Response.json({ error: 'Invalid input' }, { status: 400 });
   }
 
@@ -17,6 +17,7 @@ export async function POST(request) {
     .from('portfolio_holdings')
     .select('id, shares')
     .eq('user_id', userId)
+    .eq('portfolio_id', portfolio_id)
     .eq('ticker', ticker.toUpperCase())
     .order('purchase_date', { ascending: true })
     .order('created_at', { ascending: true });

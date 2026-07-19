@@ -5,9 +5,9 @@ export async function POST(request) {
   const userId = await getUserId();
   if (!userId) return Response.json({ error: 'Not authenticated' }, { status: 401 });
 
-  const { rows } = await request.json();
-  if (!Array.isArray(rows) || rows.length === 0) {
-    return Response.json({ error: 'No rows to import' }, { status: 400 });
+  const { rows, portfolio_id } = await request.json();
+  if (!Array.isArray(rows) || rows.length === 0 || !portfolio_id) {
+    return Response.json({ error: 'No rows to import or missing portfolio_id' }, { status: 400 });
   }
 
   const clean = rows
@@ -15,6 +15,7 @@ export async function POST(request) {
     .slice(0, 500)
     .map(r => ({
       user_id: userId,
+      portfolio_id: portfolio_id,
       ticker: String(r.ticker).toUpperCase().trim(),
       shares: Number(r.shares),
       cost_basis: Number(r.costBasis),
