@@ -234,7 +234,8 @@ export default function WorkspacePortfolio() {
   const byTickerChart = useMemo(() => {
     if (totals.investedValue === 0) return [];
     return positions
-      .map(p => ({ name: p.ticker, value: ((p.marketValue ?? p.cost) / totals.investedValue) * 100 }))
+      .filter(p => (p.marketValue ?? p.cost) > 0)
+      .map(p => ({ name: p.ticker, value: (Math.max(0, p.marketValue ?? p.cost) / Math.abs(totals.investedValue)) * 100 }))
       .sort((a, b) => b.value - a.value);
   }, [positions, totals.investedValue]);
 
@@ -243,7 +244,10 @@ export default function WorkspacePortfolio() {
     const bySector = {};
     positions.forEach(p => {
       const key = p.sector || 'Unknown';
-      bySector[key] = (bySector[key] || 0) + ((p.marketValue ?? p.cost) / totals.investedValue) * 100;
+      const val = Math.max(0, p.marketValue ?? p.cost);
+      if (val > 0) {
+        bySector[key] = (bySector[key] || 0) + (val / Math.abs(totals.investedValue)) * 100;
+      }
     });
     return Object.entries(bySector).map(([name, value]) => ({ name, value })).sort((a, b) => b.value - a.value);
   }, [positions, totals.investedValue]);
@@ -253,7 +257,10 @@ export default function WorkspacePortfolio() {
     const byPie = {};
     positions.forEach(p => {
       const key = p.pie || 'Unassigned';
-      byPie[key] = (byPie[key] || 0) + ((p.marketValue ?? p.cost) / totals.investedValue) * 100;
+      const val = Math.max(0, p.marketValue ?? p.cost);
+      if (val > 0) {
+        byPie[key] = (byPie[key] || 0) + (val / Math.abs(totals.investedValue)) * 100;
+      }
     });
     return Object.entries(byPie).map(([name, value]) => ({ name, value })).sort((a, b) => b.value - a.value);
   }, [positions, totals.investedValue]);
