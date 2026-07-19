@@ -50,8 +50,9 @@ export default async function RootLayout({ children }) {
   return (
     <AuthProvider>
       <html lang={locale} suppressHydrationWarning>
-        <head>
+        <head suppressHydrationWarning>
           <script dangerouslySetInnerHTML={{ __html: `(function(){try{var t=localStorage.getItem('ws_theme')||'light';document.documentElement.setAttribute('data-ws-theme',t)}catch(e){}})()` }} />
+          <AdSense />
         </head>
         <body suppressHydrationWarning>
           <TrialGate />
@@ -60,7 +61,6 @@ export default async function RootLayout({ children }) {
           <CookieBanner />
           <Analytics />
           <GoogleAnalytics />
-          <AdSense />
           <Script
             src="https://datafa.st/js/script.js"
             data-website-id="dfid_WAIi12RsesdbDTvKjxaVj"
