@@ -59,8 +59,8 @@ export default function CashModal({ portfolioId, portfolios, transactions = [], 
   };
 
   return (
-    <div className="ws-modal-overlay">
-      <div className="ws-modal" style={{ maxWidth: '500px' }}>
+    <div onClick={onClose} className="fixed inset-0 bg-black/35 flex items-center justify-center z-[200]">
+      <div onClick={e => e.stopPropagation()} style={{ width: '500px', maxWidth: '92vw', background: 'var(--ws-bg-1)', border: '1px solid var(--ws-border)', borderRadius: '12px', boxShadow: '0 12px 40px rgba(0,0,0,0.18)' }}>
         <div style={{ padding: '16px 20px', borderBottom: '1px solid var(--ws-border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
             <div style={{ fontSize: '14px', fontWeight: 700, color: 'var(--ws-text)' }}>Cash Ledger</div>
