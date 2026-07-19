@@ -534,12 +534,21 @@ export async function GET(request) {
 
   const riskFreeRate = await fetchRiskFreeRate();
 
+  // Set from the cache read below and reused by every fetch/upsert branch further down —
+  // without this, refetching a ticker that /api/etfs previously marked isEtf:true (e.g. once
+  // its 24h cache goes stale) silently drops that flag, since none of the Yahoo-fallback
+  // branches below know a ticker is a fund on their own. That flip is what put VUAG.L in the
+  // "STOCKS" bucket in search despite /api/etfs having correctly seeded it as an ETF.
+  let cachedIsEtf = false;
+
   try {
     const { data: cached } = await supabase
       .from('stock_cache')
       .select('data, updated_at')
       .eq('ticker', ticker)
       .single();
+
+    cachedIsEtf = cached?.data?.isEtf === true;
 
     const forceRefresh = searchParams.get('refresh') === 'true';
     if (cached && !forceRefresh) {
@@ -670,6 +679,7 @@ export async function GET(request) {
         currency: yh.currency,
         finnhubFallback: !fundamentals,
         internationalSource: 'yahoo',
+        isEtf: cachedIsEtf,
       };
 
       try {
@@ -766,6 +776,7 @@ export async function GET(request) {
           currency: yh.currency,
           finnhubFallback: !fundamentals,
           internationalSource: 'yahoo',
+          isEtf: cachedIsEtf,
         };
 
         try {
@@ -883,6 +894,7 @@ export async function GET(request) {
         yahooFundamentals: !!yh,
       };
 
+      result.isEtf = cachedIsEtf;
       const valCountFallback = [result.revVal, result.niVal, result.fcfVal, result.assetsVal, result.debtVal, result.cashVal].filter(v => v !== null).length;
       const isEtfFallback = result.sector === 'ETF' || result.industry === 'ETF';
       if (valCountFallback >= 2 || (isEtfFallback && result.currentPrice != null)) {
@@ -1294,6 +1306,7 @@ const sharesForCalc = sharesValAdj || sharesFinnhub;
       }
     }
 
+    result.isEtf = cachedIsEtf;
     const finalValidCount = [result.revVal, result.niVal, result.fcfVal, result.assetsVal, result.debtVal, result.cashVal].filter(v => v !== null).length;
     const isEtfSec = result.sector === 'ETF' || result.industry === 'ETF';
     if (finalValidCount >= 2 || (isEtfSec && result.currentPrice != null)) {
