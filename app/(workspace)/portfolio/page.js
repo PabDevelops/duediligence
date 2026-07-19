@@ -24,7 +24,11 @@ export default function WorkspacePortfolio() {
   const { isSignedIn } = useUser();
   const router = useRouter();
   const searchParams = useSearchParams();
-  const [holdings, setHoldings] = useState([]);
+  const [allHoldings, setAllHoldings] = useState([]);
+  const holdings = useMemo(() => {
+    if (selectedPortfolioId === 'all') return allHoldings;
+    return allHoldings.filter(h => h.portfolio_id === selectedPortfolioId);
+  }, [allHoldings, selectedPortfolioId]);
   const [stocks, setStocks] = useState({});
   const [sparklines, setSparklines] = useState({});
   const [loading, setLoading] = useState(true);
@@ -104,11 +108,11 @@ export default function WorkspacePortfolio() {
 
   const load = ({ refresh = false } = {}) => {
     if (!isSignedIn || !selectedPortfolioId) return;
-    fetch(`/api/portfolio?portfolioId=${selectedPortfolioId}`).then(async r => {
+    fetch(`/api/portfolio?portfolioId=all`).then(async r => {
       const d = await r.json();
       if (!r.ok) { setLoadError(d.error || 'Failed to load portfolio.'); setLoading(false); return; }
       setLoadError(null);
-      setHoldings(d.holdings || []);
+      setAllHoldings(d.holdings || []);
       setLoading(false);
       const tickers = [...new Set((d.holdings || []).map(h => h.ticker))];
       tickers.forEach(ticker => {
@@ -141,9 +145,9 @@ export default function WorkspacePortfolio() {
 
   const existingPies = useMemo(() => [...new Set(holdings.map(h => h.pie).filter(Boolean))].sort(), [holdings]);
 
-  const positions = useMemo(() => {
+  const buildPositions = (holdingsArray) => {
     const byTicker = {};
-    holdings.forEach(h => {
+    holdingsArray.forEach(h => {
       const p = byTicker[h.ticker] ||= { ticker: h.ticker, shares: 0, cost: 0, costNative: 0, lots: [] };
       p.shares += Number(h.shares);
       p.cost += Number(h.shares) * toUSD(Number(h.cost_basis), h.cost_basis_currency);
@@ -174,7 +178,10 @@ export default function WorkspacePortfolio() {
         name: s?.name, sector: s?.sector, pie, pe: s?.pe, dividendYield: s?.dividendYield ?? s?.yield, dayChangePct: s?.priceChangePct,
       };
     });
-  }, [holdings, stocks, rates]);
+  };
+
+  const positions = useMemo(() => buildPositions(holdings), [holdings, stocks, rates]);
+  const allPositions = useMemo(() => buildPositions(allHoldings), [allHoldings, stocks, rates]);
 
   const totals = useMemo(() => {
     const cost = positions.reduce((a, p) => a + p.cost, 0);
@@ -184,14 +191,22 @@ export default function WorkspacePortfolio() {
     return { cost, value, gain, gainPct };
   }, [positions]);
 
+  const netWorthTotals = useMemo(() => {
+    const cost = allPositions.reduce((a, p) => a + p.cost, 0);
+    const value = allPositions.reduce((a, p) => a + (p.marketValue ?? p.cost), 0);
+    const gain = value - cost;
+    const gainPct = cost > 0 ? (gain / cost) * 100 : 0;
+    return { cost, value, gain, gainPct };
+  }, [allPositions]);
+
   useEffect(() => {
     if (positions.length === 0 || totals.value === 0) return;
     if (!positions.every(p => p.marketValue != null)) return;
     fetch('/api/portfolio/snapshot', {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ value: totals.value, cost: totals.cost }),
+      body: JSON.stringify({ value: netWorthTotals.value, cost: netWorthTotals.cost }),
     }).catch(() => {});
-  }, [positions, totals.value, totals.cost]);
+  }, [positions, netWorthTotals.value, netWorthTotals.cost]);
 
   const byTickerChart = useMemo(() => {
     if (totals.value === 0) return [];
@@ -284,24 +299,13 @@ export default function WorkspacePortfolio() {
             <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
               <div style={{ fontSize: '20px', fontWeight: 700, color: 'var(--ws-text)' }}>Portfolio</div>
               {isSignedIn && portfolios.length > 0 && (
-                <select 
-                  value={selectedPortfolioId || ''} 
-                  onChange={e => {
-                    if (e.target.value === 'new') {
-                      setCreatingPortfolio(true);
-                    } else {
-                      setSelectedPortfolioId(e.target.value);
-                    }
-                  }}
-                  className="ws-input"
-                  style={{ height: '30px', padding: '0 8px', fontSize: '13px', width: 'auto' }}
-                >
-                  <option value="all">Net Worth (All Portfolios)</option>
+                <div style={{ display: 'flex', gap: '4px', marginLeft: '8px' }}>
+                  <button onClick={() => setSelectedPortfolioId('all')} style={{ padding: '4px 10px', borderRadius: '14px', border: 'none', cursor: 'pointer', fontSize: '12px', fontWeight: 600, background: selectedPortfolioId === 'all' ? 'var(--ws-text)' : 'var(--ws-bg-2)', color: selectedPortfolioId === 'all' ? 'var(--ws-bg-1)' : 'var(--ws-text-2)' }}>All Portfolios</button>
                   {portfolios.map(p => (
-                    <option key={p.id} value={p.id}>{p.name}</option>
+                    <button key={p.id} onClick={() => setSelectedPortfolioId(p.id)} style={{ padding: '4px 10px', borderRadius: '14px', border: 'none', cursor: 'pointer', fontSize: '12px', fontWeight: 600, background: selectedPortfolioId === p.id ? 'var(--ws-text)' : 'var(--ws-bg-2)', color: selectedPortfolioId === p.id ? 'var(--ws-bg-1)' : 'var(--ws-text-2)' }}>{p.name}</button>
                   ))}
-                  {portfolios.length < 3 && <option value="new">+ Create Portfolio</option>}
-                </select>
+                  {portfolios.length < 3 && <button onClick={() => setCreatingPortfolio(true)} style={{ padding: '4px 10px', borderRadius: '14px', border: '1px dashed var(--ws-border)', cursor: 'pointer', fontSize: '12px', fontWeight: 600, background: 'transparent', color: 'var(--ws-text-3)' }}>+ Create</button>}
+                </div>
               )}
             </div>
             <div style={{ fontSize: '13px', color: 'var(--ws-text-2)' }}>Track your holdings and performance.</div>
@@ -366,7 +370,11 @@ export default function WorkspacePortfolio() {
         </div>
       ) : (
         <>
-          <div className="portfolio-overview-grid">
+          <div className="portfolio-overview-grid" style={{ gridTemplateColumns: 'repeat(4, 1fr)' }}>
+            <div className="border border-ws-border p-3.5" style={{ background: 'var(--ws-bg-2)' }}>
+              <div style={{ fontSize: '10px', color: 'var(--ws-text-3)', letterSpacing: '0.5px', marginBottom: '4px' }}>NET WORTH (ALL)</div>
+              <div style={{ fontSize: '20px', fontWeight: 700, color: 'var(--ws-text)' }}>{fmtC(netWorthTotals.value)}</div>
+            </div>
             <div className="border border-ws-border p-3.5">
               <div style={{ fontSize: '10px', color: 'var(--ws-text-3)', letterSpacing: '0.5px', marginBottom: '4px' }}>MARKET VALUE</div>
               <div style={{ fontSize: '20px', fontWeight: 700, color: 'var(--ws-text)' }}>{fmtC(totals.value)}</div>
@@ -555,7 +563,7 @@ export default function WorkspacePortfolio() {
       {showImport && <ImportCsvModal onClose={() => setShowImport(false)} onImported={() => { setShowImport(false); load(); }} defaultCurrency={currency} portfolioId={selectedPortfolioId} />}
       {editLot && <AddHoldingModal onClose={() => setEditLot(null)} onAdded={() => { setEditLot(null); load(); }} existingPies={existingPies} defaultCurrency={currency} editLot={editLot} portfolioId={selectedPortfolioId} />}
       {sellPosition && <SellModal position={sellPosition} onClose={() => setSellPosition(null)} onSold={() => { setSellPosition(null); load(); }} portfolioId={selectedPortfolioId} />}
-      {transferPie && <TransferPieModal pie={transferPie} sourcePortfolioId={selectedPortfolioId} portfolios={portfolios} onClose={() => setTransferPie(null)} onTransferred={() => { setTransferPie(null); load(); }} />}
+      {transferPie && <TransferPieModal pie={transferPie} sourcePortfolioId={selectedPortfolioId} portfolios={portfolios} onClose={() => setTransferPie(null)} onTransferred={() => { setTransferPie(null); loadPortfolios(); load(); }} />}
     </div>
   );
 }
