@@ -407,10 +407,14 @@ export default function WorkspacePortfolio() {
         </div>
       ) : (
         <>
-          <div className="portfolio-overview-grid" style={{ gridTemplateColumns: 'repeat(5, 1fr)' }}>
+          <div className="portfolio-overview-grid" style={{ gridTemplateColumns: 'repeat(6, 1fr)' }}>
             <div className="border border-ws-border p-3.5" style={{ background: 'var(--ws-bg-2)' }}>
               <div style={{ fontSize: '10px', color: 'var(--ws-text-3)', letterSpacing: '0.5px', marginBottom: '4px' }}>NET WORTH (ALL)</div>
               <div style={{ fontSize: '20px', fontWeight: 700, color: 'var(--ws-text)' }}>{fmtC(netWorthTotals.value)}</div>
+            </div>
+            <div className="border border-ws-border p-3.5">
+              <div style={{ fontSize: '10px', color: 'var(--ws-text-3)', letterSpacing: '0.5px', marginBottom: '4px' }}>PORTFOLIO TOTAL</div>
+              <div style={{ fontSize: '20px', fontWeight: 700, color: 'var(--ws-text)' }}>{fmtC(totals.investedValue + cashTotal)}</div>
             </div>
             <div className="border border-ws-border p-3.5">
               <div style={{ fontSize: '10px', color: 'var(--ws-text-3)', letterSpacing: '0.5px', marginBottom: '4px' }}>MARKET VALUE</div>
