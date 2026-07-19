@@ -12,6 +12,7 @@ import AddHoldingModal from '../../../components/workspace/portfolio/AddHoldingM
 import MarketStatusDot from '../../../components/workspace/MarketStatusDot';
 import { LockedPanel } from '../../../components/SoftWall';
 import { useUser } from '../../../components/AuthProvider';
+import AdSlot from '../../../components/AdSlot';
 import { isInGuestWatchlist, addToGuestWatchlist, removeFromGuestWatchlist } from '../../../../lib/guestWatchlist';
 import { fmt as sharedFmt, fmtP as sharedFmtP, fmtN as sharedFmtN, formatCurrency } from '../../../../lib/formatters';
 import { useStockData } from '../../../../lib/hooks/useStockData';
@@ -371,10 +372,10 @@ export default function StockPage({ params }) {
   const [showJumpSuggestions, setShowJumpSuggestions] = useState(false);
   const jumpInputRef = useRef(null);
   const { suggestions: jumpSuggestions } = useTickerSearch(jumpQuery, { limit: 6 });
-  const goToTicker = (t) => {
+  const goToTicker = (t, isEtf = false) => {
     const next = t.trim().toUpperCase();
     if (!next) return;
-    router.push(`/stock/${next}`);
+    router.push(isEtf ? `/etfs/${next}` : `/stock/${next}`);
     setJumpQuery('');
     setShowJumpSuggestions(false);
     jumpInputRef.current?.blur();
@@ -763,12 +764,17 @@ export default function StockPage({ params }) {
               }}>
                 {jumpSuggestions.map(s => (
                   <div key={s.ticker}
-                    onMouseDown={() => goToTicker(s.ticker)}
+                    onMouseDown={() => goToTicker(s.ticker, s.isEtf)}
                     style={{ padding: '7px 10px', cursor: 'pointer', display: 'flex', gap: '8px', alignItems: 'baseline', fontSize: '11px' }}
                     onMouseEnter={e => e.currentTarget.style.background = 'var(--ws-bg-2)'}
                     onMouseLeave={e => e.currentTarget.style.background = 'transparent'}>
                     <span style={{ color: 'var(--ws-accent)', fontWeight: 700, fontFamily: "'JetBrains Mono', monospace", minWidth: '44px' }}>{s.ticker}</span>
                     <span style={{ color: 'var(--ws-text-2)', flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{s.name}</span>
+                    {s.isEtf && (
+                      <span style={{ fontFamily: "'JetBrains Mono', monospace", fontWeight: 700, fontSize: '9px', letterSpacing: '0.5px', color: 'var(--ws-text-3)', border: '1px solid var(--ws-border)', borderRadius: '4px', padding: '1px 4px', flexShrink: 0 }}>
+                        ETF
+                      </span>
+                    )}
                   </div>
                 ))}
               </div>
@@ -2168,6 +2174,9 @@ export default function StockPage({ params }) {
         ))}
 
       </div>
+
+      {/* Signed-out visitors only — subscribers never see ads. */}
+      <AdSlot slot={process.env.NEXT_PUBLIC_ADSENSE_SLOT_STOCK} style={{ minHeight: '90px', marginTop: '20px' }} />
 
       {achievementToast && (
         <AchievementToast

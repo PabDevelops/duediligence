@@ -174,16 +174,37 @@ async function fetchETFData(ticker) {
   sectors.sort((a, b) => b.rawVal - a.rawVal);
   sectors.forEach((s) => delete s.rawVal); // Remove temporary rawVal
 
-  // Determine category based on name/ticker
+  // Determine category. Yahoo's own Morningstar-style category string (when present) is a
+  // more reliable signal than guessing from the fund name, which misses funds like VEA
+  // ("Vanguard FTSE Developed Markets ETF") that don't contain any of the international
+  // keywords we check for. Fall back to name/ticker heuristics only when that string is
+  // missing or doesn't match any known signal.
   let category = 'all';
   let assetClass = profileModule.legalType || statsModule.legalType || 'Exchange-Traded Fund (ETF)';
   const lowerName = name.toLowerCase();
+  const lowerCategoryName = (profileModule.categoryName || statsModule.category || '').toLowerCase();
 
   if (lowerName.includes('etc') || lowerName.includes('commodity') || cleanTicker.includes('SSLN') || cleanTicker.includes('SGLN')) {
     assetClass = 'Exchange-Traded Commodity (ETC)';
   }
 
   if (
+    lowerCategoryName.includes('bond') ||
+    lowerCategoryName.includes('treasury') ||
+    lowerCategoryName.includes('municipal') ||
+    lowerCategoryName.includes('high yield') ||
+    lowerCategoryName.includes('tips')
+  ) {
+    category = 'fixed';
+  } else if (
+    lowerCategoryName.includes('foreign') ||
+    lowerCategoryName.includes('emerging') ||
+    lowerCategoryName.includes('world') ||
+    lowerCategoryName.includes('international') ||
+    lowerCategoryName.includes('diversified emerging')
+  ) {
+    category = 'international';
+  } else if (
     lowerName.includes('bond') ||
     lowerName.includes('treasury') ||
     lowerName.includes('fixed income') ||
@@ -202,6 +223,11 @@ async function fetchETFData(ticker) {
   } else if (
     lowerName.includes('international') ||
     lowerName.includes('global') ||
+    lowerName.includes('developed markets') ||
+    lowerName.includes('ftse') ||
+    lowerName.includes('msci') ||
+    lowerName.includes('ex-us') ||
+    lowerName.includes('frontier') ||
     cleanTicker.includes('.') ||
     lowerName.includes('world') ||
     lowerName.includes('emerging')

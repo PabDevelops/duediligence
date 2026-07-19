@@ -561,9 +561,17 @@ export async function GET(request) {
       const KEY_FIN_FIELDS = ['revVal', 'niVal', 'fcfVal', 'assetsVal', 'debtVal', 'cashVal'];
       const normData = normalizeStockData(cached.data);
       const validFinCount = KEY_FIN_FIELDS.filter(f => normData?.[f] != null).length;
-      const isEtf = cached.data?.sector === 'ETF' || cached.data?.industry === 'ETF';
-      const isComplete = validFinCount >= 2 || (isEtf && cached.data?.currentPrice != null);
-      if (hoursOld < CACHE_HOURS && cached.data?.marketCap != null && isComplete) {
+      // A cache row written by app/api/etfs/route.js (expense ratio, holdings, AUM — no
+      // marketCap or SEC-style financials at all) used to fail every check below: no
+      // revVal/niVal/etc. (validFinCount stays 0) and no marketCap, so it was never
+      // considered "complete" and got silently overwritten with company-fundamentals-shaped
+      // data on every view here, destroying isEtf/holdings/expenseRatio for good (verified:
+      // GET-ing this route for an ETF ticker made it vanish from /api/etfs's list). The
+      // `data->>isEtf` flag is the reliable signal that this row's shape isn't meant to have
+      // those company fields in the first place.
+      const isEtf = cached.data?.isEtf === true || cached.data?.sector === 'ETF' || cached.data?.industry === 'ETF';
+      const isComplete = validFinCount >= 2 || isEtf;
+      if (hoursOld < CACHE_HOURS && (cached.data?.marketCap != null || isEtf) && isComplete) {
         const minsOld = hoursOld * 60;
         if (minsOld < 2) {
           return Response.json({ ...normData, cached: true });

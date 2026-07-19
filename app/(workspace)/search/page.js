@@ -40,8 +40,15 @@ function StockCard({ s, onClick }) {
           )}
         </div>
         <div style={{ minWidth: 0, flex: 1 }}>
-          <div style={{ fontFamily: "'JetBrains Mono', monospace", fontWeight: 700, fontSize: '13px', color: 'var(--ws-accent)', letterSpacing: '0.5px' }}>
-            {s.ticker}
+          <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+            <span style={{ fontFamily: "'JetBrains Mono', monospace", fontWeight: 700, fontSize: '13px', color: 'var(--ws-accent)', letterSpacing: '0.5px' }}>
+              {s.ticker}
+            </span>
+            {s.isEtf && (
+              <span style={{ fontFamily: "'JetBrains Mono', monospace", fontWeight: 700, fontSize: '9px', letterSpacing: '0.5px', color: 'var(--ws-text-3)', border: '1px solid var(--ws-border)', borderRadius: '4px', padding: '1px 4px' }}>
+                ETF
+              </span>
+            )}
           </div>
           <div style={{ fontSize: '12px', color: 'var(--ws-text-2)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
             {s.name}
@@ -75,7 +82,9 @@ export default function SearchPage() {
   const searchParams = useSearchParams();
   const initialQ = searchParams.get('q') || '';
   const [q, setQ] = useState(initialQ);
-  const { suggestions: results, loading } = useTickerSearch(q, { limit: 24 });
+  const { suggestions: results, loading } = useTickerSearch(q, { limit: 48 });
+  const etfResults = results.filter(s => s.isEtf);
+  const stockResults = results.filter(s => !s.isEtf);
   const [searched, setSearched] = useState(false);
   const wasLoading = useRef(false);
   const inputRef = useRef(null);
@@ -95,11 +104,11 @@ export default function SearchPage() {
     wasLoading.current = loading;
   }, [loading]);
 
-  const goToTicker = (ticker) => router.push(`/stock/${ticker}`);
+  const goToTicker = (ticker, isEtf = false) => router.push(isEtf ? `/etfs/${ticker}` : `/stock/${ticker}`);
 
   const handleKeyDown = (e) => {
     if (e.key === 'Enter' && q.trim()) {
-      if (results.length > 0) goToTicker(results[0].ticker);
+      if (results.length > 0) goToTicker(results[0].ticker, results[0].isEtf);
       else goToTicker(q.trim().toUpperCase());
     }
   };
@@ -143,17 +152,49 @@ export default function SearchPage() {
         </div>
         {q.trim().length > 0 && (
           <div style={{ marginTop: '10px', fontSize: '11px', color: 'var(--ws-text-3)', fontFamily: "'JetBrains Mono', monospace", letterSpacing: '0.5px', paddingLeft: '4px' }}>
-            {loading ? 'SEARCHING...' : `${results.length} RESULT${results.length !== 1 ? 'S' : ''} FOR "${q.trim().toUpperCase()}"`}
+            {loading ? 'SEARCHING...' : `${stockResults.length} STOCK${stockResults.length !== 1 ? 'S' : ''} · ${etfResults.length} ETF${etfResults.length !== 1 ? 'S' : ''} FOR "${q.trim().toUpperCase()}"`}
           </div>
         )}
       </div>
 
-      {/* Results grid */}
+      {/* Results: Stocks on the left, ETFs on the right */}
       {results.length > 0 && (
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))', gap: '12px' }}>
-          {results.map(s => (
-            <StockCard key={s.ticker} s={s} onClick={() => goToTicker(s.ticker)} />
-          ))}
+        <div className="search-results-columns" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '24px', alignItems: 'start' }}>
+          <style dangerouslySetInnerHTML={{ __html: `
+            @media (max-width: 900px) {
+              .search-results-columns { grid-template-columns: 1fr !important; }
+            }
+          `}} />
+
+          <div>
+            <div style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: '11px', fontWeight: 700, color: 'var(--ws-text-3)', letterSpacing: '1.5px', marginBottom: '12px', paddingBottom: '8px', borderBottom: '1px solid var(--ws-border)' }}>
+              STOCKS
+            </div>
+            {stockResults.length > 0 ? (
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))', gap: '12px' }}>
+                {stockResults.map(s => (
+                  <StockCard key={s.ticker} s={s} onClick={() => goToTicker(s.ticker, s.isEtf)} />
+                ))}
+              </div>
+            ) : (
+              <div style={{ fontSize: '12px', color: 'var(--ws-text-3)', padding: '12px 0' }}>No stock matches.</div>
+            )}
+          </div>
+
+          <div>
+            <div style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: '11px', fontWeight: 700, color: 'var(--ws-text-3)', letterSpacing: '1.5px', marginBottom: '12px', paddingBottom: '8px', borderBottom: '1px solid var(--ws-border)' }}>
+              ETFS
+            </div>
+            {etfResults.length > 0 ? (
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))', gap: '12px' }}>
+                {etfResults.map(s => (
+                  <StockCard key={s.ticker} s={s} onClick={() => goToTicker(s.ticker, s.isEtf)} />
+                ))}
+              </div>
+            ) : (
+              <div style={{ fontSize: '12px', color: 'var(--ws-text-3)', padding: '12px 0' }}>No ETF matches.</div>
+            )}
+          </div>
         </div>
       )}
 
