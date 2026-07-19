@@ -36,7 +36,7 @@ export async function POST(request) {
   const userId = await getUserId();
   if (!userId) return Response.json({ error: 'Not authenticated' }, { status: 401 });
 
-  const { portfolio_id, amount, currency, notes } = await request.json();
+  const { portfolio_id, amount, currency, notes, type } = await request.json();
 
   if (!portfolio_id || !amount || !currency) {
     return Response.json({ error: 'Missing required fields' }, { status: 400 });
@@ -61,6 +61,7 @@ export async function POST(request) {
       portfolio_id,
       amount: Number(amount),
       currency: currency.toUpperCase(),
+      type: type || 'DEPOSIT',
       notes: notes || null
     })
     .select()

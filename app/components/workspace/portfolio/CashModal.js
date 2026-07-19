@@ -35,6 +35,7 @@ export default function CashModal({ portfolioId, portfolios, onClose, onAdded })
           portfolio_id: selectedPortfolio,
           amount: finalAmount,
           currency,
+          type: type.toUpperCase(),
           notes
         }),
       });
