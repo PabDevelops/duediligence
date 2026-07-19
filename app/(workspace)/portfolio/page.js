@@ -194,13 +194,13 @@ export default function WorkspacePortfolio() {
   const cashTotal = useMemo(() => {
     let total = 0;
     const transactions = selectedPortfolioId === 'all' ? allCashTransactions : allCashTransactions.filter(t => t.portfolio_id === selectedPortfolioId);
-    transactions.forEach(t => total += toUSD(t.amount, t.currency));
+    transactions.forEach(t => total += toUSD(Number(t.amount), t.currency));
     return total;
   }, [allCashTransactions, selectedPortfolioId, rates]);
 
   const allCashTotal = useMemo(() => {
     let total = 0;
-    allCashTransactions.forEach(t => total += toUSD(t.amount, t.currency));
+    allCashTransactions.forEach(t => total += toUSD(Number(t.amount), t.currency));
     return total;
   }, [allCashTransactions, rates]);
 
@@ -424,7 +424,7 @@ export default function WorkspacePortfolio() {
           </div>
 
           <div style={{ marginBottom: '18px' }}>
-            <GrowthChart snapshots={snapshots} currentValue={totals.value} currentCost={totals.cost} rate={rate} symbol={symbol} />
+            <GrowthChart snapshots={snapshots} currentValue={netWorthTotals.value} currentCost={netWorthTotals.cost} rate={rate} symbol={symbol} />
           </div>
 
           <div className="portfolio-allocations-grid" style={{ gridTemplateColumns: `repeat(${1 + (bySectorChart.length > 1 ? 1 : 0) + (hasPies ? 1 : 0)}, 1fr)` }}>
