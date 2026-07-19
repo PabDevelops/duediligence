@@ -27,15 +27,17 @@ export default function WorkspacePortfolio() {
   const searchParams = useSearchParams();
   const [allHoldings, setAllHoldings] = useState([]);
   const [allCashTransactions, setAllCashTransactions] = useState([]);
+  const [portfolios, setPortfolios] = useState([]);
+  const [selectedPortfolioId, setSelectedPortfolioId] = useState('all');
+
   const holdings = useMemo(() => {
     if (selectedPortfolioId === 'all') return allHoldings;
     return allHoldings.filter(h => h.portfolio_id === selectedPortfolioId);
   }, [allHoldings, selectedPortfolioId]);
+
   const [stocks, setStocks] = useState({});
   const [sparklines, setSparklines] = useState({});
   const [loading, setLoading] = useState(true);
-  const [portfolios, setPortfolios] = useState([]);
-  const [selectedPortfolioId, setSelectedPortfolioId] = useState(null);
   const [creatingPortfolio, setCreatingPortfolio] = useState(false);
   const [newPortfolioName, setNewPortfolioName] = useState('');
   const [loadError, setLoadError] = useState(null);
