@@ -14,8 +14,8 @@ export default function CookieBanner() {
     if (!accepted) setVisible(true);
   }, []);
 
-  const accept = () => { localStorage.setItem('cookie_consent', 'accepted'); setVisible(false); };
-  const decline = () => { localStorage.setItem('cookie_consent', 'declined'); setVisible(false); };
+  const accept = () => { localStorage.setItem('cookie_consent', 'accepted'); window.dispatchEvent(new Event('cookieConsentChanged')); setVisible(false); };
+  const decline = () => { localStorage.setItem('cookie_consent', 'declined'); window.dispatchEvent(new Event('cookieConsentChanged')); setVisible(false); };
 
   if (!visible) return null;
 

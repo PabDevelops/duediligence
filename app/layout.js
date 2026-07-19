@@ -6,6 +6,7 @@ import CookieBanner from './components/CookieBanner';
 import BottomNav from './components/BottomNav';
 import TrialGate from './components/TrialGate';
 import { Analytics } from '@vercel/analytics/react';
+import GoogleAnalytics from './components/GoogleAnalytics';
 
 export const metadata = {
   metadataBase: new URL('https://traqcker.com'),
@@ -57,6 +58,7 @@ export default async function RootLayout({ children }) {
           <BottomNav />
           <CookieBanner />
           <Analytics />
+          <GoogleAnalytics />
           <Script
             src="https://datafa.st/js/script.js"
             data-website-id="dfid_WAIi12RsesdbDTvKjxaVj"
