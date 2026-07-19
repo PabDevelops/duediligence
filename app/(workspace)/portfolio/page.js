@@ -133,7 +133,7 @@ export default function WorkspacePortfolio() {
       return {
         ...p, avgCost, price, marketValue, gain, gainPct,
         avgCostNative, costCurrency, priceNative, priceCurrency, marketValueNative,
-        name: s?.name, sector: s?.sector, pie, pe: s?.pe, dividendYield: s?.dividendYield, dayChangePct: s?.priceChangePct,
+        name: s?.name, sector: s?.sector, pie, pe: s?.pe, dividendYield: s?.dividendYield ?? s?.yield, dayChangePct: s?.priceChangePct,
       };
     });
   }, [holdings, stocks, rates]);
@@ -431,8 +431,8 @@ export default function WorkspacePortfolio() {
                             <td style={{ padding: '10px 12px', textAlign: 'right', color: p.dayChangePct == null ? 'var(--ws-text-3)' : p.dayChangePct >= 0 ? 'var(--ws-accent)' : 'var(--ws-red)' }}>
                               {p.dayChangePct != null ? `${p.dayChangePct >= 0 ? '+' : ''}${p.dayChangePct.toFixed(2)}%` : '—'}
                             </td>
-                            <td style={{ padding: '10px 12px', textAlign: 'right', color: 'var(--ws-text-2)' }}>{p.pe ? p.pe.toFixed(1) : '—'}</td>
-                            <td style={{ padding: '10px 12px', textAlign: 'right', color: 'var(--ws-text-2)' }}>{p.dividendYield ? `${p.dividendYield.toFixed(2)}%` : '—'}</td>
+                            <td style={{ padding: '10px 12px', textAlign: 'right', color: 'var(--ws-text-2)' }}>{typeof p.pe === 'number' ? p.pe.toFixed(1) : (p.pe || '—')}</td>
+                            <td style={{ padding: '10px 12px', textAlign: 'right', color: 'var(--ws-text-2)' }}>{typeof p.dividendYield === 'number' ? `${p.dividendYield.toFixed(2)}%` : (p.dividendYield || '—')}</td>
                             <td style={{ padding: '10px 12px', textAlign: 'right', fontWeight: 600 }}>{fmtC(p.marketValue ?? p.cost)}</td>
                             <td style={{ padding: '10px 12px', textAlign: 'right', color: p.gain == null ? 'var(--ws-text-3)' : p.gain >= 0 ? 'var(--ws-accent)' : 'var(--ws-red)', fontWeight: 600 }}>
                               {p.gain == null ? '—' : `${p.gain >= 0 ? '+' : ''}${fmtC(p.gain)} (${p.gainPct >= 0 ? '+' : ''}${p.gainPct.toFixed(1)}%)`}
