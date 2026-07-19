@@ -3,6 +3,8 @@ import { useState } from 'react';
 
 export default function SellModal({ position, onClose, onSold, portfolioId }) {
   const [shares, setShares] = useState('');
+  const [addToCash, setAddToCash] = useState(false);
+  const [sellPrice, setSellPrice] = useState(position.priceNative || position.price || '');
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState(null);
 
@@ -14,7 +16,14 @@ export default function SellModal({ position, onClose, onSold, portfolioId }) {
     setError(null);
     const res = await fetch('/api/portfolio/sell', {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ ticker: position.ticker, shares: n, portfolio_id: portfolioId }),
+      body: JSON.stringify({ 
+        ticker: position.ticker, 
+        shares: n, 
+        portfolio_id: portfolioId,
+        addToCash,
+        sellPrice: addToCash ? Number(sellPrice) : null,
+        currency: position.priceCurrency || 'USD'
+      }),
     });
     setSaving(false);
     if (!res.ok) {
@@ -39,10 +48,27 @@ export default function SellModal({ position, onClose, onSold, portfolioId }) {
             style={{ alignSelf: 'flex-start', fontSize: '11px', fontWeight: 600, color: 'var(--ws-accent)', background: 'var(--ws-accent-dim)', border: 'none', padding: '5px 10px', cursor: 'pointer' }}>
             Sell all
           </button>
+          <div style={{ marginTop: '12px' }}>
+            <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer' }}>
+              <input type="checkbox" checked={addToCash} onChange={e => setAddToCash(e.target.checked)} style={{ width: '16px', height: '16px', accentColor: 'var(--ws-accent)' }} />
+              <span style={{ fontSize: '13px', color: 'var(--ws-text)', fontWeight: 600 }}>Add proceeds to cash balance</span>
+            </label>
+            {addToCash && (
+              <div style={{ marginTop: '12px', background: 'var(--ws-bg-2)', padding: '12px', borderRadius: '8px', border: '1px solid var(--ws-border)' }}>
+                <div className="ws-label" style={{ marginBottom: '4px' }}>SELL PRICE ({position.priceCurrency || 'USD'})</div>
+                <input type="number" step="any" min="0" value={sellPrice} onChange={e => setSellPrice(e.target.value)} className="ws-input" style={{ width: '100%' }} placeholder="Price per share" required />
+                {Number(shares) > 0 && Number(sellPrice) > 0 && (
+                  <div style={{ fontSize: '12px', color: 'var(--ws-text-2)', textAlign: 'right', marginTop: '8px' }}>
+                    Total proceeds: <strong style={{ color: 'var(--ws-accent)' }}>+{(Number(shares) * Number(sellPrice)).toLocaleString(undefined, { maximumFractionDigits: 2 })} {position.priceCurrency || 'USD'}</strong>
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
           {error && (
             <div style={{ padding: '8px 12px', border: '1px solid var(--ws-red)', color: 'var(--ws-red)', fontSize: '12px' }}>{error}</div>
           )}
-          <div className="flex gap-2 mt-1.5">
+          <div className="flex gap-2 mt-3">
             <button type="button" onClick={onClose}
               className="ws-btn-secondary"
               style={{ flex: 1, height: '38px' }}>

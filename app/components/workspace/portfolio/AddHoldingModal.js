@@ -28,6 +28,7 @@ export default function AddHoldingModal({ onClose, onAdded, existingPies, defaul
   const [purchaseDate, setPurchaseDate] = useState(editLot?.purchase_date || new Date().toISOString().slice(0, 10));
   const [pie, setPie] = useState(editLot?.pie || '');
   const [showPieSuggestions, setShowPieSuggestions] = useState(false);
+  const [deductCash, setDeductCash] = useState(false);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState(null);
   const [manualLookupState, setManualLookupState] = useState('idle'); // idle | loading | not_found
@@ -91,7 +92,7 @@ export default function AddHoldingModal({ onClose, onAdded, existingPies, defaul
         })
       : await fetch('/api/portfolio', {
           method: 'POST', headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ ticker: selected.ticker, shares, costBasis, purchaseDate, pie, costBasisCurrency, portfolio_id: portfolioId }),
+          body: JSON.stringify({ ticker: selected.ticker, shares, costBasis, purchaseDate, pie, costBasisCurrency, portfolio_id: portfolioId, deductCash }),
         });
     setSaving(false);
     if (!res.ok) {
@@ -247,6 +248,13 @@ export default function AddHoldingModal({ onClose, onAdded, existingPies, defaul
 
           {total != null && (
             <div style={{ fontSize: '12px', color: 'var(--ws-text-2)', textAlign: 'right' }}>Total cost: <strong style={{ color: 'var(--ws-text)' }}>{formatCurrency(total, CURRENCIES[costBasisCurrency])}</strong></div>
+          )}
+
+          {!isEdit && (
+            <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', marginTop: '4px' }}>
+              <input type="checkbox" checked={deductCash} onChange={e => setDeductCash(e.target.checked)} style={{ width: '16px', height: '16px', accentColor: 'var(--ws-accent)' }} />
+              <span style={{ fontSize: '13px', color: 'var(--ws-text)', fontWeight: 600 }}>Deduct cost from cash balance</span>
+            </label>
           )}
 
           {error && (

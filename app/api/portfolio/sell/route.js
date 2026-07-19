@@ -7,7 +7,7 @@ export async function POST(request) {
   const userId = await getUserId();
   if (!userId) return Response.json({ error: 'Not authenticated' }, { status: 401 });
 
-  const { ticker, shares, portfolio_id } = await request.json();
+  const { ticker, shares, portfolio_id, addToCash, sellPrice, currency } = await request.json();
   const sellShares = Number(shares);
   if (!ticker || !(sellShares > 0) || !portfolio_id) {
     return Response.json({ error: 'Invalid input' }, { status: 400 });
@@ -39,6 +39,22 @@ export async function POST(request) {
     } else {
       await supabase.from('portfolio_holdings').update({ shares: lotShares - remaining }).eq('id', lot.id).eq('user_id', userId);
       remaining = 0;
+    }
+  }
+
+  if (addToCash && sellPrice > 0) {
+    const totalAmount = sellShares * Number(sellPrice);
+    try {
+      await supabase.from('portfolio_cash_ledger').insert({
+        user_id: userId,
+        portfolio_id: portfolio_id,
+        amount: totalAmount,
+        currency: ['USD', 'EUR', 'GBP'].includes(currency) ? currency : 'USD',
+        type: 'DEPOSIT',
+        notes: `Sold ${sellShares} shares of ${ticker.toUpperCase()}`
+      });
+    } catch (err) {
+      console.error('Failed to add to cash ledger:', err);
     }
   }
 

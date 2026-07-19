@@ -31,7 +31,7 @@ export async function POST(request) {
   const userId = await getUserId();
   if (!userId) return Response.json({ error: 'Not authenticated' }, { status: 401 });
 
-  const { ticker, shares, costBasis, purchaseDate, pie, costBasisCurrency, portfolio_id } = await request.json();
+  const { ticker, shares, costBasis, purchaseDate, pie, costBasisCurrency, portfolio_id, deductCash } = await request.json();
   if (!ticker || !shares || costBasis == null || Number(shares) <= 0 || Number(costBasis) < 0 || !portfolio_id) {
     return Response.json({ error: 'Invalid input' }, { status: 400 });
   }
@@ -64,6 +64,22 @@ export async function POST(request) {
     });
   } catch (err) {
     console.error('Failed to auto-add to watchlist:', err);
+  }
+
+  if (deductCash) {
+    const totalAmount = Number(shares) * Number(costBasis);
+    try {
+      await supabase.from('portfolio_cash_ledger').insert({
+        user_id: userId,
+        portfolio_id: portfolio_id,
+        amount: -totalAmount,
+        currency: ['USD', 'EUR', 'GBP'].includes(costBasisCurrency) ? costBasisCurrency : 'USD',
+        type: 'WITHDRAWAL',
+        notes: `Bought ${shares} shares of ${ticker.toUpperCase()}`
+      });
+    } catch (err) {
+      console.error('Failed to deduct from cash ledger:', err);
+    }
   }
 
   return Response.json({ success: true, holding: data });
