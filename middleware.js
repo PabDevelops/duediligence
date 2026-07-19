@@ -51,11 +51,18 @@ function resolveLocale(request) {
   return { locale, isFirstTouch: true };
 }
 
+// Root-level static/metadata files Next.js serves identically regardless of host —
+// crawlers (Googlebot, AdSense's Mediapartners-Google, etc.) fetch these from whichever
+// domain they found the site on, so redirecting them cross-domain breaks robots.txt/ads.txt
+// discovery and, in turn, AdSense's "can the crawler access the site" verification check.
+const CRAWLER_STATIC_FILES = ['/ads.txt', '/robots.txt', '/sitemap.xml'];
+
 function domainRedirect(request) {
   const host = request.headers.get('host') || '';
   const { pathname, search } = request.nextUrl;
 
   if (pathname.startsWith('/api')) return null;
+  if (CRAWLER_STATIC_FILES.includes(pathname)) return null;
 
   if (isHiddenPath(pathname)) {
     const dest = request.nextUrl.clone();
