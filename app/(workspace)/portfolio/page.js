@@ -13,6 +13,7 @@ import ImportCsvModal from '../../components/workspace/portfolio/ImportCsvModal'
 import AddHoldingModal from '../../components/workspace/portfolio/AddHoldingModal';
 import SellModal from '../../components/workspace/portfolio/SellModal';
 import TransferPieModal from '../../components/workspace/portfolio/TransferPieModal';
+import CashModal from '../../components/workspace/portfolio/CashModal';
 import GrowthChart from '../../components/workspace/portfolio/GrowthChart';
 import AllocationChart from '../../components/workspace/portfolio/AllocationChart';
 
@@ -25,6 +26,7 @@ export default function WorkspacePortfolio() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [allHoldings, setAllHoldings] = useState([]);
+  const [allCashTransactions, setAllCashTransactions] = useState([]);
   const holdings = useMemo(() => {
     if (selectedPortfolioId === 'all') return allHoldings;
     return allHoldings.filter(h => h.portfolio_id === selectedPortfolioId);
@@ -38,6 +40,7 @@ export default function WorkspacePortfolio() {
   const [newPortfolioName, setNewPortfolioName] = useState('');
   const [loadError, setLoadError] = useState(null);
   const [showModal, setShowModal] = useState(false);
+  const [showCashModal, setShowCashModal] = useState(false);
   const [buyTicker, setBuyTicker] = useState(null);
   const [showImport, setShowImport] = useState(false);
   const [editLot, setEditLot] = useState(null);
@@ -108,13 +111,18 @@ export default function WorkspacePortfolio() {
 
   const load = ({ refresh = false } = {}) => {
     if (!isSignedIn || !selectedPortfolioId) return;
-    fetch(`/api/portfolio?portfolioId=all`).then(async r => {
-      const d = await r.json();
-      if (!r.ok) { setLoadError(d.error || 'Failed to load portfolio.'); setLoading(false); return; }
+    Promise.all([
+      fetch(`/api/portfolio?portfolioId=all`),
+      fetch(`/api/portfolio/cash?portfolioId=all`)
+    ]).then(async ([rHoldings, rCash]) => {
+      const dHoldings = await rHoldings.json();
+      const dCash = await rCash.json();
+      if (!rHoldings.ok) { setLoadError(dHoldings.error || 'Failed to load portfolio.'); setLoading(false); return; }
       setLoadError(null);
-      setAllHoldings(d.holdings || []);
+      setAllHoldings(dHoldings.holdings || []);
+      setAllCashTransactions(dCash.transactions || []);
       setLoading(false);
-      const tickers = [...new Set((d.holdings || []).map(h => h.ticker))];
+      const tickers = [...new Set((dHoldings.holdings || []).map(h => h.ticker))];
       tickers.forEach(ticker => {
         fetch(`/api/stock?ticker=${ticker}${refresh ? '&refresh=true' : ''}`).then(r => r.json()).then(data => setStocks(prev => ({ ...prev, [ticker]: data })));
         fetch(`/api/sparkline?ticker=${ticker}`).then(r => r.json()).then(data => setSparklines(prev => ({ ...prev, [ticker]: data.candles }))).catch(() => {});
@@ -183,21 +191,36 @@ export default function WorkspacePortfolio() {
   const positions = useMemo(() => buildPositions(holdings), [holdings, stocks, rates]);
   const allPositions = useMemo(() => buildPositions(allHoldings), [allHoldings, stocks, rates]);
 
+  const cashTotal = useMemo(() => {
+    let total = 0;
+    const transactions = selectedPortfolioId === 'all' ? allCashTransactions : allCashTransactions.filter(t => t.portfolio_id === selectedPortfolioId);
+    transactions.forEach(t => total += toUSD(t.amount, t.currency));
+    return total;
+  }, [allCashTransactions, selectedPortfolioId, rates]);
+
+  const allCashTotal = useMemo(() => {
+    let total = 0;
+    allCashTransactions.forEach(t => total += toUSD(t.amount, t.currency));
+    return total;
+  }, [allCashTransactions, rates]);
+
   const totals = useMemo(() => {
     const cost = positions.reduce((a, p) => a + p.cost, 0);
-    const value = positions.reduce((a, p) => a + (p.marketValue ?? p.cost), 0);
-    const gain = value - cost;
+    const investedValue = positions.reduce((a, p) => a + (p.marketValue ?? p.cost), 0);
+    const value = investedValue + cashTotal;
+    const gain = investedValue - cost;
     const gainPct = cost > 0 ? (gain / cost) * 100 : 0;
-    return { cost, value, gain, gainPct };
-  }, [positions]);
+    return { cost, value, gain, gainPct, investedValue };
+  }, [positions, cashTotal]);
 
   const netWorthTotals = useMemo(() => {
     const cost = allPositions.reduce((a, p) => a + p.cost, 0);
-    const value = allPositions.reduce((a, p) => a + (p.marketValue ?? p.cost), 0);
-    const gain = value - cost;
+    const investedValue = allPositions.reduce((a, p) => a + (p.marketValue ?? p.cost), 0);
+    const value = investedValue + allCashTotal;
+    const gain = investedValue - cost;
     const gainPct = cost > 0 ? (gain / cost) * 100 : 0;
-    return { cost, value, gain, gainPct };
-  }, [allPositions]);
+    return { cost, value, gain, gainPct, investedValue };
+  }, [allPositions, allCashTotal]);
 
   useEffect(() => {
     if (positions.length === 0 || totals.value === 0) return;
@@ -209,31 +232,31 @@ export default function WorkspacePortfolio() {
   }, [positions, netWorthTotals.value, netWorthTotals.cost]);
 
   const byTickerChart = useMemo(() => {
-    if (totals.value === 0) return [];
+    if (totals.investedValue === 0) return [];
     return positions
-      .map(p => ({ name: p.ticker, value: ((p.marketValue ?? p.cost) / totals.value) * 100 }))
+      .map(p => ({ name: p.ticker, value: ((p.marketValue ?? p.cost) / totals.investedValue) * 100 }))
       .sort((a, b) => b.value - a.value);
-  }, [positions, totals.value]);
+  }, [positions, totals.investedValue]);
 
   const bySectorChart = useMemo(() => {
-    if (totals.value === 0) return [];
+    if (totals.investedValue === 0) return [];
     const bySector = {};
     positions.forEach(p => {
       const key = p.sector || 'Unknown';
-      bySector[key] = (bySector[key] || 0) + ((p.marketValue ?? p.cost) / totals.value) * 100;
+      bySector[key] = (bySector[key] || 0) + ((p.marketValue ?? p.cost) / totals.investedValue) * 100;
     });
     return Object.entries(bySector).map(([name, value]) => ({ name, value })).sort((a, b) => b.value - a.value);
-  }, [positions, totals.value]);
+  }, [positions, totals.investedValue]);
 
   const byPieChart = useMemo(() => {
-    if (totals.value === 0) return [];
+    if (totals.investedValue === 0) return [];
     const byPie = {};
     positions.forEach(p => {
       const key = p.pie || 'Unassigned';
-      byPie[key] = (byPie[key] || 0) + ((p.marketValue ?? p.cost) / totals.value) * 100;
+      byPie[key] = (byPie[key] || 0) + ((p.marketValue ?? p.cost) / totals.investedValue) * 100;
     });
     return Object.entries(byPie).map(([name, value]) => ({ name, value })).sort((a, b) => b.value - a.value);
-  }, [positions, totals.value]);
+  }, [positions, totals.investedValue]);
 
   const groupedByPie = useMemo(() => {
     const groups = {};
@@ -332,6 +355,11 @@ export default function WorkspacePortfolio() {
                   </button>
                 ))}
               </div>
+              <button onClick={() => setShowCashModal(true)}
+                className="ws-btn-secondary"
+                style={{ height: '34px', padding: '0 14px' }}>
+                ⇄ Manage Cash
+              </button>
               <button onClick={() => setShowImport(true)}
                 className="ws-btn-secondary"
                 style={{ height: '34px', padding: '0 14px' }}>
@@ -370,14 +398,18 @@ export default function WorkspacePortfolio() {
         </div>
       ) : (
         <>
-          <div className="portfolio-overview-grid" style={{ gridTemplateColumns: 'repeat(4, 1fr)' }}>
+          <div className="portfolio-overview-grid" style={{ gridTemplateColumns: 'repeat(5, 1fr)' }}>
             <div className="border border-ws-border p-3.5" style={{ background: 'var(--ws-bg-2)' }}>
               <div style={{ fontSize: '10px', color: 'var(--ws-text-3)', letterSpacing: '0.5px', marginBottom: '4px' }}>NET WORTH (ALL)</div>
               <div style={{ fontSize: '20px', fontWeight: 700, color: 'var(--ws-text)' }}>{fmtC(netWorthTotals.value)}</div>
             </div>
             <div className="border border-ws-border p-3.5">
               <div style={{ fontSize: '10px', color: 'var(--ws-text-3)', letterSpacing: '0.5px', marginBottom: '4px' }}>MARKET VALUE</div>
-              <div style={{ fontSize: '20px', fontWeight: 700, color: 'var(--ws-text)' }}>{fmtC(totals.value)}</div>
+              <div style={{ fontSize: '20px', fontWeight: 700, color: 'var(--ws-text)' }}>{fmtC(totals.investedValue)}</div>
+            </div>
+            <div className="border border-ws-border p-3.5">
+              <div style={{ fontSize: '10px', color: 'var(--ws-text-3)', letterSpacing: '0.5px', marginBottom: '4px' }}>CASH BALANCE</div>
+              <div style={{ fontSize: '20px', fontWeight: 700, color: 'var(--ws-text)' }}>{fmtC(cashTotal)}</div>
             </div>
             <div className="border border-ws-border p-3.5">
               <div style={{ fontSize: '10px', color: 'var(--ws-text-3)', letterSpacing: '0.5px', marginBottom: '4px' }}>COST BASIS</div>
@@ -402,7 +434,7 @@ export default function WorkspacePortfolio() {
           </div>
 
           {groupedByPie.map(group => {
-            const groupAllocation = totals.value > 0 ? (group.value / totals.value) * 100 : 0;
+            const groupAllocation = totals.investedValue > 0 ? (group.value / totals.investedValue) * 100 : 0;
             const isEditing = editingPie === group.name;
             return (
               <div key={group.name} style={{ marginBottom: '18px' }}>
@@ -492,7 +524,7 @@ export default function WorkspacePortfolio() {
                     </thead>
                     <tbody>
                       {group.items.map(p => {
-                        const allocation = totals.value > 0 ? ((p.marketValue ?? p.cost) / totals.value) * 100 : 0;
+                        const allocation = totals.investedValue > 0 ? ((p.marketValue ?? p.cost) / totals.investedValue) * 100 : 0;
                         const lastLot = [...p.lots].sort((a, b) => new Date(b.created_at) - new Date(a.created_at))[0];
                         return (
                           <tr key={p.ticker} onClick={() => router.push(`/stock/${p.ticker}`)}
@@ -561,6 +593,7 @@ export default function WorkspacePortfolio() {
 
       {(showModal || buyTicker) && <AddHoldingModal presetTicker={buyTicker} onClose={() => { setShowModal(false); setBuyTicker(null); }} onAdded={() => { setShowModal(false); setBuyTicker(null); load(); }} existingPies={existingPies} defaultCurrency={currency} portfolioId={selectedPortfolioId} />}
       {showImport && <ImportCsvModal onClose={() => setShowImport(false)} onImported={() => { setShowImport(false); load(); }} defaultCurrency={currency} portfolioId={selectedPortfolioId} />}
+      {showCashModal && <CashModal portfolioId={selectedPortfolioId} portfolios={portfolios} onClose={() => setShowCashModal(false)} onAdded={() => { setShowCashModal(false); load(); }} />}
       {editLot && <AddHoldingModal onClose={() => setEditLot(null)} onAdded={() => { setEditLot(null); load(); }} existingPies={existingPies} defaultCurrency={currency} editLot={editLot} portfolioId={selectedPortfolioId} />}
       {sellPosition && <SellModal position={sellPosition} onClose={() => setSellPosition(null)} onSold={() => { setSellPosition(null); load(); }} portfolioId={selectedPortfolioId} />}
       {transferPie && <TransferPieModal pie={transferPie} sourcePortfolioId={selectedPortfolioId} portfolios={portfolios} onClose={() => setTransferPie(null)} onTransferred={() => { setTransferPie(null); loadPortfolios(); load(); }} />}
