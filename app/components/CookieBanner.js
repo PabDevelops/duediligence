@@ -3,6 +3,7 @@ import { useState, useEffect } from 'react';
 import { localizeHref } from '../../lib/i18n/locale';
 import { useLocale } from '../../lib/i18n/useLocale';
 import { getDictionary } from '../../lib/i18n/getDictionary';
+import { pollGoogleCmp } from '../../lib/googleCmp';
 
 export default function CookieBanner() {
   const [visible, setVisible] = useState(false);
@@ -11,7 +12,10 @@ export default function CookieBanner() {
 
   useEffect(() => {
     const accepted = localStorage.getItem('cookie_consent');
-    if (!accepted) setVisible(true);
+    if (accepted) return;
+    // EEA/UK/CH visitors get Google's own certified CMP message (wired through the
+    // AdSense script) — showing ours on top would be a confusing double banner.
+    pollGoogleCmp((cmpPresent) => { if (!cmpPresent) setVisible(true); });
   }, []);
 
   const accept = () => { localStorage.setItem('cookie_consent', 'accepted'); window.dispatchEvent(new Event('cookieConsentChanged')); setVisible(false); };
