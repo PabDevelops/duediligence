@@ -359,7 +359,7 @@ export default function PerformanceAreaChart({ totalUniverseCap }) {
       </div>
 
       {/* Chart Footer Breakdown */}
-      <div style={{ display: 'flex', justifyContent: 'space-around', paddingTop: '10px', borderTop: '1px solid var(--ws-border)', fontSize: '11px' }}>
+      <div style={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'space-around', rowGap: '8px', paddingTop: '10px', borderTop: '1px solid var(--ws-border)', fontSize: '11px' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
           <span style={{ width: '8px', height: '8px', background: 'var(--ws-accent)' }} />
           <span style={{ color: 'var(--ws-text-2)' }}>Buybacks:</span>

@@ -135,7 +135,7 @@ export default function SmallCapsExploreTable({ radarData, loading, onSelect }) 
         </div>
 
         {/* Filter Inputs & Cap Tier Switcher */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flexWrap: 'wrap' }}>
           <input
             type="text"
             placeholder="Search ticker or name..."
@@ -143,7 +143,8 @@ export default function SmallCapsExploreTable({ radarData, loading, onSelect }) 
             onChange={e => { setSearch(e.target.value); setPage(1); }}
             style={{
               background: 'var(--ws-bg-2)', border: '1px solid var(--ws-border)',
-              color: 'var(--ws-text)', fontSize: '11px', padding: '6px 12px', outline: 'none', width: '200px'
+              color: 'var(--ws-text)', fontSize: '11px', padding: '6px 12px', outline: 'none', width: '200px',
+              maxWidth: '100%', boxSizing: 'border-box'
             }}
           />
 

@@ -215,13 +215,13 @@ export default function SmallMicroCaps() {
       <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column' }}>
 
         {/* Top Header Bar */}
-        <div style={{
+        <div className="smallcaps-header-bar" style={{
           background: 'var(--ws-bg-2)', borderBottom: '1px solid var(--ws-border)',
           padding: '10px 24px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexShrink: 0
         }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '24px' }}>
             {/* Nav Tabs */}
-            <div style={{ display: 'flex', gap: '16px', fontSize: '11px', fontWeight: 700 }}>
+            <div className="smallcaps-header-tabs" style={{ display: 'flex', gap: '16px', fontSize: '11px', fontWeight: 700, whiteSpace: 'nowrap' }}>
               <span
                 onClick={() => setActiveTab('dashboard')}
                 style={{
@@ -276,6 +276,7 @@ export default function SmallMicroCaps() {
           <div style={{ display: 'flex', alignItems: 'center', gap: '12px', position: 'relative' }}>
             <div style={{ position: 'relative' }}>
               <input
+                className="smallcaps-search-input"
                 type="text"
                 placeholder="Scan ticker... (e.g. IONQ)"
                 value={searchQuery}
@@ -283,7 +284,7 @@ export default function SmallMicroCaps() {
                 onKeyDown={(e) => { if (e.key === 'Enter' && searchQuery) triggerSpotlight(searchQuery); }}
                 style={{
                   background: 'var(--ws-bg-1)', border: '1px solid var(--ws-border)',
-                  color: 'var(--ws-text)', fontSize: '11px', padding: '6px 12px 6px 28px', outline: 'none', width: '180px'
+                  color: 'var(--ws-text)', fontSize: '11px', padding: '6px 12px 6px 28px', outline: 'none', width: '180px', boxSizing: 'border-box'
                 }}
                 onFocus={() => setShowSuggestions(true)}
                 onBlur={() => setTimeout(() => setShowSuggestions(false), 200)}
@@ -316,10 +317,10 @@ export default function SmallMicroCaps() {
 
         {/* Tab 1: Dashboard View */}
         {activeTab === 'dashboard' && (
-          <div style={{
+          <div className="smallcaps-dashboard-grid" style={{
             padding: '24px', display: 'grid', gridTemplateColumns: 'repeat(12, 1fr)', gap: '20px', flex: 1, alignItems: 'stretch'
           }}>
-            
+
             {/* Row 1: Top-Left Speedometer Arc (4 cols) + Top-Right Main Area Panel (8 cols) */}
             <div style={{ gridColumn: 'span 4' }}>
               <SemiCircleGauge
@@ -398,8 +399,37 @@ export default function SmallMicroCaps() {
           100% { transform: rotate(360deg); }
         }
         @media (max-width: 1200px) {
-          div[style*="gridTemplateColumns: 'repeat(12, 1fr)'"] > div {
-            grid-column: span 12 !important;
+          /* Inline styles can't be targeted by a media query directly (there's no selector for
+             a React style *object* — the rendered attribute is a plain CSS string, and even
+             then attribute selectors don't match on arbitrary substrings reliably across
+             browsers), so the grid needs a real class name to hook into here. Collapses the
+             12-column dashboard grid to one column per row below tablet width — at 1fr-per-span
+             widths a 4-or-8-column split renders as unreadably thin slivers on a phone screen. */
+          .smallcaps-dashboard-grid {
+            /* minmax(0, 1fr), not 1fr — a bare 1fr track still won't shrink below its
+               content's min-content width (verified: one of the panels here has enough
+               unbreakable inline content that the track grew to ~394px on a 375px viewport
+               and got silently clipped by the workspace layout's overflow-x: hidden instead
+               of showing a scrollbar). minmax(0, ...) caps the track's automatic minimum at 0
+               so 1fr actually means "fill the available width" instead of "at least this wide". */
+            grid-template-columns: minmax(0, 1fr) !important;
+          }
+          .smallcaps-dashboard-grid > div {
+            grid-column: span 1 !important;
+            min-width: 0;
+          }
+        }
+        @media (max-width: 640px) {
+          .smallcaps-header-bar {
+            flex-wrap: wrap;
+            gap: 12px;
+          }
+          .smallcaps-header-tabs {
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+          }
+          .smallcaps-search-input {
+            width: 100% !important;
           }
         }
       `}</style>

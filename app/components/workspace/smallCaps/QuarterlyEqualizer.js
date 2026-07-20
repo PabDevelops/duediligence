@@ -89,8 +89,8 @@ export default function QuarterlyEqualizer({ spotlightData }) {
       </div>
 
       {/* Feature 1: Headline KPI (40% 8-Quarter FCF Streak) */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: '16px', flex: 1 }}>
-        <div style={{ display: 'flex', flexDirection: 'column', minWidth: '105px' }}>
+      <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: '16px', flex: 1 }}>
+        <div style={{ display: 'flex', flexDirection: 'column', minWidth: '105px', flexShrink: 0 }}>
           <span style={{ fontSize: '32px', fontWeight: 900, color: 'var(--ws-text)', lineHeight: 1 }}>40%</span>
           <span style={{ fontSize: '10px', fontWeight: 800, color: 'var(--ws-accent)', marginTop: '4px', letterSpacing: '0.5px' }}>
             8-Quarter FCF Streak
@@ -100,8 +100,14 @@ export default function QuarterlyEqualizer({ spotlightData }) {
           </span>
         </div>
 
-        {/* Equalizer Block Stack Grid */}
-        <div style={{ flex: 1, display: 'flex', justifyContent: 'space-between', alignItems: 'center', position: 'relative' }}>
+        {/* Equalizer Block Stack Grid — minWidth: 0 lets it shrink below the 8 quarter
+            columns' combined min-content width instead of forcing the KPI block beside it
+            to overflow; flexWrap above puts it on its own full-width row once there isn't
+            room next to the KPI (verified: without this, the row's intrinsic minimum width
+            (KPI's fixed 105px + this chart's ~280px of unbreakable "Q1 '25"-style labels)
+            overflowed a 297px-wide mobile Spotlight drawer). overflowX is a fallback for
+            anything still tighter than that, e.g. a narrower drawer/viewport in the future. */}
+        <div style={{ flex: 1, minWidth: 0, display: 'flex', justifyContent: 'space-between', alignItems: 'center', position: 'relative', overflowX: 'auto' }}>
           <div style={{ display: 'flex', gap: '4px', width: '100%', justifyContent: 'space-around' }}>
             {QUARTER_DATA.map((q, idx) => {
               const isHovered = hoveredQ === idx;
