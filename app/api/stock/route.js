@@ -1,5 +1,7 @@
 import { supabase } from '../../../lib/supabase.js';
 import { getYahooAuth } from '../../../lib/yahooFinance.js';
+import { fetchForm4Transactions, computeInsiderOwnershipPct } from '../../../lib/secInsiders.js';
+import { getCapTier, isSmallOrMicro } from '../../../lib/marketCap.js';
 
 const FH_KEY = process.env.FINNHUB_API_KEY;
 const AV_KEY = process.env.ALPHA_VANTAGE_API_KEY;
@@ -581,8 +583,22 @@ export async function GET(request) {
       // `data->>isEtf` flag is the reliable signal that this row's shape isn't meant to have
       // those company fields in the first place.
       const isEtf = cached.data?.isEtf === true || cached.data?.sector === 'ETF' || cached.data?.industry === 'ETF';
+      // Rows written before insiderOwnershipPct existed (lib/secInsiders.js) don't have the key
+      // at all — distinct from a row that computed it and got null because no Form 4 ownership
+      // signal was found, which does have the key (with value null). This used to force
+      // `isComplete = false`, sending every pre-existing cached ticker down the full
+      // Finnhub+SEC EDGAR refetch pipeline (not just the Form4 call) on its first view after
+      // this field shipped — with screener/watchlist/portfolio pages loading dozens of tickers
+      // in parallel, that fanned out into a simultaneous burst against SEC EDGAR's shared
+      // ~10 req/sec limit (see getSecTickerMap's comment above for what that does: an HTML
+      // "Request Rate Threshold Exceeded" page instead of JSON, crashing the request) and blew
+      // through Finnhub's rate limit at the same time — which is what was taking the stock page
+      // down. Backfilling this one field is not worth re-running the whole pipeline for, so it
+      // no longer gates isComplete; missing rows get it filled in the background instead (below).
+      const missingInsiderData = cached.data?.cik != null && !('insiderOwnershipPct' in (cached.data || {}));
       const isComplete = validFinCount >= 2 || isEtf;
       if (hoursOld < CACHE_HOURS && (cached.data?.marketCap != null || isEtf) && isComplete) {
+        if (missingInsiderData) backfillInsiderOwnership(cached.data.cik, ticker, cached.data.sharesOutstanding);
         const minsOld = hoursOld * 60;
         if (minsOld < 2) {
           return Response.json({ ...normData, cached: true });
@@ -1196,6 +1212,36 @@ const sharesForCalc = sharesValAdj || sharesFinnhub;
     const fhDEAdj = fhDE != null ? (fhDE > 10 ? +(fhDE / 100).toFixed(2) : +fhDE.toFixed(2)) : null;
     const debtToEquityFinal = debtToEquity ?? fhDEAdj ?? (equityVal != null ? 0 : null);
 
+    // "Skin in the game" — aggregate insider ownership from the most recent Form 4 filings for
+    // this CIK (see lib/secInsiders.js). Only attempted here, in the confirmed-domestic-filer
+    // (us-gaap) branch — Form 4 is a US Section 16 requirement, so foreign filers and the
+    // Finnhub/Yahoo fallback branches above correctly stay null rather than guessing. Best-
+    // effort: a fetch failure here shouldn't take down the whole stock lookup, so it's swallowed
+    // the same way the SEC XBRL facts fetch above is.
+    let insiderTxns = [];
+    const insiderOwnershipPct = await fetchForm4Transactions(cik, ticker, 15)
+      .then(txns => { insiderTxns = txns; return computeInsiderOwnershipPct(txns, sharesForCalc); })
+      .catch(() => null);
+
+    // Piggyback the same Form 4 fetch above onto the Small & Micro Cap Radar's cross-ticker
+    // insider feed (insider_feed_events) — scoped to small/micro only so ordinary mega/large-cap
+    // traffic doesn't flood a table nobody browsing those tiers cares about. Deliberately not
+    // awaited: this is a side effect for a different feature, and must never add latency to (or
+    // fail) a stock-page load. The daily admin/refresh-small-cap-radar cron sweeps the rest of
+    // the universe, since this alone only fires for tickers someone actually views.
+    if (isSmallOrMicro(marketCapFinal) && insiderTxns.length > 0) {
+      const capTierForFeed = getCapTier(marketCapFinal);
+      const feedRows = insiderTxns.map(t => ({
+        ticker, insider: t.insider, type: t.type, shares: t.shares, price: t.price, value: t.value,
+        date: t.date, cap_tier: capTierForFeed?.id ?? null,
+        is_officer: t.isOfficer, is_director: t.isDirector, is_ten_percent_owner: t.isTenPercentOwner,
+      }));
+      supabase.from('insider_feed_events')
+        .upsert(feedRows, { onConflict: 'ticker,insider,date,type,shares', ignoreDuplicates: true })
+        .then(() => {})
+        .catch(err => console.error(`Failed to upsert insider feed rows for ${ticker}:`, err));
+    }
+
     const result = {
       riskFreeRate,
       name: company.title,
@@ -1243,6 +1289,7 @@ const sharesForCalc = sharesValAdj || sharesFinnhub;
       analystTarget: null,
       operatingCFVal,
       finnhubFallback: false,
+      insiderOwnershipPct,
     };
 
     // Si menos de 3 campos clave tienen datos o no hay ingresos/beneficios, combinar con Yahoo Fundamentals

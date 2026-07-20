@@ -27,6 +27,7 @@ import {
   computeFundamentalGrowth,
   computeFairValue,
 } from '../../../../lib/stockScoring';
+import { getCapTier, isTierAdjusted } from '../../../../lib/marketCap';
 
 // This page shows 'N/A' for missing values instead of the shared '—' fallback.
 const fmt = (val) => sharedFmt(val, 'N/A');
@@ -212,19 +213,10 @@ function GemRevealBar({ score100 }) {
 const CURRENCY_SYMBOLS = { USD: '$', EUR: '€', GBP: '£', JPY: '¥', CNY: '¥', CHF: 'CHF ', CAD: 'C$', AUD: 'A$', HKD: 'HK$', INR: '₹', KRW: '₩', SEK: 'kr', NOK: 'kr', DKK: 'kr' };
 const curSym = (code) => !code || code === 'USD' ? '$' : (CURRENCY_SYMBOLS[code] || `${code} `);
 
-// Standard market-cap tiers (Mega/Large/Mid/Small/Micro), same thresholds used by S&P/Russell
-// index providers and most brokerages. data.marketCap is a raw USD figure (e.g. 1e9 = $1B).
-const MARKET_CAP_TIERS = [
-  { min: 200e9, label: 'MEGA CAP', color: '#a855f7' },
-  { min: 10e9, label: 'LARGE CAP', color: 'var(--ws-accent)' },
-  { min: 2e9, label: 'MID CAP', color: 'var(--ws-text)' },
-  { min: 300e6, label: 'SMALL CAP', color: 'var(--ws-text-2)' },
-  { min: 0, label: 'MICRO CAP', color: 'var(--ws-text-3)' },
-];
-const marketCapTier = (marketCap) => {
-  if (marketCap == null) return null;
-  return MARKET_CAP_TIERS.find(t => marketCap >= t.min);
-};
+// Market-cap tier classification (Mega/Large/Mid/Small/Micro) lives in lib/marketCap.js — the
+// same module the size-calibrated Quality Score and the Small & Micro Cap screener use — so
+// this page and those never classify the same company differently.
+const marketCapTier = getCapTier;
 
 // SEC Form 4 transaction codes — P/S are genuine open-market trades, everything else
 // (grants, exercises, tax withholding, gifts...) moves shares for administrative reasons.
@@ -711,6 +703,11 @@ export default function StockPage({ params }) {
     || data.roic != null || data.grossMargin != null || (data.revHistory?.length ?? 0) > 0;
 
   const easyMode = computeEasyMode(data, hasFundamentals);
+  // Gates every tier-specific UI element below (badge, footnote narrative, Capital Discipline
+  // section) — true only for small/micro, where the calibration actually differs from the
+  // mid/large/mega baseline. Mid-and-up renders exactly as it did before market-cap tiering
+  // existed: no badge, no extra section, same numbers.
+  const tierAdjusted = isTierAdjusted(easyMode?.capTier?.id);
   // Quality-adjusted relative valuation — replaces the old 10-year forward DCF, which stacked
   // 4-5 independently uncertain assumptions (WACC via beta, a decade of reinvestment×ROIC
   // growth, a margin-recovery ramp, a terminal exit multiple) that compounded multiplicatively.
@@ -877,7 +874,18 @@ export default function StockPage({ params }) {
 
             {/* Right: terminal score block */}
             <div className="stock-hero-score" style={{ alignItems: 'flex-start', gap: '10px' }}>
-              <div style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: '9px', letterSpacing: '2px', color: 'var(--ws-text-3)', fontWeight: 700 }}>QUALITY SCORE</div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap' }}>
+                <div style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: '9px', letterSpacing: '2px', color: 'var(--ws-text-3)', fontWeight: 700 }}>QUALITY SCORE</div>
+                {tierAdjusted && (
+                  <span title={`Margin/ROIC bars and the CBS/OPPO/GQS blend are calibrated for ${easyMode.capTier.label} — see the Quality tab for the exact weighting.`}
+                    style={{
+                      fontFamily: "'JetBrains Mono', monospace", fontSize: '8px', fontWeight: 700, letterSpacing: '0.5px',
+                      color: easyMode.capTier.color, border: `1px solid ${easyMode.capTier.color}`, borderRadius: '3px', padding: '1px 5px',
+                    }}>
+                    {easyMode.capTier.label} CALIBRATED
+                  </span>
+                )}
+              </div>
               {!easyMode ? (
                 <div style={{ fontSize: '11px', color: 'var(--ws-text-3)', maxWidth: '200px', lineHeight: 1.6, borderLeft: '2px solid var(--ws-border)', paddingLeft: '10px', marginTop: '2px' }}>
                   No fundamentals reported yet — likely a recent IPO or thin data coverage. Price and chart are still live.
@@ -1424,16 +1432,21 @@ export default function StockPage({ params }) {
               ))}
             </div>
             <div style={{ color: 'var(--ws-text-3)', fontSize: '10px', letterSpacing: '1px', marginTop: '12px', textAlign: 'center' }}>
-              AUTOMATED SCORE · BASED ON SEC EDGAR & FINNHUB · NOT A BUY/SELL SIGNAL · CBS 45% · OPPO 30% · GQS 25% · MOAT ±20%
+              AUTOMATED SCORE · BASED ON SEC EDGAR & FINNHUB · NOT A BUY/SELL SIGNAL · CBS {Math.round(easyMode.capTier.weights.cbs * 100)}% · OPPO {Math.round(easyMode.capTier.weights.oppo * 100)}% · GQS {Math.round(easyMode.capTier.weights.gqs * 100)}% · MOAT ±20%
             </div>
+            {tierAdjusted && (
+              <div style={{ color: 'var(--ws-text-3)', fontSize: '10px', lineHeight: 1.6, marginTop: '8px', textAlign: 'center', maxWidth: '520px', marginLeft: 'auto', marginRight: 'auto' }}>
+                Weighted toward Growth Quality (GQS) over Core Business (CBS) — at {easyMode.capTier.label.toLowerCase()} scale, growth trajectory is the thesis, and demanding mega-cap-level stability would unfairly punish an earlier-stage business. Mid cap and up are unaffected — this recalibration only applies here.
+              </div>
+            )}
           </div>
 
           <div className="text-ws-text-3 text-[10px] tracking-[2px] border-b border-ws-border pb-1.5 mb-3">CORE BUSINESS BREAKDOWN</div>
           <div className="grid-5" style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: '1px', background: 'var(--ws-border)', marginBottom: '24px' }}>
             {[
-              { label: 'ROIC', val: fmtP(easyMode.roicForScore), score: easyMode.roicScore, desc: `Threshold: ${(easyMode.roicThreshold * 100).toFixed(0)}% for ${data.sector || 'this sector'}` },
-              { label: isFinancial ? 'NET MARGIN' : 'GROSS MARGIN', val: isFinancial ? fmtP(data.netMargin) : fmtP(data.grossMargin), score: easyMode.gmScore, desc: `Threshold: ${(easyMode.gmThreshold * 100).toFixed(0)}% for ${data.sector || 'this sector'}` },
-              { label: 'OP. MARGIN', val: fmtP(data.opMargin), score: easyMode.omScore, desc: `Threshold: ${(easyMode.omThreshold * 100).toFixed(0)}% for ${data.sector || 'this sector'}` },
+              { label: 'ROIC', val: fmtP(easyMode.roicForScore), score: easyMode.roicScore, desc: `Threshold: ${(easyMode.roicThreshold * 100).toFixed(0)}% for ${data.sector || 'this sector'}${tierAdjusted ? ` (${easyMode.capTier.short} Cap)` : ''}` },
+              { label: isFinancial ? 'NET MARGIN' : 'GROSS MARGIN', val: isFinancial ? fmtP(data.netMargin) : fmtP(data.grossMargin), score: easyMode.gmScore, desc: `Threshold: ${(easyMode.gmThreshold * 100).toFixed(0)}% for ${data.sector || 'this sector'}${tierAdjusted ? ` (${easyMode.capTier.short} Cap)` : ''}` },
+              { label: 'OP. MARGIN', val: fmtP(data.opMargin), score: easyMode.omScore, desc: `Threshold: ${(easyMode.omThreshold * 100).toFixed(0)}% for ${data.sector || 'this sector'}${tierAdjusted ? ` (${easyMode.capTier.short} Cap)` : ''}` },
               { label: 'DEBT/EQUITY', val: fmtN(easyMode.netDebtToEquity), score: easyMode.deScore, desc: 'Net of cash · lower is better' },
               { label: 'CURRENT RATIO', val: easyMode.currentRatio != null ? `${easyMode.currentRatio.toFixed(2)}x` : 'N/A', score: easyMode.crScore, desc: 'Current assets / liabilities' },
             ].map(m => (
@@ -1447,6 +1460,42 @@ export default function StockPage({ params }) {
               </div>
             ))}
           </div>
+
+          {/* Small/micro only — dilution, cash runway and insider ownership carry zero weight
+              in CBS at mid cap and up (capTier.capitalDisciplineWeight === 0 there), so the
+              section is hidden entirely rather than shown with a score that can't move. */}
+          {tierAdjusted && (
+            <>
+              <div className="text-ws-text-3 text-[10px] tracking-[2px] border-b border-ws-border pb-1.5 mb-3">
+                CAPITAL DISCIPLINE — {Math.round(easyMode.capTier.capitalDisciplineWeight * 100)}% OF CBS FOR {easyMode.capTier.label}
+              </div>
+              <div className="grid-3" style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '1px', background: 'var(--ws-border)', marginBottom: '24px' }}>
+                {[
+                  {
+                    label: 'DILUTION (HISTORICAL)', val: easyMode.shareDilution != null ? `${easyMode.shareDilution > 0 ? '+' : ''}${easyMode.shareDilution}%` : 'N/A',
+                    score: easyMode.dilutionScore, desc: 'Diluted share count, oldest to latest reported year',
+                  },
+                  {
+                    label: 'CASH RUNWAY', val: data.fcfVal != null && data.fcfVal >= 0 ? 'FCF+' : easyMode.cashRunwayYears != null ? `${easyMode.cashRunwayYears.toFixed(1)}y` : 'N/A',
+                    score: easyMode.runwayScore, desc: data.fcfVal != null && data.fcfVal >= 0 ? 'Not burning cash' : 'Cash on hand ÷ annual FCF burn',
+                  },
+                  {
+                    label: 'INSIDER OWNERSHIP', val: easyMode.insiderOwnershipPct != null ? `${easyMode.insiderOwnershipPct}%` : 'N/A',
+                    score: easyMode.ownershipScore, desc: 'Skin in the game · from recent SEC Form 4 filings',
+                  },
+                ].map(m => (
+                  <div key={m.label} className="bg-ws-bg-1 p-4">
+                    <div className="flex justify-between mb-2">
+                      <span className="text-ws-text-3 text-[10px] tracking-[1px]">{m.label}</span>
+                      <span style={{ color: scoreColor(m.score), fontSize: '10px' }}>{Math.round(m.score * 20)}/100</span>
+                    </div>
+                    <div style={{ fontSize: '28px', fontWeight: 600, color: scoreColor(m.score), marginBottom: '4px' }}>{m.val}</div>
+                    <div className="text-ws-text-3 text-[10px]">{m.desc}</div>
+                  </div>
+                ))}
+              </div>
+            </>
+          )}
 
           <div className="text-ws-text-3 text-[10px] tracking-[2px] border-b border-ws-border pb-1.5 mb-3">OPPORTUNITY BREAKDOWN</div>
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '1px', background: 'var(--ws-border)', marginBottom: '24px' }}>

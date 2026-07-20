@@ -67,6 +67,9 @@
   --ws-accent: #0f766e;
   --ws-accent-dim: rgba(15, 118, 110, 0.08);
   --ws-red: #ef4444;
+  --ws-red-dim: rgba(239, 68, 68, 0.08);
+  --ws-amber: #f59e0b;
+  --ws-amber-dim: rgba(245, 158, 11, 0.08);
   --ws-radius: 12px;
   --ws-sidebar-width: 240px;
 }
@@ -96,6 +99,9 @@ html[data-ws-theme="dark"] .workspace {
   --ws-accent: #14b8a6;
   --ws-accent-dim: rgba(20, 184, 166, 0.15);
   --ws-red: #f87171;
+  --ws-red-dim: rgba(248, 113, 113, 0.15);
+  --ws-amber: #f59e0b;
+  --ws-amber-dim: rgba(245, 158, 11, 0.15);
 }
 .workspace * {
   font-family: inherit;

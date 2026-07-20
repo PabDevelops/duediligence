@@ -2,6 +2,7 @@
   "crons": [
     { "path": "/api/admin/seed-earnings-calendar", "schedule": "0 3 * * *" },
     { "path": "/api/admin/seed-tickers", "schedule": "30 6 * * *" },
-    { "path": "/api/admin/auto-post-educational", "schedule": "3 8 * * *" }
+    { "path": "/api/admin/auto-post-educational", "schedule": "3 8 * * *" },
+    { "path": "/api/admin/refresh-small-cap-radar", "schedule": "15 7 * * *" }
   ]
 }

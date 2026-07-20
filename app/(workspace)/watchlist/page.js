@@ -1,5 +1,6 @@
 'use client';
 import { useState, useEffect, useCallback, useMemo } from 'react';
+import { useRouter } from 'next/navigation';
 import { useUser } from '../../components/AuthProvider';
 import Link from 'next/link';
 import Sparkline from '../../components/Sparkline';
