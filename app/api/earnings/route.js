@@ -1,4 +1,5 @@
 import { fetchYahooEarningsDate } from '../../../lib/yahooFinance';
+import { supabase } from '../../../lib/supabase';
 
 const FH_KEY = process.env.FINNHUB_API_KEY;
 
@@ -176,7 +177,46 @@ export async function GET(req) {
       fallbacks.forEach(f => { if (f) earnings.push(f); });
     }
 
-    return Response.json({ earnings, ipos });
+    // Enrich with market cap and sector from stock_cache
+    const allTickers = new Set([
+      ...earnings.map(e => e.ticker),
+      ...ipos.map(i => i.ticker)
+    ].filter(Boolean));
+
+    const tickerArray = Array.from(allTickers);
+    const enrichmentMap = {};
+
+    const CHUNK_SIZE = 100;
+    for (let i = 0; i < tickerArray.length; i += CHUNK_SIZE) {
+      const chunk = tickerArray.slice(i, i + CHUNK_SIZE);
+      const { data } = await supabase
+        .from('stock_cache')
+        .select('ticker, marketCap:data->marketCap, sector:data->sector')
+        .in('ticker', chunk);
+      
+      if (data) {
+        data.forEach(row => {
+          enrichmentMap[row.ticker] = {
+            marketCap: row.marketCap,
+            sector: row.sector
+          };
+        });
+      }
+    }
+
+    const enrichedEarnings = earnings.map(e => ({
+      ...e,
+      marketCap: enrichmentMap[e.ticker]?.marketCap || null,
+      sector: enrichmentMap[e.ticker]?.sector || null,
+    }));
+
+    const enrichedIpos = ipos.map(i => ({
+      ...i,
+      marketCap: enrichmentMap[i.ticker]?.marketCap || null,
+      sector: enrichmentMap[i.ticker]?.sector || null,
+    }));
+
+    return Response.json({ earnings: enrichedEarnings, ipos: enrichedIpos });
   } catch (e) {
     return Response.json({ earnings: [] });
   }

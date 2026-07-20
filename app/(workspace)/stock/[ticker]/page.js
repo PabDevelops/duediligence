@@ -418,7 +418,7 @@ export default function StockPage({ params }) {
   const [showAddHolding, setShowAddHolding] = useState(false);
 
   useEffect(() => {
-    fetch(`/api/earnings?ticker=${ticker}`)
+    fetch(`/api/earnings?ticker=${ticker}`, { cache: 'no-store' })
       .then(r => r.json())
       .then(d => {
         if (d.earnings && d.earnings.length > 0) {

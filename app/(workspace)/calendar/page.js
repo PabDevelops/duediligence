@@ -27,6 +27,8 @@ export default function WorkspaceCalendar() {
   const [watchlistOnly, setWatchlistOnly] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [typeFilter, setTypeFilter] = useState('all'); // all | earnings | ipos
+  const [marketCapFilter, setMarketCapFilter] = useState('all');
+  const [sectorFilter, setSectorFilter] = useState('all');
   const [watchlistTickers, setWatchlistTickers] = useState(new Set());
   const [selectedDate, setSelectedDate] = useState(null);
   const [togglingWatchlist, setTogglingWatchlist] = useState(null);
@@ -116,7 +118,15 @@ export default function WorkspaceCalendar() {
     return [...earnList, ...ipoList];
   }, [earnings, ipos]);
 
-  // Apply filters: Watchlist, Search, Type
+  const availableSectors = useMemo(() => {
+    const sectors = new Set();
+    allEventsThisMonth.forEach(e => {
+      if (e.sector) sectors.add(e.sector);
+    });
+    return Array.from(sectors).sort();
+  }, [allEventsThisMonth]);
+
+  // Apply filters: Watchlist, Search, Type, Market Cap, Sector
   const filteredEvents = useMemo(() => {
     return allEventsThisMonth.filter(event => {
       // 1. Watchlist filter
@@ -134,9 +144,21 @@ export default function WorkspaceCalendar() {
         if (!matchesTicker && !matchesName) return false;
       }
 
+      // 4. Market Cap filter
+      if (marketCapFilter !== 'all') {
+        const mc = event.marketCap || 0;
+        if (marketCapFilter === 'mega' && mc < 200000000000) return false;
+        if (marketCapFilter === 'large' && (mc < 10000000000 || mc >= 200000000000)) return false;
+        if (marketCapFilter === 'mid' && (mc < 2000000000 || mc >= 10000000000)) return false;
+        if (marketCapFilter === 'small' && mc >= 2000000000) return false;
+      }
+
+      // 5. Sector filter
+      if (sectorFilter !== 'all' && event.sector !== sectorFilter) return false;
+
       return true;
     });
-  }, [allEventsThisMonth, watchlistOnly, watchlistTickers, typeFilter, searchQuery]);
+  }, [allEventsThisMonth, watchlistOnly, watchlistTickers, typeFilter, searchQuery, marketCapFilter, sectorFilter]);
 
   // Categorize filtered events by date
   const byDate = useMemo(() => {
@@ -362,6 +384,24 @@ export default function WorkspaceCalendar() {
         </div>
         
         <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flexWrap: 'wrap' }}>
+          {/* Market Cap & Sector Filters */}
+          <div style={{ display: 'flex', gap: '8px' }}>
+            <select value={marketCapFilter} onChange={e => setMarketCapFilter(e.target.value)}
+              style={{ background: 'var(--ws-bg-2)', border: '1px solid var(--ws-border)', color: 'var(--ws-text)', fontSize: '11px', fontWeight: 600, padding: '4px 8px', borderRadius: '4px', outline: 'none', cursor: 'pointer' }}>
+              <option value="all">All Sizes</option>
+              <option value="mega">Mega Cap (&gt;$200B)</option>
+              <option value="large">Large Cap ($10B-$200B)</option>
+              <option value="mid">Mid Cap ($2B-$10B)</option>
+              <option value="small">Small Cap (&lt;$2B)</option>
+            </select>
+            
+            <select value={sectorFilter} onChange={e => setSectorFilter(e.target.value)}
+              style={{ background: 'var(--ws-bg-2)', border: '1px solid var(--ws-border)', color: 'var(--ws-text)', fontSize: '11px', fontWeight: 600, padding: '4px 8px', borderRadius: '4px', outline: 'none', cursor: 'pointer', maxWidth: '140px' }}>
+              <option value="all">All Sectors</option>
+              {availableSectors.map(s => <option key={s} value={s}>{s}</option>)}
+            </select>
+          </div>
+
           {/* View toggle */}
           <div style={{ display: 'flex', border: '1px solid var(--ws-border)', borderRadius: '4px', overflow: 'hidden' }}>
             <button onClick={() => setViewMode('month')}
@@ -434,6 +474,27 @@ export default function WorkspaceCalendar() {
               </div>
 
               <div className="custom-scroll" style={{ padding: '12px', display: 'flex', flexDirection: 'column', gap: '16px', overflowY: 'auto', flex: 1 }}>
+                {/* Other/Unspecified */}
+                {dayGroup.other.length > 0 && (
+                  <div>
+                    <div style={{ fontSize: '10px', fontWeight: 700, color: 'var(--ws-text-3)', marginBottom: '8px', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>
+                      Time TBD
+                    </div>
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(44px, 1fr))', gap: '6px' }}>
+                      {dayGroup.other.map(e => (
+                        <div key={e.ticker} className="weekly-stock-tile" title={`${e.ticker}${e.name ? ` - ${e.name}` : ''}`} onClick={() => openInNewTab(`/stock/${e.ticker}`)}
+                          style={{ background: 'var(--ws-bg-2)', border: '1px solid var(--ws-border)', borderRadius: '4px', padding: '4px', cursor: 'pointer', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px' }}>
+                          <StockLogo ticker={e.ticker} size={28} />
+                          <div style={{ fontSize: '9px', fontWeight: 700, color: 'var(--ws-text)', textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap', width: '100%', textAlign: 'center' }}>
+                            {e.ticker}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
                 {/* Before Open */}
                 <div>
                   <div style={{ fontSize: '10px', fontWeight: 700, color: 'var(--ws-text-3)', marginBottom: '8px', display: 'flex', alignItems: 'center', gap: '6px' }}>
@@ -477,27 +538,6 @@ export default function WorkspaceCalendar() {
                     )}
                   </div>
                 </div>
-                
-                {/* Other/Unspecified */}
-                {dayGroup.other.length > 0 && (
-                  <div>
-                    <div style={{ fontSize: '10px', fontWeight: 700, color: 'var(--ws-text-3)', marginBottom: '8px', display: 'flex', alignItems: 'center', gap: '6px' }}>
-                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>
-                      Time TBD
-                    </div>
-                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(44px, 1fr))', gap: '6px' }}>
-                      {dayGroup.other.map(e => (
-                        <div key={e.ticker} className="weekly-stock-tile" title={`${e.ticker}${e.name ? ` - ${e.name}` : ''}`} onClick={() => openInNewTab(`/stock/${e.ticker}`)}
-                          style={{ background: 'var(--ws-bg-2)', border: '1px solid var(--ws-border)', borderRadius: '4px', padding: '4px', cursor: 'pointer', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px' }}>
-                          <StockLogo ticker={e.ticker} size={28} />
-                          <div style={{ fontSize: '9px', fontWeight: 700, color: 'var(--ws-text)', textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap', width: '100%', textAlign: 'center' }}>
-                            {e.ticker}
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                )}
               </div>
             </div>
           ))}
