@@ -9,7 +9,7 @@ import { useUser } from '../components/AuthProvider';
 // part of the anonymous-access exploration flow. Watchlist is included here
 // too — signed-out users get a session-only watchlist there, gated inside
 // the page itself, not at this layout level.
-const PUBLIC_ROUTES = ['/home', '/search', '/stock', '/screener', '/radar', '/calendar', '/watchlist'];
+const PUBLIC_ROUTES = ['/home', '/search', '/stock', '/screener', '/radar', '/calendar', '/watchlist', '/small-caps'];
 
 function isPublicPath(path) {
   return PUBLIC_ROUTES.some(r => path === r || path.startsWith(r + '/'));
@@ -28,6 +28,12 @@ export default function WorkspaceLayout({ children }) {
   const path = usePathname();
   const router = useRouter();
   const [access, setAccess] = useState('checking'); // checking | denied | granted
+  // Recomputed every render straight off the current path, instead of trusting the effect
+  // below to have already resolved `access` to 'granted' — the effect only re-runs on its
+  // own dependency changes, so a route that's public by construction shouldn't ever be able
+  // to render the loading screen or the paywall while waiting on auth/subscription state
+  // that a public route was never supposed to need.
+  const isPublic = isPublicPath(path);
   const [theme, setTheme] = useState('light');
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [scanlines, setScanlines] = useState(false);
@@ -100,7 +106,7 @@ export default function WorkspaceLayout({ children }) {
     document.documentElement.setAttribute('data-ws-theme', nextTheme);
   };
 
-  if (access === 'checking') return <LoadingScreen />;
+  if (access === 'checking' && !isPublic) return <LoadingScreen />;
 
   const isDark = theme === 'dark';
   const closePaywall = () => router.push('/home');
@@ -164,11 +170,11 @@ export default function WorkspaceLayout({ children }) {
         )}
 
         <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', maxWidth: '100%', overflowX: 'hidden' }}>
-          <main style={{ flex: 1, maxWidth: '100%', overflowX: 'hidden' }}>{access === 'granted' ? children : null}</main>
+          <main style={{ flex: 1, maxWidth: '100%', overflowX: 'hidden' }}>{(access === 'granted' || isPublic) ? children : null}</main>
         </div>
       </div>
 
-      {access === 'denied' && (
+      {access === 'denied' && !isPublic && (
         <PaywallModal
           eyebrow="TRAQCKER TERMINAL"
           title="Subscribe to unlock the terminal"
