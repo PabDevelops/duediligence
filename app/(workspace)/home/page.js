@@ -10,10 +10,11 @@ import { formatPriceWithSymbol as formatCurrency } from '../../../lib/formatters
 import { useCurrencyRates } from '../../../lib/hooks/useCurrencyRates';
 import { distributeMasonryColumns } from '../../../lib/homeLayout';
 import { computeEasyMode } from '../../../lib/stockScoring';
+import { openInNewTab } from '../../../lib/openInNewTab';
 import StockLogo from '../../components/workspace/StockLogo';
 import NewsImage from '../../components/workspace/home/NewsImage';
 import Card from '../../components/workspace/home/Card';
-import OnboardingBanner from '../../components/OnboardingBanner';
+import WelcomeModal from '../../components/workspace/home/WelcomeModal';
 import StockChart from '../../components/StockChart';
 import AdSlot from '../../components/AdSlot';
 
@@ -896,7 +897,7 @@ export default function WorkspaceHome() {
                       const detail = stockDetails[item.ticker];
                       const easyMode = detail ? computeEasyMode(detail, hasFundamentals(detail)) : null;
                       return (
-                        <tr key={item.ticker} onClick={() => router.push(`/stock/${item.ticker}`)}
+                        <tr key={item.ticker} onClick={() => openInNewTab(`/stock/${item.ticker}`)}
                           className="border-b border-ws-border cursor-pointer transition-[background] duration-150"
                           onMouseEnter={e => e.currentTarget.style.background = 'var(--ws-bg-2)'}
                           onMouseLeave={e => e.currentTarget.style.background = 'transparent'}>
@@ -965,7 +966,7 @@ export default function WorkspaceHome() {
                       const detail = stockDetails[ticker];
                       const easyMode = detail ? computeEasyMode(detail, hasFundamentals(detail)) : null;
                       return (
-                        <tr key={ticker} onClick={() => router.push(`/stock/${ticker}`)}
+                        <tr key={ticker} onClick={() => openInNewTab(`/stock/${ticker}`)}
                           className="border-b border-ws-border cursor-pointer transition-[background] duration-150"
                           onMouseEnter={e => e.currentTarget.style.background = 'var(--ws-bg-2)'}
                           onMouseLeave={e => e.currentTarget.style.background = 'transparent'}>
@@ -1206,7 +1207,7 @@ export default function WorkspaceHome() {
                       const changePositive = hasChange && item.changePct >= 0;
                       return (
                         <tr key={item.ticker + (item.pie || '') + idx}
-                          onClick={() => router.push(`/stock/${item.ticker}`)}
+                          onClick={() => openInNewTab(`/stock/${item.ticker}`)}
                           style={{ borderBottom: idx === sortedHoldings.length - 1 ? 'none' : '1px solid var(--ws-border)', cursor: 'pointer', transition: 'background 0.15s' }}
                           onMouseEnter={e => e.currentTarget.style.background = 'var(--ws-bg-2)'}
                           onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
@@ -1654,7 +1655,7 @@ export default function WorkspaceHome() {
               {top10.map((s, index) => (
                 <tr
                   key={s.ticker}
-                  onClick={() => router.push(`/stock/${s.ticker}`)}
+                  onClick={() => openInNewTab(`/stock/${s.ticker}`)}
                   className="border-b border-ws-border cursor-pointer transition-[background] duration-150"
                   onMouseEnter={e => e.currentTarget.style.background = 'var(--ws-bg-2)'}
                   onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
@@ -2690,6 +2691,8 @@ export default function WorkspaceHome() {
             {/* Pinned Bottom Button */}
             <Link
               href={`/stock/${terminalTicker}`}
+              target="_blank"
+              rel="noopener noreferrer"
               style={{
                 display: 'block',
                 textAlign: 'center',
@@ -2726,7 +2729,7 @@ export default function WorkspaceHome() {
       boxSizing: 'border-box',
       overflow: (advancedMode && !isMobile) ? 'hidden' : 'visible'
     }}>
-      <OnboardingBanner />
+      <WelcomeModal />
 
       {/* Dashboard Title & Customize Layout Control — the Advanced Mode toggle itself now
           lives in the sidebar footer (Sidebar.js), so this whole header (and the vertical
@@ -2877,7 +2880,7 @@ export default function WorkspaceHome() {
                 >
                   {/* Rendered twice back-to-back so translateX(-50%) loops seamlessly */}
                   {[...tapeItems, ...tapeItems].map((s, i) => (
-                    <div key={`${s.ticker}-${i}`} onClick={() => router.push(`/stock/${s.ticker}`)}
+                    <div key={`${s.ticker}-${i}`} onClick={() => openInNewTab(`/stock/${s.ticker}`)}
                       style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', flexShrink: 0, transition: 'opacity 0.15s' }}
                       onMouseEnter={e => e.currentTarget.style.opacity = 0.8}
                       onMouseLeave={e => e.currentTarget.style.opacity = 1}>
