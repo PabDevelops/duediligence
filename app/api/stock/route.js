@@ -524,6 +524,8 @@ function normalizeStockData(data) {
   return data;
 }
 
+export const dynamic = 'force-dynamic';
+
 export async function GET(request) {
   const { searchParams } = new URL(request.url);
   const ticker = searchParams.get('ticker')?.toUpperCase();

@@ -3,6 +3,8 @@ import { supabase } from '../../../lib/supabase';
 
 const FH_KEY = process.env.FINNHUB_API_KEY;
 
+export const dynamic = 'force-dynamic';
+
 export async function GET(req) {
   try {
     const { searchParams } = new URL(req.url);
