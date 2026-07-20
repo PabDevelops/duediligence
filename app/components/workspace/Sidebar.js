@@ -3,6 +3,7 @@ import { usePathname, useRouter } from 'next/navigation';
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import UserMenu from './UserMenu';
+import { openInNewTab } from '../../../lib/openInNewTab';
 
 const NAV_ITEMS = [
   { id: 'home', href: '/home', label: 'Home', icon: (active) => (
@@ -119,7 +120,7 @@ export default function Sidebar({ theme, onToggleTheme, collapsed = false, onTog
       return;
     }
     const { ticker } = await res.json();
-    router.push(`/stock/${ticker}`);
+    openInNewTab(`/stock/${ticker}`);
   };
 
   const orderedNav = navOrder.map(id => NAV_ITEMS.find(item => item.id === id)).filter(Boolean);

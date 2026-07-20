@@ -1,12 +1,11 @@
 'use client';
 import { useState, useEffect } from 'react';
 import { useUser } from './AuthProvider';
-import { useRouter } from 'next/navigation';
 import Sparkline from './Sparkline';
+import { openInNewTab } from '../../lib/openInNewTab';
 
 export default function WatchlistWidget() {
   const { isSignedIn } = useUser();
-  const router = useRouter();
   const [open, setOpen] = useState(false);
   const [stocks, setStocks] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -53,7 +52,7 @@ export default function WatchlistWidget() {
               const up = s.priceChangePct >= 0;
               return (
                 <div key={s.ticker}
-                  onClick={() => router.push(`/stock/${s.ticker}`)}
+                  onClick={() => openInNewTab(`/stock/${s.ticker}`)}
                   style={{ padding: '10px 14px', borderBottom: '1px solid var(--border)', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '8px' }}
                   onMouseEnter={e => e.currentTarget.style.background = 'var(--bg-2)'}
                   onMouseLeave={e => e.currentTarget.style.background = 'transparent'}>

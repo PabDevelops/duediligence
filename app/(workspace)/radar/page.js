@@ -13,6 +13,7 @@ import EconomicCalendar from '../../components/workspace/compare/EconomicCalenda
 import TechnicalScanner from '../../components/workspace/compare/TechnicalScanner';
 import InsiderActivity from '../../components/workspace/compare/InsiderActivity';
 import { computeEasyMode } from '../../../lib/stockScoring';
+import { openInNewTab } from '../../../lib/openInNewTab';
 const fmtP = (v) => fmtPercent(v, { decimals: 1 });
 
 // Curated thematic/industry baskets — migrated in from the old standalone Explore page.
@@ -894,7 +895,7 @@ export default function MarketRadar() {
               {/* Action Buttons */}
               <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginTop: 'auto', paddingTop: '10px' }}>
                 <button
-                  onClick={() => router.push(`/stock/${spotlightData.ticker}`)}
+                  onClick={() => openInNewTab(`/stock/${spotlightData.ticker}`)}
                   style={{
                     width: '100%',
                     background: 'var(--ws-text)',

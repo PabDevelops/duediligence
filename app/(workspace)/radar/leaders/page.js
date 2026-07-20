@@ -9,6 +9,7 @@ import Sparkline from '../../../components/Sparkline';
 import { fmt, fmtP as fmtPercent, fmtN } from '../../../../lib/formatters';
 import { useTickerSearch } from '../../../../lib/hooks/useTickerSearch';
 import { computeEasyMode } from '../../../../lib/stockScoring';
+import { openInNewTab } from '../../../../lib/openInNewTab';
 
 const fmtP = (v) => fmtPercent(v, { decimals: 1 });
 
@@ -501,7 +502,7 @@ export default function LeadersPage() {
               {/* Action Button */}
               <div style={{ marginTop: 'auto', paddingTop: '16px' }}>
                 <button
-                  onClick={() => router.push(`/stock/${spotlightData.ticker}`)}
+                  onClick={() => openInNewTab(`/stock/${spotlightData.ticker}`)}
                   style={{
                     width: '100%',
                     background: 'var(--ws-text)',

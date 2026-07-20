@@ -4,6 +4,7 @@ import { useRouter } from 'next/navigation';
 import { useUser } from '../../components/AuthProvider';
 import Sparkline from '../../components/Sparkline';
 import { fmt, fmtP, fmtN } from '../../../lib/formatters';
+import { openInNewTab } from '../../../lib/openInNewTab';
 
 // Mirrors ANON_RESULT_LIMIT in app/api/screener/route.js — used only for the
 // guest banner copy, the actual cap is enforced server-side.
@@ -501,7 +502,7 @@ export default function WorkspaceScreener() {
               </thead>
               <tbody>
                 {paginated.map((s, idx) => (
-                  <tr key={s.ticker} onClick={() => router.push(`/stock/${s.ticker}`)}
+                  <tr key={s.ticker} onClick={() => openInNewTab(`/stock/${s.ticker}`)}
                     style={{
                       borderBottom: '1px solid var(--ws-border)',
                       cursor: 'pointer',

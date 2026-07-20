@@ -1,7 +1,8 @@
 'use client';
 import { useState, useEffect, useRef } from 'react';
-import { useRouter, useSearchParams } from 'next/navigation';
+import { useSearchParams } from 'next/navigation';
 import { useTickerSearch } from '../../../lib/hooks/useTickerSearch';
+import { openInNewTab } from '../../../lib/openInNewTab';
 
 function StockCard({ s, onClick }) {
   const [imgError, setImgError] = useState(false);
@@ -78,7 +79,6 @@ function StockCard({ s, onClick }) {
 }
 
 export default function SearchPage() {
-  const router = useRouter();
   const searchParams = useSearchParams();
   const initialQ = searchParams.get('q') || '';
   const [q, setQ] = useState(initialQ);
@@ -104,7 +104,7 @@ export default function SearchPage() {
     wasLoading.current = loading;
   }, [loading]);
 
-  const goToTicker = (ticker, isEtf = false) => router.push(isEtf ? `/etfs/${ticker}` : `/stock/${ticker}`);
+  const goToTicker = (ticker, isEtf = false) => openInNewTab(isEtf ? `/etfs/${ticker}` : `/stock/${ticker}`);
 
   const handleKeyDown = (e) => {
     if (e.key === 'Enter' && q.trim()) {

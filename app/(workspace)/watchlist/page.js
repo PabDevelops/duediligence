@@ -1,7 +1,6 @@
 'use client';
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import { useUser } from '../../components/AuthProvider';
-import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import Sparkline from '../../components/Sparkline';
 import MarketStatusDot from '../../components/workspace/MarketStatusDot';
@@ -10,6 +9,7 @@ import AllocationChart from '../../components/workspace/portfolio/AllocationChar
 import { formatPrice as formatCurrency } from '../../../lib/formatters';
 import { getGuestWatchlist, addToGuestWatchlist, removeFromGuestWatchlist, GUEST_WATCHLIST_LIMIT } from '../../../lib/guestWatchlist';
 import { computeEasyMode } from '../../../lib/stockScoring';
+import { openInNewTab } from '../../../lib/openInNewTab';
 
 // Same "is there enough fundamental data to score this" check as the stock detail page
 // (app/(workspace)/stock/[ticker]/page.js) — recent IPOs / thinly-covered tickers would
@@ -275,7 +275,7 @@ export default function WatchlistPage() {
             const dayChange = t.priceChangePct ?? 0;
             const easyMode = computeEasyMode(t, hasFundamentals(t));
             return (
-              <tr key={t.ticker} onClick={() => router.push(`/stock/${t.ticker}`)}
+              <tr key={t.ticker} onClick={() => openInNewTab(`/stock/${t.ticker}`)}
                 style={{ borderBottom: '1px solid var(--ws-border)', cursor: 'pointer', background: 'var(--ws-bg-1)' }}
                 onMouseEnter={e => e.currentTarget.style.background = 'var(--ws-bg-2)'}
                 onMouseLeave={e => e.currentTarget.style.background = 'var(--ws-bg-1)'}>

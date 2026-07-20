@@ -4,6 +4,7 @@ import { useRouter } from 'next/navigation';
 import { useUser } from '../../components/AuthProvider';
 import StockLogo from '../../components/workspace/StockLogo';
 import { toKey, startOfMonth, endOfMonth, shiftMonth } from '../../../lib/calendarDates';
+import { openInNewTab } from '../../../lib/openInNewTab';
 
 const MONTH_NAMES = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
 const DAY_NAMES = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
@@ -449,7 +450,7 @@ export default function WorkspaceCalendar() {
                       const isWatchlisted = watchlistTickers.has(e.ticker);
                       return (
                         <div key={e.type + e.ticker + index}
-                          onClick={() => router.push(`/stock/${e.ticker}`)}
+                          onClick={() => openInNewTab(`/stock/${e.ticker}`)}
                           style={{
                             display: 'flex',
                             alignItems: 'center',

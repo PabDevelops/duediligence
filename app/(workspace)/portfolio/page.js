@@ -16,6 +16,7 @@ import TransferPieModal from '../../components/workspace/portfolio/TransferPieMo
 import CashModal from '../../components/workspace/portfolio/CashModal';
 import GrowthChart from '../../components/workspace/portfolio/GrowthChart';
 import AllocationChart from '../../components/workspace/portfolio/AllocationChart';
+import { openInNewTab } from '../../../lib/openInNewTab';
 
 const fmt = (val) => formatCurrency(val, '$');
 
@@ -540,7 +541,7 @@ export default function WorkspacePortfolio() {
                         const allocation = totals.investedValue > 0 ? ((p.marketValue ?? p.cost) / totals.investedValue) * 100 : 0;
                         const lastLot = [...p.lots].sort((a, b) => new Date(b.created_at) - new Date(a.created_at))[0];
                         return (
-                          <tr key={p.ticker} onClick={() => router.push(`/stock/${p.ticker}`)}
+                          <tr key={p.ticker} onClick={() => openInNewTab(`/stock/${p.ticker}`)}
                             style={{ borderBottom: '1px solid var(--ws-border)', cursor: 'pointer', background: 'var(--ws-bg-1)' }}
                             onMouseEnter={e => e.currentTarget.style.background = 'var(--ws-bg-2)'}
                             onMouseLeave={e => e.currentTarget.style.background = 'var(--ws-bg-1)'}>

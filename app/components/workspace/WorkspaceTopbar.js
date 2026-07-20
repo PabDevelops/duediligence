@@ -1,10 +1,9 @@
 'use client';
 import { useState, useEffect, useRef } from 'react';
-import { useRouter } from 'next/navigation';
 import UserMenu from './UserMenu';
+import { openInNewTab } from '../../../lib/openInNewTab';
 
 export default function WorkspaceTopbar() {
-  const router = useRouter();
   const [searchQ, setSearchQ] = useState('');
   const [suggestions, setSuggestions] = useState([]);
   const [showSuggestions, setShowSuggestions] = useState(false);
@@ -30,7 +29,7 @@ export default function WorkspaceTopbar() {
     return () => clearTimeout(timeout);
   }, [searchQ]);
 
-  const onSelect = (ticker) => { router.push(`/stock/${ticker}`); setSearchQ(''); setShowSuggestions(false); };
+  const onSelect = (ticker) => { openInNewTab(`/stock/${ticker}`); setSearchQ(''); setShowSuggestions(false); };
 
   const runDiscover = async () => {
     const res = await fetch('/api/random');
@@ -40,7 +39,7 @@ export default function WorkspaceTopbar() {
       return;
     }
     const { ticker } = await res.json();
-    router.push(`/stock/${ticker}`);
+    openInNewTab(`/stock/${ticker}`);
   };
 
   return (
@@ -83,7 +82,7 @@ export default function WorkspaceTopbar() {
           value={searchQ}
           onChange={e => { setSearchQ(e.target.value); setShowSuggestions(true); }}
           onKeyDown={e => {
-            if (e.key === 'Enter' && searchQ) { router.push(`/stock/${searchQ.toUpperCase()}`); setSearchQ(''); setShowSuggestions(false); }
+            if (e.key === 'Enter' && searchQ) { openInNewTab(`/stock/${searchQ.toUpperCase()}`); setSearchQ(''); setShowSuggestions(false); }
             if (e.key === 'Escape') { setShowSuggestions(false); inputRef.current?.blur(); }
           }}
           onBlur={() => { setTimeout(() => setShowSuggestions(false), 200); setFocused(false); }}

@@ -1,6 +1,7 @@
 'use client';
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import { openInNewTab } from '../../lib/openInNewTab';
 
 export default function MobileHeader() {
   const router = useRouter();
@@ -22,7 +23,7 @@ export default function MobileHeader() {
   }, [searchQ]);
 
   const handleSelect = (t) => {
-    router.push(`/stock/${t}`);
+    openInNewTab(`/stock/${t}`);
     setShowSuggestions(false);
     setSearchQ('');
     setTicker('');

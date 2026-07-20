@@ -1,7 +1,7 @@
 'use client';
 import { useState, useEffect, useMemo } from 'react';
-import { useRouter } from 'next/navigation';
 import { parseAUM, parsePercent, parseVolume } from '../../../lib/formatters';
+import { openInNewTab } from '../../../lib/openInNewTab';
 
 const SortHeader = ({ field, label, align = 'right', sortField, sortAsc, onSort }) => (
   <th onClick={() => onSort(field)}
@@ -30,7 +30,6 @@ const CATEGORIES = [
 ];
 
 export default function ETFsPage() {
-  const router = useRouter();
   const [etfsList, setEtfsList] = useState([]);
   const [activeTab, setActiveTab] = useState('all');
   const [searchQuery, setSearchQuery] = useState('');
@@ -68,7 +67,7 @@ export default function ETFsPage() {
     setCurrentPage(1);
   }, [activeTab, sortField, sortAsc, maxExpense, minYield, minAUM]);
 
-  const goToTicker = (ticker) => router.push(`/etfs/${ticker}`);
+  const goToTicker = (ticker) => openInNewTab(`/etfs/${ticker}`);
 
   const handleSearchSubmit = async (e) => {
     e.preventDefault();

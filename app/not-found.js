@@ -1,6 +1,7 @@
 'use client';
 import { useRouter } from 'next/navigation';
 import Topbar from './components/Topbar';
+import { openInNewTab } from '../lib/openInNewTab';
 
 const SUGGESTIONS = ['AAPL', 'MSFT', 'NVDA', 'GOOGL', 'AMZN'];
 
@@ -38,7 +39,7 @@ export default function NotFound() {
           </div>
           <div style={{ display: 'flex', gap: '8px', justifyContent: 'center', flexWrap: 'wrap' }}>
             {SUGGESTIONS.map(t => (
-              <button key={t} onClick={() => router.push(`/stock/${t}`)}
+              <button key={t} onClick={() => openInNewTab(`/stock/${t}`)}
                 style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid var(--border)', borderRadius: '8px', color: 'var(--text-3)', padding: '6px 14px', fontSize: '12px', fontWeight: 600, cursor: 'pointer', fontFamily: 'Inter, sans-serif', transition: 'border-color 0.15s, color 0.15s' }}
                 onMouseEnter={e => { e.currentTarget.style.borderColor = 'var(--accent)'; e.currentTarget.style.color = 'var(--accent)'; }}
                 onMouseLeave={e => { e.currentTarget.style.borderColor = 'var(--border)'; e.currentTarget.style.color = 'var(--text-3)'; }}>
