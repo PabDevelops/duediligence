@@ -1,5 +1,5 @@
 'use client';
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { useTickerSearch } from '../../../lib/hooks/useTickerSearch';
 import { openInNewTab } from '../../../lib/openInNewTab';
@@ -78,7 +78,7 @@ function StockCard({ s, onClick }) {
   );
 }
 
-export default function SearchPage() {
+function SearchPageContent() {
   const searchParams = useSearchParams();
   const initialQ = searchParams.get('q') || '';
   const [q, setQ] = useState(initialQ);
@@ -220,5 +220,16 @@ export default function SearchPage() {
         </div>
       )}
     </div>
+  );
+}
+
+// useSearchParams() opts the whole subtree out of static prerendering unless it's inside a
+// Suspense boundary — without this wrapper, `next build` fails prerendering this page instead
+// of just falling back to client-side rendering for it.
+export default function SearchPage() {
+  return (
+    <Suspense fallback={null}>
+      <SearchPageContent />
+    </Suspense>
   );
 }
