@@ -1,6 +1,8 @@
 import { createServerClient } from '@supabase/ssr';
 import { NextResponse } from 'next/server';
 import { getCookieDomain } from './lib/cookieDomain';
+import { detectAiBot } from './lib/aiBots';
+import { logBotVisit } from './lib/botLogger';
 
 // Marketing/informational pages that live on the apex domain (traqcker.com).
 // Everything else is the app/workspace terminal, served from
@@ -87,7 +89,20 @@ function domainRedirect(request) {
   return null;
 }
 
-export async function middleware(request) {
+export async function middleware(request, event) {
+  const userAgent = request.headers.get('user-agent') || '';
+  const botName = detectAiBot(userAgent);
+  if (botName) {
+    event.waitUntil(
+      logBotVisit({
+        path: request.nextUrl.pathname,
+        botName,
+        userAgent,
+        referrer: request.headers.get('referer'),
+      })
+    );
+  }
+
   const redirect = domainRedirect(request);
   if (redirect) return redirect;
 
