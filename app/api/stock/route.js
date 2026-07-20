@@ -926,6 +926,19 @@ export async function GET(request) {
 
     const usgaap = facts.facts?.['us-gaap'] || {};
 
+    // How current this filer's most recent 10-K actually is, independent of getMetric() below
+    // (computed directly off NetIncomeLoss/Assets, not through it, to avoid a chicken-and-egg
+    // dependency) — NetIncomeLoss is about as close to universally-reported as an XBRL concept
+    // gets, so its newest period end is a reliable proxy for "how current is this company's
+    // filing history," used to reject stale matches in getMetric.
+    function newestFyEnd(tag) {
+      const units = usgaap[tag]?.units?.USD;
+      if (!units) return null;
+      const annual = units.filter(u => ['10-K', '20-F', '10-K/A', '20-F/A'].includes(u.form)).sort((a, b) => b.end.localeCompare(a.end));
+      return annual[0]?.end ?? null;
+    }
+    const recencyAnchor = newestFyEnd('NetIncomeLoss') || newestFyEnd('Assets');
+
     const getMetric = (keys, isFlow = true) => {
       for (const key of keys) {
         const metric = usgaap[key];
@@ -941,7 +954,21 @@ export async function GET(request) {
           }
           return true;
         }).sort((a, b) => b.end.localeCompare(a.end));
-        if (annual.length > 0) return annual;
+        if (annual.length === 0) continue;
+        // Reject a match whose newest period is a multi-year gap behind the freshest thing
+        // this filer has ever reported — the signature of CIK reuse across a reverse merger,
+        // where an old, unrelated predecessor business's figures (e.g. a defunct shell's
+        // revenue tag) would otherwise look like a genuine, just-stale series for a company
+        // that's still filing every year. Verified against real data: VRDN's 'Revenues' tag
+        // matched 2013-2015 only (a pre-reverse-merger predecessor entity under the same CIK)
+        // while NetIncomeLoss/OperatingIncomeLoss keep reporting every year through 2025 — that
+        // mismatch fed a -6368% operating margin and a 1,243-day DPO into the Quality tab. Falls
+        // through to the next key instead of returning stale data, same as "no data at all."
+        if (recencyAnchor) {
+          const gapYears = (new Date(recencyAnchor) - new Date(annual[0].end)) / (1000 * 60 * 60 * 24 * 365.25);
+          if (gapYears > 3) continue;
+        }
+        return annual;
       }
       return null;
     };
@@ -1042,7 +1069,25 @@ export async function GET(request) {
       'ConvertibleLongTermNotesPayable','NotesPayableNoncurrent','SecuredDebtNoncurrent','UnsecuredDebtNoncurrent',
       'OperatingLeaseLiabilityNoncurrent','FinanceLeaseLiabilityNoncurrent',
     ]);
-    const cash          = getMetric(['CashAndCashEquivalentsAtCarryingValue','CashCashEquivalentsAndShortTermInvestments']);
+    // Cash runway (lib/stockScoring.js's cashRunwayYears/runwayScore) and the Balance Sheet's
+    // "Cash" figure both need actual liquid firepower, not just the narrow "cash and cash
+    // equivalents" line — many filers (biotechs especially) hold the bulk of their runway in
+    // a separately-tagged short-term-investments line (T-bills, money-market funds) instead of
+    // cash itself. Verified against real data: VRDN's CashAndCashEquivalentsAtCarryingValue was
+    // $32.6M while their own reported cash+equivalents+short-term-investments was $875M — the
+    // unpatched cashVal alone put Cash Runway at ~0.1y (39 days) instead of the real ~2.9y,
+    // the single most alarming number on the page and wrong by ~27x. Only additive when a
+    // filer tags cash and short-term investments separately (the common case) — when a filer
+    // instead reports the two combined under CashCashEquivalentsAndShortTermInvestments,
+    // shortTermInvestmentsByEnd has nothing to add on top of it, so behavior there is
+    // unchanged.
+    const cashNarrow = getMetric(['CashAndCashEquivalentsAtCarryingValue']);
+    const cashCombined = getMetric(['CashCashEquivalentsAndShortTermInvestments']);
+    const shortTermInvestments = getMetric(['ShortTermInvestments', 'MarketableSecuritiesCurrent', 'AvailableForSaleSecuritiesCurrent']);
+    const shortTermInvestmentsByEnd = new Map((shortTermInvestments || []).map(u => [u.end, u.val]));
+    const cash = cashNarrow
+      ? cashNarrow.map(u => ({ ...u, val: u.val + (shortTermInvestmentsByEnd.get(u.end) ?? 0) }))
+      : cashCombined;
     const shares        = getMetric(['CommonStockSharesOutstanding','WeightedAverageNumberOfSharesOutstandingBasic']);
     const grossProfit   = getMetric(['GrossProfit']);
     const rd            = getMetric(['ResearchAndDevelopmentExpense']);
