@@ -111,28 +111,30 @@ export default function SmallMicroCaps() {
     return computeEasyMode(spotlightData, hasFundamentals);
   }, [spotlightData]);
 
-  // Dynamic Engine reading live Supabase 3,784 SEC dataset (Small + Micro + Nano)
+  // Dynamic Engine reading live Supabase small/micro/nano dataset. Sourced from
+  // radarData.universe (every small/micro/nano ticker in stock_cache) rather than the
+  // risk-flags/leaderboards union — that union only contains tickers with a computed
+  // dilution/runway/ownership signal, which used to make this badge and the Explore tab
+  // disagree wildly (badge showing the hardcoded 3,784 placeholder while Explore, built off
+  // the same narrow union, listed barely a dozen).
   const universeMetrics = useMemo(() => {
-    const flags = radarData?.riskFlags || [];
-    const leaderboards = radarData?.leaderboards;
-    
-    const stockMap = new Map();
-    flags.forEach(r => stockMap.set(r.ticker, r));
-    if (leaderboards) {
-      ['leastDiluted', 'longestRunway', 'highestInsiderOwnership'].forEach(k => {
-        (leaderboards[k] || []).forEach(s => {
-          if (!stockMap.has(s.ticker)) stockMap.set(s.ticker, s);
-        });
-      });
+    const universe = radarData?.universe;
+
+    if (!universe || universe.length === 0) {
+      // Loading, or before the first radar fetch resolves — placeholder so the dashboard
+      // doesn't flash zeros; overwritten the moment real data arrives.
+      return {
+        total: 3784, small: 1500, micro: 1459, nano: 825,
+        totalCapFormatted: '$1,420.50B', allList: [],
+      };
     }
 
-    const allList = Array.from(stockMap.values());
     let small = 0;
     let micro = 0;
     let nano = 0;
     let totalCap = 0;
 
-    allList.forEach(s => {
+    universe.forEach(s => {
       const tier = getCapTier(s.marketCap);
       if (tier?.id === 'small') small++;
       else if (tier?.id === 'micro') micro++;
@@ -140,22 +142,15 @@ export default function SmallMicroCaps() {
       totalCap += (s.marketCap || 0);
     });
 
-    const totalCount = Math.max(allList.length, 3784);
-    if (small === 0 && micro === 0 && nano === 0) {
-      small = 1500;
-      micro = 1459;
-      nano = 825;
-    }
-
     const capFormatted = totalCap > 0 ? `$${(totalCap / 1e9).toFixed(2)}B` : '$1,420.50B';
 
     return {
-      total: totalCount,
+      total: universe.length,
       small,
       micro,
       nano,
       totalCapFormatted: capFormatted,
-      allList
+      allList: universe
     };
   }, [radarData]);
 

@@ -41,6 +41,15 @@ function buildRiskTriageAndLeaderboards(stocks) {
   const dilutionRows = [];
   const runwayRows = [];
   const ownershipRows = [];
+  // Every small/micro/nano ticker in stock_cache, not just the ones with a risk flag or a
+  // leaderboard placement — those two are deliberately narrow (only stocks with computed
+  // dilution/runway/ownership data qualify), which is fine for Risk Triage and the
+  // leaderboards but left the Explore tab with only the dozen-ish tickers that happened to
+  // clear one of those bars, while its header badge showed the full universe count. Explore
+  // browses this instead so a freshly-populated ticker (marketCap/name/sector only, financials
+  // still pending their first /api/stock view) still shows up, just with '—' for the columns
+  // it doesn't have data for yet.
+  const universeRows = [];
 
   universe.forEach(s => {
     const runway = cashRunwayYears(s.cashVal, s.fcfVal);
@@ -58,7 +67,8 @@ function buildRiskTriageAndLeaderboards(stocks) {
       flags.push({ type: 'unknown_insider_ownership', severity: 'low', value: null, label: 'No insider ownership data yet' });
     }
 
-    if (flags.filter(f => f.type !== 'unknown_insider_ownership').length > 0) {
+    const realFlagCount = flags.filter(f => f.type !== 'unknown_insider_ownership').length;
+    if (realFlagCount > 0) {
       riskFlags.push({
         ticker: s.ticker, name: s.name, marketCap: s.marketCap, capTier: getCapTier(s.marketCap)?.id ?? null,
         flags, flagCount: flags.length,
@@ -68,6 +78,12 @@ function buildRiskTriageAndLeaderboards(stocks) {
     if (s.shareDilution != null) dilutionRows.push({ ticker: s.ticker, name: s.name, marketCap: s.marketCap, shareDilution: s.shareDilution });
     if (runway != null) runwayRows.push({ ticker: s.ticker, name: s.name, marketCap: s.marketCap, cashRunwayYears: runway });
     if (s.insiderOwnershipPct != null) ownershipRows.push({ ticker: s.ticker, name: s.name, marketCap: s.marketCap, insiderOwnershipPct: s.insiderOwnershipPct });
+
+    universeRows.push({
+      ticker: s.ticker, name: s.name, marketCap: s.marketCap, sector: s.sector, exchange: s.exchange,
+      grossMargin: s.grossMargin, insiderOwnershipPct: s.insiderOwnershipPct, cashRunwayYears: runway,
+      flagCount: realFlagCount, flags,
+    });
   });
 
   const severityWeight = { high: 2, medium: 1, low: 0 };
@@ -80,6 +96,7 @@ function buildRiskTriageAndLeaderboards(stocks) {
 
   return {
     riskFlags,
+    universe: universeRows,
     leaderboards: {
       leastDiluted: dilutionRows.sort((a, b) => a.shareDilution - b.shareDilution).slice(0, LEADERBOARD_SIZE),
       longestRunway: runwayRows.sort((a, b) => b.cashRunwayYears - a.cashRunwayYears).slice(0, LEADERBOARD_SIZE),
@@ -178,12 +195,12 @@ async function loadTierMigrations() {
 
 async function buildRadar() {
   const stocks = await loadScreenerStocks();
-  const { riskFlags, leaderboards } = buildRiskTriageAndLeaderboards(stocks);
+  const { riskFlags, universe, leaderboards } = buildRiskTriageAndLeaderboards(stocks);
   const [{ events, clusters }, { migrations, trackingSince }] = await Promise.all([
     loadInsiderFeed(),
     loadTierMigrations(),
   ]);
-  return { riskFlags, leaderboards, feed: { events, clusters }, migrations, trackingSince };
+  return { riskFlags, universe, leaderboards, feed: { events, clusters }, migrations, trackingSince };
 }
 
 export async function GET() {

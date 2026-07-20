@@ -17,11 +17,32 @@ export default function SmallCapsExploreTable({ radarData, loading, onSelect }) 
   const [page, setPage] = useState(1);
   const pageSize = 25;
 
+  const rawUniverse = radarData?.universe;
   const rawFlags = radarData?.riskFlags || [];
   const rawLeaderboards = radarData?.leaderboards;
 
   // Build stock list from Supabase data (real SEC/Finnhub data)
   const allStocks = useMemo(() => {
+    // Preferred path: the full small/micro/nano universe from stock_cache (every tracked
+    // ticker, not just the ones that happen to have a risk flag or a leaderboard placement —
+    // see app/api/small-caps/radar/route.js's `universeRows`). Falls back to the old
+    // flags+leaderboards union only for a radar payload from before that field existed.
+    if (rawUniverse) {
+      return rawUniverse.map(s => ({
+        ticker: s.ticker,
+        name: s.name || s.ticker,
+        marketCap: s.marketCap,
+        capTier: getCapTier(s.marketCap),
+        riskCount: s.flagCount || 0,
+        flags: s.flags || [],
+        sector: s.sector || null,
+        exchange: s.exchange || null,
+        grossMargin: s.grossMargin ?? null,
+        insiderOwnership: s.insiderOwnershipPct ?? null,
+        cashRunway: s.cashRunwayYears ?? null,
+      }));
+    }
+
     const map = new Map();
 
     // 1. Add backend risk flags (populated from Finnhub/SEC data in Supabase)
@@ -66,7 +87,7 @@ export default function SmallCapsExploreTable({ radarData, loading, onSelect }) 
     }
 
     return Array.from(map.values());
-  }, [rawFlags, rawLeaderboards]);
+  }, [rawUniverse, rawFlags, rawLeaderboards]);
 
   // Filter & Sort
   const filteredStocks = useMemo(() => {
