@@ -1,11 +1,8 @@
 'use client';
-import { localizeHref } from '../../../lib/i18n/locale';
 
 const CONTAINER = { maxWidth: '1160px', margin: '0 auto', padding: '0 clamp(16px, 5vw, 24px)' };
 
-export default function Footer({ dict, locale }) {
-  const href = (path) => localizeHref(path, locale);
-
+export default function Footer({ dict }) {
   return (
     <footer style={{ borderTop: '1px solid var(--border)', background: '#fafafa', padding: 'clamp(40px, 6vw, 60px) clamp(16px, 5vw, 24px) clamp(56px, 8vw, 80px)' }}>
       <div style={{ ...CONTAINER, padding: 0, display: 'flex', justifyContent: 'space-between', flexWrap: 'wrap', gap: '40px' }}>
@@ -20,17 +17,17 @@ export default function Footer({ dict, locale }) {
           <div>
             <div style={{ fontSize: '11px', fontWeight: 700, color: 'var(--text-3)', textTransform: 'uppercase', letterSpacing: '1px', marginBottom: '16px' }}>{dict.product}</div>
             <ul style={{ listStyle: 'none', padding: 0, margin: 0, display: 'flex', flexDirection: 'column', gap: '10px', fontSize: '13px' }}>
-              <li><a href={href('/pricing')} style={{ textDecoration: 'none', color: 'var(--text-2)' }}>{dict.pricingLink}</a></li>
-              <li><a href={href('/about')} style={{ textDecoration: 'none', color: 'var(--text-2)' }}>{dict.proFeatures}</a></li>
+              <li><a href="/pricing" style={{ textDecoration: 'none', color: 'var(--text-2)' }}>{dict.pricingLink}</a></li>
+              <li><a href="/about" style={{ textDecoration: 'none', color: 'var(--text-2)' }}>{dict.proFeatures}</a></li>
             </ul>
           </div>
           <div>
             <div style={{ fontSize: '11px', fontWeight: 700, color: 'var(--text-3)', textTransform: 'uppercase', letterSpacing: '1px', marginBottom: '16px' }}>{dict.company}</div>
             <ul style={{ listStyle: 'none', padding: 0, margin: 0, display: 'flex', flexDirection: 'column', gap: '10px', fontSize: '13px' }}>
-              <li><a href={href('/about')} style={{ textDecoration: 'none', color: 'var(--text-2)' }}>{dict.aboutUs}</a></li>
-              <li><a href={href('/faq')} style={{ textDecoration: 'none', color: 'var(--text-2)' }}>{dict.faqLink}</a></li>
-              <li><a href={href('/privacy')} style={{ textDecoration: 'none', color: 'var(--text-2)' }}>{dict.privacyPolicy}</a></li>
-              <li><a href={href('/terms')} style={{ textDecoration: 'none', color: 'var(--text-2)' }}>{dict.termsOfService}</a></li>
+              <li><a href="/about" style={{ textDecoration: 'none', color: 'var(--text-2)' }}>{dict.aboutUs}</a></li>
+              <li><a href="/faq" style={{ textDecoration: 'none', color: 'var(--text-2)' }}>{dict.faqLink}</a></li>
+              <li><a href="/privacy" style={{ textDecoration: 'none', color: 'var(--text-2)' }}>{dict.privacyPolicy}</a></li>
+              <li><a href="/terms" style={{ textDecoration: 'none', color: 'var(--text-2)' }}>{dict.termsOfService}</a></li>
             </ul>
           </div>
         </div>

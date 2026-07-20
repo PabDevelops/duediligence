@@ -1,11 +1,9 @@
 'use client';
 import { useState } from 'react';
-import { useLocale } from '../../lib/i18n/useLocale';
 import { getDictionary } from '../../lib/i18n/getDictionary';
 
 export default function NewsletterForm({ source = 'landing', dict }) {
-  const locale = useLocale();
-  const t = dict || getDictionary(locale).newsletter;
+  const t = dict || getDictionary().newsletter;
   const [email, setEmail] = useState('');
   const [status, setStatus] = useState('idle'); // idle | loading | done | error
   const [errorMsg, setErrorMsg] = useState('');

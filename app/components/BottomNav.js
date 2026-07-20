@@ -2,7 +2,6 @@
 import { usePathname } from 'next/navigation';
 import { useUser } from './AuthProvider';
 import { useState, useEffect } from 'react';
-import { stripLocale } from '../../lib/i18n/locale';
 
 const ICONS = {
   home: (active) => (
@@ -69,7 +68,7 @@ export default function BottomNav() {
     return () => { clearInterval(interval); window.removeEventListener('resize', measure); };
   }, []);
 
-  const isPublicPage = ['/', '/about', '/pricing', '/privacy', '/terms', '/sign-in', '/sign-up'].includes(stripLocale(path));
+  const isPublicPage = ['/', '/about', '/pricing', '/privacy', '/terms', '/sign-in', '/sign-up'].includes(path);
   // The terminal (workspace) has its own mobile nav — hamburger + Sidebar drawer in
   // app/(workspace)/layout.js. Skip this legacy bottom bar there so the two don't stack
   // and fight for the same (already tight, especially in landscape) screen space.

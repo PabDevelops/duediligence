@@ -1,0 +1,223 @@
+'use client';
+import Topbar from '../../components/Topbar';
+import Footer from '../../components/marketing/Footer';
+import { PrimaryButton, SecondaryButton } from '../../components/marketing/Buttons';
+import { WindowChrome, Shot } from '../../components/WindowChrome';
+
+const MONO = "'JetBrains Mono', monospace";
+
+const BENTO_SHOTS = [
+  { src: '/screenshots/stock.png', alt: 'Stock analysis page sourced directly from SEC filings', span: 2 },
+  { src: '/screenshots/portfolio.png', alt: 'Multi-currency portfolio tracker', span: 1 },
+  { src: '/screenshots/screener.png', alt: 'Quantitative stock screener', span: 1 },
+  { src: '/screenshots/watchlist.png', alt: 'Live ticker headlines and real-time prices feed', span: 2 },
+];
+
+export default function AboutView({ dict }) {
+  const t = dict.about;
+  const bentoTiles = t.bento.tiles.map((tile, i) => ({ ...tile, ...BENTO_SHOTS[i] }));
+
+  return (
+    <div style={{ background: '#ffffff', minHeight: '100vh', color: 'var(--text)', fontFamily: 'Inter, sans-serif' }}>
+      <Topbar />
+
+      {/* HERO — light, matches the rest of the marketing site */}
+      <section style={{
+        background: '#ffffff',
+        borderBottom: '1px solid var(--border)',
+        padding: '90px 24px 100px',
+        position: 'relative',
+        overflow: 'hidden'
+      }}>
+        <div style={{
+          position: 'absolute',
+          top: '-10%',
+          left: '50%',
+          transform: 'translateX(-50%)',
+          width: '70%',
+          height: '60%',
+          background: 'radial-gradient(circle, var(--accent) 0%, transparent 70%)',
+          opacity: 0.08,
+          filter: 'blur(60px)',
+          pointerEvents: 'none'
+        }} />
+
+        <div style={{ maxWidth: '820px', margin: '0 auto', textAlign: 'center', position: 'relative', zIndex: 1 }}>
+          <div style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', background: 'var(--accent-dim)', border: '1px solid rgba(15,118,110,0.35)', padding: '4px 14px', borderRadius: '20px', marginBottom: '24px' }}>
+            <span style={{ width: 6, height: 6, borderRadius: '50%', background: 'var(--accent)', display: 'inline-block' }} />
+            <span style={{ color: 'var(--accent)', fontSize: '11px', letterSpacing: '2px', fontWeight: 700 }}>{t.hero.eyebrow}</span>
+          </div>
+          <h1 style={{ fontSize: '48px', fontWeight: 900, letterSpacing: '-1.5px', lineHeight: 1.1, marginBottom: '20px', color: 'var(--text)' }}>
+            {t.hero.title}
+          </h1>
+          <p style={{ color: 'var(--text-2)', fontSize: '16px', lineHeight: 1.8, maxWidth: '640px', margin: '0 auto 36px' }}>
+            {t.hero.subtitle}
+          </p>
+          <div style={{ display: 'flex', gap: '12px', justifyContent: 'center', flexWrap: 'wrap' }}>
+            <PrimaryButton href="/sign-up" style={{ padding: '0 28px', height: '48px' }}>
+              {t.hero.ctaPrimary}
+            </PrimaryButton>
+            <SecondaryButton href="/home" style={{ padding: '0 28px', height: '48px' }}>
+              {t.hero.ctaSecondary}
+            </SecondaryButton>
+          </div>
+        </div>
+
+        <div style={{ maxWidth: '900px', margin: '56px auto 0', position: 'relative', zIndex: 1 }}>
+          <WindowChrome title="terminal.traqcker.com/home — Market Overview Dashboard" maxWidth="900px">
+            <Shot src="/screenshots/home.png" alt="Traqcker home dashboard" />
+          </WindowChrome>
+        </div>
+      </section>
+
+      {/* BENTO PRODUCT GRID */}
+      <section style={{ maxWidth: '1200px', margin: '0 auto', padding: '100px 24px 40px' }}>
+        <div style={{ textAlign: 'center', marginBottom: '48px' }}>
+          <span style={{ fontFamily: MONO, fontSize: '11px', color: 'var(--accent)', fontWeight: 700, letterSpacing: '1px', textTransform: 'uppercase' }}>{t.bento.eyebrow}</span>
+          <h2 style={{ fontSize: '32px', fontWeight: 800, letterSpacing: '-0.8px', color: 'var(--text)', marginTop: '8px' }}>{t.bento.title}</h2>
+        </div>
+
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '20px' }} className="about-bento-grid">
+          {bentoTiles.map((tile) => (
+            <div key={tile.title} style={{
+              gridColumn: `span ${tile.span}`,
+              border: '1px solid var(--border)',
+              borderRadius: '16px',
+              padding: '28px',
+              background: '#fafafa',
+              display: 'flex',
+              flexDirection: 'column',
+              gap: '20px',
+              transition: 'border-color 0.2s'
+            }}
+              onMouseEnter={e => e.currentTarget.style.borderColor = 'var(--accent)'}
+              onMouseLeave={e => e.currentTarget.style.borderColor = 'var(--border)'}
+            >
+              <div>
+                <div style={{ display: 'inline-flex', background: 'var(--accent-dim)', color: 'var(--accent)', fontSize: '10px', fontWeight: 700, padding: '4px 10px', borderRadius: '20px', marginBottom: '14px', letterSpacing: '0.5px' }}>
+                  {tile.badge}
+                </div>
+                <h3 style={{ fontSize: '19px', fontWeight: 800, color: 'var(--text)', marginBottom: '8px' }}>{tile.title}</h3>
+                <p style={{ fontSize: '13px', color: 'var(--text-2)', lineHeight: 1.6 }}>{tile.desc}</p>
+              </div>
+              <WindowChrome title={tile.alt}>
+                <Shot src={tile.src} alt={tile.alt} />
+              </WindowChrome>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      {/* FOUNDER'S LETTER / MISSION */}
+      <section style={{ borderTop: '1px solid var(--border)', borderBottom: '1px solid var(--border)', background: '#fafafa', padding: '80px 24px' }}>
+        <div style={{ maxWidth: '820px', margin: '0 auto' }}>
+          <div style={{ fontSize: '28px', fontWeight: 800, letterSpacing: '-1px', color: 'var(--text)', marginBottom: '32px', borderLeft: '3px solid var(--accent)', paddingLeft: '24px', lineHeight: 1.3 }}>
+            &ldquo;{t.letter.quote}&rdquo;
+          </div>
+
+          <div style={{ color: 'var(--text-2)', fontSize: '15px', lineHeight: 1.8, display: 'flex', flexDirection: 'column', gap: '20px' }}>
+            {t.letter.paragraphs.map((p, i) => <p key={i}>{p}</p>)}
+          </div>
+        </div>
+      </section>
+
+      {/* WHY TRAQCKER EXISTS */}
+      <section style={{ maxWidth: '820px', margin: '0 auto', padding: '80px 24px' }}>
+        <div style={{ color: 'var(--text-3)', fontSize: '11px', letterSpacing: '2px', fontWeight: 700, marginBottom: '36px' }}>{t.why.eyebrow}</div>
+
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '32px' }} className="quality-score-grid">
+          {t.why.items.map((item, i) => (
+            <div key={i}>
+              <h3 style={{ fontSize: '16px', fontWeight: 800, color: 'var(--text)', marginBottom: '10px' }}>{item.title}</h3>
+              <p style={{ color: 'var(--text-2)', fontSize: '13px', lineHeight: 1.7 }}>{item.desc}</p>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      {/* METHODOLOGY / SCORING */}
+      <section style={{ borderTop: '1px solid var(--border)', maxWidth: '820px', margin: '0 auto', padding: '80px 24px' }}>
+        <div style={{ color: 'var(--text-3)', fontSize: '11px', letterSpacing: '2px', fontWeight: 700, marginBottom: '12px' }}>{t.methodology.eyebrow}</div>
+        <h2 style={{ fontSize: '28px', fontWeight: 800, letterSpacing: '-0.8px', color: 'var(--text)', marginBottom: '10px' }}>{t.methodology.title}</h2>
+        <p style={{ color: 'var(--text-2)', fontSize: '15px', lineHeight: 1.7, marginBottom: '40px' }}>{t.methodology.capsule}</p>
+
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '28px', marginBottom: '40px' }}>
+          {t.methodology.steps.map(step => (
+            <div key={step.title}>
+              <h3 style={{ fontSize: '16px', fontWeight: 800, color: 'var(--text)', marginBottom: '8px' }}>{step.title}</h3>
+              <p style={{ color: 'var(--text)', fontSize: '13px', lineHeight: 1.7, marginBottom: '6px', fontWeight: 500 }}>{step.capsule}</p>
+              <p style={{ color: 'var(--text-2)', fontSize: '13px', lineHeight: 1.7 }}>{step.desc}</p>
+            </div>
+          ))}
+        </div>
+
+        <div style={{ marginBottom: '32px' }}>
+          <h3 style={{ fontSize: '16px', fontWeight: 800, color: 'var(--text)', marginBottom: '8px' }}>{t.methodology.survival.title}</h3>
+          <p style={{ color: 'var(--text)', fontSize: '13px', lineHeight: 1.7, marginBottom: '6px', fontWeight: 500 }}>{t.methodology.survival.capsule}</p>
+          <p style={{ color: 'var(--text-2)', fontSize: '13px', lineHeight: 1.7 }}>{t.methodology.survival.desc}</p>
+        </div>
+
+        <div>
+          <h3 style={{ fontSize: '16px', fontWeight: 800, color: 'var(--text)', marginBottom: '8px' }}>{t.methodology.sources.title}</h3>
+          <p style={{ color: 'var(--text)', fontSize: '13px', lineHeight: 1.7, marginBottom: '6px', fontWeight: 500 }}>{t.methodology.sources.capsule}</p>
+          <p style={{ color: 'var(--text-2)', fontSize: '13px', lineHeight: 1.7 }}>{t.methodology.sources.desc}</p>
+        </div>
+      </section>
+
+      {/* TL;DR — short, citable, self-contained summary */}
+      <section style={{ borderTop: '1px solid var(--border)', background: '#fafafa', padding: '56px 24px' }}>
+        <div style={{ maxWidth: '820px', margin: '0 auto' }}>
+          <h2 style={{ fontSize: '13px', fontWeight: 800, letterSpacing: '1.5px', color: 'var(--accent)', marginBottom: '18px', textTransform: 'uppercase' }}>{t.tldr.title}</h2>
+          <ul style={{ margin: 0, padding: '0 0 0 20px', color: 'var(--text-2)', fontSize: '14px', lineHeight: 1.9 }}>
+            {t.tldr.items.map((item, i) => <li key={i}>{item}</li>)}
+          </ul>
+        </div>
+      </section>
+
+      {/* TEAM SECTION */}
+      <section style={{ borderTop: '1px solid var(--border)', background: '#fafafa', padding: '80px 24px' }}>
+        <div style={{ maxWidth: '820px', margin: '0 auto' }}>
+          <div style={{ color: 'var(--text-3)', fontSize: '11px', letterSpacing: '2px', fontWeight: 700, marginBottom: '28px' }}>{t.team.eyebrow}</div>
+          <div style={{ border: '1px solid var(--border)', borderRadius: '16px', padding: '32px', display: 'flex', alignItems: 'center', gap: '28px', background: '#ffffff' }}>
+            <img src="/pablo2.jpg" alt={t.team.name} style={{ width: '88px', height: '88px', objectFit: 'cover', borderRadius: '50%', flexShrink: 0, border: '2px solid var(--border)' }} />
+            <div>
+              <div style={{ fontSize: '20px', fontWeight: 800, marginBottom: '4px', color: 'var(--text)' }}>{t.team.name}</div>
+              <div className="gradient-text" style={{ fontSize: '13px', fontWeight: 700, marginBottom: '10px' }}>{t.team.role}</div>
+              <p style={{ color: 'var(--text-2)', fontSize: '13px', lineHeight: 1.7, marginBottom: '12px', maxWidth: '440px' }}>
+                {t.team.bio}
+              </p>
+              <a href="https://twitter.com/pabloinvesting_" target="_blank" rel="noopener noreferrer"
+                style={{ color: 'var(--accent)', fontSize: '13px', fontWeight: 600, textDecoration: 'none' }}>
+                @pabloinvesting_ ↗
+              </a>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* FINAL CTA */}
+      <section style={{ maxWidth: '820px', margin: '0 auto', padding: '80px 24px 100px' }}>
+        <div style={{ border: '1px solid var(--border)', borderRadius: '24px', padding: '48px 40px', textAlign: 'center', background: '#fafafa' }}>
+          <h2 style={{ fontSize: '28px', fontWeight: 900, letterSpacing: '-0.5px', marginBottom: '12px', color: 'var(--text)' }}>
+            {t.finalCta.title}
+          </h2>
+          <p style={{ color: 'var(--text-2)', fontSize: '14px', marginBottom: '28px' }}>
+            {t.finalCta.subtitle}
+          </p>
+          <PrimaryButton href="/sign-up" style={{ padding: '0 36px', height: '48px' }}>
+            {t.finalCta.cta}
+          </PrimaryButton>
+        </div>
+
+        {/* Footer note */}
+        <div style={{ marginTop: '48px', paddingTop: '24px', borderTop: '1px solid var(--border)', color: 'var(--text-3)', fontSize: '12px', display: 'flex', justifyContent: 'space-between', flexWrap: 'wrap', gap: '8px' }}>
+          <span>{t.footerNote.disclaimer}</span>
+          <span>{t.footerNote.copyright}</span>
+        </div>
+      </section>
+
+      <Footer dict={dict.home.footer} />
+
+    </div>
+  );
+}

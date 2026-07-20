@@ -3,8 +3,6 @@ import { usePathname } from 'next/navigation';
 import { useState, useEffect } from 'react';
 import { useUser } from './AuthProvider';
 import UserMenu from './workspace/UserMenu';
-import { localizeHref } from '../../lib/i18n/locale';
-import { useLocale } from '../../lib/i18n/useLocale';
 import { getDictionary } from '../../lib/i18n/getDictionary';
 
 function ProBadge() {
@@ -20,12 +18,9 @@ export default function Topbar() {
   const path = usePathname();
   const [menuOpen, setMenuOpen] = useState(false);
   const { isSignedIn } = useUser();
-  const locale = useLocale();
-  const t = getDictionary(locale).topbar;
-  const href = (p) => localizeHref(p, locale);
+  const t = getDictionary().topbar;
 
-  const navItem = (targetPath, label) => {
-    const target = href(targetPath);
+  const navItem = (target, label) => {
     const active = path === target || path.startsWith(target + '/');
     return (
       <a href={target} className={`topbar-nav-link${active ? ' active' : ''}`}>{label}</a>
@@ -36,7 +31,7 @@ export default function Topbar() {
     <>
       <div className="topbar">
         {/* Logo */}
-        <a href={href('/')} className="topbar-logo" style={{ display: 'flex', alignItems: 'center' }}>
+        <a href="/" className="topbar-logo" style={{ display: 'flex', alignItems: 'center' }}>
           <img src="/logo-traqcker-new.png" alt="Traqcker" style={{ height: '18px', width: 'auto' }} />
         </a>
 
@@ -53,8 +48,8 @@ export default function Topbar() {
             </div>
           ) : (
             <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-              <a href={href('/sign-in')} style={{ color: 'var(--text-3)', fontSize: '13px', fontWeight: 600, textDecoration: 'none' }}>{t.signIn}</a>
-              <a href={href('/sign-up')} className="btn-primary" style={{ padding: '6px 16px', fontSize: '13px', background: 'var(--accent)', borderRadius: 0 }}>{t.startFreeTrial}</a>
+              <a href="/sign-in" style={{ color: 'var(--text-3)', fontSize: '13px', fontWeight: 600, textDecoration: 'none' }}>{t.signIn}</a>
+              <a href="/sign-up" className="btn-primary" style={{ padding: '6px 16px', fontSize: '13px', background: 'var(--accent)', borderRadius: 0 }}>{t.startFreeTrial}</a>
             </div>
           )}
         </div>
@@ -70,19 +65,16 @@ export default function Topbar() {
       {/* Mobile dropdown menu */}
       {menuOpen && (
         <div className="topbar-mobile-menu mobile-menu">
-          {[['/', t.home], ['/about', t.about], ['/pricing', t.pricing], ['/faq', t.faq]].map(([p, label]) => {
-            const target = href(p);
-            return (
-              <a key={p} href={target} onClick={() => setMenuOpen(false)}
-                className={`topbar-mobile-link${path === target ? ' active' : ''}`}>
-                {label}
-              </a>
-            );
-          })}
+          {[['/', t.home], ['/about', t.about], ['/pricing', t.pricing], ['/faq', t.faq]].map(([target, label]) => (
+            <a key={target} href={target} onClick={() => setMenuOpen(false)}
+              className={`topbar-mobile-link${path === target ? ' active' : ''}`}>
+              {label}
+            </a>
+          ))}
           {!isSignedIn && (
             <div style={{ padding: '12px 16px', display: 'flex', flexDirection: 'column', gap: '10px' }}>
-              <a href={href('/sign-up')} className="btn-primary" style={{ display: 'block', width: '100%', padding: '10px', textAlign: 'center', boxSizing: 'border-box', background: 'var(--accent)', borderRadius: 0 }}>{t.startFreeTrial}</a>
-              <a href={href('/sign-in')} style={{ display: 'block', width: '100%', padding: '10px', textAlign: 'center', boxSizing: 'border-box', border: '1px solid var(--border)', color: 'var(--text)', textDecoration: 'none', fontSize: '13px', fontWeight: 600 }}>{t.signIn}</a>
+              <a href="/sign-up" className="btn-primary" style={{ display: 'block', width: '100%', padding: '10px', textAlign: 'center', boxSizing: 'border-box', background: 'var(--accent)', borderRadius: 0 }}>{t.startFreeTrial}</a>
+              <a href="/sign-in" style={{ display: 'block', width: '100%', padding: '10px', textAlign: 'center', boxSizing: 'border-box', border: '1px solid var(--border)', color: 'var(--text)', textDecoration: 'none', fontSize: '13px', fontWeight: 600 }}>{t.signIn}</a>
             </div>
           )}
         </div>
