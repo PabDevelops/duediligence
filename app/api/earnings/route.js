@@ -5,9 +5,33 @@ const FH_KEY = process.env.FINNHUB_API_KEY;
 
 export const dynamic = 'force-dynamic';
 
+// Every request (page load, month/week navigation, watchlist toggle) previously re-fetched
+// Finnhub + Nasdaq (one request per day in range) + Supabase from scratch, with nothing
+// shared across users or repeat visits — a short in-memory cache keyed by the exact query
+// string cuts that down to one real fetch per [from, to] window per TTL window, same pattern
+// as app/api/small-caps/radar's radarCache.
+const CACHE_TTL_MS = 90_000;
+const cache = new Map(); // queryString -> { data, cachedAt }
+const CACHE_MAX_ENTRIES = 300;
+
+function getCached(key) {
+  const hit = cache.get(key);
+  if (hit && Date.now() - hit.cachedAt < CACHE_TTL_MS) return hit.data;
+  return null;
+}
+function setCached(key, data) {
+  cache.set(key, { data, cachedAt: Date.now() });
+  if (cache.size > CACHE_MAX_ENTRIES) {
+    cache.delete(cache.keys().next().value); // evict oldest (Map preserves insertion order)
+  }
+}
+
 export async function GET(req) {
   try {
     const { searchParams } = new URL(req.url);
+    const cacheKey = searchParams.toString();
+    const cached = getCached(cacheKey);
+    if (cached) return Response.json(cached);
     const today = new Date();
     const ticker = searchParams.get('ticker')?.toUpperCase();
 
@@ -56,9 +80,11 @@ export async function GET(req) {
       // Surfaced only on a genuine upstream failure (bad/rate-limited key, plan restriction,
       // etc.) so hitting this URL directly distinguishes "Finnhub errored" from "Finnhub
       // returned zero events for this ticker" — the two used to look identical.
-      return Response.json(fhFailed
+      const result = fhFailed
         ? { earnings, debug: { finnhubStatus: fhRawRes.status, finnhubError: fhRes.error || null } }
-        : { earnings });
+        : { earnings };
+      if (!fhFailed) setCached(cacheKey, result); // don't cache a transient upstream failure
+      return Response.json(result);
     }
 
     const from = searchParams.get('from') || today.toISOString().slice(0, 10);
@@ -121,11 +147,16 @@ export async function GET(req) {
       ];
     }
 
-    const [earningsResults, ipoRes] = await Promise.all([
+    // Nasdaq fallback used to run as a separate `await` *after* this Promise.all resolved —
+    // its full latency (one request per day in range, batched 10 at a time) stacked on top of
+    // Finnhub's instead of overlapping with it. Same [from, to] window, no dependency on
+    // Finnhub's result, so it belongs in the same Promise.all.
+    const [earningsResults, ipoRes, nasdaqEarnings] = await Promise.all([
       Promise.all(earningsPromises).then(results => results.flat()),
       fetch(`https://finnhub.io/api/v1/calendar/ipo?from=${from}&to=${to}&token=${FH_KEY}`, {
         headers: { 'User-Agent': 'Mozilla/5.0' },
       }).then(r => r.json()).catch(() => ({})),
+      fetchNasdaqEarningsRange(from, to),
     ]);
 
     // Previously restricted to tickers already present in stock_cache ("covered" companies) —
@@ -162,11 +193,10 @@ export async function GET(req) {
       }));
 
     // Same Finnhub-coverage gap as the per-ticker branch above (thin coverage for foreign
-    // private issuers like Nokia). Nasdaq's calendar is fetched a day at a time for the same
-    // [from, to] window anyway, so — unlike the old Yahoo fallback, which was per-ticker and
-    // had to be limited to the caller's watchlist to bound latency — this covers every ticker
-    // reporting in the window for roughly the same cost.
-    const nasdaqEarnings = await fetchNasdaqEarningsRange(from, to);
+    // private issuers like Nokia) — unlike the old Yahoo fallback, which was per-ticker and
+    // had to be limited to the caller's watchlist to bound latency, this covers every ticker
+    // reporting in the window for roughly the same cost (fetched above, in parallel with
+    // Finnhub).
     for (const e of nasdaqEarnings) {
       const key = `${e.ticker}-${e.date}`;
       if (!seen.has(key)) {
@@ -184,23 +214,25 @@ export async function GET(req) {
     const tickerArray = Array.from(allTickers);
     const enrichmentMap = {};
 
+    // Chunks queried concurrently instead of one-at-a-time — independent lookups (no chunk
+    // depends on another's result), so there's no reason to pay N sequential round trips to
+    // Supabase when N parallel ones finish in roughly the time of the slowest single one.
     const CHUNK_SIZE = 100;
-    for (let i = 0; i < tickerArray.length; i += CHUNK_SIZE) {
-      const chunk = tickerArray.slice(i, i + CHUNK_SIZE);
-      const { data } = await supabase
-        .from('stock_cache')
-        .select('ticker, marketCap:data->marketCap, sector:data->sector')
-        .in('ticker', chunk);
-      
-      if (data) {
-        data.forEach(row => {
-          enrichmentMap[row.ticker] = {
-            marketCap: row.marketCap,
-            sector: row.sector
-          };
-        });
-      }
-    }
+    const chunks = [];
+    for (let i = 0; i < tickerArray.length; i += CHUNK_SIZE) chunks.push(tickerArray.slice(i, i + CHUNK_SIZE));
+
+    const chunkResults = await Promise.all(chunks.map(chunk =>
+      supabase.from('stock_cache').select('ticker, marketCap:data->marketCap, sector:data->sector').in('ticker', chunk)
+    ));
+    chunkResults.forEach(({ data }) => {
+      if (!data) return;
+      data.forEach(row => {
+        enrichmentMap[row.ticker] = {
+          marketCap: row.marketCap,
+          sector: row.sector
+        };
+      });
+    });
 
     const enrichedEarnings = earnings.map(e => ({
       ...e,
@@ -214,7 +246,9 @@ export async function GET(req) {
       sector: enrichmentMap[i.ticker]?.sector || null,
     }));
 
-    return Response.json({ earnings: enrichedEarnings, ipos: enrichedIpos });
+    const result = { earnings: enrichedEarnings, ipos: enrichedIpos };
+    setCached(cacheKey, result);
+    return Response.json(result);
   } catch (e) {
     return Response.json({ earnings: [] });
   }

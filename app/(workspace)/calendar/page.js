@@ -33,10 +33,6 @@ export default function WorkspaceCalendar() {
   const [selectedDate, setSelectedDate] = useState(null);
   const [togglingWatchlist, setTogglingWatchlist] = useState(null);
 
-  // Sorted/joined so it's a stable primitive for the effect dependency array below —
-  // watchlistTickers itself is a Set, and Sets don't compare usefully with ===.
-  const watchlistKey = useMemo(() => [...watchlistTickers].sort().join(','), [watchlistTickers]);
-
   // Fetch Calendar Data (Earnings & IPOs)
   const fetchCalendarData = () => {
     const activeCursor = viewMode === 'week' ? weekCursor : cursor;
@@ -44,12 +40,6 @@ export default function WorkspaceCalendar() {
     const to = toKey(endOfMonth(activeCursor));
     setEarnings(null);
     const qs = new URLSearchParams({ from, to });
-    // Finnhub's bulk calendar has thin coverage for foreign private issuers (Nokia's July
-    // earnings never showed up because Finnhub simply doesn't have that date on file) — the
-    // backend falls back to Yahoo for watchlisted tickers specifically, so pass them along
-    // instead of eating that fallback's latency for every one of the thousands of cached
-    // tickers nobody asked about.
-    if (watchlistKey) qs.set('watchlist', watchlistKey);
     fetch(`/api/earnings?${qs.toString()}`)
       .then(r => r.json())
       .then(d => {
@@ -64,7 +54,7 @@ export default function WorkspaceCalendar() {
 
   useEffect(() => {
     fetchCalendarData();
-  }, [cursor, weekCursor, viewMode, watchlistKey]);
+  }, [cursor, weekCursor, viewMode]);
 
   // Fetch Watchlist Tickers
   const fetchWatchlist = () => {
