@@ -1,4 +1,4 @@
-import { fetchYahooEarningsDate } from '../../../lib/yahooFinance';
+import { fetchNasdaqEarningsRange } from '../../../lib/nasdaqEarnings';
 import { supabase } from '../../../lib/supabase';
 
 const FH_KEY = process.env.FINNHUB_API_KEY;
@@ -41,16 +41,16 @@ export async function GET(req) {
 
       // Finnhub's calendar has thin coverage for foreign private issuers (20-F filers like
       // Nokia) — confirmed empty (not an error) doesn't mean no date exists, just that
-      // Finnhub doesn't have it. Yahoo's calendarEvents module often does; fall back to it
-      // only when Finnhub genuinely came back clean-but-empty, not on a Finnhub failure
-      // (retrying against a different provider on every rate-limit would just add load).
-      // `source: 'yahoo'` lives on the earnings item itself (not the response envelope) since
-      // the frontend reads it straight off whichever entry it picks as "upcoming event".
+      // Finnhub doesn't have it. Nasdaq's public calendar often does; fall back to it only
+      // when Finnhub genuinely came back clean-but-empty, not on a Finnhub failure (retrying
+      // against a different provider on every rate-limit would just add load).
+      // `source: 'nasdaq'` lives on the earnings item itself (not the response envelope)
+      // since the frontend reads it straight off whichever entry it picks as "upcoming event".
       if (earnings.length === 0 && !fhFailed) {
-        const yahooDate = await fetchYahooEarningsDate(ticker);
-        if (yahooDate && yahooDate >= from && yahooDate <= to) {
-          earnings = [{ ticker, date: yahooDate, epsEstimate: null, hour: null, source: 'yahoo' }];
-        }
+        const nasdaqMatches = (await fetchNasdaqEarningsRange(from, to))
+          .filter(e => e.ticker === ticker)
+          .sort((a, b) => a.date.localeCompare(b.date));
+        if (nasdaqMatches[0]) earnings = [nasdaqMatches[0]];
       }
 
       // Surfaced only on a genuine upstream failure (bad/rate-limited key, plan restriction,
@@ -161,22 +161,18 @@ export async function GET(req) {
         numberOfShares: e.numberOfShares,
       }));
 
-    // Same Finnhub-coverage gap as the per-ticker branch above, applied to whichever tickers
-    // the caller says it actually cares about (the Calendar page passes its watchlist) rather
-    // than every cached ticker — querying Yahoo per-ticker for the whole stock_cache table on
-    // every month view isn't worth the latency/rate-limit risk for tickers nobody's watching.
-    const watchlistParam = searchParams.get('watchlist');
-    if (watchlistParam) {
-      const alreadyHave = new Set(earnings.map(e => e.ticker));
-      const watchlistTickers = [...new Set(watchlistParam.split(',').map(t => t.trim().toUpperCase()).filter(Boolean))]
-        .filter(t => !alreadyHave.has(t))
-        .slice(0, 25);
-
-      const fallbacks = await Promise.all(watchlistTickers.map(async t => {
-        const date = await fetchYahooEarningsDate(t);
-        return date && date >= from && date <= to ? { ticker: t, date, epsEstimate: null, hour: null, source: 'yahoo' } : null;
-      }));
-      fallbacks.forEach(f => { if (f) earnings.push(f); });
+    // Same Finnhub-coverage gap as the per-ticker branch above (thin coverage for foreign
+    // private issuers like Nokia). Nasdaq's calendar is fetched a day at a time for the same
+    // [from, to] window anyway, so — unlike the old Yahoo fallback, which was per-ticker and
+    // had to be limited to the caller's watchlist to bound latency — this covers every ticker
+    // reporting in the window for roughly the same cost.
+    const nasdaqEarnings = await fetchNasdaqEarningsRange(from, to);
+    for (const e of nasdaqEarnings) {
+      const key = `${e.ticker}-${e.date}`;
+      if (!seen.has(key)) {
+        seen.add(key);
+        earnings.push(e);
+      }
     }
 
     // Enrich with market cap and sector from stock_cache

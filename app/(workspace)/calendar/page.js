@@ -720,7 +720,7 @@ export default function WorkspaceCalendar() {
                             </div>
                             <div style={{ fontSize: '11px', color: 'var(--ws-text-3)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', marginTop: '1px' }}>
                               {e.type === 'ipo' ? e.name : (e.hour === 'bmo' ? 'Before Open' : e.hour === 'amc' ? 'After Close' : 'Time TBD')}
-                              {e.source === 'yahoo' && <span title="Not yet confirmed by our primary data source — estimated date"> · Est. date</span>}
+                              {e.source === 'nasdaq' && <span title="Not yet confirmed by our primary data source — estimated date"> · Est. date</span>}
                             </div>
                           </div>
 

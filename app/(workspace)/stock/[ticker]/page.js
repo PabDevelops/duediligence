@@ -1270,7 +1270,7 @@ export default function StockPage({ params }) {
                             <span>Est. EPS: ${upcomingEvent.epsEstimate.toFixed(2)}</span>
                           </>
                         )}
-                        {upcomingEvent.source === 'yahoo' && (
+                        {upcomingEvent.source === 'nasdaq' && (
                           <>
                             <span className="text-ws-text-3"> · </span>
                             <span title="Not yet confirmed by our primary data source — estimated date">Est. date</span>
