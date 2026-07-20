@@ -1,7 +1,8 @@
 'use client';
 import { useState, useEffect } from 'react';
-import { usePathname } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import Sidebar from '../components/workspace/Sidebar';
+import PaywallModal from '../components/workspace/PaywallModal';
 import { useUser } from '../components/AuthProvider';
 
 // Routes reachable without an account (and without a Pro subscription) as
@@ -12,25 +13,6 @@ const PUBLIC_ROUTES = ['/home', '/search', '/stock', '/screener', '/radar', '/ca
 
 function isPublicPath(path) {
   return PUBLIC_ROUTES.some(r => path === r || path.startsWith(r + '/'));
-}
-
-function PaywallGate() {
-  const card = { padding: '12px 0', borderRadius: '10px', fontWeight: 700, fontSize: '14px', textDecoration: 'none', textAlign: 'center' };
-  return (
-    <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#f8f9fa', padding: '24px', fontFamily: 'Inter, sans-serif' }}>
-      <div style={{ maxWidth: '420px', width: '100%', textAlign: 'center', background: '#fff', border: '1px solid #e5e7eb', borderRadius: '16px', padding: '40px 32px', boxSizing: 'border-box' }}>
-        <div style={{ fontSize: '11px', fontWeight: 700, letterSpacing: '1.5px', color: '#0f766e', marginBottom: '10px' }}>TRAQCKER TERMINAL</div>
-        <h1 style={{ fontSize: '22px', fontWeight: 800, color: '#1f2937', marginBottom: '10px' }}>Subscribe to unlock the terminal</h1>
-        <p style={{ fontSize: '14px', color: '#4b5563', lineHeight: 1.6, marginBottom: '24px' }}>
-          The screener, portfolio tracker, full financials and the rest of the terminal are available with Traqcker Pro — 14 days free to start.
-        </p>
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-          <a href="/pricing" style={{ ...card, background: '#0f766e', color: '#fff' }}>Start 14-day free trial</a>
-          <a href="/" style={{ ...card, border: '1px solid #e5e7eb', color: '#4b5563', fontWeight: 600, fontSize: '13px' }}>← Back to traqcker.com</a>
-        </div>
-      </div>
-    </div>
-  );
 }
 
 function LoadingScreen() {
@@ -44,6 +26,7 @@ function LoadingScreen() {
 export default function WorkspaceLayout({ children }) {
   const { isSignedIn, isLoaded } = useUser();
   const path = usePathname();
+  const router = useRouter();
   const [access, setAccess] = useState('checking'); // checking | denied | granted
   const [theme, setTheme] = useState('light');
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -118,9 +101,9 @@ export default function WorkspaceLayout({ children }) {
   };
 
   if (access === 'checking') return <LoadingScreen />;
-  if (access === 'denied') return <PaywallGate />;
 
   const isDark = theme === 'dark';
+  const closePaywall = () => router.push('/home');
 
   return (
     <div className={`workspace ${theme}`} style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh', position: 'relative', '--ws-sidebar-width': sidebarCollapsed ? '68px' : '240px' }}>
@@ -181,9 +164,20 @@ export default function WorkspaceLayout({ children }) {
         )}
 
         <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', maxWidth: '100%', overflowX: 'hidden' }}>
-          <main style={{ flex: 1, maxWidth: '100%', overflowX: 'hidden' }}>{children}</main>
+          <main style={{ flex: 1, maxWidth: '100%', overflowX: 'hidden' }}>{access === 'granted' ? children : null}</main>
         </div>
       </div>
+
+      {access === 'denied' && (
+        <PaywallModal
+          eyebrow="TRAQCKER TERMINAL"
+          title="Subscribe to unlock the terminal"
+          description="The screener, portfolio tracker, full financials and the rest of the terminal are available with Traqcker Pro — 14 days free to start."
+          ctaLabel="Start 14-day free trial"
+          ctaHref="/pricing"
+          onClose={closePaywall}
+        />
+      )}
     </div>
   );
 }

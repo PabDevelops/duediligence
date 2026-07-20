@@ -13,7 +13,9 @@ import MarketStatusDot from '../../../components/workspace/MarketStatusDot';
 import { LockedPanel } from '../../../components/SoftWall';
 import { useUser } from '../../../components/AuthProvider';
 import AdSlot from '../../../components/AdSlot';
+import PaywallModal from '../../../components/workspace/PaywallModal';
 import { isInGuestWatchlist, addToGuestWatchlist, removeFromGuestWatchlist } from '../../../../lib/guestWatchlist';
+import { openInNewTab } from '../../../../lib/openInNewTab';
 import { fmt as sharedFmt, fmtP as sharedFmtP, fmtN as sharedFmtN, formatCurrency } from '../../../../lib/formatters';
 import { useStockData } from '../../../../lib/hooks/useStockData';
 import { useTickerSearch } from '../../../../lib/hooks/useTickerSearch';
@@ -375,7 +377,7 @@ export default function StockPage({ params }) {
   const goToTicker = (t, isEtf = false) => {
     const next = t.trim().toUpperCase();
     if (!next) return;
-    router.push(isEtf ? `/etfs/${next}` : `/stock/${next}`);
+    openInNewTab(isEtf ? `/etfs/${next}` : `/stock/${next}`);
     setJumpQuery('');
     setShowJumpSuggestions(false);
     jumpInputRef.current?.blur();
@@ -393,6 +395,10 @@ export default function StockPage({ params }) {
   const [sparklineData, setSparklineData] = useState(null);
   const [isPro, setIsPro] = useState(false);
   const [checkingPro, setCheckingPro] = useState(true);
+  // Daily free-view limit (see /api/usage) — null until we know we're over it, so this
+  // never blocks the initial render while the check is in flight (same lax pattern as
+  // checkingPro above, which also doesn't hold up the page).
+  const [viewGate, setViewGate] = useState(null);
   const [inWatchlist, setInWatchlist] = useState(false);
   // Existing watchlist "pies" (groups) this user already has, so Add-to-Watchlist here can
   // offer a picker instead of always dropping the ticker into General — same grouping concept
@@ -552,6 +558,25 @@ export default function StockPage({ params }) {
     }
   }, [ticker, isSignedIn]);
 
+  // Daily free-view limit — Pro (incl. the 14-day trial, see /api/subscription) is unlimited,
+  // so this never even calls /api/usage for them. Every other view counts against today's
+  // free quota, anonymous and signed-in-free alike (same isPro-not-isSignedIn convention the
+  // screener's column gating already uses).
+  useEffect(() => {
+    if (checkingPro || isPro) { setViewGate(null); return; }
+    let cancelled = false;
+    fetch('/api/usage')
+      .then(r => r.json())
+      .then(d => {
+        if (cancelled) return;
+        if (!d.allowed) { setViewGate('blocked'); return; }
+        setViewGate(null);
+        fetch('/api/usage', { method: 'POST' }).catch(() => {});
+      })
+      .catch(() => { if (!cancelled) setViewGate(null); });
+    return () => { cancelled = true; };
+  }, [ticker, isPro, checkingPro]);
+
   useEffect(() => {
     fetch(`/api/analyst-rating?ticker=${ticker}`)
       .then(r => r.json())
@@ -704,6 +729,21 @@ export default function StockPage({ params }) {
   // tab requires a free account to view.
   const isInternational = data.internationalSource === 'yahoo';
   const tabsLocked = isInternational && !isSignedIn;
+
+  if (viewGate === 'blocked') {
+    return (
+      <PaywallModal
+        eyebrow="TRAQCKER TERMINAL"
+        title="You've hit today's free limit"
+        description={isSignedIn
+          ? "You've viewed 5 stocks today. Upgrade to Pro for unlimited access."
+          : "You've viewed 5 stocks today. Sign up free — your first 14 days include full Pro access, no card required."}
+        ctaLabel={isSignedIn ? 'Upgrade to Pro' : 'Start 14-day free trial'}
+        ctaHref="/pricing"
+        onClose={() => router.push('/home')}
+      />
+    );
+  }
 
   return (
     <div className="p-6">
