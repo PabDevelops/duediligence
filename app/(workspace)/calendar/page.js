@@ -442,7 +442,7 @@ export default function WorkspaceCalendar() {
                   </div>
                   <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(44px, 1fr))', gap: '6px' }}>
                     {dayGroup.bmo.map(e => (
-                      <div key={e.ticker} className="weekly-stock-tile" title={`${e.ticker} - ${e.name}`} onClick={() => openInNewTab(`/stock/${e.ticker}`)}
+                      <div key={e.ticker} className="weekly-stock-tile" title={`${e.ticker}${e.name ? ` - ${e.name}` : ''}`} onClick={() => openInNewTab(`/stock/${e.ticker}`)}
                         style={{ background: 'var(--ws-bg-2)', border: '1px solid var(--ws-border)', borderRadius: '4px', padding: '4px', cursor: 'pointer', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px' }}>
                         <StockLogo ticker={e.ticker} size={28} />
                         <div style={{ fontSize: '9px', fontWeight: 700, color: 'var(--ws-text)', textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap', width: '100%', textAlign: 'center' }}>
@@ -464,7 +464,7 @@ export default function WorkspaceCalendar() {
                   </div>
                   <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(44px, 1fr))', gap: '6px' }}>
                     {dayGroup.amc.map(e => (
-                      <div key={e.ticker} className="weekly-stock-tile" title={`${e.ticker} - ${e.name}`} onClick={() => openInNewTab(`/stock/${e.ticker}`)}
+                      <div key={e.ticker} className="weekly-stock-tile" title={`${e.ticker}${e.name ? ` - ${e.name}` : ''}`} onClick={() => openInNewTab(`/stock/${e.ticker}`)}
                         style={{ background: 'var(--ws-bg-2)', border: '1px solid var(--ws-border)', borderRadius: '4px', padding: '4px', cursor: 'pointer', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px' }}>
                         <StockLogo ticker={e.ticker} size={28} />
                         <div style={{ fontSize: '9px', fontWeight: 700, color: 'var(--ws-text)', textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap', width: '100%', textAlign: 'center' }}>
@@ -487,7 +487,7 @@ export default function WorkspaceCalendar() {
                     </div>
                     <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(44px, 1fr))', gap: '6px' }}>
                       {dayGroup.other.map(e => (
-                        <div key={e.ticker} className="weekly-stock-tile" title={`${e.ticker} - ${e.name}`} onClick={() => openInNewTab(`/stock/${e.ticker}`)}
+                        <div key={e.ticker} className="weekly-stock-tile" title={`${e.ticker}${e.name ? ` - ${e.name}` : ''}`} onClick={() => openInNewTab(`/stock/${e.ticker}`)}
                           style={{ background: 'var(--ws-bg-2)', border: '1px solid var(--ws-border)', borderRadius: '4px', padding: '4px', cursor: 'pointer', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px' }}>
                           <StockLogo ticker={e.ticker} size={28} />
                           <div style={{ fontSize: '9px', fontWeight: 700, color: 'var(--ws-text)', textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap', width: '100%', textAlign: 'center' }}>
