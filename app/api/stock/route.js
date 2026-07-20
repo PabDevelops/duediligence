@@ -946,6 +946,60 @@ export async function GET(request) {
       return null;
     };
 
+    // Same key-preference lookup as getMetric, but keeps 10-Q periods too (still sorted
+    // newest-end-first) — the raw material ttmVal below needs to roll a stale annual figure
+    // forward.
+    const getMetricAllPeriods = (keys) => {
+      for (const key of keys) {
+        const metric = usgaap[key];
+        if (!metric) continue;
+        const units = metric.units?.USD || metric.units?.EUR || metric.units?.shares || metric.units?.pure;
+        if (!units) continue;
+        const periods = units
+          .filter(u => ['10-K', '20-F', '10-K/A', '20-F/A', '10-Q', '10-Q/A'].includes(u.form) && u.start && u.end)
+          .sort((a, b) => b.end.localeCompare(a.end));
+        if (periods.length > 0) return periods;
+      }
+      return null;
+    };
+
+    const daysBetween = (a, b) => Math.abs(new Date(a) - new Date(b)) / (1000 * 60 * 60 * 24);
+    const oneYearBefore = (d) => { const nd = new Date(d); nd.setFullYear(nd.getFullYear() - 1); return nd; };
+
+    // Trailing-twelve-month figure for a cash-flow-statement line item (operating cash flow,
+    // capex, SBC): the latest full fiscal year (10-K) rolled forward by whatever 10-Q filings
+    // have landed since, instead of freezing at the last annual report for up to a year.
+    // Verified against real data: MU's FY2025 10-K (ended Aug 2025) reported $1.7B FCF, right
+    // at the trough of the memory-price downcycle — getMetric alone kept every consumer of
+    // fcfVal (relative-valuation fair value, DCF, P/FCF) anchored to that trough for months
+    // after two blowout AI/HBM-driven quarters had already been reported, producing a ~96%
+    // "downside" that was really a stale-denominator artifact, not a real valuation signal.
+    // Cash-flow-statement lines are always YTD-cumulative in 10-Qs (an SEC presentation
+    // requirement), so "this year's YTD minus the same period last year, plus the last full
+    // FY" is a clean TTM delta — unlike income-statement lines, there's no discrete-vs-
+    // cumulative ambiguity to resolve first. Falls back to the plain annual figure whenever a
+    // newer interim period — or its prior-year comparative — can't be confidently matched
+    // (fiscal-year change, thinly-tagged filer, etc.), so every filer without fresher 10-Q
+    // data keeps the exact old behavior.
+    const ttmVal = (keys) => {
+      const periods = getMetricAllPeriods(keys);
+      if (!periods || !periods.length) return null;
+      const fy = periods.find(u => ['10-K', '20-F', '10-K/A', '20-F/A'].includes(u.form) && daysBetween(u.start, u.end) >= 300);
+      if (!fy) return periods[0]?.val ?? null;
+
+      const curYtd = periods
+        .filter(u => u.form.startsWith('10-Q') && new Date(u.end) > new Date(fy.end) && daysBetween(u.start, u.end) < 300)
+        .sort((a, b) => b.end.localeCompare(a.end))[0];
+      if (!curYtd) return fy.val;
+
+      const priorYtd = periods.find(u => u.form.startsWith('10-Q')
+        && daysBetween(u.end, oneYearBefore(curYtd.end)) < 40
+        && daysBetween(u.start, oneYearBefore(curYtd.start)) < 40);
+      if (!priorYtd) return fy.val;
+
+      return fy.val - priorYtd.val + curYtd.val;
+    };
+
     const getEPS = () => {
       const keys = ['EarningsPerShareDiluted', 'EarningsPerShareBasic'];
       for (const key of keys) {
@@ -1060,8 +1114,15 @@ export async function GET(request) {
     const revPrev  = prev(revenues);
     const niVal    = latest(netIncomes);
     const oiVal    = latest(operatingIncomes);
-    const operatingCFVal = latest(cashFlows);
-    const fcfVal   = latest(freeCashFlows);
+    // TTM (see ttmVal above) whenever a fresher one can be confidently rolled forward;
+    // capexTTM only applies to the *scalar* OCF - capex used for fcfVal below, not to
+    // freeCashFlows/fcfHistory's annual series, which stays a plain 10-K-by-10-K history.
+    const operatingCFValTTM = ttmVal(['NetCashProvidedByUsedInOperatingActivities']);
+    const capexValTTM = ttmVal(['PaymentsToAcquirePropertyPlantAndEquipment', 'CapitalExpenditureDiscontinuedOperations', 'PaymentsForProceedsFromProductiveAssets', 'PaymentsToAcquireProductiveAssets']);
+    const operatingCFVal = operatingCFValTTM ?? latest(cashFlows);
+    const fcfVal = (operatingCFValTTM != null && capexValTTM != null)
+      ? operatingCFValTTM - capexValTTM
+      : latest(freeCashFlows);
     const assetsVal = latest(assets);
     const equityVal = latest(equity);
     const debtVal  = latest(debt);
@@ -1080,11 +1141,11 @@ export async function GET(request) {
     const currentLiabilitiesVal = latest(currentLiabilities);
     const totalLiabilitiesVal = latest(totalLiabilities);
     const retainedEarningsVal = latest(retainedEarnings);
-    const capexVal = latest(capex);
+    const capexVal = capexValTTM ?? latest(capex);
     const inventoryVal = latest(inventory);
     const receivablesVal = latest(receivables);
     const payablesVal = latest(payables);
-    const sbcVal   = latest(sbc);
+    const sbcVal   = ttmVal(['ShareBasedCompensation', 'AllocatedShareBasedCompensationExpense']) ?? latest(sbc);
     const daVal    = latest(da);
     const dividendsPaidVal = latest(dividendsPaid);
     const investingCFVal = latest(investingActivities);
