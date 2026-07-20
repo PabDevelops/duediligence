@@ -13,6 +13,13 @@ export default function WorkspaceCalendar() {
   const router = useRouter();
   const { isSignedIn } = useUser();
   const [cursor, setCursor] = useState(() => startOfMonth(new Date()));
+  const [weekCursor, setWeekCursor] = useState(() => {
+    const d = new Date();
+    const day = d.getDay();
+    const diff = d.getDate() - day + (day === 0 ? -6 : 1);
+    return new Date(d.setDate(diff));
+  });
+  const [viewMode, setViewMode] = useState('week'); // default to new week view based on mockup
   const [earnings, setEarnings] = useState(null);
   const [ipos, setIpos] = useState([]);
   
@@ -30,8 +37,9 @@ export default function WorkspaceCalendar() {
 
   // Fetch Calendar Data (Earnings & IPOs)
   const fetchCalendarData = () => {
-    const from = toKey(startOfMonth(cursor));
-    const to = toKey(endOfMonth(cursor));
+    const activeCursor = viewMode === 'week' ? weekCursor : cursor;
+    const from = toKey(startOfMonth(activeCursor));
+    const to = toKey(endOfMonth(activeCursor));
     setEarnings(null);
     const qs = new URLSearchParams({ from, to });
     // Finnhub's bulk calendar has thin coverage for foreign private issuers (Nokia's July
@@ -54,7 +62,7 @@ export default function WorkspaceCalendar() {
 
   useEffect(() => {
     fetchCalendarData();
-  }, [cursor, watchlistKey]);
+  }, [cursor, weekCursor, viewMode, watchlistKey]);
 
   // Fetch Watchlist Tickers
   const fetchWatchlist = () => {
@@ -140,14 +148,57 @@ export default function WorkspaceCalendar() {
     return acc;
   }, [filteredEvents]);
 
+  // Week events grouped by day for the Weekly Grid
+  const weekEvents = useMemo(() => {
+    if (viewMode !== 'week') return [];
+    
+    // Generate dates for Mon-Fri
+    const dates = Array.from({ length: 5 }, (_, i) => {
+      const d = new Date(weekCursor);
+      d.setDate(d.getDate() + i);
+      return {
+        dateStr: toKey(d),
+        dateObj: d,
+      };
+    });
+
+    return dates.map(({ dateStr, dateObj }) => {
+      const eventsForDay = byDate[dateStr] || [];
+      const bmo = eventsForDay.filter(e => e.hour === 'bmo' || e.time === 'bmo');
+      const amc = eventsForDay.filter(e => e.hour === 'amc' || e.time === 'amc');
+      const other = eventsForDay.filter(e => e.hour !== 'bmo' && e.hour !== 'amc' && e.time !== 'bmo' && e.time !== 'amc');
+      
+      return {
+        dateStr,
+        dateObj,
+        bmo: bmo.sort((a, b) => a.ticker.localeCompare(b.ticker)),
+        amc: amc.sort((a, b) => a.ticker.localeCompare(b.ticker)),
+        other: other.sort((a, b) => a.ticker.localeCompare(b.ticker)),
+      };
+    });
+  }, [viewMode, weekCursor, byDate]);
+
   // Stats Counters
   const stats = useMemo(() => {
-    const totalEarnings = (earnings || []).length;
     const todayStr = toKey(new Date());
+    if (viewMode === 'week') {
+      let eCount = 0;
+      let iCount = 0;
+      let wCount = 0;
+      weekEvents.forEach(day => {
+        const allDay = [...day.bmo, ...day.amc, ...day.other];
+        eCount += allDay.filter(e => e.type === 'earnings').length;
+        iCount += allDay.filter(e => e.type === 'ipo' && e.date >= todayStr).length;
+        wCount += allDay.filter(e => watchlistTickers.has(e.ticker)).length;
+      });
+      return { totalEarnings: eCount, totalIpos: iCount, watchlistMatch: wCount };
+    }
+
+    const totalEarnings = (earnings || []).length;
     const totalIpos = ipos.filter(i => i.date >= todayStr).length;
     const watchlistMatch = allEventsThisMonth.filter(e => watchlistTickers.has(e.ticker)).length;
     return { totalEarnings, totalIpos, watchlistMatch };
-  }, [earnings, ipos, allEventsThisMonth, watchlistTickers]);
+  }, [viewMode, weekEvents, earnings, ipos, allEventsThisMonth, watchlistTickers]);
 
   const todayKey = toKey(new Date());
 
@@ -177,6 +228,14 @@ export default function WorkspaceCalendar() {
     }).filter(group => group.events.length > 0);
   }, [byDate, selectedDate]);
 
+  // (weekEvents moved up before stats)
+
+  const getWeekEndDate = () => {
+    const end = new Date(weekCursor);
+    end.setDate(end.getDate() + 4); // Friday
+    return end;
+  };
+
   return (
     <div style={{ padding: '24px' }}>
       
@@ -196,22 +255,55 @@ export default function WorkspaceCalendar() {
             <div style={{ fontSize: '13px', color: 'var(--ws-text-2)', marginTop: '4px' }}>Track scheduled earnings releases, expected analyst updates, and upcoming IPOs.</div>
           </div>
           
-          {/* Month controls */}
+          {/* Month/Week controls */}
           <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-            <button onClick={() => setCursor(c => shiftMonth(c, -1))}
+            <button onClick={() => {
+                if (viewMode === 'month') {
+                  setCursor(c => shiftMonth(c, -1));
+                } else {
+                  const next = new Date(weekCursor);
+                  next.setDate(next.getDate() - 7);
+                  setWeekCursor(next);
+                }
+              }}
               className="ctrl-btn"
               style={{ width: '32px', height: '32px', border: '1px solid var(--ws-border)', background: 'var(--ws-bg-1)', color: 'var(--ws-text)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', borderRadius: '4px', transition: 'all 0.15s ease' }}>
               ‹
             </button>
-            <div style={{ fontSize: '14px', fontWeight: 700, color: 'var(--ws-text)', width: '150px', textAlign: 'center', letterSpacing: '0.3px' }}>
-              {MONTH_NAMES[cursor.getMonth()]} {cursor.getFullYear()}
+            <div style={{ fontSize: '14px', fontWeight: 700, color: 'var(--ws-text)', width: '220px', textAlign: 'center', letterSpacing: '0.3px', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+              {viewMode === 'month' ? (
+                <span>{MONTH_NAMES[cursor.getMonth()]} {cursor.getFullYear()}</span>
+              ) : (
+                <>
+                  <span style={{ fontSize: '12px', color: 'var(--ws-text-3)', marginBottom: '2px' }}>Earnings This Week</span>
+                  <span>{MONTH_NAMES[weekCursor.getMonth()].slice(0, 3)} {weekCursor.getDate()} - {MONTH_NAMES[getWeekEndDate().getMonth()].slice(0, 3)} {getWeekEndDate().getDate()}</span>
+                </>
+              )}
             </div>
-            <button onClick={() => setCursor(c => shiftMonth(c, 1))}
+            <button onClick={() => {
+                if (viewMode === 'month') {
+                  setCursor(c => shiftMonth(c, 1));
+                } else {
+                  const next = new Date(weekCursor);
+                  next.setDate(next.getDate() + 7);
+                  setWeekCursor(next);
+                }
+              }}
               className="ctrl-btn"
               style={{ width: '32px', height: '32px', border: '1px solid var(--ws-border)', background: 'var(--ws-bg-1)', color: 'var(--ws-text)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', borderRadius: '4px', transition: 'all 0.15s ease' }}>
               ›
             </button>
-            <button onClick={() => { setCursor(startOfMonth(new Date())); setSelectedDate(null); }}
+            <button onClick={() => {
+                const now = new Date();
+                if (viewMode === 'month') {
+                  setCursor(startOfMonth(now));
+                  setSelectedDate(null);
+                } else {
+                  const day = now.getDay();
+                  const diff = now.getDate() - day + (day === 0 ? -6 : 1);
+                  setWeekCursor(new Date(now.setDate(diff)));
+                }
+              }}
               className="ctrl-btn"
               style={{ padding: '0 14px', height: '32px', border: '1px solid var(--ws-border)', background: 'var(--ws-bg-1)', color: 'var(--ws-text-2)', fontSize: '12px', fontWeight: 600, cursor: 'pointer', borderRadius: '4px', transition: 'all 0.15s ease' }}>
               Today
@@ -224,7 +316,9 @@ export default function WorkspaceCalendar() {
       <div className="calendar-stats-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '16px', marginBottom: '20px' }}>
         <div style={{ border: '1px solid var(--ws-border)', background: 'var(--ws-bg-1)', padding: '16px', borderRadius: '4px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           <div>
-            <div style={{ fontSize: '10px', color: 'var(--ws-text-3)', fontWeight: 700, letterSpacing: '0.5px', marginBottom: '4px' }}>EARNINGS THIS MONTH</div>
+            <div style={{ fontSize: '10px', color: 'var(--ws-text-3)', fontWeight: 700, letterSpacing: '0.5px', marginBottom: '4px' }}>
+              {viewMode === 'week' ? 'EARNINGS THIS WEEK' : 'EARNINGS THIS MONTH'}
+            </div>
             <div style={{ fontSize: '24px', fontWeight: 800, color: 'var(--ws-text)' }}>{earnings === null ? '—' : stats.totalEarnings}</div>
             <div style={{ fontSize: '11px', color: 'var(--ws-text-2)', marginTop: '2px' }}>Companies reporting</div>
           </div>
@@ -268,6 +362,18 @@ export default function WorkspaceCalendar() {
         </div>
         
         <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flexWrap: 'wrap' }}>
+          {/* View toggle */}
+          <div style={{ display: 'flex', border: '1px solid var(--ws-border)', borderRadius: '4px', overflow: 'hidden' }}>
+            <button onClick={() => setViewMode('month')}
+              style={{ border: 'none', height: '28px', padding: '0 12px', fontSize: '11px', fontWeight: 600, cursor: 'pointer', background: viewMode === 'month' ? 'var(--ws-accent)' : 'var(--ws-bg-2)', color: viewMode === 'month' ? 'var(--ws-bg-1)' : 'var(--ws-text-2)', transition: 'all 0.15s ease' }}>
+              Month View
+            </button>
+            <button onClick={() => setViewMode('week')}
+              style={{ border: 'none', height: '28px', padding: '0 12px', fontSize: '11px', fontWeight: 600, cursor: 'pointer', background: viewMode === 'week' ? 'var(--ws-accent)' : 'var(--ws-bg-2)', color: viewMode === 'week' ? 'var(--ws-bg-1)' : 'var(--ws-text-2)', transition: 'all 0.15s ease' }}>
+              Weekly Grid
+            </button>
+          </div>
+
           {/* Event type pills */}
           <div style={{ display: 'flex', border: '1px solid var(--ws-border)', borderRadius: '4px', overflow: 'hidden' }}>
             <button onClick={() => setTypeFilter('all')}
@@ -307,7 +413,96 @@ export default function WorkspaceCalendar() {
         </div>
       </div>
 
-      {/* 4. Main Dual Grid Layout */}
+      {/* 4. Main Dual Grid Layout OR Weekly Grid */}
+      {viewMode === 'week' ? (
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: '16px', alignItems: 'stretch' }}>
+          {weekEvents.map((dayGroup, i) => (
+            <div key={dayGroup.dateStr} style={{ border: '1px solid var(--ws-border)', background: 'var(--ws-bg-1)', borderRadius: '4px', overflow: 'hidden', display: 'flex', flexDirection: 'column', maxHeight: '720px' }}>
+              {/* Column Header */}
+              <div style={{ padding: '12px', textAlign: 'center', borderBottom: '1px solid var(--ws-border)', background: 'var(--ws-bg-2)', flexShrink: 0 }}>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px', marginBottom: '4px' }}>
+                  <div style={{ fontSize: '16px', fontWeight: 800, color: dayGroup.dateStr === todayKey ? 'var(--ws-accent)' : 'var(--ws-text)' }}>
+                    {dayGroup.dateObj.getDate()}
+                  </div>
+                  <div style={{ fontSize: '14px', fontWeight: 700, color: 'var(--ws-text)', textTransform: 'uppercase' }}>
+                    {DAY_NAMES[dayGroup.dateObj.getDay()]}
+                  </div>
+                </div>
+                <div style={{ fontSize: '11px', fontWeight: 600, color: 'var(--ws-text-3)' }}>
+                  {dayGroup.bmo.length + dayGroup.amc.length + dayGroup.other.length} events
+                </div>
+              </div>
+
+              <div className="custom-scroll" style={{ padding: '12px', display: 'flex', flexDirection: 'column', gap: '16px', overflowY: 'auto', flex: 1 }}>
+                {/* Before Open */}
+                <div>
+                  <div style={{ fontSize: '10px', fontWeight: 700, color: 'var(--ws-text-3)', marginBottom: '8px', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+                    Before Open
+                  </div>
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(44px, 1fr))', gap: '6px' }}>
+                    {dayGroup.bmo.map(e => (
+                      <div key={e.ticker} className="weekly-stock-tile" title={`${e.ticker} - ${e.name}`} onClick={() => openInNewTab(`/stock/${e.ticker}`)}
+                        style={{ background: 'var(--ws-bg-2)', border: '1px solid var(--ws-border)', borderRadius: '4px', padding: '4px', cursor: 'pointer', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px' }}>
+                        <StockLogo ticker={e.ticker} size={28} />
+                        <div style={{ fontSize: '9px', fontWeight: 700, color: 'var(--ws-text)', textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap', width: '100%', textAlign: 'center' }}>
+                          {e.ticker}
+                        </div>
+                      </div>
+                    ))}
+                    {dayGroup.bmo.length === 0 && (
+                      <div style={{ fontSize: '11px', color: 'var(--ws-text-3)', padding: '4px', fontStyle: 'italic', gridColumn: '1 / -1' }}>None</div>
+                    )}
+                  </div>
+                </div>
+
+                {/* After Close */}
+                <div>
+                  <div style={{ fontSize: '10px', fontWeight: 700, color: 'var(--ws-text-3)', marginBottom: '8px', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path></svg>
+                    After Close
+                  </div>
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(44px, 1fr))', gap: '6px' }}>
+                    {dayGroup.amc.map(e => (
+                      <div key={e.ticker} className="weekly-stock-tile" title={`${e.ticker} - ${e.name}`} onClick={() => openInNewTab(`/stock/${e.ticker}`)}
+                        style={{ background: 'var(--ws-bg-2)', border: '1px solid var(--ws-border)', borderRadius: '4px', padding: '4px', cursor: 'pointer', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px' }}>
+                        <StockLogo ticker={e.ticker} size={28} />
+                        <div style={{ fontSize: '9px', fontWeight: 700, color: 'var(--ws-text)', textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap', width: '100%', textAlign: 'center' }}>
+                          {e.ticker}
+                        </div>
+                      </div>
+                    ))}
+                    {dayGroup.amc.length === 0 && (
+                      <div style={{ fontSize: '11px', color: 'var(--ws-text-3)', padding: '4px', fontStyle: 'italic', gridColumn: '1 / -1' }}>None</div>
+                    )}
+                  </div>
+                </div>
+                
+                {/* Other/Unspecified */}
+                {dayGroup.other.length > 0 && (
+                  <div>
+                    <div style={{ fontSize: '10px', fontWeight: 700, color: 'var(--ws-text-3)', marginBottom: '8px', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>
+                      Time TBD
+                    </div>
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(44px, 1fr))', gap: '6px' }}>
+                      {dayGroup.other.map(e => (
+                        <div key={e.ticker} className="weekly-stock-tile" title={`${e.ticker} - ${e.name}`} onClick={() => openInNewTab(`/stock/${e.ticker}`)}
+                          style={{ background: 'var(--ws-bg-2)', border: '1px solid var(--ws-border)', borderRadius: '4px', padding: '4px', cursor: 'pointer', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px' }}>
+                          <StockLogo ticker={e.ticker} size={28} />
+                          <div style={{ fontSize: '9px', fontWeight: 700, color: 'var(--ws-text)', textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap', width: '100%', textAlign: 'center' }}>
+                            {e.ticker}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+          ))}
+        </div>
+      ) : (
       <div className="calendar-main-grid" style={{ display: 'grid', gridTemplateColumns: '1.2fr 1fr', gap: '20px', alignItems: 'start' }}>
         
         {/* Left Side: Monthly Grid view */}
@@ -533,10 +728,24 @@ export default function WorkspaceCalendar() {
         </div>
 
       </div>
+      )}
 
       <style>{`
         @keyframes spin {
           to { transform: rotate(360deg); }
+        }
+        .custom-scroll::-webkit-scrollbar {
+          width: 4px;
+        }
+        .custom-scroll::-webkit-scrollbar-track {
+          background: transparent;
+        }
+        .custom-scroll::-webkit-scrollbar-thumb {
+          background: var(--ws-border);
+          border-radius: 4px;
+        }
+        .custom-scroll::-webkit-scrollbar-thumb:hover {
+          background: var(--ws-text-3);
         }
         .ctrl-btn:hover {
           background: var(--ws-bg-2) !important;
@@ -553,6 +762,12 @@ export default function WorkspaceCalendar() {
           background: var(--ws-bg-2) !important;
           border-color: var(--ws-accent) !important;
           transform: translateX(2px);
+        }
+        .weekly-stock-tile:hover {
+          background: var(--ws-bg-3) !important;
+          border-color: var(--ws-accent) !important;
+          transform: translateY(-2px);
+          transition: all 0.15s ease;
         }
         .star-btn:hover {
           transform: scale(1.2);
