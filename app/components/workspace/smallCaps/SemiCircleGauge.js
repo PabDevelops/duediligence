@@ -2,15 +2,15 @@
 import { useState } from 'react';
 
 export default function SemiCircleGauge({
-  score = 78,
-  totalTracked = 3784,
-  smallCount = 1500,
-  microCount = 1459,
-  nanoCount = 825,
+  score = 0,
+  totalTracked = 0,
+  smallCount = 0,
+  microCount = 0,
+  nanoCount = 0,
   activeFilter = 'all',
   onFilterChange,
   healthRatios = [],
-  riskDist = { optimalPct: 74, watchlistPct: 19, flaggedPct: 7 }
+  riskDist = { optimalPct: 0, optimalCount: 0, watchlistPct: 0, watchlistCount: 0, flaggedPct: 0, flaggedCount: 0 }
 }) {
   const [hoveredRatio, setHoveredRatio] = useState(null);
 
@@ -36,19 +36,12 @@ export default function SemiCircleGauge({
       padding: '20px', display: 'flex', flexDirection: 'column',
       alignItems: 'center', justifyContent: 'space-between', height: '100%', boxSizing: 'border-box'
     }}>
-      {/* Card Header & Monthly Trend Badge */}
+      {/* Card Header — no trend badge: market_cap_snapshots only has one day of history so
+          far (tracking started today), so there's no real "vs 30d ago" to compare against.
+          A badge will make sense again once daily snapshots have accumulated. */}
       <div style={{ width: '100%', display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
         <span style={{ fontSize: '11px', fontWeight: 800, color: 'var(--ws-accent)', letterSpacing: '1px' }}>
           UNIVERSE HEALTH
-        </span>
-
-        {/* Monthly Trend Badge */}
-        <span style={{
-          fontSize: '9px', fontWeight: 800, padding: '2px 8px',
-          background: 'rgba(20, 184, 166, 0.15)', color: 'var(--ws-accent)',
-          border: '1px solid rgba(20, 184, 166, 0.3)', fontFamily: "'JetBrains Mono', monospace"
-        }}>
-          ▲ +3.2 pts vs 30d
         </span>
       </div>
 
@@ -123,8 +116,13 @@ export default function SemiCircleGauge({
           SEGMENT HEALTH RATIOS
         </div>
         {healthRatios.map((item, idx) => {
-          const totalCompanies = activeFilter === 'all' ? totalTracked : (activeFilter === 'small' ? smallCount : (activeFilter === 'micro' ? microCount : nanoCount));
-          const count = Math.round((item.pct / 100) * totalCompanies);
+          // n/count come from the API (app/api/small-caps/radar/route.js's buildHealthMetrics)
+          // — the real number of stocks that report this field, not a share of the whole
+          // tracked universe. Most of the universe hasn't been individually hydrated yet, so
+          // this is deliberately a small, honest sample rather than a fabricated full-coverage
+          // percentage.
+          const hasData = item.pct != null && item.n > 0;
+          const pct = hasData ? item.pct : 0;
           return (
             <div
               key={idx}
@@ -134,19 +132,19 @@ export default function SemiCircleGauge({
             >
               <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '9px', marginBottom: '2px' }}>
                 <span style={{ color: 'var(--ws-text-2)', fontWeight: 600 }}>{item.label}</span>
-                <span style={{ fontWeight: 800, color: item.color || 'var(--ws-accent)', fontFamily: "'JetBrains Mono', monospace" }}>
-                  {item.pct}%
+                <span style={{ fontWeight: 800, color: hasData ? (item.color || 'var(--ws-accent)') : 'var(--ws-text-3)', fontFamily: "'JetBrains Mono', monospace" }}>
+                  {hasData ? `${pct}%` : 'N/A'}
                 </span>
               </div>
               <div style={{ height: '4px', width: '100%', background: 'var(--ws-bg-2)', overflow: 'hidden' }}>
                 <div style={{
-                  height: '100%', width: `${item.pct}%`,
+                  height: '100%', width: `${pct}%`,
                   background: item.color || 'var(--ws-accent)',
                   transition: 'width 0.4s ease'
                 }} />
               </div>
 
-              {/* Hover Tooltip with exact company counts */}
+              {/* Hover Tooltip with the real sample the ratio is computed over */}
               {hoveredRatio === idx && (
                 <div style={{
                   position: 'absolute', bottom: '100%', left: '50%', transform: 'translateX(-50%)',
@@ -154,7 +152,7 @@ export default function SemiCircleGauge({
                   padding: '4px 8px', fontSize: '9px', color: 'var(--ws-text)',
                   boxShadow: '0 4px 12px rgba(0,0,0,0.5)', zIndex: 10, whiteSpace: 'nowrap', marginBottom: '4px'
                 }}>
-                  {count.toLocaleString()} of {totalCompanies.toLocaleString()} companies
+                  {hasData ? `${item.count.toLocaleString()} of ${item.n.toLocaleString()} stocks with data` : 'No stocks with this data yet'}
                 </div>
               )}
             </div>
@@ -168,9 +166,9 @@ export default function SemiCircleGauge({
           UNIVERSE RISK DISTRIBUTION
         </div>
         <div style={{ display: 'flex', height: '6px', width: '100%', overflow: 'hidden', background: 'var(--ws-bg-2)' }}>
-          <div style={{ width: `${riskDist.optimalPct}%`, background: 'var(--ws-accent)', transition: 'width 0.4s ease' }} title={`Optimal (${riskDist.optimalPct}%)`} />
-          <div style={{ width: `${riskDist.watchlistPct}%`, background: '#f59e0b', transition: 'width 0.4s ease' }} title={`Watchlist (${riskDist.watchlistPct}%)`} />
-          <div style={{ width: `${riskDist.flaggedPct}%`, background: 'var(--ws-red)', transition: 'width 0.4s ease' }} title={`Flagged (${riskDist.flaggedPct}%)`} />
+          <div style={{ width: `${riskDist.optimalPct}%`, background: 'var(--ws-accent)', transition: 'width 0.4s ease' }} title={`Optimal: ${(riskDist.optimalCount ?? 0).toLocaleString()} stocks (${riskDist.optimalPct}%) — no risk flags detected (includes stocks not yet analyzed)`} />
+          <div style={{ width: `${riskDist.watchlistPct}%`, background: '#f59e0b', transition: 'width 0.4s ease' }} title={`Watchlist: ${(riskDist.watchlistCount ?? 0).toLocaleString()} stocks (${riskDist.watchlistPct}%) — 1 risk flag`} />
+          <div style={{ width: `${riskDist.flaggedPct}%`, background: 'var(--ws-red)', transition: 'width 0.4s ease' }} title={`Flagged: ${(riskDist.flaggedCount ?? 0).toLocaleString()} stocks (${riskDist.flaggedPct}%) — 2+ risk flags`} />
         </div>
         <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '9px', color: 'var(--ws-text-3)', fontFamily: "'JetBrains Mono', monospace" }}>
           <span style={{ color: 'var(--ws-accent)' }}>● Optimal {riskDist.optimalPct}%</span>

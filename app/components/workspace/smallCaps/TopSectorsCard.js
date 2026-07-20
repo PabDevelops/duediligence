@@ -1,28 +1,24 @@
 'use client';
 import { useState } from 'react';
 
-const SECTOR_DATA = [
-  { tag: 'TECH', name: 'Technology & AI', pct: 28.4, count: '142 stocks', yoy: '+5.2%' },
-  { tag: 'HLTH', name: 'Healthcare & Biotech', pct: 21.2, count: '106 stocks', yoy: '+2.1%' },
-  { tag: 'IND', name: 'Industrials & Robotics', pct: 16.8, count: '84 stocks', yoy: '+1.4%' },
-  { tag: 'FIN', name: 'Financials & Fintech', pct: 14.5, count: '73 stocks', yoy: '-0.8%' },
-  { tag: 'ENRG', name: 'Energy & CleanTech', pct: 11.1, count: '56 stocks', yoy: '+3.9%' },
-  { tag: 'CONS', name: 'Consumer & Retail', pct: 8.0, count: '40 stocks', yoy: '-1.2%' },
-];
+function fmtCap(val) {
+  if (!val) return '—';
+  if (val >= 1e9) return `$${(val / 1e9).toFixed(1)}B`;
+  if (val >= 1e6) return `$${(val / 1e6).toFixed(0)}M`;
+  return `$${val}`;
+}
 
-const COUNTRY_DATA = [
-  { tag: 'US', name: 'United States', pct: 64.2, count: '322 stocks', yoy: '+4.8%' },
-  { tag: 'EU', name: 'European Union', pct: 18.5, count: '93 stocks', yoy: '+1.5%' },
-  { tag: 'JP', name: 'Japan & Asia-Pac', pct: 8.3, count: '42 stocks', yoy: '+2.7%' },
-  { tag: 'GB', name: 'United Kingdom', pct: 5.2, count: '26 stocks', yoy: '+0.4%' },
-  { tag: 'CA', name: 'Canada & Mining', pct: 3.8, count: '18 stocks', yoy: '-0.9%' },
-];
-
-export default function TopSectorsCard() {
+// sector/country distribution is computed server-side (app/api/small-caps/radar/route.js's
+// buildDistribution) from the real tracked universe — no hardcoded lists or fabricated YoY
+// figures here. YoY isn't shown at all: market_cap_snapshots only has one day of history right
+// now (see PerformanceAreaChart.js's comment), so there's nothing real to compute a trend from.
+// marketCap sum stands in for the old YoY column instead.
+export default function TopSectorsCard({ sectorDistribution, countryDistribution, loading }) {
   const [viewMode, setViewMode] = useState('sector');
   const [hoveredIdx, setHoveredIdx] = useState(null);
 
-  const activeData = viewMode === 'sector' ? SECTOR_DATA : COUNTRY_DATA;
+  const dist = viewMode === 'sector' ? sectorDistribution : countryDistribution;
+  const rows = dist?.rows || [];
 
   return (
     <div style={{
@@ -32,9 +28,16 @@ export default function TopSectorsCard() {
     }}>
       {/* Header with View Switcher Pills */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <span style={{ fontSize: '11px', fontWeight: 800, color: 'var(--ws-accent)', letterSpacing: '1px' }}>
-          {viewMode === 'sector' ? 'TOP SECTOR DISTRIBUTION' : 'GEOGRAPHIC DISTRIBUTION'}
-        </span>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+          <span style={{ fontSize: '11px', fontWeight: 800, color: 'var(--ws-accent)', letterSpacing: '1px' }}>
+            {viewMode === 'sector' ? 'TOP SECTOR DISTRIBUTION' : 'GEOGRAPHIC DISTRIBUTION'}
+          </span>
+          {dist && (
+            <span style={{ fontSize: '9px', color: 'var(--ws-text-3)', fontFamily: "'JetBrains Mono', monospace" }}>
+              n={dist.sampleSize.toLocaleString()}
+            </span>
+          )}
+        </div>
 
         {/* View Switcher Pills */}
         <div style={{ display: 'flex', gap: '2px', background: 'var(--ws-bg-2)', padding: '2px', border: '1px solid var(--ws-border)' }}>
@@ -61,11 +64,15 @@ export default function TopSectorsCard() {
         </div>
       </div>
 
-      {/* Distribution List with Progress Fill Bars (No Emojis) */}
-      <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', flex: 1, justifyContent: 'space-around' }}>
-        {activeData.map((s, idx) => (
+      {/* Distribution List with Progress Fill Bars */}
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', flex: 1, justifyContent: rows.length ? 'space-around' : 'center' }}>
+        {loading ? (
+          <div style={{ textAlign: 'center', color: 'var(--ws-text-3)', fontSize: '11px' }}>Loading universe breakdown...</div>
+        ) : rows.length === 0 ? (
+          <div style={{ textAlign: 'center', color: 'var(--ws-text-3)', fontSize: '11px' }}>No {viewMode} data yet.</div>
+        ) : rows.map((s, idx) => (
           <div
-            key={idx}
+            key={s.name}
             onMouseEnter={() => setHoveredIdx(idx)}
             onMouseLeave={() => setHoveredIdx(null)}
             style={{
@@ -81,28 +88,21 @@ export default function TopSectorsCard() {
               borderRight: '2px solid var(--ws-accent)', transition: 'width 0.4s ease'
             }} />
 
-            {/* Left Info: Code Tag + Name */}
-            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', zIndex: 2 }}>
-              <span style={{
-                fontSize: '9px', fontWeight: 800, padding: '1px 5px',
-                background: 'var(--ws-bg-1)', border: '1px solid var(--ws-border)',
-                color: 'var(--ws-accent)', fontFamily: "'JetBrains Mono', monospace"
-              }}>
-                {s.tag}
-              </span>
-              <span style={{ fontSize: '11px', fontWeight: 700, color: 'var(--ws-text)' }}>{s.name}</span>
+            {/* Left Info: Name */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', zIndex: 2, minWidth: 0 }}>
+              <span style={{ fontSize: '11px', fontWeight: 700, color: 'var(--ws-text)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{s.name}</span>
             </div>
 
-            {/* Right Metrics: Percentage, Count & YoY */}
-            <div style={{ display: 'flex', alignItems: 'center', gap: '10px', fontFamily: "'JetBrains Mono', monospace", zIndex: 2 }}>
-              <span style={{ fontSize: '9px', color: s.yoy.startsWith('+') ? 'var(--ws-accent)' : 'var(--ws-red)', fontWeight: 700 }}>
-                {s.yoy}
+            {/* Right Metrics: Market Cap, Percentage & Count */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: '10px', fontFamily: "'JetBrains Mono', monospace", zIndex: 2, flexShrink: 0 }}>
+              <span style={{ fontSize: '9px', color: 'var(--ws-text-3)', fontWeight: 700 }}>
+                {fmtCap(s.marketCap)}
               </span>
               <span style={{ fontSize: '11px', fontWeight: 800, color: 'var(--ws-text)' }}>
                 {s.pct.toFixed(1)}%
               </span>
               <span style={{ fontSize: '10px', color: 'var(--ws-text-3)' }}>
-                {s.count}
+                {s.count.toLocaleString()} stocks
               </span>
             </div>
 
@@ -114,7 +114,7 @@ export default function TopSectorsCard() {
                 padding: '2px 8px', fontSize: '9px', fontWeight: 800, color: 'var(--ws-accent)',
                 boxShadow: '0 4px 12px rgba(0,0,0,0.5)', zIndex: 10, fontFamily: "'JetBrains Mono', monospace"
               }}>
-                {s.count} · {s.yoy} YoY Growth
+                {s.count.toLocaleString()} stocks &middot; {fmtCap(s.marketCap)} combined cap
               </div>
             )}
           </div>

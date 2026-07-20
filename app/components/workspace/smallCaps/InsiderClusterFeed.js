@@ -19,28 +19,12 @@ export default function InsiderClusterFeed({ feed, loading, onSelect }) {
   const [timeRange, setTimeRange] = useState('30D');
 
   const rawEvents = feed?.events || [];
-  const rawClusters = feed?.clusters || [
-    { ticker: 'IONQ', windowStart: '2026-07-10', insiderCount: 3, totalValue: 1450000, insiders: ['Peter Chapman (CEO)', 'Thomas Kramer (CFO)', 'Harry You (Director)'] },
-    { ticker: 'RGTI', windowStart: '2026-07-12', insiderCount: 4, totalValue: 820000, insiders: ['Dr. Subodh Kulkarni (CEO)', 'Jeffrey Bertelsen (CFO)'] },
-  ];
-
-  const mockEvents = [
-    { ticker: 'IONQ', insider: 'Peter Chapman (CEO)', type: 'BUY', shares: 50000, value: 650000, date: '2026-07-18' },
-    { ticker: 'RGTI', insider: 'Dr. Subodh Kulkarni (CEO)', type: 'BUY', shares: 80000, value: 320000, date: '2026-07-17' },
-    { ticker: 'QUBT', insider: 'Richard Blank (Director)', type: 'BUY', shares: 25000, value: 180000, date: '2026-07-16' },
-    { ticker: 'ASTS', insider: 'Abel Avellan (CEO)', type: 'BUY', shares: 120000, value: 1250000, date: '2026-07-15' },
-    { ticker: 'RKLB', insider: 'Adam Spice (CFO)', type: 'BUY', shares: 35000, value: 240000, date: '2026-07-14' },
-    { ticker: 'LCID', insider: 'Marc Winterhoff (COO)', type: 'BUY', shares: 45000, value: 210000, date: '2026-07-12' },
-    { ticker: 'JOBY', insider: 'Paul Sciarra (Director)', type: 'BUY', shares: 90000, value: 540000, date: '2026-07-10' },
-    { ticker: 'ACHR', insider: 'Brett Adcock (CEO)', type: 'BUY', shares: 110000, value: 480000, date: '2026-07-08' },
-    { ticker: 'PLTR', insider: 'Alexander Karp (CEO)', type: 'BUY', shares: 200000, value: 3800000, date: '2026-07-05' },
-  ];
+  const rawClusters = feed?.clusters || [];
 
   const events = useMemo(() => {
-    const list = rawEvents.length > 0 ? rawEvents : mockEvents;
-    if (timeRange === '7D') return list.slice(0, 3);
-    if (timeRange === '30D') return list.slice(0, 5);
-    return list; // 90D returns all items, scroll bound inside card box
+    if (timeRange === '7D') return rawEvents.slice(0, 3);
+    if (timeRange === '30D') return rawEvents.slice(0, 5);
+    return rawEvents; // 90D returns all items, scroll bound inside card box
   }, [rawEvents, timeRange]);
 
   return (

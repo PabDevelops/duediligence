@@ -3,7 +3,6 @@ import { useState } from 'react';
 import Sparkline from '../../Sparkline';
 import ScoreGauge from './ScoreGauge';
 import CompanySpiderChart from './CompanySpiderChart';
-import QuarterlyEqualizer from './QuarterlyEqualizer';
 import { fmt, fmtP as fmtPercent, fmtN } from '../../../../lib/formatters';
 import { openInNewTab } from '../../../../lib/openInNewTab';
 
@@ -265,35 +264,6 @@ export default function SpotlightDetail({
           </div>
         </div>
 
-        <div>
-          <QuarterlyEqualizer spotlightData={spotlightData} />
-        </div>
-
-        {/* Geographic Revenue Exposure with Flag icons */}
-        <div>
-          <div style={{ fontSize: '9px', fontWeight: 800, color: 'var(--ws-text-3)', letterSpacing: '1px', marginBottom: '8px' }}>
-            GEOGRAPHIC REVENUE EXPOSURE
-          </div>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', fontSize: '11px' }}>
-            {[
-              { flag: 'US', country: 'United States', pct: 68 },
-              { flag: 'EU', country: 'Europe & UK', pct: 20 },
-              { flag: 'JP', country: 'Asia-Pacific', pct: 8 },
-              { flag: 'INTL', country: 'Rest of World', pct: 4 },
-            ].map((g, i) => (
-              <div key={i} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '8px' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '6px', width: '120px' }}>
-                  <span style={{ fontSize: '9px', fontWeight: 800, padding: '1px 4px', background: 'var(--ws-bg-2)', border: '1px solid var(--ws-border)', color: 'var(--ws-accent)', fontFamily: "'JetBrains Mono', monospace" }}>{g.flag}</span>
-                  <span style={{ fontSize: '10px', color: 'var(--ws-text-2)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{g.country}</span>
-                </div>
-                <div style={{ flex: 1, height: '4px', background: 'var(--ws-bg-2)', overflow: 'hidden' }}>
-                  <div style={{ height: '100%', width: `${g.pct}%`, background: i === 0 ? 'var(--ws-accent)' : 'var(--ws-text-3)' }} />
-                </div>
-                <span style={{ fontSize: '10px', fontWeight: 700, fontFamily: "'JetBrains Mono', monospace", width: '32px', textAlign: 'right' }}>{g.pct}%</span>
-              </div>
-            ))}
-          </div>
-        </div>
       </div>
 
       <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginTop: 'auto', paddingTop: '10px' }}>

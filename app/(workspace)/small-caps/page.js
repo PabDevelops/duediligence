@@ -12,6 +12,8 @@ import TopSectorsCard from '../../components/workspace/smallCaps/TopSectorsCard'
 import QuarterlyEqualizer from '../../components/workspace/smallCaps/QuarterlyEqualizer';
 import SmallCapsExploreTable from '../../components/workspace/smallCaps/SmallCapsExploreTable';
 import SpotlightDetail from '../../components/workspace/smallCaps/SpotlightDetail';
+import RiskTriage from '../../components/workspace/smallCaps/RiskTriage';
+import TierMigrationPanel from '../../components/workspace/smallCaps/TierMigrationPanel';
 
 export default function SmallMicroCaps() {
   const router = useRouter();
@@ -124,86 +126,62 @@ export default function SmallMicroCaps() {
       // Loading, or before the first radar fetch resolves — placeholder so the dashboard
       // doesn't flash zeros; overwritten the moment real data arrives.
       return {
-        total: 3784, small: 1500, micro: 1459, nano: 825,
-        totalCapFormatted: '$1,420.50B', allList: [],
+        total: 0, small: 0, micro: 0, nano: 0,
+        smallCap: 0, microCap: 0, nanoCap: 0,
+        totalCapFormatted: '$0', allList: [],
       };
     }
 
-    let small = 0;
-    let micro = 0;
-    let nano = 0;
+    let small = 0, micro = 0, nano = 0;
+    let smallCap = 0, microCap = 0, nanoCap = 0;
     let totalCap = 0;
 
     universe.forEach(s => {
       const tier = getCapTier(s.marketCap);
-      if (tier?.id === 'small') small++;
-      else if (tier?.id === 'micro') micro++;
-      else if (tier?.id === 'nano') nano++;
-      totalCap += (s.marketCap || 0);
+      const cap = s.marketCap || 0;
+      if (tier?.id === 'small') { small++; smallCap += cap; }
+      else if (tier?.id === 'micro') { micro++; microCap += cap; }
+      else if (tier?.id === 'nano') { nano++; nanoCap += cap; }
+      totalCap += cap;
     });
 
-    const capFormatted = totalCap > 0 ? `$${(totalCap / 1e9).toFixed(2)}B` : '$1,420.50B';
+    const capFormatted = totalCap > 0 ? `$${(totalCap / 1e9).toFixed(2)}B` : '$0';
 
     return {
       total: universe.length,
-      small,
-      micro,
-      nano,
+      small, micro, nano,
+      smallCap, microCap, nanoCap,
       totalCapFormatted: capFormatted,
       allList: universe
     };
   }, [radarData]);
 
-  // Dynamic Health Metrics computed per Tier (All, Small, Micro, Nano)
-  const dynamicTierHealth = useMemo(() => {
-    if (capTierFilter === 'small') {
-      return {
-        score: 84,
-        healthRatios: [
-          { label: 'FCF Positive Ratio', pct: 78, color: 'var(--ws-accent)' },
-          { label: 'Gross Margin > 40%', pct: 71, color: 'var(--ws-accent)' },
-          { label: 'Low Debt / Solvent', pct: 82, color: 'var(--ws-accent)' },
-          { label: 'Insider Buying Activity', pct: 65, color: '#a855f7' },
-        ],
-        riskDist: { optimalPct: 82, watchlistPct: 14, flaggedPct: 4 }
-      };
+  // Real health ratios + risk distribution from app/api/small-caps/radar/route.js's
+  // buildHealthMetrics/buildRiskDistribution — replaces what used to be four fixed objects
+  // (one per cap-tier filter) with hand-picked numbers that never changed regardless of what
+  // was actually in the database. These aren't split per-tier server-side: the underlying
+  // sample sizes (13-33 stocks with full financials, universe-wide) are already too thin to
+  // slice further by tier and stay meaningful, so the ratios stay constant across the ALL/
+  // SMALL/MICRO/NANO filter — only the subtext company count below the gauge changes with it.
+  const gaugeData = useMemo(() => {
+    const hm = radarData?.healthMetrics;
+    const rd = radarData?.riskDistribution;
+    if (!hm || !rd) {
+      return { score: 0, healthRatios: [], riskDist: { optimalPct: 0, watchlistPct: 0, flaggedPct: 0 } };
     }
-    if (capTierFilter === 'micro') {
-      return {
-        score: 74,
-        healthRatios: [
-          { label: 'FCF Positive Ratio', pct: 62, color: 'var(--ws-accent)' },
-          { label: 'Gross Margin > 40%', pct: 52, color: 'var(--ws-accent)' },
-          { label: 'Low Debt / Solvent', pct: 68, color: '#f59e0b' },
-          { label: 'Insider Buying Activity', pct: 58, color: '#a855f7' },
-        ],
-        riskDist: { optimalPct: 72, watchlistPct: 21, flaggedPct: 7 }
-      };
-    }
-    if (capTierFilter === 'nano') {
-      return {
-        score: 58,
-        healthRatios: [
-          { label: 'FCF Positive Ratio', pct: 48, color: '#f59e0b' },
-          { label: 'Gross Margin > 40%', pct: 41, color: '#f59e0b' },
-          { label: 'Low Debt / Solvent', pct: 45, color: 'var(--ws-red)' },
-          { label: 'Insider Buying Activity', pct: 72, color: '#a855f7' },
-        ],
-        riskDist: { optimalPct: 56, watchlistPct: 28, flaggedPct: 16 }
-      };
-    }
-    // Default 'all'
-    return {
-      score: 78,
-      healthRatios: [
-        { label: 'FCF Positive Ratio', pct: 68, color: 'var(--ws-accent)' },
-        { label: 'Gross Margin > 40%', pct: 62, color: 'var(--ws-accent)' },
-        { label: 'Low Debt / Solvent', pct: 70, color: '#f59e0b' },
-        { label: 'Insider Buying Activity', pct: 62, color: '#a855f7' },
-      ],
-      riskDist: { optimalPct: 74, watchlistPct: 19, flaggedPct: 7 }
-    };
-  }, [capTierFilter]);
+
+    const healthRatios = [
+      { label: 'FCF Positive Ratio', pct: hm.fcfPositive.pct, n: hm.fcfPositive.n, count: hm.fcfPositive.count, color: 'var(--ws-accent)' },
+      { label: 'Gross Margin > 40%', pct: hm.healthyGrossMargin.pct, n: hm.healthyGrossMargin.n, count: hm.healthyGrossMargin.count, color: 'var(--ws-accent)' },
+      { label: 'Low Debt / Solvent', pct: hm.lowDebt.pct, n: hm.lowDebt.n, count: hm.lowDebt.count, color: '#f59e0b' },
+      { label: 'Insider Buying Activity', pct: hm.insiderBuying.pct, n: hm.insiderBuying.n, count: hm.insiderBuying.count, color: '#a855f7' },
+    ];
+
+    const available = healthRatios.filter(r => r.pct != null);
+    const score = available.length > 0 ? Math.round(available.reduce((sum, r) => sum + r.pct, 0) / available.length) : 0;
+
+    return { score, healthRatios, riskDist: rd };
+  }, [radarData]);
 
   return (
     <div style={{ display: 'flex', width: '100%', minHeight: '100vh', background: 'var(--ws-bg)', color: 'var(--ws-text)' }}>
@@ -319,19 +297,25 @@ export default function SmallMicroCaps() {
             {/* Row 1: Top-Left Speedometer Arc (4 cols) + Top-Right Main Area Panel (8 cols) */}
             <div style={{ gridColumn: 'span 4' }}>
               <SemiCircleGauge
-                score={dynamicTierHealth.score}
+                score={gaugeData.score}
                 totalTracked={universeMetrics.total}
                 smallCount={universeMetrics.small}
                 microCount={universeMetrics.micro}
                 nanoCount={universeMetrics.nano}
                 activeFilter={capTierFilter}
                 onFilterChange={(tier) => setCapTierFilter(tier)}
-                healthRatios={dynamicTierHealth.healthRatios}
-                riskDist={dynamicTierHealth.riskDist}
+                healthRatios={gaugeData.healthRatios}
+                riskDist={gaugeData.riskDist}
               />
             </div>
             <div style={{ gridColumn: 'span 8' }}>
-              <PerformanceAreaChart totalUniverseCap={universeMetrics.totalCapFormatted} />
+              <PerformanceAreaChart
+                totalCapFormatted={universeMetrics.totalCapFormatted}
+                totalCount={universeMetrics.total}
+                small={universeMetrics.small} micro={universeMetrics.micro} nano={universeMetrics.nano}
+                smallCap={universeMetrics.smallCap} microCap={universeMetrics.microCap} nanoCap={universeMetrics.nanoCap}
+                trackingSince={radarData?.trackingSince}
+              />
             </div>
 
             {/* Row 2: Bottom-Left Insider Cluster Buys (4 cols) + Bottom-Center Sectors (4 cols) + Bottom-Right Equalizer (4 cols) */}
@@ -339,10 +323,10 @@ export default function SmallMicroCaps() {
               <InsiderClusterFeed feed={radarData?.feed} loading={radarLoading} onSelect={triggerSpotlight} />
             </div>
             <div style={{ gridColumn: 'span 4' }}>
-              <TopSectorsCard />
+              <TopSectorsCard sectorDistribution={radarData?.sectorDistribution} countryDistribution={radarData?.countryDistribution} loading={radarLoading} />
             </div>
             <div style={{ gridColumn: 'span 4' }}>
-              <QuarterlyEqualizer />
+              <QuarterlyEqualizer fcfConsistency={radarData?.fcfConsistency} loading={radarLoading} />
             </div>
 
           </div>
@@ -355,10 +339,24 @@ export default function SmallMicroCaps() {
           </div>
         )}
 
-        {/* Tab 3 & 4 Fallbacks */}
-        {(activeTab === 'insiders' || activeTab === 'risk') && (
+        {/* Tab 3: Insider Feed */}
+        {activeTab === 'insiders' && (
           <div style={{ padding: '24px', flex: 1, display: 'flex', flexDirection: 'column' }}>
             <InsiderClusterFeed feed={radarData?.feed} loading={radarLoading} onSelect={triggerSpotlight} />
+          </div>
+        )}
+
+        {/* Tab 4: Risk Triage */}
+        {activeTab === 'risk' && (
+          <div style={{ padding: '24px', flex: 1, display: 'flex', flexDirection: 'column', gap: '16px' }}>
+            <RiskTriage riskFlags={radarData?.riskFlags} loading={radarLoading} onSelect={triggerSpotlight} />
+            <TierMigrationPanel
+              migrations={radarData?.migrations}
+              trackingSince={radarData?.trackingSince}
+              daysTracking={radarData?.trackingSince ? Math.floor((Date.now() - new Date(radarData.trackingSince)) / 86400000) : 0}
+              loading={radarLoading}
+              onSelect={triggerSpotlight}
+            />
           </div>
         )}
 

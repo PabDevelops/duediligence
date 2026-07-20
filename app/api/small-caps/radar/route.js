@@ -20,8 +20,12 @@ let radarCachedAt = 0;
 const DILUTION_FLAG_PCT = 30;       // dilutionScore's [30, 2] anchor
 const RUNWAY_FLAG_YEARS = 1;        // runwayScore's [1, 2.5] anchor
 const OWNERSHIP_FLAG_PCT = 2;       // ownershipScore's [2, 2.5] anchor
+const HEALTHY_GROSS_MARGIN_PCT = 40; // matches the dashboard's own "Gross Margin > 40%" label
 
 const LEADERBOARD_SIZE = 10;
+const SECTOR_TOP_N = 6;
+const COUNTRY_TOP_N = 5;
+const FCF_HISTORY_YEARS = 8; // however many of the last N fiscal years a stock actually reports
 const CLUSTER_WINDOW_DAYS = 14; // ~10 trading days
 const CLUSTER_MIN_INSIDERS = 3;
 const FEED_LOOKBACK_DAYS = 30;
@@ -81,7 +85,8 @@ function buildRiskTriageAndLeaderboards(stocks) {
 
     universeRows.push({
       ticker: s.ticker, name: s.name, marketCap: s.marketCap, sector: s.sector, exchange: s.exchange,
-      grossMargin: s.grossMargin, insiderOwnershipPct: s.insiderOwnershipPct, cashRunwayYears: runway,
+      country: s.country, grossMargin: s.grossMargin, fcfVal: s.fcfVal, netDebt: s.netDebt,
+      insiderOwnershipPct: s.insiderOwnershipPct, cashRunwayYears: runway, fcfHistory: s.fcfHistory,
       flagCount: realFlagCount, flags,
     });
   });
@@ -103,6 +108,116 @@ function buildRiskTriageAndLeaderboards(stocks) {
       highestInsiderOwnership: ownershipRows.sort((a, b) => b.insiderOwnershipPct - a.insiderOwnershipPct).slice(0, LEADERBOARD_SIZE),
     },
   };
+}
+
+// --- Sector / country distribution (Dashboard's TOP SECTOR DISTRIBUTION card) -------------
+// Grouped by whatever's actually in stock_cache (sector from either fetch pipeline, country
+// from the Finnhub-profile populate script) rather than a fixed hardcoded list, so the mix
+// reflects the real tracked universe. Top N + an "Other" bucket for the long tail, ranked by
+// count. `sampleSize` is how many universe rows actually have this field set (denominator for
+// the percentages) — distinct from `total`, since not every ticker has a sector/country yet.
+function buildDistribution(universeRows, field, topN) {
+  const counts = new Map();
+  let sampleSize = 0;
+  universeRows.forEach(s => {
+    const key = s[field];
+    // Finnhub's profile2 returns the literal string "N/A" for an unclassified industry
+    // instead of leaving the field null — treat it the same as missing rather than let it
+    // win the #1 sector slot on count alone (it did, at 1,368 stocks, before this check).
+    if (!key || key === 'N/A') return;
+    sampleSize++;
+    const entry = counts.get(key) || { count: 0, marketCap: 0 };
+    entry.count++;
+    entry.marketCap += s.marketCap || 0;
+    counts.set(key, entry);
+  });
+
+  const sorted = [...counts.entries()].sort((a, b) => b[1].count - a[1].count);
+  const top = sorted.slice(0, topN);
+  const rest = sorted.slice(topN);
+  const restCount = rest.reduce((sum, [, v]) => sum + v.count, 0);
+  const restCap = rest.reduce((sum, [, v]) => sum + v.marketCap, 0);
+
+  const pct = (n) => (sampleSize > 0 ? +((n / sampleSize) * 100).toFixed(1) : 0);
+  const rows = top.map(([name, v]) => ({ name, count: v.count, marketCap: v.marketCap, pct: pct(v.count) }));
+  if (restCount > 0) rows.push({ name: 'Other', count: restCount, marketCap: restCap, pct: pct(restCount) });
+
+  return { rows, sampleSize, total: universeRows.length };
+}
+
+// --- Segment health ratios (Dashboard's SEGMENT HEALTH RATIOS gauge) -----------------------
+// Each ratio's denominator is only the stocks that actually report that field, not the whole
+// universe — the vast majority of freshly-populated tickers don't have financials yet (they
+// hydrate on first /api/stock view), so a ratio "of 6,845" would badly overstate coverage.
+// `n` (sample size) travels with every ratio so the UI can show it rather than imply
+// full-universe coverage.
+function buildHealthMetrics(universeRows) {
+  const pct = (n, d) => (d > 0 ? +((n / d) * 100).toFixed(1) : null);
+
+  const withFcf = universeRows.filter(s => s.fcfVal != null);
+  const withGm = universeRows.filter(s => s.grossMargin != null);
+  const withDebt = universeRows.filter(s => s.netDebt != null);
+
+  const fcfPositive = withFcf.filter(s => s.fcfVal >= 0).length;
+  const healthyGm = withGm.filter(s => s.grossMargin > HEALTHY_GROSS_MARGIN_PCT).length;
+  const lowDebt = withDebt.filter(s => s.netDebt <= 0).length;
+
+  return {
+    fcfPositive: { pct: pct(fcfPositive, withFcf.length), n: withFcf.length, count: fcfPositive },
+    healthyGrossMargin: { pct: pct(healthyGm, withGm.length), n: withGm.length, count: healthyGm },
+    lowDebt: { pct: pct(lowDebt, withDebt.length), n: withDebt.length, count: lowDebt },
+  };
+}
+
+// --- Universe risk distribution (Dashboard's UNIVERSE RISK DISTRIBUTION bar) ---------------
+// flagCount already excludes the "no data yet" pseudo-flag (see realFlagCount above), so a
+// stock with zero flags here means either "genuinely clean" or "not enough data to flag" --
+// both fall in `optimal` since neither is a detected problem. That's a real trade-off given
+// today's data coverage (most of the universe hasn't been individually hydrated yet): it
+// means `optimal` isn't "verified healthy," just "nothing flagged." flaggedPct/watchlistPct
+// are unaffected by that and stay meaningful either way.
+function buildRiskDistribution(universeRows) {
+  const total = universeRows.length;
+  const pct = (n) => (total > 0 ? +((n / total) * 100).toFixed(1) : 0);
+  const flagged = universeRows.filter(s => s.flagCount >= 2).length;
+  const watchlist = universeRows.filter(s => s.flagCount === 1).length;
+  const optimal = total - flagged - watchlist;
+  return {
+    flaggedPct: pct(flagged), flaggedCount: flagged,
+    watchlistPct: pct(watchlist), watchlistCount: watchlist,
+    optimalPct: pct(optimal), optimalCount: optimal,
+    total,
+  };
+}
+
+// --- FCF consistency (Dashboard's FCF-consistency widget) -----------------------------------
+// stock_cache only stores annual fcfHistory (fiscal-year keyed, e.g. "2022".."2025") -- there
+// is no quarterly figure anywhere in the schema, so this is a per-fiscal-year series over
+// however many years each stock actually reports, not a fabricated "8 quarters." Coverage is
+// thin today (fcfHistory only exists for tickers that have gone through the full /api/stock
+// fetch at least once), so `sampleSize` matters here more than anywhere else on this page.
+function buildFcfConsistency(universeRows) {
+  const withHistory = universeRows.filter(s => Array.isArray(s.fcfHistory) && s.fcfHistory.length > 0);
+  const byYear = new Map();
+  withHistory.forEach(s => {
+    s.fcfHistory.forEach(h => {
+      if (h?.year == null || h?.val == null) return;
+      const entry = byYear.get(h.year) || { positive: 0, total: 0 };
+      entry.total++;
+      if (h.val >= 0) entry.positive++;
+      byYear.set(h.year, entry);
+    });
+  });
+
+  const years = [...byYear.keys()].sort().slice(-FCF_HISTORY_YEARS);
+  const series = years.map(year => {
+    const { positive, total } = byYear.get(year);
+    return { year, positive, total, pct: total > 0 ? Math.round((positive / total) * 100) : 0 };
+  });
+
+  const consistentCount = withHistory.filter(s => s.fcfHistory.every(h => h.val == null || h.val >= 0)).length;
+
+  return { series, sampleSize: withHistory.length, consistentCount };
 }
 
 async function loadInsiderFeed() {
@@ -200,7 +315,22 @@ async function buildRadar() {
     loadInsiderFeed(),
     loadTierMigrations(),
   ]);
-  return { riskFlags, universe, leaderboards, feed: { events, clusters }, migrations, trackingSince };
+
+  const healthMetrics = buildHealthMetrics(universe);
+  const insiderBuys = events.filter(e => e.type === 'BUY').length;
+  healthMetrics.insiderBuying = {
+    pct: events.length > 0 ? +((insiderBuys / events.length) * 100).toFixed(1) : null,
+    n: events.length, count: insiderBuys,
+  };
+
+  return {
+    riskFlags, universe, leaderboards, feed: { events, clusters }, migrations, trackingSince,
+    sectorDistribution: buildDistribution(universe, 'sector', SECTOR_TOP_N),
+    countryDistribution: buildDistribution(universe, 'country', COUNTRY_TOP_N),
+    healthMetrics,
+    riskDistribution: buildRiskDistribution(universe),
+    fcfConsistency: buildFcfConsistency(universe),
+  };
 }
 
 export async function GET() {
