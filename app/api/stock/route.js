@@ -8,6 +8,27 @@ const FH_KEY = process.env.FINNHUB_API_KEY;
 const AV_KEY = process.env.ALPHA_VANTAGE_API_KEY;
 const CACHE_HOURS = 24;
 
+// /quote, /stock/metric and /stock/profile2 are the three Finnhub calls that feed marketCap/
+// beta/sector/currentPrice — a burst of concurrent page loads (a screener or watchlist view
+// firing off a dozen tickers' worth of these at once, 3 calls each) can trip Finnhub's per-
+// minute rate limit for the whole wave at the same time (verified against real data: AAPL,
+// AMZN, META, NFLX, NVDA and TSLA all landed with these fields null within the same 4-second
+// window). A 429/5xx is usually transient — retrying once after a short delay clears most of
+// them before ever falling through to the priorCachedData fallback below, so a brief traffic
+// spike degrades far less often into a stale/blank cache row in the first place.
+async function fetchFinnhub(url, retries = 1) {
+  for (let attempt = 0; ; attempt++) {
+    let res;
+    try {
+      res = await fetch(url, { headers: { 'User-Agent': 'Mozilla/5.0' } });
+    } catch (e) {
+      res = null;
+    }
+    if ((res && res.ok) || attempt >= retries) return res;
+    await new Promise(r => setTimeout(r, 350 * (attempt + 1)));
+  }
+}
+
 // Fundamentals genuinely don't change between earnings reports — the flat 24h TTL below was
 // forcing a full SEC EDGAR + Finnhub refetch on the first view after any day-long gap even
 // mid-quarter, when nothing in the underlying filings had changed. Once a row carries a known
@@ -936,9 +957,9 @@ export async function GET(request) {
       // Finnhub for price/profile/TTM metrics, Yahoo for full financial-statement history.
       const safeFinnhubJson = (res) => res.ok ? res.json().catch(() => ({})) : Promise.resolve({});
       const [fhRes, fhBasicRes, fhProfileRes, yhFundamentals] = await Promise.all([
-        fetch(`https://finnhub.io/api/v1/quote?symbol=${ticker}&token=${FH_KEY}`).catch(() => null),
-        fetch(`https://finnhub.io/api/v1/stock/metric?symbol=${ticker}&metric=all&token=${FH_KEY}`).catch(() => null),
-        fetch(`https://finnhub.io/api/v1/stock/profile2?symbol=${ticker}&token=${FH_KEY}`).catch(() => null),
+        fetchFinnhub(`https://finnhub.io/api/v1/quote?symbol=${ticker}&token=${FH_KEY}`),
+        fetchFinnhub(`https://finnhub.io/api/v1/stock/metric?symbol=${ticker}&metric=all&token=${FH_KEY}`),
+        fetchFinnhub(`https://finnhub.io/api/v1/stock/profile2?symbol=${ticker}&token=${FH_KEY}`),
         fetchYahooFundamentals(ticker).catch(() => null),
       ]);
 
@@ -1661,9 +1682,9 @@ export async function GET(request) {
 
     const safeFinnhubJson = (res) => res.ok ? res.json().catch(() => ({})) : Promise.resolve({});
     const [fhRes, fhBasicRes, fhProfileRes] = await Promise.all([
-      fetch(`https://finnhub.io/api/v1/quote?symbol=${ticker}&token=${FH_KEY}`).catch(() => null),
-      fetch(`https://finnhub.io/api/v1/stock/metric?symbol=${ticker}&metric=all&token=${FH_KEY}`).catch(() => null),
-      fetch(`https://finnhub.io/api/v1/stock/profile2?symbol=${ticker}&token=${FH_KEY}`).catch(() => null),
+      fetchFinnhub(`https://finnhub.io/api/v1/quote?symbol=${ticker}&token=${FH_KEY}`),
+      fetchFinnhub(`https://finnhub.io/api/v1/stock/metric?symbol=${ticker}&metric=all&token=${FH_KEY}`),
+      fetchFinnhub(`https://finnhub.io/api/v1/stock/profile2?symbol=${ticker}&token=${FH_KEY}`),
     ]);
 
     const fh = fhRes ? await safeFinnhubJson(fhRes) : {};
