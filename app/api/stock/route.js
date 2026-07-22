@@ -7,6 +7,47 @@ const FH_KEY = process.env.FINNHUB_API_KEY;
 const AV_KEY = process.env.ALPHA_VANTAGE_API_KEY;
 const CACHE_HOURS = 24;
 
+// Fundamentals genuinely don't change between earnings reports — the flat 24h TTL below was
+// forcing a full SEC EDGAR + Finnhub refetch on the first view after any day-long gap even
+// mid-quarter, when nothing in the underlying filings had changed. Once a row carries a known
+// nextEarningsDate (see fetchEarningsReaction below), trust it as fresh until that date passes
+// instead of re-running the whole pipeline every CACHE_HOURS.
+//
+// EARNINGS_GRACE_DAYS guards the transition right after an earnings date: Finnhub's calendar
+// flips to a new, far-future nextEarningsDate the instant the report is due, but the actual
+// 10-Q/10-K can lag the announcement by a few days — trusting the new long window immediately
+// would risk caching a whole quarter against stale pre-earnings SEC figures if a refetch landed
+// in that gap. Falling back to the flat 24h check for a few days after lastEarningsDate keeps
+// retrying daily until the fresh filing has had time to land, same as the old behavior, before
+// switching to the long window.
+const EARNINGS_GRACE_DAYS = 5;
+
+function isFinancialsCacheFresh(cachedData, hoursOld) {
+  const today = new Date().toISOString().slice(0, 10);
+  const last = cachedData?.lastEarningsDate;
+  if (last) {
+    const daysSinceLast = (Date.now() - new Date(last + 'T00:00:00Z').getTime()) / (1000 * 60 * 60 * 24);
+    if (daysSinceLast >= 0 && daysSinceLast < EARNINGS_GRACE_DAYS) return hoursOld < CACHE_HOURS;
+  }
+  const next = cachedData?.nextEarningsDate;
+  if (next) return today < next;
+  return hoursOld < CACHE_HOURS;
+}
+
+// Picks the most recent known "last earnings" date from three sources: Finnhub's own calendar
+// (authoritative when present, but per the comment above often has no history at all beyond a
+// few weeks back), the previous cache row's nextEarningsDate once that date has passed (self-
+// derived — the one signal that's reliably available for every ticker, since we stored it
+// ourselves), and whatever lastEarningsDate was already cached. Plain ISO-string comparison
+// (YYYY-MM-DD sorts correctly lexically) picks the latest of whichever are present.
+function resolveLastEarningsDate(priorData, freshLastEarningsDate) {
+  const today = new Date().toISOString().slice(0, 10);
+  const priorNext = priorData?.nextEarningsDate;
+  const carriedForward = priorNext && priorNext <= today ? priorNext : null;
+  const candidates = [freshLastEarningsDate, carriedForward, priorData?.lastEarningsDate].filter(Boolean);
+  return candidates.length ? candidates.sort().pop() : null;
+}
+
 // SEC's company_tickers.json is a large (~1-2MB), slow-changing file — re-fetching it fresh on
 // every single uncached stock lookup needlessly hammers SEC's rate limit (officially ~10
 // req/sec, shared across this server's *entire* traffic), and once that limit trips, SEC
@@ -597,21 +638,30 @@ async function fetchRiskFreeRate() {
 // that converted currentPrice against this function's raw-currency historical close would
 // silently misprice the reaction for those tickers. Never throws — this is a nice-to-have badge,
 // not something that should ever break the stock page.
+// Besides the price-reaction snapshot, this is also the single source for the last/next
+// earnings dates (same Finnhub calendar call, window widened to −200d..+120d): the cache
+// layer in GET below uses nextEarningsDate to keep serving a snapshot until the next report
+// instead of re-running the whole pipeline every CACHE_HOURS. The dates are therefore
+// returned even when the reaction itself can't be computed (no current price, no past
+// event, chart fetch failed) — those paths used to return null outright.
 async function fetchEarningsReaction(ticker, currentPrice) {
-  if (!currentPrice) return null;
+  const result = { reaction: null, lastEarningsDate: null, nextEarningsDate: null };
   try {
     const today = new Date().toISOString().slice(0, 10);
     const from = new Date(Date.now() - 200 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10);
+    const to = new Date(Date.now() + 120 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10);
     const calRes = await fetch(
-      `https://finnhub.io/api/v1/calendar/earnings?symbol=${ticker}&from=${from}&to=${today}&token=${FH_KEY}`,
+      `https://finnhub.io/api/v1/calendar/earnings?symbol=${ticker}&from=${from}&to=${to}&token=${FH_KEY}`,
       { headers: { 'User-Agent': 'Mozilla/5.0' } }
     );
-    if (!calRes.ok) return null;
+    if (!calRes.ok) return result;
     const calData = await calRes.json().catch(() => ({}));
-    const last = (calData.earningsCalendar || [])
-      .filter(e => e.symbol === ticker && e.date && e.date <= today)
-      .sort((a, b) => b.date.localeCompare(a.date))[0];
-    if (!last) return null;
+    const events = (calData.earningsCalendar || []).filter(e => e.symbol === ticker && e.date);
+    const last = events.filter(e => e.date <= today).sort((a, b) => b.date.localeCompare(a.date))[0];
+    const next = events.filter(e => e.date > today).sort((a, b) => a.date.localeCompare(b.date))[0];
+    result.lastEarningsDate = last?.date ?? null;
+    result.nextEarningsDate = next?.date ?? null;
+    if (!last || !currentPrice) return result;
 
     // BMO (before market open): the close the trading day *before* the report is still the
     // pre-reaction price. AMC/DMH (after close / during hours): the market had already closed
@@ -627,28 +677,29 @@ async function fetchEarningsReaction(ticker, currentPrice) {
       `https://query1.finance.yahoo.com/v8/finance/chart/${ticker}?period1=${period1}&period2=${period2}&interval=1d`,
       { headers: { 'User-Agent': 'Mozilla/5.0' } }
     );
-    if (!chartRes.ok) return null;
+    if (!chartRes.ok) return result;
     const chartData = await chartRes.json().catch(() => null);
     const chartResult = chartData?.chart?.result?.[0];
     const timestamps = chartResult?.timestamp;
     const closes = chartResult?.indicators?.quote?.[0]?.close;
-    if (!timestamps || !closes) return null;
+    if (!timestamps || !closes) return result;
 
     let refClose = null;
     for (let i = 0; i < timestamps.length; i++) {
       const day = new Date(timestamps[i] * 1000).toISOString().slice(0, 10);
       if (day <= cutoff && closes[i] != null) refClose = closes[i];
     }
-    if (refClose == null) return null;
+    if (refClose == null) return result;
 
-    return {
+    result.reaction = {
       date: last.date,
       hour: last.hour || null,
       priceBefore: +refClose.toFixed(2),
       pctChange: +(((currentPrice - refClose) / refClose) * 100).toFixed(2),
     };
+    return result;
   } catch (e) {
-    return null;
+    return result;
   }
 }
 
@@ -681,6 +732,13 @@ export async function GET(request) {
   // branches below know a ticker is a fund on their own. That flip is what put VUAG.L in the
   // "STOCKS" bucket in search despite /api/etfs having correctly seeded it as an ETF.
   let cachedIsEtf = false;
+  // Same idea, for resolveLastEarningsDate below — carries the previous cache row's own
+  // nextEarningsDate forward into the new snapshot's lastEarningsDate once it has passed,
+  // since Finnhub's own calendar/earnings has thin past-event coverage on this plan (verified:
+  // a 200-day back-window returns nothing for MSFT/NVDA/QCOM's own most recent report, each
+  // 1-3 months prior, despite obviously having happened) and can't be trusted alone to tell
+  // isFinancialsCacheFresh's grace-period check that an earnings date has actually passed.
+  let priorCachedData = null;
 
   try {
     const { data: cached } = await supabase
@@ -690,6 +748,7 @@ export async function GET(request) {
       .single();
 
     cachedIsEtf = cached?.data?.isEtf === true;
+    priorCachedData = cached?.data ?? null;
 
     const forceRefresh = searchParams.get('refresh') === 'true';
     if (cached && !forceRefresh) {
@@ -734,7 +793,7 @@ export async function GET(request) {
       // no longer gates isComplete; missing rows get it filled in the background instead (below).
       const missingInsiderData = cached.data?.cik != null && !('insiderOwnershipPct' in (cached.data || {}));
       const isComplete = validFinCount >= 2 || isEtf;
-      if (hoursOld < CACHE_HOURS && (cached.data?.marketCap != null || isEtf) && isComplete) {
+      if (isFinancialsCacheFresh(cached.data, hoursOld) && (cached.data?.marketCap != null || isEtf) && isComplete) {
         if (missingInsiderData) backfillInsiderOwnership(cached.data.cik, ticker, cached.data.sharesOutstanding);
         const minsOld = hoursOld * 60;
         if (minsOld < 2) {
@@ -1049,7 +1108,10 @@ export async function GET(request) {
         yahooFundamentals: !!yh,
       };
 
-      result.earningsReaction = await fetchEarningsReaction(ticker, result.currentPrice);
+      const earningsInfo = await fetchEarningsReaction(ticker, result.currentPrice);
+      result.earningsReaction = earningsInfo.reaction;
+      result.lastEarningsDate = resolveLastEarningsDate(priorCachedData, earningsInfo.lastEarningsDate);
+      result.nextEarningsDate = earningsInfo.nextEarningsDate;
       result.isEtf = cachedIsEtf;
       const valCountFallback = [result.revVal, result.niVal, result.fcfVal, result.assetsVal, result.debtVal, result.cashVal].filter(v => v !== null).length;
       const isEtfFallback = result.sector === 'ETF' || result.industry === 'ETF';
@@ -1498,9 +1560,17 @@ export async function GET(request) {
       ? cashNarrowInstant[0].val + (shortTermInvestmentsInstantByEnd.get(cashNarrowInstant[0].end) ?? 0)
       : (instantSeries(['CashCashEquivalentsAndShortTermInvestments'])?.[0]?.val ?? latest(cash));
     const sharesVal = latestInstant(['CommonStockSharesOutstanding','WeightedAverageNumberOfSharesOutstandingBasic'])?.val ?? latest(shares);
-    const gpVal    = ttmVal(['GrossProfit']) ?? latest(grossProfit);
     const rdVal    = ttmVal(['ResearchAndDevelopmentExpense']) ?? latest(rd);
     const cogsVal  = ttmVal(['CostOfRevenue','CostOfGoodsAndServicesSold']) ?? latest(cogs);
+    // Some filers never tag GrossProfit because their income statement doesn't present that
+    // subtotal at all (verified against real data: QCOM reports revenues and CostOfRevenue but
+    // no GrossProfit line — its grossMargin showed N/A whenever the Finnhub/Yahoo fallbacks
+    // happened to be rate-limited, despite both ingredients sitting right there in the same
+    // filing). Deriving revenue − cost of revenue is the same subtotal those filers' own
+    // readers compute; revVal and cogsVal both come from the same ttm-else-annual lookup, so
+    // the two sides stay period-consistent.
+    const gpVal    = ttmVal(['GrossProfit']) ?? latest(grossProfit)
+      ?? (revVal != null && cogsVal != null ? revVal - cogsVal : null);
     const sgaVal   = ttmVal(['SellingGeneralAndAdministrativeExpense','SellingAndMarketingExpense']) ?? latest(sga);
     const ebtVal   = ttmVal(['IncomeLossFromContinuingOperationsBeforeIncomeTaxesExtraordinaryItemsNoncontrollingInterest']) ?? latest(ebt);
     const taxVal   = ttmVal(['IncomeTaxExpenseBenefit']) ?? latest(tax);
@@ -1628,14 +1698,18 @@ const sharesForCalc = sharesValAdj || sharesFinnhub;
     // moved instead of only a point-in-time snapshot. Individual fields stay null rather than
     // fabricating a comparison when there's no genuine prior quarter (a filer's first 10-Q, or
     // one with only annual data).
-    const earningsReaction = await fetchEarningsReaction(ticker, currentPrice);
+    const { reaction: earningsReaction, lastEarningsDate: freshLastEarningsDate, nextEarningsDate } = await fetchEarningsReaction(ticker, currentPrice);
+    const lastEarningsDate = resolveLastEarningsDate(priorCachedData, freshLastEarningsDate);
     const priceBefore = earningsReaction?.priceBefore ?? null;
 
     const revValBefore = ttmValBefore(['RevenueFromContractWithCustomerExcludingAssessedTax','Revenues','SalesRevenueNet','RevenueFromContractWithCustomerIncludingAssessedTax']);
     const niValBefore = ttmValBefore(['NetIncomeLoss']);
     const oiValBefore = ttmValBefore(['OperatingIncomeLoss', 'IncomeLossFromContinuingOperationsBeforeIncomeTaxesExtraordinaryItemsNoncontrollingInterest']);
-    const gpValBefore = ttmValBefore(['GrossProfit']);
     const cogsValBefore = ttmValBefore(['CostOfRevenue','CostOfGoodsAndServicesSold']);
+    // Same revenue − cost-of-revenue derivation as gpVal above, for filers with no GrossProfit
+    // subtotal, so the QoQ comparison doesn't show a "before" gap against a derived "now".
+    const gpValBefore = ttmValBefore(['GrossProfit'])
+      ?? (revValBefore != null && cogsValBefore != null ? revValBefore - cogsValBefore : null);
     const daValBefore = ttmValBefore(['DepreciationDepletionAndAmortization','DepreciationAndAmortization','Depreciation']);
     const sbcValBefore = ttmValBefore(['ShareBasedCompensation', 'AllocatedShareBasedCompensationExpense']);
     const dividendsPaidValBefore = ttmValBefore(['PaymentsOfDividends','PaymentsOfDividendsCommonStock']);
@@ -1703,7 +1777,7 @@ const sharesForCalc = sharesValAdj || sharesFinnhub;
     const fcfYieldBefore = marketCapBefore && fcfValBefore ? +((fcfValBefore / marketCapBefore) * 100).toFixed(2) : null;
 
     const prevQuarter = {
-      date: earningsReaction?.date ?? null,
+      date: lastEarningsDate ?? earningsReaction?.date ?? null,
       revVal: revValBefore, niVal: niValBefore, oiVal: oiValBefore, gpVal: gpValBefore, fcfVal: fcfValBefore,
       operatingCFVal: operatingCFValBefore, capexVal: capexValBefore,
       assetsVal: assetsValBefore, equityVal: equityValBefore, debtVal: effectiveDebtValBefore, cashVal: cashValBefore,
@@ -1827,6 +1901,8 @@ const sharesForCalc = sharesValAdj || sharesFinnhub;
       finnhubFallback: false,
       insiderOwnershipPct,
       earningsReaction,
+      lastEarningsDate,
+      nextEarningsDate,
       prevQuarter,
     };
 
