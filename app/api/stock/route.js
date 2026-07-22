@@ -2,6 +2,7 @@ import { supabase } from '../../../lib/supabase.js';
 import { getYahooAuth } from '../../../lib/yahooFinance.js';
 import { fetchForm4Transactions, computeInsiderOwnershipPct } from '../../../lib/secInsiders.js';
 import { getCapTier, isSmallOrMicro } from '../../../lib/marketCap.js';
+import { cleanCompanyName } from '../../../lib/secTickers.js';
 
 const FH_KEY = process.env.FINNHUB_API_KEY;
 const AV_KEY = process.env.ALPHA_VANTAGE_API_KEY;
@@ -1869,7 +1870,7 @@ const sharesForCalc = sharesValAdj || sharesFinnhub;
 
     const result = {
       riskFreeRate,
-      name: company.title,
+      name: cleanCompanyName(company.title),
       ticker,
       cik,
       sector: fhProfile.finnhubIndustry || priorCachedData?.sector || null,
