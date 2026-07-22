@@ -1205,7 +1205,13 @@ export async function GET(request) {
 
     // Same key-preference lookup as getMetric, but keeps 10-Q periods too (still sorted
     // newest-end-first) — the raw material ttmVal below needs to roll a stale annual figure
-    // forward.
+    // forward. Carries the same staleness guard as getMetric/instantSeries: a key whose
+    // newest period is years behind the filer's own reporting cadence is a dead tag, not
+    // current data (verified against real data: DAVE's `OperatingIncomeLoss` facts all come
+    // from its pre-merger 2021 SPAC-shell filings — the shell's own −$6.4M operating loss —
+    // and the tag was never used again post-merger, so without this guard ttmVal served that
+    // five-year-old shell loss as the "TTM" figure, flipping ROIC/opMargin negative for a
+    // company whose real operating income is ~+$200M).
     const getMetricAllPeriods = (keys) => {
       for (const key of keys) {
         const metric = usgaap[key];
@@ -1215,7 +1221,12 @@ export async function GET(request) {
         const periods = units
           .filter(u => ['10-K', '20-F', '10-K/A', '20-F/A', '10-Q', '10-Q/A'].includes(u.form) && u.start && u.end)
           .sort((a, b) => b.end.localeCompare(a.end));
-        if (periods.length > 0) return periods;
+        if (periods.length === 0) continue;
+        if (recencyAnchor) {
+          const gapYears = (new Date(recencyAnchor) - new Date(periods[0].end)) / (1000 * 60 * 60 * 24 * 365.25);
+          if (gapYears > 3) continue;
+        }
+        return periods;
       }
       return null;
     };
