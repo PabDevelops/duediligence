@@ -583,31 +583,32 @@ export default function WorkspaceHome() {
   }, [quoteTickers]);
 
   // Uniform display holdings: [{ ticker, shares, avgPrice, pie, costCurrency, avgPriceUSD }]
+  // Grouped by ticker only — matching /portfolio's buildPositions — so a ticker split
+  // across multiple lots (e.g. tagged into different Pies over time) rolls up into one
+  // consolidated row with total shares instead of one row per lot/pie. It previously
+  // grouped by `ticker-pie`, so the same stock held under two Pie tags (or one lot tagged
+  // and another not) rendered as two separate "duplicate" positions here.
   const displayHoldings = useMemo(() => {
-    if (isSignedIn) {
-      const byKey = {};
-      holdings.forEach(h => {
-        const key = `${h.ticker}-${h.pie || ''}`;
-        const p = byKey[key] ||= { ticker: h.ticker, shares: 0, cost: 0, costUSD: 0, pie: h.pie || '', costCurrency: h.cost_basis_currency || 'USD' };
-        p.shares += Number(h.shares);
-        p.cost += Number(h.shares) * Number(h.cost_basis);
-        p.costUSD += Number(h.shares) * toUSD(Number(h.cost_basis), h.cost_basis_currency || 'USD');
-      });
-      return Object.values(byKey).map(p => ({
-        ticker: p.ticker,
-        shares: p.shares,
-        avgPrice: p.cost / p.shares,
-        avgPriceUSD: p.costUSD / p.shares,
-        pie: p.pie,
-        costCurrency: p.costCurrency
-      }));
-    } else {
-      return portfolio.map(p => ({
-        ...p,
-        avgPriceUSD: toUSD(p.avgPrice, p.costCurrency || 'USD'),
-        costCurrency: p.costCurrency || 'USD'
-      }));
-    }
+    const lots = isSignedIn
+      ? holdings.map(h => ({ ticker: h.ticker, shares: Number(h.shares), costBasis: Number(h.cost_basis), costCurrency: h.cost_basis_currency || 'USD', pie: h.pie || '' }))
+      : portfolio.map(p => ({ ticker: p.ticker, shares: Number(p.shares), costBasis: Number(p.avgPrice), costCurrency: p.costCurrency || 'USD', pie: p.pie || '' }));
+
+    const byTicker = {};
+    lots.forEach(l => {
+      const p = byTicker[l.ticker] ||= { ticker: l.ticker, shares: 0, cost: 0, costUSD: 0, pie: '', costCurrency: l.costCurrency };
+      p.shares += l.shares;
+      p.cost += l.shares * l.costBasis;
+      p.costUSD += l.shares * toUSD(l.costBasis, l.costCurrency);
+      if (!p.pie && l.pie) p.pie = l.pie;
+    });
+    return Object.values(byTicker).map(p => ({
+      ticker: p.ticker,
+      shares: p.shares,
+      avgPrice: p.cost / p.shares,
+      avgPriceUSD: p.costUSD / p.shares,
+      pie: p.pie,
+      costCurrency: p.costCurrency
+    }));
   }, [holdings, portfolio, isSignedIn, fxRates]);
 
   // Group display holdings by Pie
@@ -724,9 +725,13 @@ export default function WorkspaceHome() {
     setShowAddTx(false);
   };
 
-  const handleRemoveTx = async (tickerToRemove, pieToRemove = '') => {
+  // Rows are now one consolidated position per ticker (see displayHoldings), so removing
+  // one clears every lot for that ticker regardless of which Pie each lot was tagged with —
+  // otherwise a ticker split across Pies would only get partially removed and reappear with
+  // its remaining shares after the next reload.
+  const handleRemoveTx = async (tickerToRemove) => {
     if (isSignedIn) {
-      const lots = holdings.filter(h => h.ticker === tickerToRemove && (h.pie || '') === pieToRemove);
+      const lots = holdings.filter(h => h.ticker === tickerToRemove);
       await Promise.all(
         lots.map(lot =>
           fetch('/api/portfolio', {
@@ -738,7 +743,7 @@ export default function WorkspaceHome() {
       );
       loadPortfolio();
     } else {
-      const newPort = portfolio.filter(p => !(p.ticker === tickerToRemove && (p.pie || '') === pieToRemove));
+      const newPort = portfolio.filter(p => p.ticker !== tickerToRemove);
       savePortfolio(newPort);
     }
   };
@@ -1243,7 +1248,7 @@ export default function WorkspaceHome() {
                           </td>
                           <td style={{ padding: '8px 12px', textAlign: 'right' }}>
                             <button
-                              onClick={(e) => { e.stopPropagation(); handleRemoveTx(item.ticker, item.pie); }}
+                              onClick={(e) => { e.stopPropagation(); handleRemoveTx(item.ticker); }}
                               type="button"
                               title="Remove position"
                               style={{
