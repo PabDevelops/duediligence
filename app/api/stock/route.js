@@ -228,9 +228,22 @@ function computeDerivedFinancials(h) {
   const revGrowth = revVal && revPrev ? +(((revVal - revPrev) / Math.abs(revPrev)) * 100).toFixed(1) : null;
   const roe = equityVal && niVal ? +((niVal / equityVal) * 100).toFixed(1) : null;
   const roa = assetsVal && niVal ? +((niVal / assetsVal) * 100).toFixed(1) : null;
+  // Invested capital = Total Assets − Current Liabilities, not Debt + Equity. The Debt+Equity
+  // version collapses toward zero (or goes negative) for a company with debt-funded-buyback
+  // negative equity — verified against real data: DPZ's Debt+Equity invested capital was
+  // ~$730M-$894M depending on cash-netting, versus Finviz's reported 54.88% ROIC implying a
+  // denominator well over $1B — producing a 100%+ ROIC that reads as elite capital efficiency
+  // when it's really just an artificially tiny denominator. Assets − Current Liabilities is the
+  // standard textbook alternative for exactly this reason: it never inverts sign or collapses
+  // just because equity went negative. NOPAT (after-tax), not raw operating income, is the
+  // correct numerator for either definition — same effective-tax-rate clamp used in
+  // computeWACC/computeReinvestmentGrowth (lib/stockScoring.js) so a one-off tax benefit/charge
+  // can't send it negative.
+  const investedCapital = assetsVal != null && currentLiabilitiesVal != null ? assetsVal - currentLiabilitiesVal : null;
+  const effTaxRate = ebtVal > 0 && taxVal != null ? Math.min(0.35, Math.max(0, taxVal / ebtVal)) : 0.21;
+  const nopat = oiVal != null ? oiVal * (1 - effTaxRate) : null;
+  const roic = investedCapital > 0 && nopat != null ? +((nopat / investedCapital) * 100).toFixed(1) : null;
   const effectiveDebtVal = equityVal != null ? (debtVal ?? 0) : debtVal;
-  const investedCapital = (equityVal ?? 0) + (effectiveDebtVal ?? 0);
-  const roic = investedCapital > 0 && oiVal !== null ? +((oiVal / investedCapital) * 100).toFixed(1) : null;
   const debtToEquity = equityVal && effectiveDebtVal != null ? +(effectiveDebtVal / equityVal).toFixed(2) : null;
   const netDebt = (effectiveDebtVal ?? 0) - (cashVal ?? 0);
 
@@ -1513,9 +1526,16 @@ export async function GET(request) {
       ?? (revVal && revPrev ? +(((revVal - revPrev) / Math.abs(revPrev)) * 100).toFixed(1) : null);
     const roe         = equityVal && niVal ? +((niVal / equityVal) * 100).toFixed(1) : null;
     const roa         = assetsVal && niVal ? +((niVal / assetsVal) * 100).toFixed(1) : null;
+    // Invested capital = Total Assets − Current Liabilities, not Debt + Equity — see the
+    // matching comment in fetchYahooFundamentals above for why: Debt+Equity collapses toward
+    // zero (or negative) for a debt-funded-buyback company with negative equity, verified
+    // against real data on DPZ (Finviz reports 54.88% ROIC; Debt+Equity gave 100%+ here before
+    // this fix). NOPAT, not raw operating income, is the correct numerator either way.
+    const investedCapital = assetsVal != null && currentLiabilitiesVal != null ? assetsVal - currentLiabilitiesVal : null;
+    const effTaxRate  = ebtVal > 0 && taxVal != null ? Math.min(0.35, Math.max(0, taxVal / ebtVal)) : 0.21;
+    const nopat       = oiVal != null ? oiVal * (1 - effTaxRate) : null;
+    const roic        = investedCapital > 0 && nopat != null ? +((nopat / investedCapital) * 100).toFixed(1) : null;
     const effectiveDebtVal = equityVal != null ? (debtVal ?? 0) : debtVal;
-    const investedCapital = (equityVal ?? 0) + (effectiveDebtVal ?? 0);
-    const roic        = investedCapital > 0 && oiVal !== null ? +((oiVal / investedCapital) * 100).toFixed(1) : null;
     const debtToEquity = equityVal && effectiveDebtVal != null ? +(effectiveDebtVal / equityVal).toFixed(2) : null;
     const netDebt     = (effectiveDebtVal ?? 0) - (cashVal ?? 0);
 
@@ -1608,6 +1628,8 @@ const sharesForCalc = sharesValAdj || sharesFinnhub;
     const daValBefore = ttmValBefore(['DepreciationDepletionAndAmortization','DepreciationAndAmortization','Depreciation']);
     const sbcValBefore = ttmValBefore(['ShareBasedCompensation', 'AllocatedShareBasedCompensationExpense']);
     const dividendsPaidValBefore = ttmValBefore(['PaymentsOfDividends','PaymentsOfDividendsCommonStock']);
+    const ebtValBefore = ttmValBefore(['IncomeLossFromContinuingOperationsBeforeIncomeTaxesExtraordinaryItemsNoncontrollingInterest']);
+    const taxValBefore = ttmValBefore(['IncomeTaxExpenseBenefit']);
     const operatingCFValBefore = ttmValBefore(['NetCashProvidedByUsedInOperatingActivities']);
     const capexValBefore = ttmValBefore(['PaymentsToAcquirePropertyPlantAndEquipment', 'CapitalExpenditureDiscontinuedOperations', 'PaymentsForProceedsFromProductiveAssets', 'PaymentsToAcquireProductiveAssets']);
     const fcfValBefore = operatingCFValBefore != null && capexValBefore != null ? operatingCFValBefore - capexValBefore : null;
@@ -1653,8 +1675,10 @@ const sharesForCalc = sharesValAdj || sharesFinnhub;
     const revGrowthBefore = ttmGrowthBefore(['RevenueFromContractWithCustomerExcludingAssessedTax','Revenues','SalesRevenueNet','RevenueFromContractWithCustomerIncludingAssessedTax']);
     const roeBefore = equityValBefore && niValBefore != null ? +((niValBefore / equityValBefore) * 100).toFixed(1) : null;
     const roaBefore = assetsValBefore && niValBefore != null ? +((niValBefore / assetsValBefore) * 100).toFixed(1) : null;
-    const investedCapitalBefore = (equityValBefore ?? 0) + (effectiveDebtValBefore ?? 0);
-    const roicBefore = investedCapitalBefore > 0 && oiValBefore != null ? +((oiValBefore / investedCapitalBefore) * 100).toFixed(1) : null;
+    const investedCapitalBefore = assetsValBefore != null && currentLiabilitiesValBefore != null ? assetsValBefore - currentLiabilitiesValBefore : null;
+    const effTaxRateBefore = ebtValBefore > 0 && taxValBefore != null ? Math.min(0.35, Math.max(0, taxValBefore / ebtValBefore)) : 0.21;
+    const nopatBefore = oiValBefore != null ? oiValBefore * (1 - effTaxRateBefore) : null;
+    const roicBefore = investedCapitalBefore > 0 && nopatBefore != null ? +((nopatBefore / investedCapitalBefore) * 100).toFixed(1) : null;
     const debtToEquityBefore = equityValBefore && effectiveDebtValBefore != null ? +(effectiveDebtValBefore / equityValBefore).toFixed(2) : null;
     const netDebtBefore = equityValBefore != null || debtValBeforeRaw != null ? (effectiveDebtValBefore ?? 0) - (cashValBefore ?? 0) : null;
 
