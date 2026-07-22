@@ -1131,6 +1131,65 @@ export async function GET(request) {
     // for a point-in-time concept is simply the previous point in the same series.
     const latestInstantBefore = (keys) => instantSeries(keys)?.[1] ?? null;
 
+    // Debt-specific variant of instantSeries: instead of the first key in the list that has
+    // *any* data, picks whichever key's most recent value is *largest*. Verified against real
+    // data: DPZ tags 'LongTermDebt' at a stale, immaterial ~$15M every year (an unrelated
+    // legacy balance) while its real ~$4.9B securitized-notes program — the actual debt behind
+    // its buyback-driven negative equity — sits under 'LongTermDebtAndCapitalLeaseObligations',
+    // several keys later in the debt list below. instantSeries/getMetric's first-key-wins
+    // preference picked the $15M figure just because it's listed first and non-empty, silently
+    // understating debt and D/E — and because that near-zero debt component made "invested
+    // capital" (equity+debt) negative for a company with deeply negative buyback-driven equity,
+    // it also sent ROIC to N/A instead of a real number. A materiality heuristic (largest wins)
+    // isn't perfect — a filer that genuinely splits debt additively across two of these keys
+    // would still be understated, just less so than picking an arbitrary one — but it directly
+    // fixes the "one tag is a stale near-zero distractor, another has the real total" case,
+    // which is what actually happens in practice for the companies this broke.
+    const instantSeriesMax = (keys) => {
+      let best = null, bestVal = -Infinity;
+      for (const key of keys) {
+        const metric = usgaap[key];
+        if (!metric) continue;
+        const units = metric.units?.USD || metric.units?.EUR || metric.units?.shares || metric.units?.pure;
+        if (!units) continue;
+        const periods = units
+          .filter(u => ['10-K', '20-F', '10-K/A', '20-F/A', '10-Q', '10-Q/A'].includes(u.form) && u.end)
+          .sort((a, b) => b.end.localeCompare(a.end));
+        if (periods.length === 0) continue;
+        if (recencyAnchor) {
+          const gapYears = (new Date(recencyAnchor) - new Date(periods[0].end)) / (1000 * 60 * 60 * 24 * 365.25);
+          if (gapYears > 3) continue;
+        }
+        if (periods[0].val > bestVal) { bestVal = periods[0].val; best = periods; }
+      }
+      return best;
+    };
+    const latestInstantMax = (keys) => instantSeriesMax(keys)?.[0] ?? null;
+    const latestInstantMaxBefore = (keys) => instantSeriesMax(keys)?.[1] ?? null;
+
+    // Same materiality heuristic as instantSeriesMax, for the annual-only (10-K/20-F) series
+    // that feeds debtHistory's multi-year chart — keeps the scalar debtVal and the chart
+    // consistent instead of one using the real ~$4.9B figure and the other a stale ~$15M one.
+    const getMetricMax = (keys) => {
+      let best = null, bestVal = -Infinity;
+      for (const key of keys) {
+        const metric = usgaap[key];
+        if (!metric) continue;
+        const units = metric.units?.USD || metric.units?.EUR || metric.units?.shares || metric.units?.pure;
+        if (!units) continue;
+        const annual = units
+          .filter(u => ['10-K', '20-F', '10-K/A', '20-F/A'].includes(u.form))
+          .sort((a, b) => b.end.localeCompare(a.end));
+        if (annual.length === 0) continue;
+        if (recencyAnchor) {
+          const gapYears = (new Date(recencyAnchor) - new Date(annual[0].end)) / (1000 * 60 * 60 * 24 * 365.25);
+          if (gapYears > 3) continue;
+        }
+        if (annual[0].val > bestVal) { bestVal = annual[0].val; best = annual; }
+      }
+      return best;
+    };
+
     // Same key-preference lookup as getMetric, but keeps 10-Q periods too (still sorted
     // newest-end-first) — the raw material ttmVal below needs to roll a stale annual figure
     // forward.
@@ -1277,7 +1336,7 @@ export async function GET(request) {
     // Even with all of these, a genuinely lease-light, debt-free balance sheet can still
     // legitimately come back null — XBRL filers typically omit a concept entirely rather than
     // tag an explicit zero, so absence alone can't fully distinguish "no debt" from "wrong tag."
-    const debt          = getMetric([
+    const debt          = getMetricMax([
       'LongTermDebt','LongTermDebtNoncurrent','DebtLongtermAndShorttermCombinedAmount',
       'LongTermDebtAndCapitalLeaseObligations','ConvertibleNotesPayable','ConvertibleDebtNoncurrent',
       'ConvertibleLongTermNotesPayable','NotesPayableNoncurrent','SecuredDebtNoncurrent','UnsecuredDebtNoncurrent',
@@ -1400,7 +1459,7 @@ export async function GET(request) {
       'PartnersCapitalIncludingPortionAttributableToNoncontrollingInterest',
       'MembersEquity',
     ])?.val ?? latest(equity);
-    const debtVal  = latestInstant([
+    const debtVal  = latestInstantMax([
       'LongTermDebt','LongTermDebtNoncurrent','DebtLongtermAndShorttermCombinedAmount',
       'LongTermDebtAndCapitalLeaseObligations','ConvertibleNotesPayable','ConvertibleDebtNoncurrent',
       'ConvertibleLongTermNotesPayable','NotesPayableNoncurrent','SecuredDebtNoncurrent','UnsecuredDebtNoncurrent',
@@ -1558,7 +1617,7 @@ const sharesForCalc = sharesValAdj || sharesFinnhub;
       'StockholdersEquity', 'StockholdersEquityIncludingPortionAttributableToNoncontrollingInterest',
       'PartnersCapital', 'PartnersCapitalIncludingPortionAttributableToNoncontrollingInterest', 'MembersEquity',
     ])?.val ?? null;
-    const debtValBeforeRaw = latestInstantBefore([
+    const debtValBeforeRaw = latestInstantMaxBefore([
       'LongTermDebt', 'LongTermDebtNoncurrent', 'DebtLongtermAndShorttermCombinedAmount',
       'LongTermDebtAndCapitalLeaseObligations', 'ConvertibleNotesPayable', 'ConvertibleDebtNoncurrent',
       'ConvertibleLongTermNotesPayable', 'NotesPayableNoncurrent', 'SecuredDebtNoncurrent', 'UnsecuredDebtNoncurrent',
