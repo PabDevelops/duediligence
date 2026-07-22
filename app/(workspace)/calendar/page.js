@@ -27,7 +27,7 @@ export default function WorkspaceCalendar() {
   const [watchlistOnly, setWatchlistOnly] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [typeFilter, setTypeFilter] = useState('all'); // all | earnings | ipos
-  const [marketCapFilter, setMarketCapFilter] = useState('all');
+  const [marketCapFilter, setMarketCapFilter] = useState('mid-plus');
   const [sectorFilter, setSectorFilter] = useState('all');
   const [watchlistTickers, setWatchlistTickers] = useState(new Set());
   const [selectedDate, setSelectedDate] = useState(null);
@@ -164,6 +164,10 @@ export default function WorkspaceCalendar() {
         if (marketCapFilter === 'large' && (mc < 10000000000 || mc >= 200000000000)) return false;
         if (marketCapFilter === 'mid' && (mc < 2000000000 || mc >= 10000000000)) return false;
         if (marketCapFilter === 'small' && mc >= 2000000000) return false;
+        // Default view: drop sub-$2B tickers *and* the ones with no market cap on file
+        // (small community banks, OTC micro-caps not yet in stock_cache) — together they
+        // were most of the "Time TBD" noise on a typical earnings day.
+        if (marketCapFilter === 'mid-plus' && mc < 2000000000) return false;
       }
 
       // 5. Sector filter
@@ -401,6 +405,7 @@ export default function WorkspaceCalendar() {
           <div style={{ display: 'flex', gap: '8px' }}>
             <select value={marketCapFilter} onChange={e => setMarketCapFilter(e.target.value)}
               style={{ background: 'var(--ws-bg-2)', border: '1px solid var(--ws-border)', color: 'var(--ws-text)', fontSize: '11px', fontWeight: 600, padding: '4px 8px', borderRadius: '4px', outline: 'none', cursor: 'pointer' }}>
+              <option value="mid-plus">Mid Cap &amp; Up (default)</option>
               <option value="all">All Sizes</option>
               <option value="mega">Mega Cap (&gt;$200B)</option>
               <option value="large">Large Cap ($10B-$200B)</option>
