@@ -429,7 +429,7 @@ export default function StockPage({ params }) {
   const [news, setNews] = useState([]);
   const [upcomingEvent, setUpcomingEvent] = useState(null);
   const [loadingEvent, setLoadingEvent] = useState(true);
-  const { isSignedIn, user } = useUser();
+  const { isSignedIn, user, isLoaded } = useUser();
   const [showAddHolding, setShowAddHolding] = useState(false);
 
   useEffect(() => {
@@ -546,6 +546,16 @@ export default function StockPage({ params }) {
       .then(r => r.json())
       .then(d => setSparklineData(d.candles || null))
       .catch(() => {});
+  }, [ticker]);
+
+  useEffect(() => {
+    // isSignedIn starts false optimistically before AuthProvider confirms the session (isLoaded
+    // flips true once it has) — treating that as "really a guest" here used to set checkingPro
+    // to false immediately, before the real signed-in state (and then isPro) caught up. That
+    // window was enough for the viewGate effect below to run its real /api/usage check and
+    // briefly show the "you've hit today's limit" paywall for signed-in Pro users, an instant
+    // before isPro landed and cleared it — the flash the paywall modal shouldn't show at all.
+    if (!isLoaded) return;
 
     if (isSignedIn) {
       fetch('/api/watchlist')
@@ -571,7 +581,7 @@ export default function StockPage({ params }) {
     } else {
       setCheckingPro(false);
     }
-  }, [ticker, isSignedIn]);
+  }, [ticker, isSignedIn, isLoaded]);
 
   // Daily free-view limit — Pro (incl. the 14-day trial, see /api/subscription) is unlimited,
   // so this never even calls /api/usage for them. Every other view counts against today's
@@ -1474,7 +1484,13 @@ export default function StockPage({ params }) {
           <div className="text-ws-text-3 text-[10px] tracking-[2px] border-b border-ws-border pb-1.5 mb-3">CORE BUSINESS BREAKDOWN</div>
           <div className="grid-5" style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: '1px', background: 'var(--ws-border)', marginBottom: '24px' }}>
             {[
-              { label: 'ROIC', val: fmtP(easyMode.roicForScore), score: easyMode.roicScore, desc: `Threshold: ${(easyMode.roicThreshold * 100).toFixed(0)}% for ${data.sector || 'this sector'}${tierAdjusted ? ` (${easyMode.capTier.short} Cap)` : ''}`, delta: ppDelta(easyMode.roicForScore, easyModeBefore?.roicForScore), deltaUnit: 'pp' },
+              {
+                label: 'ROIC', val: fmtP(easyMode.roicForScore), score: easyMode.roicScore,
+                desc: easyMode.roicForScore == null && data.currentLiabilitiesVal == null
+                  ? 'N/A for banks/brokerages — unclassified balance sheet, no Current Liabilities to compute invested capital'
+                  : `Threshold: ${(easyMode.roicThreshold * 100).toFixed(0)}% for ${data.sector || 'this sector'}${tierAdjusted ? ` (${easyMode.capTier.short} Cap)` : ''}`,
+                delta: ppDelta(easyMode.roicForScore, easyModeBefore?.roicForScore), deltaUnit: 'pp',
+              },
               { label: isFinancial ? 'NET MARGIN' : 'GROSS MARGIN', val: isFinancial ? fmtP(data.netMargin) : fmtP(data.grossMargin), score: easyMode.gmScore, desc: `Threshold: ${(easyMode.gmThreshold * 100).toFixed(0)}% for ${data.sector || 'this sector'}${tierAdjusted ? ` (${easyMode.capTier.short} Cap)` : ''}`, delta: isFinancial ? ppDelta(data.netMargin, data.prevQuarter?.netMargin) : ppDelta(data.grossMargin, data.prevQuarter?.grossMargin), deltaUnit: 'pp' },
               { label: 'OP. MARGIN', val: fmtP(data.opMargin), score: easyMode.omScore, desc: `Threshold: ${(easyMode.omThreshold * 100).toFixed(0)}% for ${data.sector || 'this sector'}${tierAdjusted ? ` (${easyMode.capTier.short} Cap)` : ''}`, delta: ppDelta(data.opMargin, data.prevQuarter?.opMargin), deltaUnit: 'pp' },
               { label: 'DEBT/EQUITY', val: fmtN(easyMode.netDebtToEquity), score: easyMode.deScore, desc: 'Net of cash · lower is better', delta: pctDelta(easyMode.netDebtToEquity, easyModeBefore?.netDebtToEquity) },
@@ -1671,13 +1687,18 @@ export default function StockPage({ params }) {
             { label: 'Net Margin', val: fmtP(data.netMargin), color: data.netMargin > 15 ? 'var(--ws-accent)' : data.netMargin > 5 ? 'var(--ws-text-2)' : 'var(--ws-red)', delta: ppDelta(data.netMargin, data.prevQuarter?.netMargin), deltaUnit: 'pp' },
             { label: 'ROE', val: fmtP(data.roe), color: data.roe > 20 ? 'var(--ws-accent)' : data.roe > 10 ? 'var(--ws-text-2)' : 'var(--ws-red)', delta: ppDelta(data.roe, data.prevQuarter?.roe), deltaUnit: 'pp' },
             { label: 'ROA', val: fmtP(data.roa), color: data.roa > 10 ? 'var(--ws-accent)' : data.roa > 5 ? 'var(--ws-text-2)' : 'var(--ws-red)', delta: ppDelta(data.roa, data.prevQuarter?.roa), deltaUnit: 'pp' },
-            { label: 'ROIC', val: fmtP(data.roic), color: data.roic > 15 ? 'var(--ws-accent)' : data.roic > 8 ? 'var(--ws-text-2)' : 'var(--ws-red)', delta: ppDelta(data.roic, data.prevQuarter?.roic), deltaUnit: 'pp' },
+            {
+              label: 'ROIC', val: fmtP(data.roic), color: data.roic > 15 ? 'var(--ws-accent)' : data.roic > 8 ? 'var(--ws-text-2)' : 'var(--ws-red)', delta: ppDelta(data.roic, data.prevQuarter?.roic), deltaUnit: 'pp',
+              title: data.roic == null && data.currentLiabilitiesVal == null
+                ? 'ROIC needs Current Liabilities to compute invested capital. Banks and brokerages report an unclassified balance sheet (no current/non-current split — that distinction doesn’t apply to deposits and financial instruments), so this figure isn’t available for financial institutions. See ROE/ROA instead.'
+                : undefined,
+            },
             { label: 'SBC', val: fmt(data.sbcVal), delta: pctDelta(data.sbcVal, data.prevQuarter?.sbcVal) },
             { label: 'Dividends Paid', val: fmt(data.dividendsPaidVal), delta: pctDelta(data.dividendsPaidVal, data.prevQuarter?.dividendsPaidVal) },
           ].map(r => (
             <tr key={r.label} className="border-b border-ws-border">
               <td className="py-1 text-ws-text-3 text-[10px]">{r.label}</td>
-              <td style={{ padding: '4px 0', textAlign: 'right', color: r.color || 'var(--ws-text)', fontSize: '11px', fontWeight: 500 }}>{r.val}<DeltaTag value={r.delta} unit={r.deltaUnit ?? '%'} /></td>
+              <td title={r.title} style={{ padding: '4px 0', textAlign: 'right', color: r.color || 'var(--ws-text)', fontSize: '11px', fontWeight: 500, cursor: r.title ? 'help' : 'default' }}>{r.val}<DeltaTag value={r.delta} unit={r.deltaUnit ?? '%'} /></td>
             </tr>
           ))}
         </tbody>
