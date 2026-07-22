@@ -15,6 +15,48 @@ import SpotlightDetail from '../../components/workspace/smallCaps/SpotlightDetai
 import RiskTriage from '../../components/workspace/smallCaps/RiskTriage';
 import TierMigrationPanel from '../../components/workspace/smallCaps/TierMigrationPanel';
 
+// Mirrors app/api/small-caps/radar/route.js's buildHealthMetrics/buildRiskDistribution, but
+// run client-side over whichever cap-tier slice of universeMetrics.allList is active — the
+// API only ever computes these over the whole universe, which is why the gauge used to show
+// the same numbers no matter which of ALL/SMALL/MICRO/NANO was selected.
+const HEALTHY_GROSS_MARGIN_PCT = 40;
+
+// Below this many reporting stocks, a ratio is too noisy to show as a percentage — real data
+// showed cash-runway ratios computed over as few as 14 stocks (out of thousands tracked), where
+// one company's earnings swinging the sample by a few points reads as a real universe-wide
+// trend. Gates both the displayed % and the headline score's average, not just the display, so
+// a low-n ratio can't quietly still move the score it's hidden from.
+const MIN_HEALTH_SAMPLE = 20;
+
+function computeHealthMetrics(rows) {
+  const pct = (n, d) => (d > 0 ? +((n / d) * 100).toFixed(1) : null);
+  const withFcf = rows.filter(s => s.fcfVal != null);
+  const withGm = rows.filter(s => s.grossMargin != null);
+  const withDebt = rows.filter(s => s.netDebt != null);
+  const fcfPositive = withFcf.filter(s => s.fcfVal >= 0).length;
+  const healthyGm = withGm.filter(s => s.grossMargin > HEALTHY_GROSS_MARGIN_PCT).length;
+  const lowDebt = withDebt.filter(s => s.netDebt <= 0).length;
+  return {
+    fcfPositive: { pct: pct(fcfPositive, withFcf.length), n: withFcf.length, count: fcfPositive },
+    healthyGrossMargin: { pct: pct(healthyGm, withGm.length), n: withGm.length, count: healthyGm },
+    lowDebt: { pct: pct(lowDebt, withDebt.length), n: withDebt.length, count: lowDebt },
+  };
+}
+
+function computeRiskDistribution(rows) {
+  const total = rows.length;
+  const pct = (n) => (total > 0 ? +((n / total) * 100).toFixed(1) : 0);
+  const flagged = rows.filter(s => s.flagCount >= 2).length;
+  const watchlist = rows.filter(s => s.flagCount === 1).length;
+  const optimal = total - flagged - watchlist;
+  return {
+    flaggedPct: pct(flagged), flaggedCount: flagged,
+    watchlistPct: pct(watchlist), watchlistCount: watchlist,
+    optimalPct: pct(optimal), optimalCount: optimal,
+    total,
+  };
+}
+
 export default function SmallMicroCaps() {
   const router = useRouter();
   const { isSignedIn } = useUser();
@@ -156,32 +198,49 @@ export default function SmallMicroCaps() {
     };
   }, [radarData]);
 
-  // Real health ratios + risk distribution from app/api/small-caps/radar/route.js's
-  // buildHealthMetrics/buildRiskDistribution — replaces what used to be four fixed objects
-  // (one per cap-tier filter) with hand-picked numbers that never changed regardless of what
-  // was actually in the database. These aren't split per-tier server-side: the underlying
-  // sample sizes (13-33 stocks with full financials, universe-wide) are already too thin to
-  // slice further by tier and stay meaningful, so the ratios stay constant across the ALL/
-  // SMALL/MICRO/NANO filter — only the subtext company count below the gauge changes with it.
+  // Health ratios + risk distribution, recomputed client-side over whichever cap-tier slice
+  // is active (universeMetrics.allList already carries the per-row fcfVal/grossMargin/netDebt/
+  // flagCount fields needed for this — see computeHealthMetrics/computeRiskDistribution above).
+  // The API's own healthMetrics/riskDistribution (universe-wide) are left as the loading-state
+  // fallback only, so the gauge shows *something* before the first radar fetch resolves.
   const gaugeData = useMemo(() => {
-    const hm = radarData?.healthMetrics;
-    const rd = radarData?.riskDistribution;
-    if (!hm || !rd) {
+    const allRows = universeMetrics.allList;
+    if (!allRows || allRows.length === 0) {
       return { score: 0, healthRatios: [], riskDist: { optimalPct: 0, watchlistPct: 0, flaggedPct: 0 } };
     }
+
+    const rows = capTierFilter === 'all'
+      ? allRows
+      : allRows.filter(s => getCapTier(s.marketCap)?.id === capTierFilter);
+
+    const hm = computeHealthMetrics(rows);
+    const rd = computeRiskDistribution(rows);
+
+    const events = radarData?.feed?.events || [];
+    const tierEvents = capTierFilter === 'all' ? events : events.filter(e => e.cap_tier === capTierFilter);
+    const insiderBuys = tierEvents.filter(e => e.type === 'BUY').length;
+    hm.insiderBuying = {
+      pct: tierEvents.length > 0 ? +((insiderBuys / tierEvents.length) * 100).toFixed(1) : null,
+      n: tierEvents.length, count: insiderBuys,
+    };
 
     const healthRatios = [
       { label: 'FCF Positive Ratio', pct: hm.fcfPositive.pct, n: hm.fcfPositive.n, count: hm.fcfPositive.count, color: 'var(--ws-accent)' },
       { label: 'Gross Margin > 40%', pct: hm.healthyGrossMargin.pct, n: hm.healthyGrossMargin.n, count: hm.healthyGrossMargin.count, color: 'var(--ws-accent)' },
       { label: 'Low Debt / Solvent', pct: hm.lowDebt.pct, n: hm.lowDebt.n, count: hm.lowDebt.count, color: '#f59e0b' },
       { label: 'Insider Buying Activity', pct: hm.insiderBuying.pct, n: hm.insiderBuying.n, count: hm.insiderBuying.count, color: '#a855f7' },
-    ];
+    ].map(r => (r.n < MIN_HEALTH_SAMPLE ? { ...r, pct: null } : r));
 
+    // null (not 0) when every ratio is below MIN_HEALTH_SAMPLE — a segment with no reliable
+    // data isn't the same thing as a segment that's actually unhealthy, and a numeric 0 next to
+    // a red "WATCH" label reads as the latter (verified against real data: NANO's 13-17-stock
+    // samples all fall under the floor, and 0/WATCH there looked like "nano caps are unhealthy"
+    // rather than the true "we don't know yet").
     const available = healthRatios.filter(r => r.pct != null);
-    const score = available.length > 0 ? Math.round(available.reduce((sum, r) => sum + r.pct, 0) / available.length) : 0;
+    const score = available.length > 0 ? Math.round(available.reduce((sum, r) => sum + r.pct, 0) / available.length) : null;
 
     return { score, healthRatios, riskDist: rd };
-  }, [radarData]);
+  }, [radarData, capTierFilter, universeMetrics.allList]);
 
   return (
     <div style={{ display: 'flex', width: '100%', minHeight: '100vh', background: 'var(--ws-bg)', color: 'var(--ws-text)' }}>
@@ -342,14 +401,14 @@ export default function SmallMicroCaps() {
         {/* Tab 3: Insider Feed */}
         {activeTab === 'insiders' && (
           <div style={{ padding: '24px', flex: 1, display: 'flex', flexDirection: 'column' }}>
-            <InsiderClusterFeed feed={radarData?.feed} loading={radarLoading} onSelect={triggerSpotlight} />
+            <InsiderClusterFeed feed={radarData?.feed} loading={radarLoading} onSelect={triggerSpotlight} fullPage />
           </div>
         )}
 
         {/* Tab 4: Risk Triage */}
         {activeTab === 'risk' && (
           <div style={{ padding: '24px', flex: 1, display: 'flex', flexDirection: 'column', gap: '16px' }}>
-            <RiskTriage riskFlags={radarData?.riskFlags} loading={radarLoading} onSelect={triggerSpotlight} />
+            <RiskTriage riskFlags={radarData?.riskFlags} loading={radarLoading} onSelect={triggerSpotlight} fullPage />
             <TierMigrationPanel
               migrations={radarData?.migrations}
               trackingSince={radarData?.trackingSince}

@@ -19,7 +19,11 @@ export default function SemiCircleGauge({
   const normalizedRadius = radius - strokeWidth / 2;
   const circumference = Math.PI * normalizedRadius;
 
-  const validScore = Math.min(Math.max(score, 0), 100);
+  // null means every health ratio fell below MIN_HEALTH_SAMPLE (page.js) — no reliable data to
+  // average, not a segment that's actually scored 0. Rendered as an empty gray arc with "NO
+  // DATA" rather than a red 0, which would otherwise read as "this segment is unhealthy."
+  const hasScore = score != null;
+  const validScore = hasScore ? Math.min(Math.max(score, 0), 100) : 0;
   const strokeDashoffset = circumference - (validScore / 100) * circumference;
 
   let currentSubtext = `${totalTracked.toLocaleString()} Sub-$2B Tracked`;
@@ -27,8 +31,8 @@ export default function SemiCircleGauge({
   if (activeFilter === 'micro') currentSubtext = `${microCount.toLocaleString()} Micro Cap ($50M - $300M)`;
   if (activeFilter === 'nano') currentSubtext = `${nanoCount.toLocaleString()} Nano Cap (< $50M)`;
 
-  const scoreLabel = validScore >= 80 ? 'EXCELLENT' : (validScore >= 65 ? 'OPTIMAL' : 'WATCH');
-  const scoreColor = validScore >= 80 ? 'var(--ws-accent)' : (validScore >= 65 ? '#f59e0b' : 'var(--ws-red)');
+  const scoreLabel = !hasScore ? 'NO DATA' : validScore >= 80 ? 'EXCELLENT' : (validScore >= 65 ? 'OPTIMAL' : 'WATCH');
+  const scoreColor = !hasScore ? 'var(--ws-text-3)' : validScore >= 80 ? 'var(--ws-accent)' : (validScore >= 65 ? '#f59e0b' : 'var(--ws-red)');
 
   return (
     <div style={{
@@ -96,8 +100,8 @@ export default function SemiCircleGauge({
           position: 'absolute', top: '48px', left: '50%', transform: 'translateX(-50%)',
           textAlign: 'center', display: 'flex', flexDirection: 'column', alignItems: 'center'
         }}>
-          <span style={{ fontSize: '36px', fontWeight: 900, color: 'var(--ws-text)', lineHeight: 1 }}>
-            {validScore}
+          <span style={{ fontSize: '36px', fontWeight: 900, color: hasScore ? 'var(--ws-text)' : 'var(--ws-text-3)', lineHeight: 1 }}>
+            {hasScore ? validScore : '—'}
           </span>
           <span style={{ fontSize: '9px', fontWeight: 800, color: scoreColor, letterSpacing: '1px', marginTop: '2px' }}>
             {scoreLabel}
@@ -120,8 +124,10 @@ export default function SemiCircleGauge({
           // — the real number of stocks that report this field, not a share of the whole
           // tracked universe. Most of the universe hasn't been individually hydrated yet, so
           // this is deliberately a small, honest sample rather than a fabricated full-coverage
-          // percentage.
-          const hasData = item.pct != null && item.n > 0;
+          // percentage. page.js already nulls out `pct` below MIN_HEALTH_SAMPLE (20) — item.n
+          // still comes through either way, so the label here can tell "no data at all" (n=0)
+          // apart from "some data, just not enough to trust yet" (0 < n < 20).
+          const hasData = item.pct != null;
           const pct = hasData ? item.pct : 0;
           return (
             <div
@@ -133,7 +139,7 @@ export default function SemiCircleGauge({
               <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '9px', marginBottom: '2px' }}>
                 <span style={{ color: 'var(--ws-text-2)', fontWeight: 600 }}>{item.label}</span>
                 <span style={{ fontWeight: 800, color: hasData ? (item.color || 'var(--ws-accent)') : 'var(--ws-text-3)', fontFamily: "'JetBrains Mono', monospace" }}>
-                  {hasData ? `${pct}%` : 'N/A'}
+                  {hasData ? `${pct}%` : (item.n > 0 ? `n=${item.n}` : 'N/A')}
                 </span>
               </div>
               <div style={{ height: '4px', width: '100%', background: 'var(--ws-bg-2)', overflow: 'hidden' }}>
@@ -152,7 +158,11 @@ export default function SemiCircleGauge({
                   padding: '4px 8px', fontSize: '9px', color: 'var(--ws-text)',
                   boxShadow: '0 4px 12px rgba(0,0,0,0.5)', zIndex: 10, whiteSpace: 'nowrap', marginBottom: '4px'
                 }}>
-                  {hasData ? `${item.count.toLocaleString()} of ${item.n.toLocaleString()} stocks with data` : 'No stocks with this data yet'}
+                  {hasData
+                    ? `${item.count.toLocaleString()} of ${item.n.toLocaleString()} stocks with data`
+                    : item.n > 0
+                      ? `Only ${item.n.toLocaleString()} stocks report this — too few to show a reliable %`
+                      : 'No stocks with this data yet'}
                 </div>
               )}
             </div>

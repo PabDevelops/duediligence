@@ -115,6 +115,70 @@ function ocfMinusCapex(ocfSeries, capexSeries) {
     .map(o => ({ year: o.year, val: o.val - Math.abs(capexByYear[o.year]) }));
 }
 
+// A single-year share-count jump landing within a few percent of a clean split ratio (2x, 3x,
+// 4x, 5x, 10x, 15x, 20x, 25x, 30x, 40x — forward splits — or their inverses for reverse splits)
+// is a stock split, not dilution: a split changes the share count without changing anyone's
+// proportional ownership, so counting it as "dilution" produces nonsense. Verified against real
+// data: NVDA's sharesHistory reads 620M (2021) -> 2.5B (2022) -> 24.5B (2025), landing on 4x then
+// 10x — its actual 2021 4-for-1 and 2024 10-for-1 splits, with zero real share issuance behind
+// either jump, yet the naive (latest-oldest)/oldest calc below used to read this as 3820%
+// "dilution." Detected splits are normalized out by rescaling every value before the split by the
+// split ratio, so the whole series lands on one consistent basis before the oldest-to-latest
+// delta is measured — the same adjustment every stock price chart already applies, just for
+// share count instead of price.
+const SPLIT_RATIOS = [2, 3, 4, 5, 10, 15, 20, 25, 30, 40];
+const SPLIT_TOLERANCE = 0.08;
+
+function isCleanSplitRatio(ratio) {
+  return SPLIT_RATIOS.some(r => Math.abs(ratio - r) / r < SPLIT_TOLERANCE || Math.abs(ratio - 1 / r) / (1 / r) < SPLIT_TOLERANCE);
+}
+
+// Split-adjusts a { year, val } share-count series (ascending, oldest first) and, separately,
+// drops a leading print that's implausibly tiny next to the rest of the series — a pre-IPO or
+// pre-spin-off founder share count, not a real baseline any current investor could have bought
+// into. Verified against real data: RDX.AX's sharesHistory reads 2.3M (2022) -> 430.6M (2023) ->
+// 524.9M (2024) -> 525.9M (2025) — a ~185x jump that isn't a clean split ratio (it's the 2023
+// IPO itself), so the split check alone doesn't catch it; the oldest print sitting at <5% of the
+// median of everything after it does. Dropping it re-bases "dilution" to the company's actual
+// post-IPO trading history (525.9M/430.6M - 1 ≈ 22%) instead of a 22,512% artifact of comparing
+// against a share count that predates the stock being tradable at all.
+function splitAdjustedShares(sharesHistory) {
+  if (!sharesHistory || sharesHistory.length < 2) return sharesHistory;
+  const adjusted = sharesHistory.map(h => ({ ...h }));
+
+  for (let i = 1; i < adjusted.length; i++) {
+    const prevVal = adjusted[i - 1].val;
+    const curVal = adjusted[i].val;
+    if (!prevVal || !curVal) continue;
+    const ratio = curVal / prevVal;
+    if (isCleanSplitRatio(ratio)) {
+      for (let j = 0; j < i; j++) {
+        if (adjusted[j].val != null) adjusted[j].val *= ratio;
+      }
+    }
+  }
+
+  const vals = adjusted.map(h => h.val).filter(v => v > 0);
+  if (vals.length >= 3) {
+    const rest = vals.slice(1).sort((a, b) => a - b);
+    const mid = Math.floor(rest.length / 2);
+    const medianRest = rest.length % 2 ? rest[mid] : (rest[mid - 1] + rest[mid]) / 2;
+    if (adjusted[0].val > 0 && adjusted[0].val < medianRest * 0.05) {
+      return adjusted.slice(1);
+    }
+  }
+  return adjusted;
+}
+
+function computeShareDilutionPct(sharesHistory) {
+  const adjusted = splitAdjustedShares(sharesHistory);
+  const sharesLatest = adjusted?.[adjusted.length - 1]?.val;
+  const sharesOldest = adjusted?.[0]?.val;
+  return sharesLatest && sharesOldest
+    ? +(((sharesLatest - sharesOldest) / sharesOldest) * 100).toFixed(1)
+    : null;
+}
+
 // Same ratio/margin/history math as the SEC-EDGAR path below, but operating on
 // ascending { year, val } arrays (latest = last element) instead of raw XBRL facts.
 function computeDerivedFinancials(h) {
@@ -176,11 +240,7 @@ function computeDerivedFinancials(h) {
     return { year: r.year, margin: +((oi.val / r.val) * 100).toFixed(1) };
   });
 
-  const sharesLatest = h.sharesHistory[h.sharesHistory.length - 1]?.val;
-  const sharesOldest = h.sharesHistory[0]?.val;
-  const shareDilution = sharesLatest && sharesOldest
-    ? +(((sharesLatest - sharesOldest) / sharesOldest) * 100).toFixed(1)
-    : null;
+  const shareDilution = computeShareDilutionPct(h.sharesHistory);
 
   const epsHistory = h.niHistory.map((ni, i) => {
     const sh = h.sharesHistory[i];
@@ -1247,11 +1307,7 @@ export async function GET(request) {
       return { year: r.year, margin: +((oi.val / r.val) * 100).toFixed(1) };
     });
 
-    const sharesLatest = sharesHistory[sharesHistory.length - 1]?.val;
-    const sharesOldest = sharesHistory[0]?.val;
-    const shareDilution = sharesLatest && sharesOldest
-      ? +(((sharesLatest - sharesOldest) / sharesOldest) * 100).toFixed(1)
-      : null;
+    const shareDilution = computeShareDilutionPct(sharesHistory);
 
     const safeFinnhubJson = (res) => res.ok ? res.json().catch(() => ({})) : Promise.resolve({});
     const [fhRes, fhBasicRes, fhProfileRes] = await Promise.all([

@@ -196,19 +196,21 @@ export default function SmallCapsExploreTable({ radarData, loading, onSelect }) 
               <th onClick={() => handleSort('sector')} style={{ padding: '10px 16px', cursor: 'pointer' }}>SECTOR<SortArrow field="sector" /></th>
               <th onClick={() => handleSort('grossMargin')} style={{ padding: '10px 16px', cursor: 'pointer' }}>GROSS MARGIN<SortArrow field="grossMargin" /></th>
               <th onClick={() => handleSort('insiderOwnership')} style={{ padding: '10px 16px', cursor: 'pointer' }}>INSIDER OWNED<SortArrow field="insiderOwnership" /></th>
+              <th onClick={() => handleSort('cashRunway')} style={{ padding: '10px 16px', cursor: 'pointer' }}>CASH RUNWAY<SortArrow field="cashRunway" /></th>
+              <th onClick={() => handleSort('riskCount')} style={{ padding: '10px 16px', cursor: 'pointer' }}>RISK<SortArrow field="riskCount" /></th>
               <th style={{ padding: '10px 16px', textAlign: 'right' }}>ACTION</th>
             </tr>
           </thead>
           <tbody>
             {loading ? (
               <tr>
-                <td colSpan={8} style={{ padding: '40px', textAlign: 'center', color: 'var(--ws-text-3)' }}>
+                <td colSpan={10} style={{ padding: '40px', textAlign: 'center', color: 'var(--ws-text-3)' }}>
                   Loading stocks from database...
                 </td>
               </tr>
             ) : paginatedStocks.length === 0 ? (
               <tr>
-                <td colSpan={8} style={{ padding: '40px', textAlign: 'center', color: 'var(--ws-text-3)' }}>
+                <td colSpan={10} style={{ padding: '40px', textAlign: 'center', color: 'var(--ws-text-3)' }}>
                   No companies found matching your search.
                 </td>
               </tr>
@@ -247,6 +249,22 @@ export default function SmallCapsExploreTable({ radarData, loading, onSelect }) 
                   </td>
                   <td style={{ padding: '10px 16px', fontFamily: "'JetBrains Mono', monospace" }}>
                     {s.insiderOwnership != null ? `${Number(s.insiderOwnership).toFixed(1)}%` : <span style={{ color: 'var(--ws-text-3)' }}>—</span>}
+                  </td>
+                  <td style={{ padding: '10px 16px', fontFamily: "'JetBrains Mono', monospace" }}>
+                    {s.cashRunway != null ? `${Number(s.cashRunway).toFixed(1)}y` : <span style={{ color: 'var(--ws-text-3)' }}>—</span>}
+                  </td>
+                  <td style={{ padding: '10px 16px' }}>
+                    {s.riskCount > 0 ? (
+                      <span style={{
+                        fontSize: '9px', fontWeight: 800, padding: '2px 6px',
+                        background: 'var(--ws-bg-2)',
+                        border: `1px solid ${s.riskCount >= 2 ? 'var(--ws-red)' : '#f59e0b'}`,
+                        color: s.riskCount >= 2 ? 'var(--ws-red)' : '#f59e0b',
+                        fontFamily: "'JetBrains Mono', monospace"
+                      }}>
+                        {s.riskCount}&times;
+                      </span>
+                    ) : <span style={{ color: 'var(--ws-text-3)', fontSize: '10px' }}>—</span>}
                   </td>
                   <td style={{ padding: '10px 16px', textAlign: 'right' }}>
                     <span style={{

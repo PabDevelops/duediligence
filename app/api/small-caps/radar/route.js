@@ -28,8 +28,8 @@ const COUNTRY_TOP_N = 5;
 const FCF_HISTORY_YEARS = 8; // however many of the last N fiscal years a stock actually reports
 const CLUSTER_WINDOW_DAYS = 14; // ~10 trading days
 const CLUSTER_MIN_INSIDERS = 3;
-const FEED_LOOKBACK_DAYS = 30;
-const FEED_LIMIT = 200;
+const FEED_LOOKBACK_DAYS = 90; // matches InsiderClusterFeed's longest tab (90D)
+const FEED_LIMIT = 600; // covers ~553 events/90d today with headroom; bump if this saturates
 const MIGRATION_MIN_DAYS = 25;
 const MIGRATION_MAX_DAYS = 35;
 

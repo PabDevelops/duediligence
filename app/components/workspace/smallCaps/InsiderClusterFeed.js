@@ -15,22 +15,28 @@ function fmtVal(val) {
   return `$${val}`;
 }
 
-export default function InsiderClusterFeed({ feed, loading, onSelect }) {
+const TIME_RANGE_DAYS = { '7D': 7, '30D': 30, '90D': 90 };
+
+export default function InsiderClusterFeed({ feed, loading, onSelect, fullPage = false }) {
   const [timeRange, setTimeRange] = useState('30D');
 
   const rawEvents = feed?.events || [];
   const rawClusters = feed?.clusters || [];
 
+  // Filters by the event's real date against today, instead of the old behavior of just
+  // slicing the array to a fixed count (3/5/all) regardless of how old those events actually
+  // were — a "7D" tab that really showed whatever the 3 most recent rows happened to be, even
+  // if the newest purchase in the whole feed was 3 weeks old.
   const events = useMemo(() => {
-    if (timeRange === '7D') return rawEvents.slice(0, 3);
-    if (timeRange === '30D') return rawEvents.slice(0, 5);
-    return rawEvents; // 90D returns all items, scroll bound inside card box
+    const days = TIME_RANGE_DAYS[timeRange] ?? 30;
+    const cutoff = Date.now() - days * 86_400_000;
+    return rawEvents.filter(e => new Date(e.date).getTime() >= cutoff);
   }, [rawEvents, timeRange]);
 
   return (
     <div style={{
       background: 'var(--ws-bg-1)', border: '1px solid var(--ws-border)',
-      display: 'flex', flexDirection: 'column', height: '100%', maxHeight: '340px',
+      display: 'flex', flexDirection: 'column', height: '100%', maxHeight: fullPage ? 'none' : '340px',
       boxSizing: 'border-box', overflow: 'hidden'
     }}>
       {/* Top Header */}
@@ -68,7 +74,7 @@ export default function InsiderClusterFeed({ feed, loading, onSelect }) {
           <div style={{ fontSize: '9px', fontWeight: 800, color: 'var(--ws-accent)', letterSpacing: '1px' }}>
             HIGH CONVICTION CLUSTER DETECTED
           </div>
-          {rawClusters.slice(0, 2).map((c, i) => (
+          {(fullPage ? rawClusters : rawClusters.slice(0, 2)).map((c, i) => (
             <div
               key={i}
               onClick={() => onSelect && onSelect(c.ticker)}
