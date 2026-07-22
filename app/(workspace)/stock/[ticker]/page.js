@@ -717,10 +717,6 @@ export default function StockPage({ params }) {
   const price = data.currentPrice;
   const change = data.priceChange;
   const changePct = data.priceChangePct;
-  const earningsReaction = data.earningsReaction;
-  const earningsReactionDate = earningsReaction
-    ? new Date(earningsReaction.date + 'T00:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
-    : null;
 
   // Recent IPOs (and thinly-covered tickers) have no SEC/Finnhub fundamentals at all —
   // computing a Quality Score or "Numbers, Simplified" bars in that case just produces a
@@ -896,23 +892,6 @@ export default function StockPage({ params }) {
                       {change >= 0 ? '+' : ''}{changePct?.toFixed(2)}%
                     </span>
                     <MarketStatusDot ticker={ticker} showLabel />
-                    {earningsReaction && (
-                      <span
-                        title={`Close on ${curSym(data.currency)}${earningsReaction.priceBefore.toFixed(2)} the last trading session before the ${earningsReactionDate} report (${earningsReaction.hour === 'bmo' ? 'reported before market open' : earningsReaction.hour === 'amc' ? 'reported after market close' : 'time unconfirmed'}) vs. the live price now.`}
-                        style={{
-                          fontFamily: "'JetBrains Mono', monospace",
-                          fontSize: '10px',
-                          fontWeight: 700,
-                          letterSpacing: '0.3px',
-                          color: earningsReaction.pctChange >= 0 ? 'var(--ws-accent)' : 'var(--ws-red)',
-                          border: `1px solid ${earningsReaction.pctChange >= 0 ? 'var(--ws-accent)' : 'var(--ws-red)'}`,
-                          borderRadius: '3px',
-                          padding: '2px 6px',
-                        }}
-                      >
-                        {earningsReaction.pctChange >= 0 ? '+' : ''}{earningsReaction.pctChange.toFixed(1)}% SINCE EARNINGS ({earningsReactionDate})
-                      </span>
-                    )}
                   </div>
                 )}
               </div>
