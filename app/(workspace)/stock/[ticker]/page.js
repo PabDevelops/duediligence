@@ -34,6 +34,29 @@ const fmt = (val) => sharedFmt(val, 'N/A');
 const fmtP = (v) => sharedFmtP(v, { fallback: 'N/A' });
 const fmtN = (v, d = 2) => sharedFmtN(v, d, 'N/A');
 
+// QoQ deltas for the Quality/Financials tabs: "now" vs. data.prevQuarter (the same figure as it
+// stood immediately before the most recent 10-Q — see fetchEarningsReaction/prevQuarter in
+// app/api/stock/route.js). Percentage-point deltas for metrics already expressed as a %
+// (margins, ROE/ROIC, yields) — a "+1.8%" next to a margin reads as a relative move, when it's
+// actually an absolute point move. Everything else (dollar amounts, ratios, day counts) uses
+// relative % change instead.
+const ppDelta = (now, before) => (now == null || before == null) ? null : +(now - before).toFixed(1);
+const pctDelta = (now, before) => (now == null || before == null || !before) ? null : +(((now - before) / Math.abs(before)) * 100).toFixed(1);
+
+// Green/red only tracks direction (up/down since last earnings), not whether that direction is
+// good or bad for this particular metric (e.g. rising debt is a red flag, but would render
+// green here same as rising revenue) — keeping the same up-is-green/down-is-red convention as
+// the price header badge rather than hand-coding per-metric "good direction" semantics.
+function DeltaTag({ value, unit = '%' }) {
+  if (value == null || value === 0) return null;
+  const up = value > 0;
+  return (
+    <span style={{ fontSize: '9px', fontWeight: 700, marginLeft: '6px', whiteSpace: 'nowrap', color: up ? 'var(--ws-accent)' : 'var(--ws-red)' }}>
+      {up ? '▲' : '▼'}{Math.abs(value)}{unit}
+    </span>
+  );
+}
+
 // Animated fill bar for the main Quality Score. Was an ASCII '█'/'░' character string —
 // besides not being animatable, mixing two block-drawing glyphs at a font weight (400) that
 // isn't one of the loaded JetBrains Mono weights (500/700) meant the two characters could
@@ -694,6 +717,10 @@ export default function StockPage({ params }) {
   const price = data.currentPrice;
   const change = data.priceChange;
   const changePct = data.priceChangePct;
+  const earningsReaction = data.earningsReaction;
+  const earningsReactionDate = earningsReaction
+    ? new Date(earningsReaction.date + 'T00:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+    : null;
 
   // Recent IPOs (and thinly-covered tickers) have no SEC/Finnhub fundamentals at all —
   // computing a Quality Score or "Numbers, Simplified" bars in that case just produces a
@@ -703,6 +730,13 @@ export default function StockPage({ params }) {
     || data.roic != null || data.grossMargin != null || (data.revHistory?.length ?? 0) > 0;
 
   const easyMode = computeEasyMode(data, hasFundamentals);
+  // Same scoring/ratio pipeline, re-run on the pre-last-earnings scalars (data.prevQuarter —
+  // see app/api/stock/route.js) instead of duplicating computeEasyMode's formulas here. Field
+  // names in prevQuarter deliberately mirror the top-level data fields it's derived from
+  // (revVal, marketCap, grossMargin, etc.), so spreading it over `data` produces a structurally
+  // identical "as of before the last earnings report" snapshot. null when this ticker has no
+  // prevQuarter data (non-SEC-covered tickers, or a filer's first 10-Q).
+  const easyModeBefore = data.prevQuarter ? computeEasyMode({ ...data, ...data.prevQuarter }, hasFundamentals) : null;
   // Gates every tier-specific UI element below (badge, footnote narrative, Capital Discipline
   // section) — true only for small/micro, where the calibration actually differs from the
   // mid/large/mega baseline. Mid-and-up renders exactly as it did before market-cap tiering
@@ -862,6 +896,23 @@ export default function StockPage({ params }) {
                       {change >= 0 ? '+' : ''}{changePct?.toFixed(2)}%
                     </span>
                     <MarketStatusDot ticker={ticker} showLabel />
+                    {earningsReaction && (
+                      <span
+                        title={`Close on ${curSym(data.currency)}${earningsReaction.priceBefore.toFixed(2)} the last trading session before the ${earningsReactionDate} report (${earningsReaction.hour === 'bmo' ? 'reported before market open' : earningsReaction.hour === 'amc' ? 'reported after market close' : 'time unconfirmed'}) vs. the live price now.`}
+                        style={{
+                          fontFamily: "'JetBrains Mono', monospace",
+                          fontSize: '10px',
+                          fontWeight: 700,
+                          letterSpacing: '0.3px',
+                          color: earningsReaction.pctChange >= 0 ? 'var(--ws-accent)' : 'var(--ws-red)',
+                          border: `1px solid ${earningsReaction.pctChange >= 0 ? 'var(--ws-accent)' : 'var(--ws-red)'}`,
+                          borderRadius: '3px',
+                          padding: '2px 6px',
+                        }}
+                      >
+                        {earningsReaction.pctChange >= 0 ? '+' : ''}{earningsReaction.pctChange.toFixed(1)}% SINCE EARNINGS ({earningsReactionDate})
+                      </span>
+                    )}
                   </div>
                 )}
               </div>
@@ -1444,18 +1495,20 @@ export default function StockPage({ params }) {
           <div className="text-ws-text-3 text-[10px] tracking-[2px] border-b border-ws-border pb-1.5 mb-3">CORE BUSINESS BREAKDOWN</div>
           <div className="grid-5" style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: '1px', background: 'var(--ws-border)', marginBottom: '24px' }}>
             {[
-              { label: 'ROIC', val: fmtP(easyMode.roicForScore), score: easyMode.roicScore, desc: `Threshold: ${(easyMode.roicThreshold * 100).toFixed(0)}% for ${data.sector || 'this sector'}${tierAdjusted ? ` (${easyMode.capTier.short} Cap)` : ''}` },
-              { label: isFinancial ? 'NET MARGIN' : 'GROSS MARGIN', val: isFinancial ? fmtP(data.netMargin) : fmtP(data.grossMargin), score: easyMode.gmScore, desc: `Threshold: ${(easyMode.gmThreshold * 100).toFixed(0)}% for ${data.sector || 'this sector'}${tierAdjusted ? ` (${easyMode.capTier.short} Cap)` : ''}` },
-              { label: 'OP. MARGIN', val: fmtP(data.opMargin), score: easyMode.omScore, desc: `Threshold: ${(easyMode.omThreshold * 100).toFixed(0)}% for ${data.sector || 'this sector'}${tierAdjusted ? ` (${easyMode.capTier.short} Cap)` : ''}` },
-              { label: 'DEBT/EQUITY', val: fmtN(easyMode.netDebtToEquity), score: easyMode.deScore, desc: 'Net of cash · lower is better' },
-              { label: 'CURRENT RATIO', val: easyMode.currentRatio != null ? `${easyMode.currentRatio.toFixed(2)}x` : 'N/A', score: easyMode.crScore, desc: 'Current assets / liabilities' },
+              { label: 'ROIC', val: fmtP(easyMode.roicForScore), score: easyMode.roicScore, desc: `Threshold: ${(easyMode.roicThreshold * 100).toFixed(0)}% for ${data.sector || 'this sector'}${tierAdjusted ? ` (${easyMode.capTier.short} Cap)` : ''}`, delta: ppDelta(easyMode.roicForScore, easyModeBefore?.roicForScore), deltaUnit: 'pp' },
+              { label: isFinancial ? 'NET MARGIN' : 'GROSS MARGIN', val: isFinancial ? fmtP(data.netMargin) : fmtP(data.grossMargin), score: easyMode.gmScore, desc: `Threshold: ${(easyMode.gmThreshold * 100).toFixed(0)}% for ${data.sector || 'this sector'}${tierAdjusted ? ` (${easyMode.capTier.short} Cap)` : ''}`, delta: isFinancial ? ppDelta(data.netMargin, data.prevQuarter?.netMargin) : ppDelta(data.grossMargin, data.prevQuarter?.grossMargin), deltaUnit: 'pp' },
+              { label: 'OP. MARGIN', val: fmtP(data.opMargin), score: easyMode.omScore, desc: `Threshold: ${(easyMode.omThreshold * 100).toFixed(0)}% for ${data.sector || 'this sector'}${tierAdjusted ? ` (${easyMode.capTier.short} Cap)` : ''}`, delta: ppDelta(data.opMargin, data.prevQuarter?.opMargin), deltaUnit: 'pp' },
+              { label: 'DEBT/EQUITY', val: fmtN(easyMode.netDebtToEquity), score: easyMode.deScore, desc: 'Net of cash · lower is better', delta: pctDelta(easyMode.netDebtToEquity, easyModeBefore?.netDebtToEquity) },
+              { label: 'CURRENT RATIO', val: easyMode.currentRatio != null ? `${easyMode.currentRatio.toFixed(2)}x` : 'N/A', score: easyMode.crScore, desc: 'Current assets / liabilities', delta: pctDelta(easyMode.currentRatio, easyModeBefore?.currentRatio) },
             ].map(m => (
               <div key={m.label} className="bg-ws-bg-1 p-4">
                 <div className="flex justify-between mb-2">
                   <span className="text-ws-text-3 text-[10px] tracking-[1px]">{m.label}</span>
                   <span style={{ color: scoreColor(m.score), fontSize: '10px' }}>{Math.round(m.score * 20)}/100</span>
                 </div>
-                <div style={{ fontSize: '28px', fontWeight: 600, color: scoreColor(m.score), marginBottom: '4px' }}>{m.val}</div>
+                <div style={{ fontSize: '28px', fontWeight: 600, color: scoreColor(m.score), marginBottom: '4px', display: 'flex', alignItems: 'baseline' }}>
+                  {m.val}<DeltaTag value={m.delta} unit={m.deltaUnit ?? '%'} />
+                </div>
                 <div className="text-ws-text-3 text-[10px]">{m.desc}</div>
               </div>
             ))}
@@ -1500,15 +1553,17 @@ export default function StockPage({ params }) {
           <div className="text-ws-text-3 text-[10px] tracking-[2px] border-b border-ws-border pb-1.5 mb-3">OPPORTUNITY BREAKDOWN</div>
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '1px', background: 'var(--ws-border)', marginBottom: '24px' }}>
             {[
-              { label: 'P/FCF', val: fmtN(easyMode.truePfcf), score: easyMode.pfcfScore, desc: easyMode.truePfcf < 20 ? 'Attractive entry' : easyMode.truePfcf < 35 ? 'Fair valuation' : 'Expensive' },
-              { label: 'FCF YIELD', val: easyMode.trueFcfYield != null ? `${easyMode.trueFcfYield.toFixed(2)}%` : 'N/A', score: easyMode.fcfYieldScore, desc: easyMode.trueFcfYield > 5 ? 'Strong yield' : easyMode.trueFcfYield > 2 ? 'Moderate yield' : 'Low yield' },
+              { label: 'P/FCF', val: fmtN(easyMode.truePfcf), score: easyMode.pfcfScore, desc: easyMode.truePfcf < 20 ? 'Attractive entry' : easyMode.truePfcf < 35 ? 'Fair valuation' : 'Expensive', delta: pctDelta(easyMode.truePfcf, easyModeBefore?.truePfcf) },
+              { label: 'FCF YIELD', val: easyMode.trueFcfYield != null ? `${easyMode.trueFcfYield.toFixed(2)}%` : 'N/A', score: easyMode.fcfYieldScore, desc: easyMode.trueFcfYield > 5 ? 'Strong yield' : easyMode.trueFcfYield > 2 ? 'Moderate yield' : 'Low yield', delta: ppDelta(easyMode.trueFcfYield, easyModeBefore?.trueFcfYield), deltaUnit: 'pp' },
             ].map(m => (
               <div key={m.label} className="bg-ws-bg-1 p-4">
                 <div className="flex justify-between mb-2">
                   <span className="text-ws-text-3 text-[10px] tracking-[1px]">{m.label}</span>
                   <span style={{ color: scoreColor(m.score), fontSize: '10px' }}>{Math.round(m.score * 20)}/100</span>
                 </div>
-                <div style={{ fontSize: '28px', fontWeight: 600, color: scoreColor(m.score), marginBottom: '4px' }}>{m.val}</div>
+                <div style={{ fontSize: '28px', fontWeight: 600, color: scoreColor(m.score), marginBottom: '4px', display: 'flex', alignItems: 'baseline' }}>
+                  {m.val}<DeltaTag value={m.delta} unit={m.deltaUnit ?? '%'} />
+                </div>
                 <div className="text-ws-text-3 text-[10px]">{m.desc}</div>
               </div>
             ))}
@@ -1543,8 +1598,9 @@ export default function StockPage({ params }) {
                 <span className="text-ws-text-3 text-[10px] tracking-[1px]">REVENUE GROWTH</span>
                 <span style={{ color: scoreColor(easyMode.revGrowthScore), fontSize: '10px' }}>{Math.round(easyMode.revGrowthScore * 20)}/100</span>
               </div>
-              <div style={{ fontSize: '22px', fontWeight: 600, color: scoreColor(easyMode.revGrowthScore), marginBottom: '8px' }}>
+              <div style={{ fontSize: '22px', fontWeight: 600, color: scoreColor(easyMode.revGrowthScore), marginBottom: '8px', display: 'flex', alignItems: 'baseline' }}>
                 {data.revGrowth !== null ? `${data.revGrowth > 0 ? '+' : ''}${data.revGrowth}%` : 'N/A'}
+                <DeltaTag value={ppDelta(data.revGrowth, data.prevQuarter?.revGrowth)} unit="pp" />
               </div>
               <MiniLine data={revChart} color={scoreColor(easyMode.revGrowthScore)} />
             </div>
@@ -1552,8 +1608,9 @@ export default function StockPage({ params }) {
               <div className="flex justify-between mb-2">
                 <span className="text-ws-text-3 text-[10px] tracking-[1px]">R&D / REVENUE</span>
               </div>
-              <div style={{ fontSize: '28px', fontWeight: 600, color: 'var(--ws-text)', marginBottom: '4px' }}>
+              <div style={{ fontSize: '28px', fontWeight: 600, color: 'var(--ws-text)', marginBottom: '4px', display: 'flex', alignItems: 'baseline' }}>
                 {easyMode.rdToRevenue != null ? `${(easyMode.rdToRevenue * 100).toFixed(1)}%` : 'N/A'}
+                <DeltaTag value={ppDelta(easyMode.rdToRevenue != null ? easyMode.rdToRevenue * 100 : null, easyModeBefore?.rdToRevenue != null ? easyModeBefore.rdToRevenue * 100 : null)} unit="pp" />
               </div>
               <div className="text-ws-text-3 text-[10px]">
                 {easyMode.rdToRevenue == null ? 'Not reported' : easyMode.rdToRevenue > 0.15 ? 'Heavy reinvestment (+)' : easyMode.rdToRevenue < 0.05 ? 'Light reinvestment (−)' : 'Moderate reinvestment'}
@@ -1563,8 +1620,9 @@ export default function StockPage({ params }) {
               <div className="flex justify-between mb-2">
                 <span className="text-ws-text-3 text-[10px] tracking-[1px]">SBC / REVENUE</span>
               </div>
-              <div style={{ fontSize: '28px', fontWeight: 600, color: 'var(--ws-text)', marginBottom: '4px' }}>
+              <div style={{ fontSize: '28px', fontWeight: 600, color: 'var(--ws-text)', marginBottom: '4px', display: 'flex', alignItems: 'baseline' }}>
                 {easyMode.sbcToRevenue != null ? `${(easyMode.sbcToRevenue * 100).toFixed(1)}%` : 'N/A'}
+                <DeltaTag value={ppDelta(easyMode.sbcToRevenue != null ? easyMode.sbcToRevenue * 100 : null, easyModeBefore?.sbcToRevenue != null ? easyModeBefore.sbcToRevenue * 100 : null)} unit="pp" />
               </div>
               <div className="text-ws-text-3 text-[10px]">
                 {easyMode.sbcToRevenue == null ? 'Not reported' : easyMode.sbcToRevenue > 0.10 ? 'High dilution risk (−)' : easyMode.sbcToRevenue < 0.04 ? 'Low dilution (+)' : 'Moderate dilution'}
@@ -1607,17 +1665,17 @@ export default function StockPage({ params }) {
       <table className="w-full border-collapse text-[11px]">
         <tbody>
           {[
-            { label: 'Market Cap', val: fmt(data.marketCap) },
-            { label: 'P/E', val: fmtN(data.pe), color: data.pe > 0 && data.pe < 20 ? 'var(--ws-accent)' : data.pe > 40 ? 'var(--ws-red)' : 'var(--ws-text)' },
-            { label: 'P/FCF', val: fmtN(easyMode?.truePfcf ?? data.pfcf), color: (easyMode?.truePfcf ?? data.pfcf) > 0 && (easyMode?.truePfcf ?? data.pfcf) < 20 ? 'var(--ws-accent)' : (easyMode?.truePfcf ?? data.pfcf) > 40 ? 'var(--ws-red)' : 'var(--ws-text)' },
-            { label: 'EV/EBITDA', val: fmtN(data.evEbitda) },
-            { label: 'P/B', val: fmtN(data.priceToBook) },
-            { label: 'FCF Yield', val: (easyMode?.trueFcfYield ?? data.fcfYield) ? `${(easyMode?.trueFcfYield ?? data.fcfYield).toFixed(2)}%` : 'N/A', color: (easyMode?.trueFcfYield ?? data.fcfYield) > 5 ? 'var(--ws-accent)' : (easyMode?.trueFcfYield ?? data.fcfYield) > 0 ? 'var(--ws-text-2)' : 'var(--ws-red)' },
+            { label: 'Market Cap', val: fmt(data.marketCap), delta: pctDelta(data.marketCap, data.prevQuarter?.marketCap) },
+            { label: 'P/E', val: fmtN(data.pe), color: data.pe > 0 && data.pe < 20 ? 'var(--ws-accent)' : data.pe > 40 ? 'var(--ws-red)' : 'var(--ws-text)', delta: pctDelta(data.pe, data.prevQuarter?.pe) },
+            { label: 'P/FCF', val: fmtN(easyMode?.truePfcf ?? data.pfcf), color: (easyMode?.truePfcf ?? data.pfcf) > 0 && (easyMode?.truePfcf ?? data.pfcf) < 20 ? 'var(--ws-accent)' : (easyMode?.truePfcf ?? data.pfcf) > 40 ? 'var(--ws-red)' : 'var(--ws-text)', delta: pctDelta(easyMode?.truePfcf ?? data.pfcf, easyModeBefore?.truePfcf ?? data.prevQuarter?.pfcf) },
+            { label: 'EV/EBITDA', val: fmtN(data.evEbitda), delta: pctDelta(data.evEbitda, data.prevQuarter?.evEbitda) },
+            { label: 'P/B', val: fmtN(data.priceToBook), delta: pctDelta(data.priceToBook, data.prevQuarter?.priceToBook) },
+            { label: 'FCF Yield', val: (easyMode?.trueFcfYield ?? data.fcfYield) ? `${(easyMode?.trueFcfYield ?? data.fcfYield).toFixed(2)}%` : 'N/A', color: (easyMode?.trueFcfYield ?? data.fcfYield) > 5 ? 'var(--ws-accent)' : (easyMode?.trueFcfYield ?? data.fcfYield) > 0 ? 'var(--ws-text-2)' : 'var(--ws-red)', delta: ppDelta(easyMode?.trueFcfYield ?? data.fcfYield, easyModeBefore?.trueFcfYield ?? data.prevQuarter?.fcfYield), deltaUnit: 'pp' },
             { label: 'Div. Yield', val: data.dividendYield ? `${(+data.dividendYield).toFixed(2)}%` : '—' },
           ].map(r => (
             <tr key={r.label} className="border-b border-ws-border">
               <td className="py-1 text-ws-text-3 text-[10px]">{r.label}</td>
-              <td style={{ padding: '4px 0', textAlign: 'right', color: r.color || 'var(--ws-text)', fontSize: '11px', fontWeight: 500 }}>{r.val}</td>
+              <td style={{ padding: '4px 0', textAlign: 'right', color: r.color || 'var(--ws-text)', fontSize: '11px', fontWeight: 500 }}>{r.val}<DeltaTag value={r.delta} unit={r.deltaUnit ?? '%'} /></td>
             </tr>
           ))}
         </tbody>
@@ -1629,18 +1687,18 @@ export default function StockPage({ params }) {
       <table className="w-full border-collapse text-[11px]">
         <tbody>
           {[
-            { label: 'Gross Margin', val: fmtP(data.grossMargin), color: data.grossMargin > 50 ? 'var(--ws-accent)' : data.grossMargin > 30 ? 'var(--ws-text-2)' : 'var(--ws-red)' },
-            { label: 'Op. Margin', val: fmtP(data.opMargin), color: data.opMargin > 20 ? 'var(--ws-accent)' : data.opMargin > 10 ? 'var(--ws-text-2)' : 'var(--ws-red)' },
-            { label: 'Net Margin', val: fmtP(data.netMargin), color: data.netMargin > 15 ? 'var(--ws-accent)' : data.netMargin > 5 ? 'var(--ws-text-2)' : 'var(--ws-red)' },
-            { label: 'ROE', val: fmtP(data.roe), color: data.roe > 20 ? 'var(--ws-accent)' : data.roe > 10 ? 'var(--ws-text-2)' : 'var(--ws-red)' },
-            { label: 'ROA', val: fmtP(data.roa), color: data.roa > 10 ? 'var(--ws-accent)' : data.roa > 5 ? 'var(--ws-text-2)' : 'var(--ws-red)' },
-            { label: 'ROIC', val: fmtP(data.roic), color: data.roic > 15 ? 'var(--ws-accent)' : data.roic > 8 ? 'var(--ws-text-2)' : 'var(--ws-red)' },
-            { label: 'SBC', val: fmt(data.sbcVal) },
-            { label: 'Dividends Paid', val: fmt(data.dividendsPaidVal) },
+            { label: 'Gross Margin', val: fmtP(data.grossMargin), color: data.grossMargin > 50 ? 'var(--ws-accent)' : data.grossMargin > 30 ? 'var(--ws-text-2)' : 'var(--ws-red)', delta: ppDelta(data.grossMargin, data.prevQuarter?.grossMargin), deltaUnit: 'pp' },
+            { label: 'Op. Margin', val: fmtP(data.opMargin), color: data.opMargin > 20 ? 'var(--ws-accent)' : data.opMargin > 10 ? 'var(--ws-text-2)' : 'var(--ws-red)', delta: ppDelta(data.opMargin, data.prevQuarter?.opMargin), deltaUnit: 'pp' },
+            { label: 'Net Margin', val: fmtP(data.netMargin), color: data.netMargin > 15 ? 'var(--ws-accent)' : data.netMargin > 5 ? 'var(--ws-text-2)' : 'var(--ws-red)', delta: ppDelta(data.netMargin, data.prevQuarter?.netMargin), deltaUnit: 'pp' },
+            { label: 'ROE', val: fmtP(data.roe), color: data.roe > 20 ? 'var(--ws-accent)' : data.roe > 10 ? 'var(--ws-text-2)' : 'var(--ws-red)', delta: ppDelta(data.roe, data.prevQuarter?.roe), deltaUnit: 'pp' },
+            { label: 'ROA', val: fmtP(data.roa), color: data.roa > 10 ? 'var(--ws-accent)' : data.roa > 5 ? 'var(--ws-text-2)' : 'var(--ws-red)', delta: ppDelta(data.roa, data.prevQuarter?.roa), deltaUnit: 'pp' },
+            { label: 'ROIC', val: fmtP(data.roic), color: data.roic > 15 ? 'var(--ws-accent)' : data.roic > 8 ? 'var(--ws-text-2)' : 'var(--ws-red)', delta: ppDelta(data.roic, data.prevQuarter?.roic), deltaUnit: 'pp' },
+            { label: 'SBC', val: fmt(data.sbcVal), delta: pctDelta(data.sbcVal, data.prevQuarter?.sbcVal) },
+            { label: 'Dividends Paid', val: fmt(data.dividendsPaidVal), delta: pctDelta(data.dividendsPaidVal, data.prevQuarter?.dividendsPaidVal) },
           ].map(r => (
             <tr key={r.label} className="border-b border-ws-border">
               <td className="py-1 text-ws-text-3 text-[10px]">{r.label}</td>
-              <td style={{ padding: '4px 0', textAlign: 'right', color: r.color || 'var(--ws-text)', fontSize: '11px', fontWeight: 500 }}>{r.val}</td>
+              <td style={{ padding: '4px 0', textAlign: 'right', color: r.color || 'var(--ws-text)', fontSize: '11px', fontWeight: 500 }}>{r.val}<DeltaTag value={r.delta} unit={r.deltaUnit ?? '%'} /></td>
             </tr>
           ))}
         </tbody>
@@ -1652,18 +1710,18 @@ export default function StockPage({ params }) {
       <table className="w-full border-collapse text-[11px]">
         <tbody>
           {[
-            { label: 'Total Assets', val: fmt(data.assetsVal) },
-            { label: 'Total Liabilities', val: fmt(data.totalLiabilitiesVal) },
-            { label: 'Equity', val: fmt(data.equityVal) },
-            { label: 'Net Debt', val: fmt(data.netDebt), color: data.netDebt < 0 ? 'var(--ws-accent)' : 'var(--ws-text)' },
-            { label: 'Cash', val: fmt(data.cashVal), color: 'var(--ws-accent)' },
-            { label: 'LT Debt', val: fmt(data.debtVal) },
-            { label: 'D/E Ratio', val: fmtN(data.debtToEquity), color: data.debtToEquity < 1 ? 'var(--ws-accent)' : data.debtToEquity < 2 ? 'var(--ws-text-2)' : 'var(--ws-red)' },
-            { label: 'Current Ratio', val: data.currentAssetsVal && data.currentLiabilitiesVal ? fmtN(data.currentAssetsVal / data.currentLiabilitiesVal) : 'N/A', color: data.currentAssetsVal / data.currentLiabilitiesVal > 2 ? 'var(--ws-accent)' : data.currentAssetsVal / data.currentLiabilitiesVal > 1 ? 'var(--ws-text-2)' : 'var(--ws-red)' },
+            { label: 'Total Assets', val: fmt(data.assetsVal), delta: pctDelta(data.assetsVal, data.prevQuarter?.assetsVal) },
+            { label: 'Total Liabilities', val: fmt(data.totalLiabilitiesVal), delta: pctDelta(data.totalLiabilitiesVal, data.prevQuarter?.totalLiabilitiesVal) },
+            { label: 'Equity', val: fmt(data.equityVal), delta: pctDelta(data.equityVal, data.prevQuarter?.equityVal) },
+            { label: 'Net Debt', val: fmt(data.netDebt), color: data.netDebt < 0 ? 'var(--ws-accent)' : 'var(--ws-text)', delta: pctDelta(data.netDebt, data.prevQuarter?.netDebt) },
+            { label: 'Cash', val: fmt(data.cashVal), color: 'var(--ws-accent)', delta: pctDelta(data.cashVal, data.prevQuarter?.cashVal) },
+            { label: 'LT Debt', val: fmt(data.debtVal), delta: pctDelta(data.debtVal, data.prevQuarter?.debtVal) },
+            { label: 'D/E Ratio', val: fmtN(data.debtToEquity), color: data.debtToEquity < 1 ? 'var(--ws-accent)' : data.debtToEquity < 2 ? 'var(--ws-text-2)' : 'var(--ws-red)', delta: pctDelta(data.debtToEquity, data.prevQuarter?.debtToEquity) },
+            { label: 'Current Ratio', val: data.currentAssetsVal && data.currentLiabilitiesVal ? fmtN(data.currentAssetsVal / data.currentLiabilitiesVal) : 'N/A', color: data.currentAssetsVal / data.currentLiabilitiesVal > 2 ? 'var(--ws-accent)' : data.currentAssetsVal / data.currentLiabilitiesVal > 1 ? 'var(--ws-text-2)' : 'var(--ws-red)', delta: pctDelta(data.currentAssetsVal && data.currentLiabilitiesVal ? data.currentAssetsVal / data.currentLiabilitiesVal : null, data.prevQuarter?.currentRatio) },
           ].map(r => (
             <tr key={r.label} className="border-b border-ws-border">
               <td className="py-1 text-ws-text-3 text-[10px]">{r.label}</td>
-              <td style={{ padding: '4px 0', textAlign: 'right', color: r.color || 'var(--ws-text)', fontSize: '11px', fontWeight: 500 }}>{r.val}</td>
+              <td style={{ padding: '4px 0', textAlign: 'right', color: r.color || 'var(--ws-text)', fontSize: '11px', fontWeight: 500 }}>{r.val}<DeltaTag value={r.delta} unit={r.deltaUnit ?? '%'} /></td>
             </tr>
           ))}
         </tbody>
@@ -1675,15 +1733,15 @@ export default function StockPage({ params }) {
       <table className="w-full border-collapse text-[11px]">
         <tbody>
           {[
-            { label: 'Cash Conv. Cycle', val: data.ccc != null ? `${data.ccc}d` : 'N/A', color: data.ccc != null && data.ccc < 30 ? 'var(--ws-accent)' : data.ccc != null && data.ccc < 60 ? 'var(--ws-text-2)' : data.ccc != null ? 'var(--ws-red)' : 'var(--ws-text-3)' },
-            { label: 'Inventory Turnover', val: data.inventoryTurnover != null ? fmtN(data.inventoryTurnover) : 'N/A', color: data.inventoryTurnover > 8 ? 'var(--ws-accent)' : data.inventoryTurnover > 4 ? 'var(--ws-text-2)' : 'var(--ws-text)' },
-            { label: 'DSO', val: data.dso != null ? `${data.dso}d` : 'N/A' },
-            { label: 'DIO', val: data.dio != null ? `${data.dio}d` : 'N/A' },
-            { label: 'DPO', val: data.dpo != null ? `${data.dpo}d` : 'N/A' },
+            { label: 'Cash Conv. Cycle', val: data.ccc != null ? `${data.ccc}d` : 'N/A', color: data.ccc != null && data.ccc < 30 ? 'var(--ws-accent)' : data.ccc != null && data.ccc < 60 ? 'var(--ws-text-2)' : data.ccc != null ? 'var(--ws-red)' : 'var(--ws-text-3)', delta: pctDelta(data.ccc, data.prevQuarter?.ccc) },
+            { label: 'Inventory Turnover', val: data.inventoryTurnover != null ? fmtN(data.inventoryTurnover) : 'N/A', color: data.inventoryTurnover > 8 ? 'var(--ws-accent)' : data.inventoryTurnover > 4 ? 'var(--ws-text-2)' : 'var(--ws-text)', delta: pctDelta(data.inventoryTurnover, data.prevQuarter?.inventoryTurnover) },
+            { label: 'DSO', val: data.dso != null ? `${data.dso}d` : 'N/A', delta: pctDelta(data.dso, data.prevQuarter?.dso) },
+            { label: 'DIO', val: data.dio != null ? `${data.dio}d` : 'N/A', delta: pctDelta(data.dio, data.prevQuarter?.dio) },
+            { label: 'DPO', val: data.dpo != null ? `${data.dpo}d` : 'N/A', delta: pctDelta(data.dpo, data.prevQuarter?.dpo) },
           ].map(r => (
             <tr key={r.label} className="border-b border-ws-border">
               <td className="py-1 text-ws-text-3 text-[10px]">{r.label}</td>
-              <td style={{ padding: '4px 0', textAlign: 'right', color: r.color || 'var(--ws-text)', fontSize: '11px', fontWeight: 500 }}>{r.val}</td>
+              <td style={{ padding: '4px 0', textAlign: 'right', color: r.color || 'var(--ws-text)', fontSize: '11px', fontWeight: 500 }}>{r.val}<DeltaTag value={r.delta} unit={r.deltaUnit ?? '%'} /></td>
             </tr>
           ))}
         </tbody>
@@ -1698,15 +1756,15 @@ export default function StockPage({ params }) {
     <div className="text-ws-text-3 text-[10px] tracking-[2px] mb-3">PER SHARE & MARKET DATA</div>
     <div className="per-share-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: '10px' }}>
       {[
-        { label: 'EPS (TTM)', val: data.eps ? `${curSym(data.currency)}${data.eps}` : 'N/A' },
-        { label: 'Shs Outstanding', val: data.sharesOutstanding ? `${(data.sharesOutstanding / 1e6).toFixed(0)}M` : 'N/A' },
+        { label: 'EPS (TTM)', val: data.eps ? `${curSym(data.currency)}${data.eps}` : 'N/A', delta: pctDelta(data.eps, data.prevQuarter?.eps) },
+        { label: 'Shs Outstanding', val: data.sharesOutstanding ? `${(data.sharesOutstanding / 1e6).toFixed(0)}M` : 'N/A', delta: pctDelta(data.sharesOutstanding, data.prevQuarter?.sharesOutstanding) },
         { label: 'Beta', val: fmtN(data.beta) },
         { label: '52W High', val: data.high52 ? `${curSym(data.currency)}${data.high52}` : 'N/A' },
         { label: '52W Low', val: data.low52 ? `${curSym(data.currency)}${data.low52}` : 'N/A' },
       ].map(r => (
         <div key={r.label} style={{ background: 'var(--ws-bg-2)', padding: '12px' }}>
           <div className="text-ws-text-3 text-[10px] tracking-[1px] mb-1.5">{r.label}</div>
-          <div style={{ color: 'var(--ws-text)', fontSize: '13px', fontWeight: 600 }}>{r.val}</div>
+          <div style={{ color: 'var(--ws-text)', fontSize: '13px', fontWeight: 600, display: 'flex', alignItems: 'baseline' }}>{r.val}<DeltaTag value={r.delta} unit={r.deltaUnit ?? '%'} /></div>
         </div>
       ))}
     </div>

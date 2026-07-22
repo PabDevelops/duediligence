@@ -575,6 +575,70 @@ async function fetchRiskFreeRate() {
   }
 }
 
+// "Since last earnings" reaction badge: % move in price from the last close before the most
+// recent earnings report to right now. Finnhub's earnings calendar gives the report date and
+// whether it landed before/after market hours; Yahoo's unauthenticated chart endpoint (same one
+// fetchYahooQuote already uses) supplies the historical daily close to measure from. Only wired
+// into the two USD/Finnhub-quote branches below (plain tickers, no exchange suffix) — the
+// international '.'-suffix branch prices in a different currency via Yahoo directly, and mixing
+// that converted currentPrice against this function's raw-currency historical close would
+// silently misprice the reaction for those tickers. Never throws — this is a nice-to-have badge,
+// not something that should ever break the stock page.
+async function fetchEarningsReaction(ticker, currentPrice) {
+  if (!currentPrice) return null;
+  try {
+    const today = new Date().toISOString().slice(0, 10);
+    const from = new Date(Date.now() - 200 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10);
+    const calRes = await fetch(
+      `https://finnhub.io/api/v1/calendar/earnings?symbol=${ticker}&from=${from}&to=${today}&token=${FH_KEY}`,
+      { headers: { 'User-Agent': 'Mozilla/5.0' } }
+    );
+    if (!calRes.ok) return null;
+    const calData = await calRes.json().catch(() => ({}));
+    const last = (calData.earningsCalendar || [])
+      .filter(e => e.symbol === ticker && e.date && e.date <= today)
+      .sort((a, b) => b.date.localeCompare(a.date))[0];
+    if (!last) return null;
+
+    // BMO (before market open): the close the trading day *before* the report is still the
+    // pre-reaction price. AMC/DMH (after close / during hours): the market had already closed
+    // (or was already trading) by the time of the report, so that same day's close is the
+    // pre-reaction reference instead.
+    const cutoff = last.hour === 'bmo'
+      ? new Date(new Date(last.date + 'T00:00:00Z').getTime() - 24 * 60 * 60 * 1000).toISOString().slice(0, 10)
+      : last.date;
+
+    const period1 = Math.floor(new Date(cutoff + 'T00:00:00Z').getTime() / 1000) - 6 * 24 * 60 * 60;
+    const period2 = Math.floor(Date.now() / 1000);
+    const chartRes = await fetch(
+      `https://query1.finance.yahoo.com/v8/finance/chart/${ticker}?period1=${period1}&period2=${period2}&interval=1d`,
+      { headers: { 'User-Agent': 'Mozilla/5.0' } }
+    );
+    if (!chartRes.ok) return null;
+    const chartData = await chartRes.json().catch(() => null);
+    const chartResult = chartData?.chart?.result?.[0];
+    const timestamps = chartResult?.timestamp;
+    const closes = chartResult?.indicators?.quote?.[0]?.close;
+    if (!timestamps || !closes) return null;
+
+    let refClose = null;
+    for (let i = 0; i < timestamps.length; i++) {
+      const day = new Date(timestamps[i] * 1000).toISOString().slice(0, 10);
+      if (day <= cutoff && closes[i] != null) refClose = closes[i];
+    }
+    if (refClose == null) return null;
+
+    return {
+      date: last.date,
+      hour: last.hour || null,
+      priceBefore: +refClose.toFixed(2),
+      pctChange: +(((currentPrice - refClose) / refClose) * 100).toFixed(2),
+    };
+  } catch (e) {
+    return null;
+  }
+}
+
 function normalizeStockData(data) {
   if (!data) return data;
   if (data.equityVal != null && (data.debtToEquity == null || data.debtVal == null)) {
@@ -972,6 +1036,7 @@ export async function GET(request) {
         yahooFundamentals: !!yh,
       };
 
+      result.earningsReaction = await fetchEarningsReaction(ticker, result.currentPrice);
       result.isEtf = cachedIsEtf;
       const valCountFallback = [result.revVal, result.niVal, result.fcfVal, result.assetsVal, result.debtVal, result.cashVal].filter(v => v !== null).length;
       const isEtfFallback = result.sector === 'ETF' || result.industry === 'ETF';
@@ -1033,6 +1098,39 @@ export async function GET(request) {
       return null;
     };
 
+    // Balance-sheet ("instant") concepts have no start date and no cumulative-vs-discrete
+    // ambiguity (see ttmVal below for what that means for flow concepts) — the most recently
+    // reported balance, whether from a 10-K or a 10-Q, is simply the current one. getMetric()
+    // above restricts to 10-K/20-F only; without that, income-statement flow concepts would
+    // let a short-duration 10-Q fact slip through. This is the balance-sheet counterpart that
+    // also accepts 10-Q/10-Q/A, so assets, equity, debt, cash, inventory, receivables and
+    // payables don't sit frozen at the last fiscal year-end for up to a year after a fresher
+    // balance sheet has already been filed. Returns the full sorted series (not just the
+    // latest point) so cash below can pair its short-term-investments add-on to the exact same
+    // reporting date instead of whatever date that concept was *last* tagged on.
+    const instantSeries = (keys) => {
+      for (const key of keys) {
+        const metric = usgaap[key];
+        if (!metric) continue;
+        const units = metric.units?.USD || metric.units?.EUR || metric.units?.shares || metric.units?.pure;
+        if (!units) continue;
+        const periods = units
+          .filter(u => ['10-K', '20-F', '10-K/A', '20-F/A', '10-Q', '10-Q/A'].includes(u.form) && u.end)
+          .sort((a, b) => b.end.localeCompare(a.end));
+        if (periods.length === 0) continue;
+        if (recencyAnchor) {
+          const gapYears = (new Date(recencyAnchor) - new Date(periods[0].end)) / (1000 * 60 * 60 * 24 * 365.25);
+          if (gapYears > 3) continue;
+        }
+        return periods;
+      }
+      return null;
+    };
+    const latestInstant = (keys) => instantSeries(keys)?.[0] ?? null;
+    // The balance as of the filing immediately before the latest one — "before last earnings"
+    // for a point-in-time concept is simply the previous point in the same series.
+    const latestInstantBefore = (keys) => instantSeries(keys)?.[1] ?? null;
+
     // Same key-preference lookup as getMetric, but keeps 10-Q periods too (still sorted
     // newest-end-first) — the raw material ttmVal below needs to roll a stale annual figure
     // forward.
@@ -1053,38 +1151,94 @@ export async function GET(request) {
     const daysBetween = (a, b) => Math.abs(new Date(a) - new Date(b)) / (1000 * 60 * 60 * 24);
     const oneYearBefore = (d) => { const nd = new Date(d); nd.setFullYear(nd.getFullYear() - 1); return nd; };
 
-    // Trailing-twelve-month figure for a cash-flow-statement line item (operating cash flow,
-    // capex, SBC): the latest full fiscal year (10-K) rolled forward by whatever 10-Q filings
-    // have landed since, instead of freezing at the last annual report for up to a year.
+    // Trailing-twelve-month figure for a flow concept (cash flow, revenue, income-statement
+    // lines): the latest full fiscal year (10-K) rolled forward by whatever 10-Q filings have
+    // landed since, instead of freezing at the last annual report for up to a year.
     // Verified against real data: MU's FY2025 10-K (ended Aug 2025) reported $1.7B FCF, right
     // at the trough of the memory-price downcycle — getMetric alone kept every consumer of
     // fcfVal (relative-valuation fair value, DCF, P/FCF) anchored to that trough for months
     // after two blowout AI/HBM-driven quarters had already been reported, producing a ~96%
     // "downside" that was really a stale-denominator artifact, not a real valuation signal.
+    // Same staleness bug hit revenue/net income/margins: DPZ's Q2 2026 10-Q (filed same day as
+    // its earnings release) sat unused for the ~7 months until the next 10-K, so every margin,
+    // ROE/ROA/ROIC and revGrowth reading on the page stayed anchored to FY2025 numbers through
+    // an entire freshly-reported quarter.
+    //
     // Cash-flow-statement lines are always YTD-cumulative in 10-Qs (an SEC presentation
-    // requirement), so "this year's YTD minus the same period last year, plus the last full
-    // FY" is a clean TTM delta — unlike income-statement lines, there's no discrete-vs-
-    // cumulative ambiguity to resolve first. Falls back to the plain annual figure whenever a
-    // newer interim period — or its prior-year comparative — can't be confidently matched
-    // (fiscal-year change, thinly-tagged filer, etc.), so every filer without fresher 10-Q
-    // data keeps the exact old behavior.
-    const ttmVal = (keys) => {
+    // requirement); income-statement lines aren't — a filer can tag both a discrete-quarter
+    // fact (start = quarter start) and a YTD-cumulative fact (start = fiscal-year start) under
+    // the very same concept, sharing the same `end`. Picking the entry with the earliest start
+    // whenever `end` ties always selects the YTD-cumulative one (the longer of the two
+    // periods), which is what the fy-minus-priorYtd-plus-curYtd delta below needs — for
+    // cash-flow concepts, where no discrete-quarter variant exists, this tie-break is a no-op.
+    // Falls back to the plain annual figure whenever a newer interim period — or its
+    // prior-year comparative — can't be confidently matched (fiscal-year change, thinly-tagged
+    // filer, etc.), so every filer without fresher 10-Q data keeps the exact old behavior.
+    const resolveYtd = (keys) => {
       const periods = getMetricAllPeriods(keys);
       if (!periods || !periods.length) return null;
       const fy = periods.find(u => ['10-K', '20-F', '10-K/A', '20-F/A'].includes(u.form) && daysBetween(u.start, u.end) >= 300);
-      if (!fy) return periods[0]?.val ?? null;
+      if (!fy) return { periods, fy: null, curYtd: null, priorYtd: null, prevQtd: null, prevQtdPriorYear: null };
 
-      const curYtd = periods
-        .filter(u => u.form.startsWith('10-Q') && new Date(u.end) > new Date(fy.end) && daysBetween(u.start, u.end) < 300)
-        .sort((a, b) => b.end.localeCompare(a.end))[0];
-      if (!curYtd) return fy.val;
+      const findYtdMatch = (target) => target ? (periods.find(u => u.form.startsWith('10-Q')
+        && daysBetween(u.end, oneYearBefore(target.end)) < 40
+        && daysBetween(u.start, oneYearBefore(target.start)) < 40) || null) : null;
 
-      const priorYtd = periods.find(u => u.form.startsWith('10-Q')
-        && daysBetween(u.end, oneYearBefore(curYtd.end)) < 40
-        && daysBetween(u.start, oneYearBefore(curYtd.start)) < 40);
-      if (!priorYtd) return fy.val;
+      const candidates = periods.filter(u => u.form.startsWith('10-Q') && new Date(u.end) > new Date(fy.end) && daysBetween(u.start, u.end) < 300);
+      const maxEnd = candidates.reduce((max, u) => (!max || u.end > max) ? u.end : max, null);
+      const curYtd = candidates.filter(u => u.end === maxEnd).sort((a, b) => a.start.localeCompare(b.start))[0] || null;
+      const priorYtd = findYtdMatch(curYtd);
 
-      return fy.val - priorYtd.val + curYtd.val;
+      // Same-fiscal-year cumulative fact ending just before curYtd — "YTD through the previous
+      // quarter." Sharing curYtd.start (within a few days) is what tells it apart from a
+      // discrete-quarter-only fact for that same earlier date. Used to derive the TTM figure as
+      // it stood immediately before the latest earnings report landed (ttmValBefore below), for
+      // a "what did this earnings report move" QoQ delta instead of only a snapshot.
+      const prevQtdCandidates = curYtd
+        ? periods.filter(u => u.form.startsWith('10-Q') && daysBetween(u.start, curYtd.start) < 10
+          && new Date(u.end) < new Date(curYtd.end) && daysBetween(u.start, u.end) < 300)
+        : [];
+      const prevQtdMaxEnd = prevQtdCandidates.reduce((max, u) => (!max || u.end > max) ? u.end : max, null);
+      const prevQtd = prevQtdCandidates.filter(u => u.end === prevQtdMaxEnd).sort((a, b) => a.start.localeCompare(b.start))[0] || null;
+      const prevQtdPriorYear = findYtdMatch(prevQtd);
+
+      return { periods, fy, curYtd, priorYtd, prevQtd, prevQtdPriorYear };
+    };
+
+    // TTM as it stood immediately before the most recent earnings report — same fy-minus-
+    // priorYear-plus-interim shape as ttmVal, just anchored one quarter earlier (prevQtd
+    // instead of curYtd). No prevQtd within the current fiscal year means the latest earnings
+    // *was* the fiscal Q1 report, so "before" it is simply the last full FY figure.
+    const ttmValBefore = (keys) => {
+      const r = resolveYtd(keys);
+      if (!r || !r.fy) return null;
+      if (!r.prevQtd || !r.prevQtdPriorYear) return r.fy.val;
+      return r.fy.val - r.prevQtdPriorYear.val + r.prevQtd.val;
+    };
+
+    // Same idea as ttmGrowth, but the YoY comparison one quarter earlier — the growth rate as
+    // it stood immediately before the latest earnings report.
+    const ttmGrowthBefore = (keys) => {
+      const r = resolveYtd(keys);
+      if (!r?.prevQtd || !r?.prevQtdPriorYear?.val) return null;
+      return +(((r.prevQtd.val - r.prevQtdPriorYear.val) / Math.abs(r.prevQtdPriorYear.val)) * 100).toFixed(1);
+    };
+
+    const ttmVal = (keys) => {
+      const r = resolveYtd(keys);
+      if (!r) return null;
+      if (!r.fy) return r.periods[0]?.val ?? null;
+      if (!r.curYtd || !r.priorYtd) return r.fy.val;
+      return r.fy.val - r.priorYtd.val + r.curYtd.val;
+    };
+
+    // YoY growth off the freshest comparable period (this interim YTD vs the same YTD window
+    // last year) — reflects a new 10-Q the same day it lands, instead of an annual-vs-annual
+    // comparison that only updates once a year at the next 10-K.
+    const ttmGrowth = (keys) => {
+      const r = resolveYtd(keys);
+      if (!r?.curYtd || !r?.priorYtd?.val) return null;
+      return +(((r.curYtd.val - r.priorYtd.val) / Math.abs(r.priorYtd.val)) * 100).toFixed(1);
     };
 
     const getEPS = () => {
@@ -1215,10 +1369,15 @@ export async function GET(request) {
     }
     const freeCashFlows = (cashFlows || []).map(u => ({ ...u, val: u.val - (capexByEnd.get(u.end) ?? 0) }));
 
-    const revVal   = latest(revenues);
+    // Income-statement scalars: rolled forward from the last 10-K to the freshest 10-Q via
+    // ttmVal (same technique as the cash-flow figures below), so a same-day-filed 10-Q is
+    // reflected immediately instead of only at the next 10-K. revHistory/niHistory/etc. below
+    // stay sourced from the plain annual arrays — this only freshens the "current" scalars
+    // that drive margins, ROE/ROA/ROIC, DSO/DIO/DPO/CCC and revGrowth.
+    const revVal   = ttmVal(['RevenueFromContractWithCustomerExcludingAssessedTax','Revenues','SalesRevenueNet','RevenueFromContractWithCustomerIncludingAssessedTax']) ?? latest(revenues);
     const revPrev  = prev(revenues);
-    const niVal    = latest(netIncomes);
-    const oiVal    = latest(operatingIncomes);
+    const niVal    = ttmVal(['NetIncomeLoss']) ?? latest(netIncomes);
+    const oiVal    = ttmVal(['OperatingIncomeLoss', 'IncomeLossFromContinuingOperationsBeforeIncomeTaxesExtraordinaryItemsNoncontrollingInterest']) ?? latest(operatingIncomes);
     // TTM (see ttmVal above) whenever a fresher one can be confidently rolled forward;
     // capexTTM only applies to the *scalar* OCF - capex used for fcfVal below, not to
     // freeCashFlows/fcfHistory's annual series, which stays a plain 10-K-by-10-K history.
@@ -1228,33 +1387,56 @@ export async function GET(request) {
     const fcfVal = (operatingCFValTTM != null && capexValTTM != null)
       ? operatingCFValTTM - capexValTTM
       : latest(freeCashFlows);
-    const assetsVal = latest(assets);
-    const equityVal = latest(equity);
-    const debtVal  = latest(debt);
-    const cashVal  = latest(cash);
-    const sharesVal = latest(shares);
-    const gpVal    = latest(grossProfit);
-    const rdVal    = latest(rd);
-    const cogsVal  = latest(cogs);
-    const sgaVal   = latest(sga);
-    const ebtVal   = latest(ebt);
-    const taxVal   = latest(tax);
-    const interestVal = latest(interestExp);
+    // Balance-sheet scalars: widened to the freshest 10-Q balance via latestInstant (see its
+    // comment above), not just the last 10-K — same freshness gap as the income-statement
+    // scalars above, but simpler to close since instant facts have no discrete-vs-cumulative
+    // ambiguity to resolve first. debtHistory/equityHistory/etc. below stay sourced from the
+    // plain annual arrays, same as revHistory.
+    const assetsVal = latestInstant(['Assets'])?.val ?? latest(assets);
+    const equityVal = latestInstant([
+      'StockholdersEquity',
+      'StockholdersEquityIncludingPortionAttributableToNoncontrollingInterest',
+      'PartnersCapital',
+      'PartnersCapitalIncludingPortionAttributableToNoncontrollingInterest',
+      'MembersEquity',
+    ])?.val ?? latest(equity);
+    const debtVal  = latestInstant([
+      'LongTermDebt','LongTermDebtNoncurrent','DebtLongtermAndShorttermCombinedAmount',
+      'LongTermDebtAndCapitalLeaseObligations','ConvertibleNotesPayable','ConvertibleDebtNoncurrent',
+      'ConvertibleLongTermNotesPayable','NotesPayableNoncurrent','SecuredDebtNoncurrent','UnsecuredDebtNoncurrent',
+      'OperatingLeaseLiabilityNoncurrent','FinanceLeaseLiabilityNoncurrent',
+    ])?.val ?? latest(debt);
+    // Same cash + short-term-investments merge as the `cash` array above, but matched off the
+    // 10-Q-inclusive instant series so a fresher cash balance isn't left paired with a
+    // short-term-investments figure that's a year stale (or vice versa).
+    const cashNarrowInstant = instantSeries(['CashAndCashEquivalentsAtCarryingValue']);
+    const shortTermInvestmentsInstantByEnd = new Map((instantSeries(['ShortTermInvestments', 'MarketableSecuritiesCurrent', 'AvailableForSaleSecuritiesCurrent']) || []).map(u => [u.end, u.val]));
+    const cashVal = cashNarrowInstant
+      ? cashNarrowInstant[0].val + (shortTermInvestmentsInstantByEnd.get(cashNarrowInstant[0].end) ?? 0)
+      : (instantSeries(['CashCashEquivalentsAndShortTermInvestments'])?.[0]?.val ?? latest(cash));
+    const sharesVal = latestInstant(['CommonStockSharesOutstanding','WeightedAverageNumberOfSharesOutstandingBasic'])?.val ?? latest(shares);
+    const gpVal    = ttmVal(['GrossProfit']) ?? latest(grossProfit);
+    const rdVal    = ttmVal(['ResearchAndDevelopmentExpense']) ?? latest(rd);
+    const cogsVal  = ttmVal(['CostOfRevenue','CostOfGoodsAndServicesSold']) ?? latest(cogs);
+    const sgaVal   = ttmVal(['SellingGeneralAndAdministrativeExpense','SellingAndMarketingExpense']) ?? latest(sga);
+    const ebtVal   = ttmVal(['IncomeLossFromContinuingOperationsBeforeIncomeTaxesExtraordinaryItemsNoncontrollingInterest']) ?? latest(ebt);
+    const taxVal   = ttmVal(['IncomeTaxExpenseBenefit']) ?? latest(tax);
+    const interestVal = ttmVal(['InterestExpense','InterestAndDebtExpense']) ?? latest(interestExp);
     const sharesBasicVal = latest(sharesBasic);
     const sharesDilutedVal = latest(sharesDiluted);
-    const currentAssetsVal = latest(currentAssets);
-    const currentLiabilitiesVal = latest(currentLiabilities);
-    const totalLiabilitiesVal = latest(totalLiabilities);
-    const retainedEarningsVal = latest(retainedEarnings);
+    const currentAssetsVal = latestInstant(['AssetsCurrent'])?.val ?? latest(currentAssets);
+    const currentLiabilitiesVal = latestInstant(['LiabilitiesCurrent'])?.val ?? latest(currentLiabilities);
+    const totalLiabilitiesVal = latestInstant(['Liabilities'])?.val ?? latest(totalLiabilities);
+    const retainedEarningsVal = latestInstant(['RetainedEarningsAccumulatedDeficit'])?.val ?? latest(retainedEarnings);
     const capexVal = capexValTTM ?? latest(capex);
-    const inventoryVal = latest(inventory);
-    const receivablesVal = latest(receivables);
-    const payablesVal = latest(payables);
+    const inventoryVal = latestInstant(['InventoryNet','InventoryGross'])?.val ?? latest(inventory);
+    const receivablesVal = latestInstant(['AccountsReceivableNetCurrent','ReceivablesNetCurrent'])?.val ?? latest(receivables);
+    const payablesVal = latestInstant(['AccountsPayableCurrent', 'AccountsPayable', 'AccountsPayableAndAccruedLiabilitiesCurrent'])?.val ?? latest(payables);
     const sbcVal   = ttmVal(['ShareBasedCompensation', 'AllocatedShareBasedCompensationExpense']) ?? latest(sbc);
-    const daVal    = latest(da);
+    const daVal    = ttmVal(['DepreciationDepletionAndAmortization','DepreciationAndAmortization','Depreciation']) ?? latest(da);
     const dividendsPaidVal = latest(dividendsPaid);
-    const investingCFVal = latest(investingActivities);
-    const financingCFVal = latest(financingActivities);
+    const investingCFVal = ttmVal(['NetCashProvidedByUsedInInvestingActivities']) ?? latest(investingActivities);
+    const financingCFVal = ttmVal(['NetCashProvidedByUsedInFinancingActivities']) ?? latest(financingActivities);
 
     const dso = receivablesVal && revVal ? +((receivablesVal / revVal) * 365).toFixed(1) : null;
     const dio = inventoryVal && cogsVal ? +((inventoryVal / cogsVal) * 365).toFixed(1) : null;
@@ -1265,7 +1447,11 @@ export async function GET(request) {
     const opMargin    = revVal && oiVal ? +((oiVal / revVal) * 100).toFixed(1) : null;
     const netMargin   = revVal && niVal ? +((niVal / revVal) * 100).toFixed(1) : null;
     const grossMargin = revVal && gpVal ? +((gpVal / revVal) * 100).toFixed(1) : null;
-    const revGrowth   = revVal && revPrev ? +(((revVal - revPrev) / Math.abs(revPrev)) * 100).toFixed(1) : null;
+    // Prefers the freshest interim YoY comparison (this YTD vs the same YTD last year) so
+    // revenue growth updates with each 10-Q instead of sitting fixed between 10-Ks; falls back
+    // to the plain annual-vs-annual comparison when no fresher interim data is available.
+    const revGrowth   = ttmGrowth(['RevenueFromContractWithCustomerExcludingAssessedTax','Revenues','SalesRevenueNet','RevenueFromContractWithCustomerIncludingAssessedTax'])
+      ?? (revVal && revPrev ? +(((revVal - revPrev) / Math.abs(revPrev)) * 100).toFixed(1) : null);
     const roe         = equityVal && niVal ? +((niVal / equityVal) * 100).toFixed(1) : null;
     const roa         = assetsVal && niVal ? +((niVal / assetsVal) * 100).toFixed(1) : null;
     const effectiveDebtVal = equityVal != null ? (debtVal ?? 0) : debtVal;
@@ -1344,6 +1530,100 @@ const sharesForCalc = sharesValAdj || sharesFinnhub;
     const ebitdaFinal  = ebitdaCalc ?? ebitdaFh;
     const evEbitda     = marketCapFinal != null && ebitdaFinal ? +((marketCapFinal + netDebt) / ebitdaFinal).toFixed(1) : null;
     const priceToBook  = marketCapFinal && equityVal && equityVal > 0 ? +(marketCapFinal / equityVal).toFixed(2) : null;
+
+    // "Since last earnings" QoQ snapshot for the Quality/Financials tabs — every fundamental
+    // figure as it stood immediately before the most recent 10-Q, computed with the exact same
+    // formulas as the "now" figures above (just sourced one quarter earlier via ttmValBefore/
+    // latestInstantBefore), so the frontend can show what the last earnings report actually
+    // moved instead of only a point-in-time snapshot. Individual fields stay null rather than
+    // fabricating a comparison when there's no genuine prior quarter (a filer's first 10-Q, or
+    // one with only annual data).
+    const earningsReaction = await fetchEarningsReaction(ticker, currentPrice);
+    const priceBefore = earningsReaction?.priceBefore ?? null;
+
+    const revValBefore = ttmValBefore(['RevenueFromContractWithCustomerExcludingAssessedTax','Revenues','SalesRevenueNet','RevenueFromContractWithCustomerIncludingAssessedTax']);
+    const niValBefore = ttmValBefore(['NetIncomeLoss']);
+    const oiValBefore = ttmValBefore(['OperatingIncomeLoss', 'IncomeLossFromContinuingOperationsBeforeIncomeTaxesExtraordinaryItemsNoncontrollingInterest']);
+    const gpValBefore = ttmValBefore(['GrossProfit']);
+    const cogsValBefore = ttmValBefore(['CostOfRevenue','CostOfGoodsAndServicesSold']);
+    const daValBefore = ttmValBefore(['DepreciationDepletionAndAmortization','DepreciationAndAmortization','Depreciation']);
+    const sbcValBefore = ttmValBefore(['ShareBasedCompensation', 'AllocatedShareBasedCompensationExpense']);
+    const dividendsPaidValBefore = ttmValBefore(['PaymentsOfDividends','PaymentsOfDividendsCommonStock']);
+    const operatingCFValBefore = ttmValBefore(['NetCashProvidedByUsedInOperatingActivities']);
+    const capexValBefore = ttmValBefore(['PaymentsToAcquirePropertyPlantAndEquipment', 'CapitalExpenditureDiscontinuedOperations', 'PaymentsForProceedsFromProductiveAssets', 'PaymentsToAcquireProductiveAssets']);
+    const fcfValBefore = operatingCFValBefore != null && capexValBefore != null ? operatingCFValBefore - capexValBefore : null;
+
+    const assetsValBefore = latestInstantBefore(['Assets'])?.val ?? null;
+    const equityValBefore = latestInstantBefore([
+      'StockholdersEquity', 'StockholdersEquityIncludingPortionAttributableToNoncontrollingInterest',
+      'PartnersCapital', 'PartnersCapitalIncludingPortionAttributableToNoncontrollingInterest', 'MembersEquity',
+    ])?.val ?? null;
+    const debtValBeforeRaw = latestInstantBefore([
+      'LongTermDebt', 'LongTermDebtNoncurrent', 'DebtLongtermAndShorttermCombinedAmount',
+      'LongTermDebtAndCapitalLeaseObligations', 'ConvertibleNotesPayable', 'ConvertibleDebtNoncurrent',
+      'ConvertibleLongTermNotesPayable', 'NotesPayableNoncurrent', 'SecuredDebtNoncurrent', 'UnsecuredDebtNoncurrent',
+      'OperatingLeaseLiabilityNoncurrent', 'FinanceLeaseLiabilityNoncurrent',
+    ])?.val ?? null;
+    const effectiveDebtValBefore = equityValBefore != null ? (debtValBeforeRaw ?? 0) : debtValBeforeRaw;
+    const cashNarrowInstantSeries = instantSeries(['CashAndCashEquivalentsAtCarryingValue']);
+    const shortTermInvestmentsInstantByEndAll = new Map((instantSeries(['ShortTermInvestments', 'MarketableSecuritiesCurrent', 'AvailableForSaleSecuritiesCurrent']) || []).map(u => [u.end, u.val]));
+    const cashValBefore = cashNarrowInstantSeries?.[1]
+      ? cashNarrowInstantSeries[1].val + (shortTermInvestmentsInstantByEndAll.get(cashNarrowInstantSeries[1].end) ?? 0)
+      : (instantSeries(['CashCashEquivalentsAndShortTermInvestments'])?.[1]?.val ?? null);
+    const currentAssetsValBefore = latestInstantBefore(['AssetsCurrent'])?.val ?? null;
+    const currentLiabilitiesValBefore = latestInstantBefore(['LiabilitiesCurrent'])?.val ?? null;
+    const totalLiabilitiesValBefore = latestInstantBefore(['Liabilities'])?.val ?? null;
+    const inventoryValBefore = latestInstantBefore(['InventoryNet', 'InventoryGross'])?.val ?? null;
+    const receivablesValBefore = latestInstantBefore(['AccountsReceivableNetCurrent', 'ReceivablesNetCurrent'])?.val ?? null;
+    const payablesValBefore = latestInstantBefore(['AccountsPayableCurrent', 'AccountsPayable', 'AccountsPayableAndAccruedLiabilitiesCurrent'])?.val ?? null;
+    const sharesValBeforeRaw = latestInstantBefore(['CommonStockSharesOutstanding', 'WeightedAverageNumberOfSharesOutstandingBasic'])?.val ?? null;
+    const sharesForCalcBefore = sharesValBeforeRaw != null
+      ? (sharesValBeforeRaw < 1e6 ? sharesValBeforeRaw * 1e6 : sharesValBeforeRaw)
+      : null;
+
+    const dsoBefore = receivablesValBefore && revValBefore ? +((receivablesValBefore / revValBefore) * 365).toFixed(1) : null;
+    const dioBefore = inventoryValBefore && cogsValBefore ? +((inventoryValBefore / cogsValBefore) * 365).toFixed(1) : null;
+    const dpoBefore = payablesValBefore && cogsValBefore ? +((payablesValBefore / cogsValBefore) * 365).toFixed(1) : null;
+    const cccBefore = dsoBefore !== null && dioBefore !== null && dpoBefore !== null ? +(dsoBefore + dioBefore - dpoBefore).toFixed(1) : null;
+    const inventoryTurnoverBefore = cogsValBefore && inventoryValBefore ? +(cogsValBefore / inventoryValBefore).toFixed(2) : null;
+    const currentRatioBefore = currentAssetsValBefore != null && currentLiabilitiesValBefore ? +(currentAssetsValBefore / currentLiabilitiesValBefore).toFixed(2) : null;
+
+    const opMarginBefore = revValBefore && oiValBefore != null ? +((oiValBefore / revValBefore) * 100).toFixed(1) : null;
+    const netMarginBefore = revValBefore && niValBefore != null ? +((niValBefore / revValBefore) * 100).toFixed(1) : null;
+    const grossMarginBefore = revValBefore && gpValBefore != null ? +((gpValBefore / revValBefore) * 100).toFixed(1) : null;
+    const revGrowthBefore = ttmGrowthBefore(['RevenueFromContractWithCustomerExcludingAssessedTax','Revenues','SalesRevenueNet','RevenueFromContractWithCustomerIncludingAssessedTax']);
+    const roeBefore = equityValBefore && niValBefore != null ? +((niValBefore / equityValBefore) * 100).toFixed(1) : null;
+    const roaBefore = assetsValBefore && niValBefore != null ? +((niValBefore / assetsValBefore) * 100).toFixed(1) : null;
+    const investedCapitalBefore = (equityValBefore ?? 0) + (effectiveDebtValBefore ?? 0);
+    const roicBefore = investedCapitalBefore > 0 && oiValBefore != null ? +((oiValBefore / investedCapitalBefore) * 100).toFixed(1) : null;
+    const debtToEquityBefore = equityValBefore && effectiveDebtValBefore != null ? +(effectiveDebtValBefore / equityValBefore).toFixed(2) : null;
+    const netDebtBefore = equityValBefore != null || debtValBeforeRaw != null ? (effectiveDebtValBefore ?? 0) - (cashValBefore ?? 0) : null;
+
+    const epsBefore = niValBefore != null && sharesForCalcBefore ? +(niValBefore / sharesForCalcBefore).toFixed(2) : null;
+    const peBefore = epsBefore && priceBefore ? +(priceBefore / epsBefore).toFixed(2) : null;
+    const marketCapBefore = priceBefore && sharesForCalcBefore ? priceBefore * sharesForCalcBefore : null;
+    const ebitdaBefore = oiValBefore != null && daValBefore != null ? oiValBefore + daValBefore : null;
+    const evEbitdaBefore = marketCapBefore != null && ebitdaBefore ? +((marketCapBefore + (netDebtBefore ?? 0)) / ebitdaBefore).toFixed(1) : null;
+    const priceToBookBefore = marketCapBefore && equityValBefore && equityValBefore > 0 ? +(marketCapBefore / equityValBefore).toFixed(2) : null;
+    const pfcfBefore = marketCapBefore && fcfValBefore && fcfValBefore > 0 ? +(marketCapBefore / fcfValBefore).toFixed(1) : null;
+    const fcfYieldBefore = marketCapBefore && fcfValBefore ? +((fcfValBefore / marketCapBefore) * 100).toFixed(2) : null;
+
+    const prevQuarter = {
+      date: earningsReaction?.date ?? null,
+      revVal: revValBefore, niVal: niValBefore, oiVal: oiValBefore, gpVal: gpValBefore, fcfVal: fcfValBefore,
+      operatingCFVal: operatingCFValBefore, capexVal: capexValBefore,
+      assetsVal: assetsValBefore, equityVal: equityValBefore, debtVal: effectiveDebtValBefore, cashVal: cashValBefore,
+      currentAssetsVal: currentAssetsValBefore, currentLiabilitiesVal: currentLiabilitiesValBefore,
+      totalLiabilitiesVal: totalLiabilitiesValBefore,
+      inventoryVal: inventoryValBefore, receivablesVal: receivablesValBefore, payablesVal: payablesValBefore,
+      sbcVal: sbcValBefore, dividendsPaidVal: dividendsPaidValBefore,
+      dso: dsoBefore, dio: dioBefore, dpo: dpoBefore, ccc: cccBefore, inventoryTurnover: inventoryTurnoverBefore,
+      currentRatio: currentRatioBefore,
+      opMargin: opMarginBefore, netMargin: netMarginBefore, grossMargin: grossMarginBefore, revGrowth: revGrowthBefore,
+      roe: roeBefore, roa: roaBefore, roic: roicBefore, debtToEquity: debtToEquityBefore, netDebt: netDebtBefore,
+      marketCap: marketCapBefore, eps: epsBefore, pe: peBefore, pfcf: pfcfBefore, fcfYield: fcfYieldBefore,
+      evEbitda: evEbitdaBefore, priceToBook: priceToBookBefore, sharesOutstanding: sharesForCalcBefore,
+    };
 
     const epsHistory = niHistory.map((ni, i) => {
       const sh = sharesHistory[i];
@@ -1452,6 +1732,8 @@ const sharesForCalc = sharesValAdj || sharesFinnhub;
       operatingCFVal,
       finnhubFallback: false,
       insiderOwnershipPct,
+      earningsReaction,
+      prevQuarter,
     };
 
     // Si menos de 3 campos clave tienen datos o no hay ingresos/beneficios, combinar con Yahoo Fundamentals
