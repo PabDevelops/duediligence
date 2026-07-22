@@ -32,6 +32,17 @@ export default function WorkspaceCalendar() {
   const [watchlistTickers, setWatchlistTickers] = useState(new Set());
   const [selectedDate, setSelectedDate] = useState(null);
   const [togglingWatchlist, setTogglingWatchlist] = useState(null);
+  // Mobile week view shows one day at a time via a tab selector instead of all 5 side by
+  // side. Defaults to today when the current week is on screen, otherwise Monday.
+  const [mobileWeekDayIndex, setMobileWeekDayIndex] = useState(0);
+
+  useEffect(() => {
+    const startOfWeekDay = new Date(weekCursor.getFullYear(), weekCursor.getMonth(), weekCursor.getDate());
+    const now = new Date();
+    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    const diff = Math.round((today - startOfWeekDay) / (24 * 60 * 60 * 1000));
+    setMobileWeekDayIndex(diff >= 0 && diff <= 4 ? diff : 0);
+  }, [weekCursor]);
 
   // Fetch Calendar Data (Earnings & IPOs)
   const fetchCalendarData = () => {
@@ -457,9 +468,20 @@ export default function WorkspaceCalendar() {
 
       {/* 4. Main Dual Grid Layout OR Weekly Grid */}
       {viewMode === 'week' ? (
+        <>
+          {/* Mobile-only day tabs — hidden on desktop via CSS, shows all 5 columns there */}
+          <div className="calendar-day-tabs">
+            {weekEvents.map((dayGroup, i) => (
+              <button key={dayGroup.dateStr} onClick={() => setMobileWeekDayIndex(i)}
+                className={`calendar-day-tab ${mobileWeekDayIndex === i ? 'active' : ''}`}>
+                <span className="calendar-day-tab-name">{DAY_NAMES[dayGroup.dateObj.getDay()]}</span>
+                <span className="calendar-day-tab-num">{dayGroup.dateObj.getDate()}</span>
+              </button>
+            ))}
+          </div>
         <div className="calendar-week-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: '16px', alignItems: 'stretch' }}>
           {weekEvents.map((dayGroup, i) => (
-            <div key={dayGroup.dateStr} className="calendar-week-col" style={{ border: '1px solid var(--ws-border)', background: 'var(--ws-bg-1)', borderRadius: '4px', overflow: 'hidden', display: 'flex', flexDirection: 'column', maxHeight: '720px' }}>
+            <div key={dayGroup.dateStr} className={`calendar-week-col ${mobileWeekDayIndex === i ? 'active-day' : ''}`} style={{ border: '1px solid var(--ws-border)', background: 'var(--ws-bg-1)', borderRadius: '4px', overflow: 'hidden', display: 'flex', flexDirection: 'column', maxHeight: '720px' }}>
               {/* Column Header */}
               <div style={{ padding: '12px', textAlign: 'center', borderBottom: '1px solid var(--ws-border)', background: 'var(--ws-bg-2)', flexShrink: 0 }}>
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px', marginBottom: '4px' }}>
@@ -544,6 +566,7 @@ export default function WorkspaceCalendar() {
             </div>
           ))}
         </div>
+        </>
       ) : (
       <div className="calendar-main-grid" style={{ display: 'grid', gridTemplateColumns: '1.2fr 1fr', gap: '20px', alignItems: 'start' }}>
         
@@ -820,22 +843,55 @@ export default function WorkspaceCalendar() {
             grid-template-columns: 1fr !important;
           }
         }
+        .calendar-day-tabs {
+          display: none;
+        }
         @media (max-width: 900px) {
           /* Five equal-width day columns are already tight on a laptop; on a phone they'd
-             render as unreadable slivers. Swipeable horizontal cards read better than either
-             squeezing 5 columns or stacking 5 tall lists. */
+             render as unreadable slivers. Below this width only the active day's column
+             renders (picked via the day-tab bar) instead of all 5 side by side. */
+          .calendar-day-tabs {
+            display: flex;
+            gap: 6px;
+            margin-bottom: 12px;
+          }
+          .calendar-day-tab {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 2px;
+            padding: 8px 4px;
+            border: 1px solid var(--ws-border);
+            background: var(--ws-bg-1);
+            border-radius: 4px;
+            cursor: pointer;
+            color: var(--ws-text-2);
+          }
+          .calendar-day-tab.active {
+            background: var(--ws-accent);
+            border-color: var(--ws-accent);
+            color: var(--ws-bg-1);
+          }
+          .calendar-day-tab-name {
+            font-size: 10px;
+            font-weight: 700;
+            letter-spacing: 0.3px;
+          }
+          .calendar-day-tab-num {
+            font-size: 13px;
+            font-weight: 800;
+          }
           .calendar-week-grid {
-            display: flex !important;
-            overflow-x: auto;
-            -webkit-overflow-scrolling: touch;
-            scroll-snap-type: x proximity;
-            padding-bottom: 4px;
+            display: block !important;
           }
           .calendar-week-col {
-            flex: 0 0 78vw;
-            max-width: 320px;
-            max-height: 60vh !important;
-            scroll-snap-align: start;
+            display: none !important;
+          }
+          .calendar-week-col.active-day {
+            display: flex !important;
+            width: 100%;
+            max-height: none !important;
           }
         }
         @media (max-width: 768px) {
@@ -873,9 +929,6 @@ export default function WorkspaceCalendar() {
           }
           .calendar-controls > div {
             width: auto !important;
-          }
-          .calendar-week-col {
-            flex-basis: 88vw;
           }
         }
       `}</style>
