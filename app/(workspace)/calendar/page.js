@@ -35,9 +35,21 @@ export default function WorkspaceCalendar() {
 
   // Fetch Calendar Data (Earnings & IPOs)
   const fetchCalendarData = () => {
-    const activeCursor = viewMode === 'week' ? weekCursor : cursor;
-    const from = toKey(startOfMonth(activeCursor));
-    const to = toKey(endOfMonth(activeCursor));
+    // Week view only ever renders Mon-Fri of weekCursor, but used to request the whole
+    // month — Nasdaq's fallback fetches one request per day (batched 10 at a time), so a
+    // 30-day month took ~3x as many sequential batches as the 5 days actually shown, plus
+    // needlessly enriching every ticker in the month against stock_cache. Requesting just
+    // the visible range cuts that down to a single Nasdaq batch.
+    let from, to;
+    if (viewMode === 'week') {
+      const weekEnd = new Date(weekCursor);
+      weekEnd.setDate(weekEnd.getDate() + 4); // Friday
+      from = toKey(weekCursor);
+      to = toKey(weekEnd);
+    } else {
+      from = toKey(startOfMonth(cursor));
+      to = toKey(endOfMonth(cursor));
+    }
     setEarnings(null);
     const qs = new URLSearchParams({ from, to });
     fetch(`/api/earnings?${qs.toString()}`)
@@ -249,8 +261,8 @@ export default function WorkspaceCalendar() {
   };
 
   return (
-    <div style={{ padding: '24px' }}>
-      
+    <div className="calendar-page" style={{ padding: '24px' }}>
+
       {/* 1. Terminal style Header */}
       <div style={{ border: '1px solid var(--ws-border)', background: 'var(--ws-bg-1)', marginBottom: '20px', overflow: 'hidden' }}>
         <div style={{ background: 'var(--ws-bg-2)', borderBottom: '1px solid var(--ws-border)', padding: '7px 16px' }}>
@@ -258,7 +270,7 @@ export default function WorkspaceCalendar() {
             $ traq calendar --interactive
           </span>
         </div>
-        <div style={{ padding: '20px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '16px' }}>
+        <div className="calendar-header-row" style={{ padding: '20px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '16px' }}>
           <div>
             <div style={{ fontSize: '22px', fontWeight: 800, color: 'var(--ws-text)', display: 'flex', alignItems: 'center', gap: '8px' }}>
               <span>Market Calendar</span>
@@ -266,9 +278,9 @@ export default function WorkspaceCalendar() {
             </div>
             <div style={{ fontSize: '13px', color: 'var(--ws-text-2)', marginTop: '4px' }}>Track scheduled earnings releases, expected analyst updates, and upcoming IPOs.</div>
           </div>
-          
+
           {/* Month/Week controls */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+          <div className="calendar-controls" style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
             <button onClick={() => {
                 if (viewMode === 'month') {
                   setCursor(c => shiftMonth(c, -1));
@@ -361,8 +373,8 @@ export default function WorkspaceCalendar() {
       </div>
 
       {/* 3. Filter and Search Bar */}
-      <div style={{ border: '1px solid var(--ws-border)', background: 'var(--ws-bg-1)', padding: '14px 18px', display: 'flex', flexWrap: 'wrap', gap: '14px', alignItems: 'center', justifyContent: 'space-between', marginBottom: '20px', borderRadius: '4px' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flex: 1, minWidth: '260px' }}>
+      <div className="calendar-filter-bar" style={{ border: '1px solid var(--ws-border)', background: 'var(--ws-bg-1)', padding: '14px 18px', display: 'flex', flexWrap: 'wrap', gap: '14px', alignItems: 'center', justifyContent: 'space-between', marginBottom: '20px', borderRadius: '4px' }}>
+        <div className="calendar-search-wrap" style={{ display: 'flex', alignItems: 'center', gap: '8px', flex: 1, minWidth: '260px' }}>
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ color: 'var(--ws-text-3)' }}><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
           <input type="text" placeholder="Search by ticker or company name..."
             value={searchQuery} onChange={e => setSearchQuery(e.target.value)}
@@ -373,7 +385,7 @@ export default function WorkspaceCalendar() {
           )}
         </div>
         
-        <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flexWrap: 'wrap' }}>
+        <div className="calendar-filter-controls" style={{ display: 'flex', alignItems: 'center', gap: '12px', flexWrap: 'wrap' }}>
           {/* Market Cap & Sector Filters */}
           <div style={{ display: 'flex', gap: '8px' }}>
             <select value={marketCapFilter} onChange={e => setMarketCapFilter(e.target.value)}
@@ -445,9 +457,9 @@ export default function WorkspaceCalendar() {
 
       {/* 4. Main Dual Grid Layout OR Weekly Grid */}
       {viewMode === 'week' ? (
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: '16px', alignItems: 'stretch' }}>
+        <div className="calendar-week-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: '16px', alignItems: 'stretch' }}>
           {weekEvents.map((dayGroup, i) => (
-            <div key={dayGroup.dateStr} style={{ border: '1px solid var(--ws-border)', background: 'var(--ws-bg-1)', borderRadius: '4px', overflow: 'hidden', display: 'flex', flexDirection: 'column', maxHeight: '720px' }}>
+            <div key={dayGroup.dateStr} className="calendar-week-col" style={{ border: '1px solid var(--ws-border)', background: 'var(--ws-bg-1)', borderRadius: '4px', overflow: 'hidden', display: 'flex', flexDirection: 'column', maxHeight: '720px' }}>
               {/* Column Header */}
               <div style={{ padding: '12px', textAlign: 'center', borderBottom: '1px solid var(--ws-border)', background: 'var(--ws-bg-2)', flexShrink: 0 }}>
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px', marginBottom: '4px' }}>
@@ -542,7 +554,7 @@ export default function WorkspaceCalendar() {
               <div key={d} style={{ padding: '10px 8px', fontSize: '11px', fontWeight: 700, color: 'var(--ws-text-2)', textAlign: 'center', letterSpacing: '0.5px' }}>{d}</div>
             ))}
           </div>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)' }}>
+          <div className="calendar-month-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)' }}>
             {cells.map((d, i) => {
               const key = toKey(d);
               const inMonth = d.getMonth() === cursor.getMonth();
@@ -806,6 +818,64 @@ export default function WorkspaceCalendar() {
         @media (max-width: 1023px) {
           .calendar-main-grid {
             grid-template-columns: 1fr !important;
+          }
+        }
+        @media (max-width: 900px) {
+          /* Five equal-width day columns are already tight on a laptop; on a phone they'd
+             render as unreadable slivers. Swipeable horizontal cards read better than either
+             squeezing 5 columns or stacking 5 tall lists. */
+          .calendar-week-grid {
+            display: flex !important;
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+            scroll-snap-type: x proximity;
+            padding-bottom: 4px;
+          }
+          .calendar-week-col {
+            flex: 0 0 78vw;
+            max-width: 320px;
+            max-height: 60vh !important;
+            scroll-snap-align: start;
+          }
+        }
+        @media (max-width: 768px) {
+          .calendar-page {
+            padding: 12px !important;
+          }
+          .calendar-header-row {
+            flex-direction: column;
+            align-items: stretch !important;
+          }
+          .calendar-controls {
+            justify-content: center;
+          }
+          .calendar-filter-bar {
+            flex-direction: column;
+            align-items: stretch !important;
+          }
+          .calendar-search-wrap {
+            min-width: 0 !important;
+          }
+          .calendar-filter-controls {
+            justify-content: flex-start;
+          }
+          .calendar-month-grid .calendar-cell {
+            min-height: 64px !important;
+            padding: 4px !important;
+          }
+        }
+        @media (max-width: 480px) {
+          .calendar-page {
+            padding: 8px !important;
+          }
+          .calendar-controls {
+            width: 100%;
+          }
+          .calendar-controls > div {
+            width: auto !important;
+          }
+          .calendar-week-col {
+            flex-basis: 88vw;
           }
         }
       `}</style>
