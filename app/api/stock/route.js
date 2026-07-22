@@ -1028,19 +1028,22 @@ export async function GET(request) {
         name: fhProfile.name || ticker,
         ticker,
         cik: null,
-        sector: fhProfile.finnhubIndustry || yh?.sector || null,
-        industry: fhProfile.finnhubIndustry || yh?.industry || null,
-        exchange: fhProfile.exchange || null,
+        sector: fhProfile.finnhubIndustry || yh?.sector || priorCachedData?.sector || null,
+        industry: fhProfile.finnhubIndustry || yh?.industry || priorCachedData?.industry || null,
+        exchange: fhProfile.exchange || priorCachedData?.exchange || null,
         description: yh?.description || fhProfile.description || await fetchDescription(ticker),
-        currentPrice,
+        currentPrice: currentPrice ?? priorCachedData?.currentPrice ?? null,
         priceChange: fh.d || null,
         priceChangePct: fh.dp || null,
-        prevClose: fh.pc || null,
+        prevClose: fh.pc || priorCachedData?.prevClose || null,
         // Last-resort fallback: currentPrice × sharesOutstanding, both already USD-safe by this
         // point (verified against real data: NOK's Finnhub profile resolves to its Helsinki EUR
         // listing so the currency-matched marketCap above is null, and Yahoo's quoteSummary has
-        // no marketCap for it either — this was the only path left to a usable number).
-        marketCap: marketCap ?? yh?.marketCap ?? (currentPrice && sharesOutstanding ? currentPrice * sharesOutstanding : null),
+        // no marketCap for it either — this was the only path left to a usable number). Prior
+        // cache's own last-known-good marketCap is the final fallback, same reasoning as the
+        // hasSecFacts branch above: a transient Finnhub/Yahoo failure shouldn't blank a value
+        // this fetch already had.
+        marketCap: marketCap ?? yh?.marketCap ?? (currentPrice && sharesOutstanding ? currentPrice * sharesOutstanding : null) ?? priorCachedData?.marketCap ?? null,
         eps: eps ?? yh?.eps ?? null,
         pe: pe ?? yh?.pe ?? null,
         forwardPE: yh?.forwardPE ?? null,
@@ -1048,11 +1051,11 @@ export async function GET(request) {
         // range for NVO came back 224.25-464.6 against a $49.07 USD quote — Copenhagen DKK
         // range, not USD (Novo's actual USD 52-week range is far narrower). Gated on the same
         // profile-currency check since both Finnhub endpoints resolve the symbol the same way.
-        high52: fhProfile.currency && fhProfile.currency !== 'USD' ? (yh?.high52 ?? null) : (m['52WeekHigh'] || yh?.high52 || null),
-        low52: fhProfile.currency && fhProfile.currency !== 'USD' ? (yh?.low52 ?? null) : (m['52WeekLow'] || yh?.low52 || null),
-        beta: m.beta || yh?.beta || null,
+        high52: (fhProfile.currency && fhProfile.currency !== 'USD' ? (yh?.high52 ?? null) : (m['52WeekHigh'] || yh?.high52 || null)) ?? priorCachedData?.high52 ?? null,
+        low52: (fhProfile.currency && fhProfile.currency !== 'USD' ? (yh?.low52 ?? null) : (m['52WeekLow'] || yh?.low52 || null)) ?? priorCachedData?.low52 ?? null,
+        beta: m.beta || yh?.beta || priorCachedData?.beta || null,
         sharesOutstanding: sharesOutstanding ?? yh?.sharesOutstanding ?? null,
-        dividendYield: m.dividendYieldIndicatedAnnual || yh?.dividendYield || null,
+        dividendYield: m.dividendYieldIndicatedAnnual || yh?.dividendYield || priorCachedData?.dividendYield || null,
         // Ratios: prefer Yahoo computed-from-statements, fall back to Finnhub TTM metrics.
         // Finnhub roeTTM/roaTTM/revenueGrowthTTMYoy are already percentage points.
         grossMargin: yh?.grossMargin ?? m.grossMarginTTM ?? null,
@@ -1666,13 +1669,25 @@ export async function GET(request) {
     const fhBasic = fhBasicRes ? await safeFinnhubJson(fhBasicRes) : {};
     const fhProfile = fhProfileRes ? await safeFinnhubJson(fhProfileRes) : {};
 
-    const currentPrice   = fh.c || null;
-    const priceChange    = fh.d || null;
-    const priceChangePct = fh.dp || null;
-    const prevClose      = fh.pc || null;
-    const high52         = fhBasic?.metric?.['52WeekHigh'] || null;
-    const low52          = fhBasic?.metric?.['52WeekLow'] || null;
-    const beta           = fhBasic?.metric?.beta || null;
+    // Finnhub's /quote, /metric and /profile2 are three independent calls that can each fail
+    // on their own (rate limit, timeout) with no SEC/Yahoo equivalent to fall back on in this
+    // branch — unlike a genuine "this filer doesn't report X" gap, a failed call here used to
+    // write a hard null over whatever this ticker's *previous* successful fetch had, which then
+    // fails the cache's `marketCap != null` freshness check (see isFinancialsCacheFresh's caller
+    // above) and forces a full refetch on every subsequent view — compounding the outage instead
+    // of recovering from it, and in the meantime starves computeEasyMode (lib/stockScoring.js) of
+    // marketCap, which craters pfcfScore/fcfYieldScore to their worst value rather than reading
+    // as missing data (verified against real data: QCOM's marketCap/beta/sector/currentPrice all
+    // went null from one rate-limited fetch, which alone dropped its quality score from the high
+    // 90s to ~50). Falling back to the prior cache row's own last-known-good value means a
+    // transient Finnhub failure degrades to "slightly stale" instead of "blank".
+    const currentPrice   = fh.c || priorCachedData?.currentPrice || null;
+    const priceChange    = fh.c ? (fh.d || null) : (priorCachedData?.priceChange ?? null);
+    const priceChangePct = fh.c ? (fh.dp || null) : (priorCachedData?.priceChangePct ?? null);
+    const prevClose      = fh.pc || priorCachedData?.prevClose || null;
+    const high52         = fhBasic?.metric?.['52WeekHigh'] || priorCachedData?.high52 || null;
+    const low52          = fhBasic?.metric?.['52WeekLow'] || priorCachedData?.low52 || null;
+    const beta           = fhBasic?.metric?.beta || priorCachedData?.beta || null;
 
     const epsDirect  = getEPS();
     const epsFinnhub = fhBasic?.metric?.epsAnnual || fhBasic?.metric?.epsTTM || null;
@@ -1684,7 +1699,7 @@ const sharesForCalc = sharesValAdj || sharesFinnhub;
     const peCalc     = epsCalc && currentPrice ? +(currentPrice / epsCalc).toFixed(2) : null;
     const marketCapCalc = currentPrice && sharesForCalc ? currentPrice * sharesForCalc : null;
     const marketCapFinnhub = fhProfile?.marketCapitalization ? fhProfile.marketCapitalization * 1e6 : null;
-    const marketCapFinal = marketCapFinnhub || marketCapCalc;
+    const marketCapFinal = marketCapFinnhub || marketCapCalc || priorCachedData?.marketCap || null;
     const ebitdaCalc   = oiVal != null && daVal != null ? oiVal + daVal : null;
     const ebitdaFh     = fhBasic?.metric?.ebitdaTTM ? fhBasic.metric.ebitdaTTM * 1e6 : (fhBasic?.metric?.ebitdaAnnual ? fhBasic.metric.ebitdaAnnual * 1e6 : null);
     const ebitdaFinal  = ebitdaCalc ?? ebitdaFh;
@@ -1857,12 +1872,12 @@ const sharesForCalc = sharesValAdj || sharesFinnhub;
       name: company.title,
       ticker,
       cik,
-      sector: fhProfile.finnhubIndustry || null,
-      industry: fhProfile.finnhubIndustry || null,
-      exchange: fhProfile.exchange || null,
+      sector: fhProfile.finnhubIndustry || priorCachedData?.sector || null,
+      industry: fhProfile.finnhubIndustry || priorCachedData?.industry || null,
+      exchange: fhProfile.exchange || priorCachedData?.exchange || null,
       description: fhProfile.description || await fetchDescription(ticker),
-      employees: fhProfile.employeeTotal || null,
-      weburl: fhProfile.weburl || null,
+      employees: fhProfile.employeeTotal || priorCachedData?.employees || null,
+      weburl: fhProfile.weburl || priorCachedData?.weburl || null,
       revVal, niVal, oiVal, fcfVal, assetsVal, equityVal, debtVal: effectiveDebtVal, cashVal, sharesVal, rdVal,
       cogsVal, sgaVal, ebtVal, taxVal, interestVal, sharesBasicVal, sharesDilutedVal,
       currentAssetsVal, currentLiabilitiesVal, totalLiabilitiesVal, retainedEarningsVal,
@@ -1892,7 +1907,7 @@ const sharesForCalc = sharesValAdj || sharesFinnhub;
       fcfYield: marketCapFinal && fcfVal ? +((fcfVal / marketCapFinal) * 100).toFixed(2) : null,
       high52, low52, beta,
       sharesOutstanding: sharesForCalc,
-      dividendYield: fhBasic?.metric?.dividendYieldIndicatedAnnual || null,
+      dividendYield: fhBasic?.metric?.dividendYieldIndicatedAnnual || priorCachedData?.dividendYield || null,
       netDebt,
       evEbitda,
       priceToBook,
