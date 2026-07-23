@@ -1,6 +1,6 @@
 'use client';
-import { useState, useEffect, useMemo, useRef, use } from 'react';
-import { useRouter } from 'next/navigation';
+import { useState, useEffect, useMemo, useRef, use, Suspense } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { BarChart, Bar, LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell } from 'recharts';
 import StockChart from '../../../components/StockChart';
 import ProjectionChart from '../../../components/workspace/stock/ProjectionChart';
@@ -379,11 +379,27 @@ function AnalystGauge({ score, qualityScore100 }) {
   );
 }
 
+// useSearchParams() opts the whole subtree out of static prerendering unless it's inside a
+// Suspense boundary — without this wrapper, `next build` fails prerendering this page instead
+// of just falling back to client-side rendering for it (same pattern as app/(workspace)/search).
 export default function StockPage({ params }) {
+  return (
+    <Suspense fallback={null}>
+      <StockPageContent params={params} />
+    </Suspense>
+  );
+}
+
+function StockPageContent({ params }) {
   const { ticker: rawTicker } = use(params);
   const ticker = rawTicker.toUpperCase();
   const router = useRouter();
-  const { data, error, loading } = useStockData(ticker);
+  // The "↻ Refresh data" button below navigates to ?refresh=true, but nothing ever read that
+  // param — useStockData always ran with its default (cached) fetch, so the button silently did
+  // nothing but reload the page. Wiring it here is what makes it force a fresh /api/stock fetch.
+  const searchParams = useSearchParams();
+  const forceRefresh = searchParams.get('refresh') === 'true';
+  const { data, error, loading } = useStockData(ticker, { refresh: forceRefresh });
   const [tab, setTab] = useState('overview');
   const [jumpQuery, setJumpQuery] = useState('');
   const [showJumpSuggestions, setShowJumpSuggestions] = useState(false);
