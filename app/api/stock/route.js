@@ -652,21 +652,6 @@ async function fetchYahooFundamentals(ticker) {
       }
     }
 
-    // Temporary diagnostic (safe to remove once the NOK QoQ-badge investigation is closed):
-    // stored on the cached row itself so it can be inspected directly in Supabase without
-    // needing to reproduce the request — this endpoint's outbound calls (Yahoo, Finnhub) aren't
-    // reachable from every environment that might need to debug a "badge doesn't show" report.
-    const qDebug = {
-      tsQuarterlyFetched: !!tsQuarterlyRes,
-      tsQuarterlyOk: tsQuarterlyRes ? tsQuarterlyRes.ok : null,
-      tsQuarterlyStatus: tsQuarterlyRes ? tsQuarterlyRes.status : null,
-      tsQuarterlyHasResult: !!(tsQuarterly?.timeseries?.result),
-      tsQuarterlyResultCount: tsQuarterly?.timeseries?.result?.length ?? null,
-      tsQuarterlyError: tsQuarterly?.finance?.error ?? null,
-      quarterlyRevPoints: quarterlyHistories.revHistory.length,
-      fx,
-    };
-
     // Need at least 5 quarters (4 to sum into a TTM, plus 1 to shift the window back by a
     // quarter) — Yahoo's timeseries caps at 6 via tsSeries()'s slice(-6), so thinly-covered
     // tickers that only have a handful of quarters simply don't get this badge.
@@ -777,7 +762,6 @@ async function fetchYahooFundamentals(ticker) {
       analystTarget,
       operatingCFVal: histories.ocfHistory.length ? histories.ocfHistory[histories.ocfHistory.length - 1].val : null,
       prevQuarter: quarterlyPrevQuarter,
-      _qDebug: qDebug,
     };
   } catch (e) {
     return null;
@@ -1304,7 +1288,6 @@ export async function GET(request) {
       result.lastEarningsDate = resolveLastEarningsDate(priorCachedData, earningsInfo.lastEarningsDate);
       result.nextEarningsDate = earningsInfo.nextEarningsDate;
       result.isEtf = cachedIsEtf;
-      result._qDebug = yh?._qDebug ?? null;
 
       // Fill in the price-dependent half of the QoQ comparison snapshot (market cap, P/E, ...)
       // now that priceBefore is available — yh.prevQuarter carries everything computable
