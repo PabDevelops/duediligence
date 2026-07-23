@@ -1312,7 +1312,17 @@ export default function StockPage({ params }) {
                         <span>
                           {upcomingEvent.hour === 'bmo' ? 'Before Open' : upcomingEvent.hour === 'amc' ? 'After Close' : 'Time TBD'}
                         </span>
-                        {upcomingEvent.epsEstimate != null && (
+                        {upcomingEvent.epsActual != null && (
+                          <>
+                            <span className="text-ws-text-3"> · </span>
+                            <span>
+                              EPS: ${upcomingEvent.epsActual.toFixed(2)}
+                              {upcomingEvent.epsEstimate != null && ` (est. $${upcomingEvent.epsEstimate.toFixed(2)})`}
+                              <DeltaTag value={upcomingEvent.surprisePercent} />
+                            </span>
+                          </>
+                        )}
+                        {upcomingEvent.epsActual == null && upcomingEvent.epsEstimate != null && (
                           <>
                             <span className="text-ws-text-3"> · </span>
                             <span>Est. EPS: ${upcomingEvent.epsEstimate.toFixed(2)}</span>

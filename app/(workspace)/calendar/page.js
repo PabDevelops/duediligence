@@ -755,7 +755,20 @@ export default function WorkspaceCalendar() {
                           </div>
 
                           {/* Metric info */}
-                          {e.type === 'earnings' && e.epsEstimate != null && (
+                          {e.type === 'earnings' && e.epsActual != null && (
+                            <div style={{ textAlign: 'right', marginRight: '6px' }}>
+                              <div style={{ fontSize: '11px', fontWeight: 700, color: 'var(--ws-text)' }}>
+                                ${e.epsActual.toFixed(2)}
+                                {e.surprisePercent != null && e.surprisePercent !== 0 && (
+                                  <span style={{ fontSize: '9px', fontWeight: 700, marginLeft: '4px', whiteSpace: 'nowrap', color: e.surprisePercent > 0 ? 'var(--ws-accent)' : 'var(--ws-red)' }}>
+                                    {e.surprisePercent > 0 ? '▲' : '▼'}{Math.abs(e.surprisePercent)}%
+                                  </span>
+                                )}
+                              </div>
+                              <div style={{ fontSize: '8px', color: 'var(--ws-text-3)', fontWeight: 600 }}>ACTUAL EPS{e.epsEstimate != null ? ` (EST. $${e.epsEstimate.toFixed(2)})` : ''}</div>
+                            </div>
+                          )}
+                          {e.type === 'earnings' && e.epsActual == null && e.epsEstimate != null && (
                             <div style={{ textAlign: 'right', marginRight: '6px' }}>
                               <div style={{ fontSize: '11px', fontWeight: 700, color: 'var(--ws-text)' }}>${e.epsEstimate.toFixed(2)}</div>
                               <div style={{ fontSize: '8px', color: 'var(--ws-text-3)', fontWeight: 600 }}>EST. EPS</div>

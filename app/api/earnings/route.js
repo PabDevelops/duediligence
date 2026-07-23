@@ -5,6 +5,14 @@ const FH_KEY = process.env.FINNHUB_API_KEY;
 
 export const dynamic = 'force-dynamic';
 
+// Finnhub's calendar/earnings returns epsActual/epsEstimate but no surprise figure —
+// callers (calendar timeline, stock page "next earnings" card) want a beat/miss % to
+// color the badge the same up-is-green/down-is-red way as the Quality/Financials tabs.
+function surprisePercent(actual, estimate) {
+  if (actual == null || estimate == null || !estimate) return null;
+  return +(((actual - estimate) / Math.abs(estimate)) * 100).toFixed(1);
+}
+
 // Every request (page load, month/week navigation, watchlist toggle) previously re-fetched
 // Finnhub + Nasdaq (one request per day in range) + Supabase from scratch, with nothing
 // shared across users or repeat visits — a short in-memory cache keyed by the exact query
@@ -60,6 +68,10 @@ export async function GET(req) {
           ticker: e.symbol,
           date: e.date,
           epsEstimate: e.epsEstimate,
+          epsActual: e.epsActual,
+          revenueEstimate: e.revenueEstimate,
+          revenueActual: e.revenueActual,
+          surprisePercent: surprisePercent(e.epsActual, e.epsEstimate),
           hour: e.hour,
         }));
 
@@ -175,6 +187,10 @@ export async function GET(req) {
             ticker: e.symbol,
             date: e.date,
             epsEstimate: e.epsEstimate,
+            epsActual: e.epsActual,
+            revenueEstimate: e.revenueEstimate,
+            revenueActual: e.revenueActual,
+            surprisePercent: surprisePercent(e.epsActual, e.epsEstimate),
             hour: e.hour,
           });
         }
