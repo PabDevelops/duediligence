@@ -437,13 +437,20 @@ async function fetchYahooFundamentals(ticker) {
     const now = Math.floor(Date.now() / 1000);
     const tenYearsAgo = now - 10 * 365 * 24 * 3600;
 
-    const [qsRes, tsRes] = await Promise.all([
+    // Annual and quarterly types are fetched as two separate requests rather than one combined
+    // ~70-type query string — Yahoo's undocumented per-request type-count/URL-length ceiling
+    // isn't worth risking against the already-working annual fetch (which several fields fall
+    // back to bsSeries/cfSeries/fill1 for anyway, silently masking a broken combined request).
+    // A failure on the quarterly-only request now only costs the QoQ badge, not the whole page.
+    const [qsRes, tsRes, tsQuarterlyRes] = await Promise.all([
       fetch(`https://query2.finance.yahoo.com/v10/finance/quoteSummary/${ticker}?modules=assetProfile,summaryDetail,defaultKeyStatistics,financialData,balanceSheetHistory,cashFlowStatementHistory&crumb=${encodeURIComponent(auth.crumb)}`, { headers }),
-      fetch(`https://query2.finance.yahoo.com/ws/fundamentals-timeseries/v1/finance/timeseries/${ticker}?symbol=${ticker}&type=${YAHOO_TS_TYPES},${YAHOO_TS_TYPES_QUARTERLY}&period1=${tenYearsAgo}&period2=${now}&crumb=${encodeURIComponent(auth.crumb)}`, { headers }),
+      fetch(`https://query2.finance.yahoo.com/ws/fundamentals-timeseries/v1/finance/timeseries/${ticker}?symbol=${ticker}&type=${YAHOO_TS_TYPES}&period1=${tenYearsAgo}&period2=${now}&crumb=${encodeURIComponent(auth.crumb)}`, { headers }),
+      fetch(`https://query2.finance.yahoo.com/ws/fundamentals-timeseries/v1/finance/timeseries/${ticker}?symbol=${ticker}&type=${YAHOO_TS_TYPES_QUARTERLY}&period1=${tenYearsAgo}&period2=${now}&crumb=${encodeURIComponent(auth.crumb)}`, { headers }).catch(() => null),
     ]);
 
     const qs = await qsRes.json();
     const ts = await tsRes.json();
+    const tsQuarterly = tsQuarterlyRes && tsQuarterlyRes.ok ? await tsQuarterlyRes.json().catch(() => null) : null;
     const r = qs?.quoteSummary?.result?.[0];
     if (!r) return null;
 
@@ -602,38 +609,38 @@ async function fetchYahooFundamentals(ticker) {
     // the route handler fills in marketCap/pe/pfcf/evEbitda/priceToBook once priceBefore (from
     // fetchEarningsReaction) is available.
     const quarterlyHistories = {
-      revHistory: tsSeries(ts, 'quarterlyTotalRevenue'),
-      niHistory: tsSeries(ts, 'quarterlyNetIncomeCommonStockholders', 'quarterlyNetIncome'),
-      oiHistory: tsSeries(ts, 'quarterlyOperatingIncome'),
-      ocfHistory: tsSeries(ts, 'quarterlyOperatingCashFlow'),
-      fcfHistory: tsSeries(ts, 'quarterlyFreeCashFlow'),
-      assetsHistory: tsSeries(ts, 'quarterlyTotalAssets'),
-      equityHistory: tsSeries(ts, 'quarterlyStockholdersEquity'),
-      debtHistory: tsSeries(ts, 'quarterlyTotalDebt', 'quarterlyLongTermDebt'),
-      cashHistory: tsSeries(ts, 'quarterlyCashAndCashEquivalents'),
-      gpHistory: tsSeries(ts, 'quarterlyGrossProfit'),
-      rdHistory: tsSeries(ts, 'quarterlyResearchAndDevelopment'),
-      cogsHistory: tsSeries(ts, 'quarterlyCostOfRevenue'),
-      sgaHistory: tsSeries(ts, 'quarterlySellingGeneralAndAdministration'),
-      ebtHistory: tsSeries(ts, 'quarterlyPretaxIncome'),
-      taxHistory: tsSeries(ts, 'quarterlyTaxProvision'),
-      interestHistory: tsSeries(ts, 'quarterlyInterestExpense'),
-      sharesHistory: tsSeries(ts, 'quarterlyDilutedAverageShares', 'quarterlyBasicAverageShares'),
-      sharesBasicHistory: tsSeries(ts, 'quarterlyBasicAverageShares'),
-      sharesDilutedHistory: tsSeries(ts, 'quarterlyDilutedAverageShares'),
-      capexHistory: tsSeries(ts, 'quarterlyCapitalExpenditure'),
-      investingCFHistory: tsSeries(ts, 'quarterlyInvestingCashFlow'),
-      financingCFHistory: tsSeries(ts, 'quarterlyFinancingCashFlow'),
-      currentAssetsHistory: tsSeries(ts, 'quarterlyCurrentAssets'),
-      currentLiabilitiesHistory: tsSeries(ts, 'quarterlyCurrentLiabilities'),
-      totalLiabilitiesHistory: tsSeries(ts, 'quarterlyTotalLiabilitiesNetMinorityInterest'),
-      inventoryHistory: tsSeries(ts, 'quarterlyInventory'),
-      receivablesHistory: tsSeries(ts, 'quarterlyAccountsReceivable'),
-      payablesHistory: tsSeries(ts, 'quarterlyAccountsPayable'),
-      sbcHistory: tsSeries(ts, 'quarterlyStockBasedCompensation'),
-      daHistory: tsSeries(ts, 'quarterlyDepreciationAndAmortization'),
-      dividendsPaidHistory: tsSeries(ts, 'quarterlyCommonStockDividendPaid'),
-      retainedEarningsHistory: tsSeries(ts, 'quarterlyRetainedEarnings'),
+      revHistory: tsSeries(tsQuarterly, 'quarterlyTotalRevenue'),
+      niHistory: tsSeries(tsQuarterly, 'quarterlyNetIncomeCommonStockholders', 'quarterlyNetIncome'),
+      oiHistory: tsSeries(tsQuarterly, 'quarterlyOperatingIncome'),
+      ocfHistory: tsSeries(tsQuarterly, 'quarterlyOperatingCashFlow'),
+      fcfHistory: tsSeries(tsQuarterly, 'quarterlyFreeCashFlow'),
+      assetsHistory: tsSeries(tsQuarterly, 'quarterlyTotalAssets'),
+      equityHistory: tsSeries(tsQuarterly, 'quarterlyStockholdersEquity'),
+      debtHistory: tsSeries(tsQuarterly, 'quarterlyTotalDebt', 'quarterlyLongTermDebt'),
+      cashHistory: tsSeries(tsQuarterly, 'quarterlyCashAndCashEquivalents'),
+      gpHistory: tsSeries(tsQuarterly, 'quarterlyGrossProfit'),
+      rdHistory: tsSeries(tsQuarterly, 'quarterlyResearchAndDevelopment'),
+      cogsHistory: tsSeries(tsQuarterly, 'quarterlyCostOfRevenue'),
+      sgaHistory: tsSeries(tsQuarterly, 'quarterlySellingGeneralAndAdministration'),
+      ebtHistory: tsSeries(tsQuarterly, 'quarterlyPretaxIncome'),
+      taxHistory: tsSeries(tsQuarterly, 'quarterlyTaxProvision'),
+      interestHistory: tsSeries(tsQuarterly, 'quarterlyInterestExpense'),
+      sharesHistory: tsSeries(tsQuarterly, 'quarterlyDilutedAverageShares', 'quarterlyBasicAverageShares'),
+      sharesBasicHistory: tsSeries(tsQuarterly, 'quarterlyBasicAverageShares'),
+      sharesDilutedHistory: tsSeries(tsQuarterly, 'quarterlyDilutedAverageShares'),
+      capexHistory: tsSeries(tsQuarterly, 'quarterlyCapitalExpenditure'),
+      investingCFHistory: tsSeries(tsQuarterly, 'quarterlyInvestingCashFlow'),
+      financingCFHistory: tsSeries(tsQuarterly, 'quarterlyFinancingCashFlow'),
+      currentAssetsHistory: tsSeries(tsQuarterly, 'quarterlyCurrentAssets'),
+      currentLiabilitiesHistory: tsSeries(tsQuarterly, 'quarterlyCurrentLiabilities'),
+      totalLiabilitiesHistory: tsSeries(tsQuarterly, 'quarterlyTotalLiabilitiesNetMinorityInterest'),
+      inventoryHistory: tsSeries(tsQuarterly, 'quarterlyInventory'),
+      receivablesHistory: tsSeries(tsQuarterly, 'quarterlyAccountsReceivable'),
+      payablesHistory: tsSeries(tsQuarterly, 'quarterlyAccountsPayable'),
+      sbcHistory: tsSeries(tsQuarterly, 'quarterlyStockBasedCompensation'),
+      daHistory: tsSeries(tsQuarterly, 'quarterlyDepreciationAndAmortization'),
+      dividendsPaidHistory: tsSeries(tsQuarterly, 'quarterlyCommonStockDividendPaid'),
+      retainedEarningsHistory: tsSeries(tsQuarterly, 'quarterlyRetainedEarnings'),
     };
     if (!quarterlyHistories.fcfHistory.length) {
       quarterlyHistories.fcfHistory = ocfMinusCapexQuarterly(quarterlyHistories.ocfHistory, quarterlyHistories.capexHistory);
