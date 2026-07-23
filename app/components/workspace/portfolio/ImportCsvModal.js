@@ -47,7 +47,10 @@ function parseCsv(text) {
   return { rows, errors, hasCurrencyColumn };
 }
 
-export default function ImportCsvModal({ onClose, onImported, defaultCurrency, portfolioId }) {
+export default function ImportCsvModal({ onClose, onImported, defaultCurrency, portfolioId, portfolios }) {
+  // portfolioId is 'all' when the page's "All Portfolios" tab is active — that's a UI-only
+  // filter value, not a real portfolio, so it can't be written to a portfolio_id uuid column.
+  const resolvedPortfolioId = portfolioId !== 'all' ? portfolioId : (portfolios?.[0]?.id || '');
   const [rows, setRows] = useState([]);
   const [errors, setErrors] = useState([]);
   const [fileName, setFileName] = useState('');
@@ -80,7 +83,7 @@ export default function ImportCsvModal({ onClose, onImported, defaultCurrency, p
     setImporting(true);
     const res = await fetch('/api/portfolio/import', {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ rows, portfolio_id: portfolioId }),
+      body: JSON.stringify({ rows, portfolio_id: resolvedPortfolioId }),
     });
     setImporting(false);
     if (!res.ok) {

@@ -8,6 +8,11 @@ export default function SellModal({ position, onClose, onSold, portfolioId }) {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState(null);
 
+  // portfolioId is 'all' when the page's "All Portfolios" tab is active — that's a UI-only
+  // filter value, not a real portfolio, so it can't be written to a portfolio_id uuid column.
+  // The position being sold always belongs to a real portfolio via its lots, so use that.
+  const resolvedPortfolioId = portfolioId !== 'all' ? portfolioId : (position.lots?.[0]?.portfolio_id || '');
+
   const submit = async (e) => {
     e.preventDefault();
     const n = Number(shares);
@@ -16,10 +21,10 @@ export default function SellModal({ position, onClose, onSold, portfolioId }) {
     setError(null);
     const res = await fetch('/api/portfolio/sell', {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ 
-        ticker: position.ticker, 
-        shares: n, 
-        portfolio_id: portfolioId,
+      body: JSON.stringify({
+        ticker: position.ticker,
+        shares: n,
+        portfolio_id: resolvedPortfolioId,
         addToCash,
         sellPrice: addToCash ? Number(sellPrice) : null,
         currency: position.priceCurrency || 'USD'

@@ -6,8 +6,12 @@ import { useTickerSearch } from '../../../../lib/hooks/useTickerSearch';
 
 const CURRENCIES = { USD: '$', EUR: '€', GBP: '£' };
 
-export default function AddHoldingModal({ onClose, onAdded, existingPies, defaultCurrency, editLot, presetTicker, portfolioId }) {
+export default function AddHoldingModal({ onClose, onAdded, existingPies, defaultCurrency, editLot, presetTicker, portfolioId, portfolios }) {
   const isEdit = !!editLot;
+  // portfolioId is 'all' when the page's "All Portfolios" tab is active — that's a UI-only
+  // filter value, not a real portfolio, so it can't be written to a portfolio_id uuid column.
+  // Fall back to the holding's own portfolio when editing, otherwise the first portfolio.
+  const resolvedPortfolioId = portfolioId !== 'all' ? portfolioId : (editLot?.portfolio_id || portfolios?.[0]?.id || '');
   const [query, setQuery] = useState(editLot?.ticker || presetTicker || '');
   const [selected, setSelected] = useState(
     editLot ? { ticker: editLot.ticker, name: editLot.ticker } :
@@ -88,11 +92,11 @@ export default function AddHoldingModal({ onClose, onAdded, existingPies, defaul
     const res = isEdit
       ? await fetch('/api/portfolio', {
           method: 'PATCH', headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ id: editLot.id, shares, costBasis, purchaseDate, pie, costBasisCurrency, portfolio_id: portfolioId }),
+          body: JSON.stringify({ id: editLot.id, shares, costBasis, purchaseDate, pie, costBasisCurrency, portfolio_id: resolvedPortfolioId }),
         })
       : await fetch('/api/portfolio', {
           method: 'POST', headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ ticker: selected.ticker, shares, costBasis, purchaseDate, pie, costBasisCurrency, portfolio_id: portfolioId, deductCash }),
+          body: JSON.stringify({ ticker: selected.ticker, shares, costBasis, purchaseDate, pie, costBasisCurrency, portfolio_id: resolvedPortfolioId, deductCash }),
         });
     setSaving(false);
     if (!res.ok) {
