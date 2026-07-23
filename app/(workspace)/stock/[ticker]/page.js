@@ -34,6 +34,17 @@ const fmt = (val) => sharedFmt(val, 'N/A');
 const fmtP = (v) => sharedFmtP(v, { fallback: 'N/A' });
 const fmtN = (v, d = 2) => sharedFmtN(v, d, 'N/A');
 
+// A P/E or P/FCF multiple past this is virtually always a near-zero-denominator artifact (a
+// company right at earnings/cash-flow breakeven, e.g. MXL's ~$3M TTM FCF against a $7.7B market
+// cap pricing out at a "2350x" P/FCF) rather than a genuinely priced-in premium — the ratio stops
+// being informative long before real multiples get anywhere near this high, so it's shown as
+// "N/M" (not meaningful) instead of a four/five-digit number that reads as a bug. Scoring is
+// unaffected: computeEasyMode's pfcfScore is derived from the raw fcfVal/marketCap fields, not
+// from this formatted string, and interpolateScore already clamps values past its own top
+// breakpoint to the worst score rather than blowing up.
+const NM_MULTIPLE_THRESHOLD = 300;
+const fmtMultiple = (v) => (v == null ? 'N/A' : v > NM_MULTIPLE_THRESHOLD ? 'N/M' : fmtN(v));
+
 // QoQ deltas for the Quality/Financials tabs: "now" vs. data.prevQuarter (the same figure as it
 // stood immediately before the most recent 10-Q — see fetchEarningsReaction/prevQuarter in
 // app/api/stock/route.js). Percentage-point deltas for metrics already expressed as a %
@@ -1574,7 +1585,7 @@ function StockPageContent({ params }) {
           <div className="text-ws-text-3 text-[10px] tracking-[2px] border-b border-ws-border pb-1.5 mb-3">OPPORTUNITY BREAKDOWN</div>
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '1px', background: 'var(--ws-border)', marginBottom: '24px' }}>
             {[
-              { label: 'P/FCF', val: fmtN(easyMode.truePfcf), score: easyMode.pfcfScore, desc: easyMode.truePfcf < 20 ? 'Attractive entry' : easyMode.truePfcf < 35 ? 'Fair valuation' : 'Expensive', delta: pctDelta(easyMode.truePfcf, easyModeBefore?.truePfcf) },
+              { label: 'P/FCF', val: fmtMultiple(easyMode.truePfcf), score: easyMode.pfcfScore, desc: easyMode.truePfcf < 20 ? 'Attractive entry' : easyMode.truePfcf < 35 ? 'Fair valuation' : 'Expensive', delta: pctDelta(easyMode.truePfcf, easyModeBefore?.truePfcf) },
               { label: 'FCF YIELD', val: easyMode.trueFcfYield != null ? `${easyMode.trueFcfYield.toFixed(2)}%` : 'N/A', score: easyMode.fcfYieldScore, desc: easyMode.trueFcfYield > 5 ? 'Strong yield' : easyMode.trueFcfYield > 2 ? 'Moderate yield' : 'Low yield', delta: ppDelta(easyMode.trueFcfYield, easyModeBefore?.trueFcfYield), deltaUnit: 'pp' },
             ].map(m => (
               <div key={m.label} className="bg-ws-bg-1 p-4">
@@ -1687,8 +1698,8 @@ function StockPageContent({ params }) {
         <tbody>
           {[
             { label: 'Market Cap', val: fmt(data.marketCap), delta: pctDelta(data.marketCap, data.prevQuarter?.marketCap) },
-            { label: 'P/E', val: fmtN(data.pe), color: data.pe > 0 && data.pe < 20 ? 'var(--ws-accent)' : data.pe > 40 ? 'var(--ws-red)' : 'var(--ws-text)', delta: pctDelta(data.pe, data.prevQuarter?.pe) },
-            { label: 'P/FCF', val: fmtN(easyMode?.truePfcf ?? data.pfcf), color: (easyMode?.truePfcf ?? data.pfcf) > 0 && (easyMode?.truePfcf ?? data.pfcf) < 20 ? 'var(--ws-accent)' : (easyMode?.truePfcf ?? data.pfcf) > 40 ? 'var(--ws-red)' : 'var(--ws-text)', delta: pctDelta(easyMode?.truePfcf ?? data.pfcf, easyModeBefore?.truePfcf ?? data.prevQuarter?.pfcf) },
+            { label: 'P/E', val: fmtMultiple(data.pe), color: data.pe > 0 && data.pe < 20 ? 'var(--ws-accent)' : data.pe > 40 ? 'var(--ws-red)' : 'var(--ws-text)', delta: pctDelta(data.pe, data.prevQuarter?.pe) },
+            { label: 'P/FCF', val: fmtMultiple(easyMode?.truePfcf ?? data.pfcf), color: (easyMode?.truePfcf ?? data.pfcf) > 0 && (easyMode?.truePfcf ?? data.pfcf) < 20 ? 'var(--ws-accent)' : (easyMode?.truePfcf ?? data.pfcf) > 40 ? 'var(--ws-red)' : 'var(--ws-text)', delta: pctDelta(easyMode?.truePfcf ?? data.pfcf, easyModeBefore?.truePfcf ?? data.prevQuarter?.pfcf) },
             { label: 'EV/EBITDA', val: fmtN(data.evEbitda), delta: pctDelta(data.evEbitda, data.prevQuarter?.evEbitda) },
             { label: 'P/B', val: fmtN(data.priceToBook), delta: pctDelta(data.priceToBook, data.prevQuarter?.priceToBook) },
             { label: 'FCF Yield', val: (easyMode?.trueFcfYield ?? data.fcfYield) ? `${(easyMode?.trueFcfYield ?? data.fcfYield).toFixed(2)}%` : 'N/A', color: (easyMode?.trueFcfYield ?? data.fcfYield) > 5 ? 'var(--ws-accent)' : (easyMode?.trueFcfYield ?? data.fcfYield) > 0 ? 'var(--ws-text-2)' : 'var(--ws-red)', delta: ppDelta(easyMode?.trueFcfYield ?? data.fcfYield, easyModeBefore?.trueFcfYield ?? data.prevQuarter?.fcfYield), deltaUnit: 'pp' },
@@ -2039,7 +2050,7 @@ function StockPageContent({ params }) {
                 <>
                   <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px 24px', background: 'var(--ws-bg-1)', border: '1px solid var(--ws-border)', padding: '14px 16px', marginBottom: '16px', fontSize: '11px' }}>
                     <div title="Current true P/FCF (net of stock-based compensation) — the market's own read on this business today.">
-                      <span className="text-ws-text-3">Own multiple</span> &nbsp;<b className="text-ws-text">{relativeValue.ownMultiple != null ? `${relativeValue.ownMultiple.toFixed(1)}x` : 'N/A'}</b>
+                      <span className="text-ws-text-3">Own multiple</span> &nbsp;<b className="text-ws-text">{relativeValue.ownMultiple != null ? (relativeValue.ownMultiple > NM_MULTIPLE_THRESHOLD ? 'N/M' : `${relativeValue.ownMultiple.toFixed(1)}x`) : 'N/A'}</b>
                     </div>
                     <div title="Rough long-run benchmark for this sector — not fitted to this company.">
                       <span className="text-ws-text-3">Sector multiple</span> &nbsp;<b className="text-ws-text">{relativeValue.sectorMultiple.toFixed(1)}x</b>
