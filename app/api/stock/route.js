@@ -148,6 +148,10 @@ const YAHOO_TS_TYPES = [
   'annualTotalLiabilitiesNetMinorityInterest', 'annualRetainedEarnings', 'annualChangeInWorkingCapital',
 ].join(',');
 
+// Same fields, per-quarter — used to build the QoQ "prevQuarter" comparison snapshot (see
+// buildQuarterlySnapshot below) for tickers with no SEC EDGAR coverage.
+const YAHOO_TS_TYPES_QUARTERLY = YAHOO_TS_TYPES.split(',').map(t => t.replace(/^annual/, 'quarterly')).join(',');
+
 // Reads a fundamentals-timeseries response for the first candidate type with data,
 // returning up to the 6 most recent years in the same { year, val } shape as buildHistory().
 function tsSeries(tsJson, ...candidateTypes) {
@@ -345,6 +349,63 @@ function computeDerivedFinancials(h) {
   };
 }
 
+// Trailing-4-quarter sum from an ascending { year, val } array — a single quarter's revenue
+// compared directly against a full year's would always read as a ~75% drop, so income-
+// statement/cash-flow ("flow") figures need to be put on a TTM basis before comparing across
+// periods. Balance-sheet figures are already point-in-time and don't need this.
+function ttmSum(arr) {
+  if (arr.length < 4) return null;
+  const last4 = arr.slice(-4);
+  if (last4.some(x => x.val == null)) return null;
+  return last4.reduce((s, x) => s + x.val, 0);
+}
+
+function dropLastPoint(arr) {
+  return arr.length ? arr.slice(0, -1) : arr;
+}
+
+// ocfMinusCapex above joins by `year`, which works for annual data (one point per year) but
+// not quarterly — tsSeries() labels every point with just its 4-digit calendar year, so all
+// four quarters of the same year collide onto one key and the join would silently pair every
+// quarter with whichever one happened to overwrite the others. Only derives FCF when both
+// series are the same length (both sourced from the same tsSeries() call, same chronological
+// order), so each index really is the same reported quarter in both — otherwise it's left
+// empty rather than risk pairing the wrong quarters together.
+function ocfMinusCapexQuarterly(ocfSeries, capexSeries) {
+  if (ocfSeries.length !== capexSeries.length) return [];
+  return ocfSeries
+    .map((o, i) => (o.val != null && capexSeries[i]?.val != null ? { year: o.year, val: o.val - Math.abs(capexSeries[i].val) } : null))
+    .filter(Boolean);
+}
+
+const YAHOO_FLOW_KEYS = [
+  'revHistory', 'niHistory', 'oiHistory', 'fcfHistory', 'ocfHistory', 'gpHistory', 'rdHistory',
+  'cogsHistory', 'sgaHistory', 'ebtHistory', 'taxHistory', 'interestHistory', 'capexHistory',
+  'investingCFHistory', 'financingCFHistory', 'sbcHistory', 'daHistory', 'dividendsPaidHistory',
+];
+
+// Collapses a set of quarterly { year, val } histories into the single-point-per-key shape
+// computeDerivedFinancials() expects: flow keys become a trailing-4-quarter (TTM) sum, balance
+// keys keep their latest print. `quartersBack` shifts the window earlier — 1 = "as of the
+// quarter before the most recent one" — which is how the QoQ "prevQuarter" comparison snapshot
+// below is built for tickers with no SEC EDGAR coverage (foreign private issuers like Nokia),
+// playing the same role the EDGAR path's XBRL "before" recomputation plays for us-gaap filers.
+function buildQuarterlySnapshot(quarterlyHistories, quartersBack) {
+  const snap = {};
+  for (const [key, fullArr] of Object.entries(quarterlyHistories)) {
+    let arr = fullArr;
+    for (let i = 0; i < quartersBack; i++) arr = dropLastPoint(arr);
+    if (YAHOO_FLOW_KEYS.includes(key)) {
+      const ttm = ttmSum(arr);
+      snap[key] = ttm != null ? [{ year: arr[arr.length - 1]?.year ?? '', val: ttm }] : [];
+    } else {
+      const last = arr[arr.length - 1];
+      snap[key] = last ? [last] : [];
+    }
+  }
+  return snap;
+}
+
 // Full fundamentals for tickers not covered by SEC EDGAR (non-US filers), sourced from
 // Foreign private issuers (Novo Nordisk, Shell, etc.) file statements in their home
 // currency while their US-listed shares trade in USD — Yahoo tags the statement currency
@@ -378,7 +439,7 @@ async function fetchYahooFundamentals(ticker) {
 
     const [qsRes, tsRes] = await Promise.all([
       fetch(`https://query2.finance.yahoo.com/v10/finance/quoteSummary/${ticker}?modules=assetProfile,summaryDetail,defaultKeyStatistics,financialData,balanceSheetHistory,cashFlowStatementHistory&crumb=${encodeURIComponent(auth.crumb)}`, { headers }),
-      fetch(`https://query2.finance.yahoo.com/ws/fundamentals-timeseries/v1/finance/timeseries/${ticker}?symbol=${ticker}&type=${YAHOO_TS_TYPES}&period1=${tenYearsAgo}&period2=${now}&crumb=${encodeURIComponent(auth.crumb)}`, { headers }),
+      fetch(`https://query2.finance.yahoo.com/ws/fundamentals-timeseries/v1/finance/timeseries/${ticker}?symbol=${ticker}&type=${YAHOO_TS_TYPES},${YAHOO_TS_TYPES_QUARTERLY}&period1=${tenYearsAgo}&period2=${now}&crumb=${encodeURIComponent(auth.crumb)}`, { headers }),
     ]);
 
     const qs = await qsRes.json();
@@ -509,15 +570,15 @@ async function fetchYahooFundamentals(ticker) {
     // by USD-denominated shares/market cap. Must run before the book-value equity fallback
     // below, since bookValue/sharesOutstanding are already quote-currency and must not be
     // converted again.
+    const MONETARY_HISTORY_KEYS = [
+      'revHistory', 'niHistory', 'oiHistory', 'fcfHistory', 'ocfHistory', 'assetsHistory', 'equityHistory',
+      'debtHistory', 'cashHistory', 'gpHistory', 'rdHistory', 'cogsHistory', 'sgaHistory',
+      'ebtHistory', 'taxHistory', 'interestHistory', 'capexHistory', 'investingCFHistory',
+      'financingCFHistory', 'currentAssetsHistory', 'currentLiabilitiesHistory',
+      'totalLiabilitiesHistory', 'inventoryHistory', 'receivablesHistory', 'payablesHistory',
+      'sbcHistory', 'daHistory', 'dividendsPaidHistory', 'retainedEarningsHistory', 'wcChangeHistory',
+    ];
     if (fx !== 1) {
-      const MONETARY_HISTORY_KEYS = [
-        'revHistory', 'niHistory', 'oiHistory', 'fcfHistory', 'assetsHistory', 'equityHistory',
-        'debtHistory', 'cashHistory', 'gpHistory', 'rdHistory', 'cogsHistory', 'sgaHistory',
-        'ebtHistory', 'taxHistory', 'interestHistory', 'capexHistory', 'investingCFHistory',
-        'financingCFHistory', 'currentAssetsHistory', 'currentLiabilitiesHistory',
-        'totalLiabilitiesHistory', 'inventoryHistory', 'receivablesHistory', 'payablesHistory',
-        'sbcHistory', 'daHistory', 'dividendsPaidHistory', 'retainedEarningsHistory', 'wcChangeHistory',
-      ];
       for (const key of MONETARY_HISTORY_KEYS) {
         histories[key] = histories[key].map(pt => ({ ...pt, val: pt.val * fx }));
       }
@@ -533,6 +594,87 @@ async function fetchYahooFundamentals(ticker) {
     if (histories.revHistory.length === 0 && histories.niHistory.length === 0) return null;
 
     const d = computeDerivedFinancials(histories);
+
+    // QoQ comparison snapshot for the Quality/Financials tabs' up/down badges — the fallback
+    // path's equivalent of the SEC-EDGAR branch's `prevQuarter` (see the EDGAR-only prevQuarter
+    // built further down in this file), sourced from Yahoo's quarterly timeseries instead since
+    // EDGAR has no us-gaap data for this filer. Only the non-price-dependent half is built here;
+    // the route handler fills in marketCap/pe/pfcf/evEbitda/priceToBook once priceBefore (from
+    // fetchEarningsReaction) is available.
+    const quarterlyHistories = {
+      revHistory: tsSeries(ts, 'quarterlyTotalRevenue'),
+      niHistory: tsSeries(ts, 'quarterlyNetIncomeCommonStockholders', 'quarterlyNetIncome'),
+      oiHistory: tsSeries(ts, 'quarterlyOperatingIncome'),
+      ocfHistory: tsSeries(ts, 'quarterlyOperatingCashFlow'),
+      fcfHistory: tsSeries(ts, 'quarterlyFreeCashFlow'),
+      assetsHistory: tsSeries(ts, 'quarterlyTotalAssets'),
+      equityHistory: tsSeries(ts, 'quarterlyStockholdersEquity'),
+      debtHistory: tsSeries(ts, 'quarterlyTotalDebt', 'quarterlyLongTermDebt'),
+      cashHistory: tsSeries(ts, 'quarterlyCashAndCashEquivalents'),
+      gpHistory: tsSeries(ts, 'quarterlyGrossProfit'),
+      rdHistory: tsSeries(ts, 'quarterlyResearchAndDevelopment'),
+      cogsHistory: tsSeries(ts, 'quarterlyCostOfRevenue'),
+      sgaHistory: tsSeries(ts, 'quarterlySellingGeneralAndAdministration'),
+      ebtHistory: tsSeries(ts, 'quarterlyPretaxIncome'),
+      taxHistory: tsSeries(ts, 'quarterlyTaxProvision'),
+      interestHistory: tsSeries(ts, 'quarterlyInterestExpense'),
+      sharesHistory: tsSeries(ts, 'quarterlyDilutedAverageShares', 'quarterlyBasicAverageShares'),
+      sharesBasicHistory: tsSeries(ts, 'quarterlyBasicAverageShares'),
+      sharesDilutedHistory: tsSeries(ts, 'quarterlyDilutedAverageShares'),
+      capexHistory: tsSeries(ts, 'quarterlyCapitalExpenditure'),
+      investingCFHistory: tsSeries(ts, 'quarterlyInvestingCashFlow'),
+      financingCFHistory: tsSeries(ts, 'quarterlyFinancingCashFlow'),
+      currentAssetsHistory: tsSeries(ts, 'quarterlyCurrentAssets'),
+      currentLiabilitiesHistory: tsSeries(ts, 'quarterlyCurrentLiabilities'),
+      totalLiabilitiesHistory: tsSeries(ts, 'quarterlyTotalLiabilitiesNetMinorityInterest'),
+      inventoryHistory: tsSeries(ts, 'quarterlyInventory'),
+      receivablesHistory: tsSeries(ts, 'quarterlyAccountsReceivable'),
+      payablesHistory: tsSeries(ts, 'quarterlyAccountsPayable'),
+      sbcHistory: tsSeries(ts, 'quarterlyStockBasedCompensation'),
+      daHistory: tsSeries(ts, 'quarterlyDepreciationAndAmortization'),
+      dividendsPaidHistory: tsSeries(ts, 'quarterlyCommonStockDividendPaid'),
+      retainedEarningsHistory: tsSeries(ts, 'quarterlyRetainedEarnings'),
+    };
+    if (!quarterlyHistories.fcfHistory.length) {
+      quarterlyHistories.fcfHistory = ocfMinusCapexQuarterly(quarterlyHistories.ocfHistory, quarterlyHistories.capexHistory);
+    }
+    if (fx !== 1) {
+      for (const key of MONETARY_HISTORY_KEYS) {
+        if (!quarterlyHistories[key]) continue;
+        quarterlyHistories[key] = quarterlyHistories[key].map(pt => ({ ...pt, val: pt.val * fx }));
+      }
+    }
+
+    // Need at least 5 quarters (4 to sum into a TTM, plus 1 to shift the window back by a
+    // quarter) — Yahoo's timeseries caps at 6 via tsSeries()'s slice(-6), so thinly-covered
+    // tickers that only have a handful of quarters simply don't get this badge.
+    let quarterlyPrevQuarter = null;
+    if (quarterlyHistories.revHistory.length >= 5) {
+      const before = computeDerivedFinancials(buildQuarterlySnapshot(quarterlyHistories, 1));
+      const sharesForCalcBefore = before.sharesDilutedVal ?? before.sharesBasicVal ?? null;
+      const shiftedRev = dropLastPoint(quarterlyHistories.revHistory);
+      quarterlyPrevQuarter = {
+        date: shiftedRev[shiftedRev.length - 1]?.year ?? null,
+        revVal: before.revVal, niVal: before.niVal, oiVal: before.oiVal, gpVal: before.gpVal,
+        fcfVal: before.fcfVal, daVal: before.daVal,
+        operatingCFVal: (() => {
+          const arr = dropLastPoint(quarterlyHistories.ocfHistory);
+          return ttmSum(arr);
+        })(),
+        capexVal: before.capexVal,
+        assetsVal: before.assetsVal, equityVal: before.equityVal, debtVal: before.debtVal, cashVal: before.cashVal,
+        currentAssetsVal: before.currentAssetsVal, currentLiabilitiesVal: before.currentLiabilitiesVal,
+        totalLiabilitiesVal: before.totalLiabilitiesVal,
+        inventoryVal: before.inventoryVal, receivablesVal: before.receivablesVal, payablesVal: before.payablesVal,
+        sbcVal: before.sbcVal, dividendsPaidVal: before.dividendsPaidVal,
+        dso: before.dso, dio: before.dio, dpo: before.dpo, ccc: before.ccc, inventoryTurnover: before.inventoryTurnover,
+        currentRatio: before.currentAssetsVal && before.currentLiabilitiesVal ? +(before.currentAssetsVal / before.currentLiabilitiesVal).toFixed(2) : null,
+        opMargin: before.opMargin, netMargin: before.netMargin, grossMargin: before.grossMargin,
+        roe: before.roe, roa: before.roa, roic: before.roic, debtToEquity: before.debtToEquity, netDebt: before.netDebt,
+        eps: before.niVal != null && sharesForCalcBefore ? +(before.niVal / sharesForCalcBefore).toFixed(2) : null,
+        sharesOutstanding: sharesForCalcBefore,
+      };
+    }
 
     let currentPrice = num(fin.currentPrice) ?? num(summary.regularMarketPreviousClose) ?? null;
     const sharesOutstanding = num(keyStats.sharesOutstanding);
@@ -612,6 +754,7 @@ async function fetchYahooFundamentals(ticker) {
       priceToBook: num(keyStats.priceToBook) ?? null,
       analystTarget,
       operatingCFVal: histories.ocfHistory.length ? histories.ocfHistory[histories.ocfHistory.length - 1].val : null,
+      prevQuarter: quarterlyPrevQuarter,
     };
   } catch (e) {
     return null;
@@ -1138,6 +1281,28 @@ export async function GET(request) {
       result.lastEarningsDate = resolveLastEarningsDate(priorCachedData, earningsInfo.lastEarningsDate);
       result.nextEarningsDate = earningsInfo.nextEarningsDate;
       result.isEtf = cachedIsEtf;
+
+      // Fill in the price-dependent half of the QoQ comparison snapshot (market cap, P/E, ...)
+      // now that priceBefore is available — yh.prevQuarter carries everything computable
+      // without a price, built from Yahoo's quarterly timeseries in fetchYahooFundamentals.
+      // priceBefore is only trustworthy for plain tickers (no exchange suffix, e.g. NOK's USD
+      // ADR) — same caveat fetchEarningsReaction documents for earningsReaction itself.
+      if (yh?.prevQuarter && !ticker.includes('.')) {
+        const pq = yh.prevQuarter;
+        const priceBefore = earningsInfo.reaction?.priceBefore ?? null;
+        const marketCapBefore = priceBefore && pq.sharesOutstanding ? priceBefore * pq.sharesOutstanding : null;
+        const ebitdaBefore = pq.oiVal != null && pq.daVal != null ? pq.oiVal + pq.daVal : null;
+        result.prevQuarter = {
+          ...pq,
+          marketCap: marketCapBefore,
+          pe: pq.eps && priceBefore ? +(priceBefore / pq.eps).toFixed(2) : null,
+          pfcf: marketCapBefore && pq.fcfVal > 0 ? +(marketCapBefore / pq.fcfVal).toFixed(1) : null,
+          fcfYield: marketCapBefore && pq.fcfVal ? +((pq.fcfVal / marketCapBefore) * 100).toFixed(2) : null,
+          evEbitda: marketCapBefore != null && ebitdaBefore ? +((marketCapBefore + (pq.netDebt ?? 0)) / ebitdaBefore).toFixed(1) : null,
+          priceToBook: marketCapBefore && pq.equityVal > 0 ? +(marketCapBefore / pq.equityVal).toFixed(2) : null,
+        };
+      }
+
       const valCountFallback = [result.revVal, result.niVal, result.fcfVal, result.assetsVal, result.debtVal, result.cashVal].filter(v => v !== null).length;
       const isEtfFallback = result.sector === 'ETF' || result.industry === 'ETF';
       if (valCountFallback >= 2 || (isEtfFallback && result.currentPrice != null)) {
