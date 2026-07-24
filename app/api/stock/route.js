@@ -2115,9 +2115,16 @@ const sharesForCalc = sharesValAdj || sharesFinnhub;
       prevQuarter,
     };
 
-    // Si menos de 3 campos clave tienen datos o no hay ingresos/beneficios, combinar con Yahoo Fundamentals
+    // Si menos de 3 campos clave tienen datos o no hay ingresos/beneficios, combinar con Yahoo Fundamentals.
+    // revVal == null alone (not just revVal && niVal both null) is enough to trigger this: banks and
+    // other financials routinely tag NI/OI/assets fine in SEC EDGAR XBRL but don't use the standard
+    // "Revenues"-family concepts this fetch looks for, so revVal/revHistory come back empty while
+    // dataQuality still clears 3 on the other fields — leaving the Revenue Growth chart on the Quality
+    // tab silently blank (verified against real data: AFBI's SEC path yielded revVal: null with a
+    // populated niVal, so this condition never fired and revHistory stayed [] instead of getting
+    // backfilled from Yahoo below, which does carry revenue data for financials).
     const dataQuality = [revVal, niVal, oiVal, fcfVal, assetsVal, equityVal, debtVal, cashVal].filter(v => v !== null).length;
-    if (dataQuality < 3 || (revVal == null && niVal == null)) {
+    if (dataQuality < 3 || revVal == null) {
       result.finnhubFallback = true;
       const yh = await fetchYahooFundamentals(ticker).catch(() => null);
       if (yh) {
