@@ -748,8 +748,17 @@ function StockPageContent({ params }) {
   );
 
   const score = totalScore();
-  const revChart = data.revHistory.map(r => ({ year: r.year, value: +(r.val / 1e9).toFixed(1) }));
-  const fcfChart = data.fcfHistory.map(r => ({ year: r.year, value: +(r.val / 1e9).toFixed(1) }));
+  // Scale each series by its own magnitude rather than a fixed /1e9 — a small/micro cap's
+  // revenue in the tens of millions rounded to 1 decimal after dividing by a billion collapsed
+  // every year to 0.0, flattening the MiniLine chart into a fake zero line (verified against
+  // real data: AFBI's ~$30-33M/yr revenue history rendered as four identical 0.0 points).
+  const scaleHistory = (hist) => {
+    const maxAbs = Math.max(0, ...hist.map(r => Math.abs(r.val ?? 0)));
+    const divisor = maxAbs >= 1e9 ? 1e9 : maxAbs >= 1e6 ? 1e6 : maxAbs >= 1e3 ? 1e3 : 1;
+    return hist.map(r => ({ year: r.year, value: +(r.val / divisor).toFixed(1) }));
+  };
+  const revChart = scaleHistory(data.revHistory);
+  const fcfChart = scaleHistory(data.fcfHistory);
 
   const price = data.currentPrice;
   const change = data.priceChange;
