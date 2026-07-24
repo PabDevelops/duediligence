@@ -926,7 +926,7 @@ function StockPageContent({ params }) {
                     }}
                       title={`Market cap: ${fmt(data.marketCap)}`}
                     >
-                      {marketCapTier(data.marketCap).label}
+                      {marketCapTier(data.marketCap).label} · {fmt(data.marketCap)}
                     </span>
                   )}
                 </div>
