@@ -1174,13 +1174,32 @@ export async function GET(request) {
 
       const m = fhBasic?.metric || {};
       const currentPrice = fh.c || null;
+      // Prefer Yahoo's full financial-statement history for the dollar amounts and charts;
+      // Finnhub fills in TTM ratios and current-price fields that Yahoo may be missing.
+      const yh = yhFundamentals;
       // /stock/metric's sharesOutstanding is occasionally missing (verified against real data:
       // NOK) even when /stock/profile2's shareOutstanding is populated — the latter is a plain
       // share count with no currency exposure, safe to use regardless of which listing profile2
       // resolves to (unlike marketCapitalization below, which is denominated in whatever
       // currency that listing trades in).
-      const sharesOutstanding = (m.sharesOutstanding ? m.sharesOutstanding * 1e6 : null)
+      const finnhubShares = (m.sharesOutstanding ? m.sharesOutstanding * 1e6 : null)
         ?? (fhProfile.shareOutstanding ? fhProfile.shareOutstanding * 1e6 : null);
+      // Finnhub's shareOutstanding (and the epsAnnual/epsTTM computed from it) can go stale
+      // after a reverse stock split — verified against real data: VEON did a 1-for-25 reverse
+      // split in 2023, and Finnhub's /stock/metric and /stock/profile2 still report the
+      // PRE-split share count (~1.73B vs. the real ~71.8M) here. That drags Finnhub's own EPS
+      // down by the same ~25x and inflates the derived `pe` to a nonsensical 175x against a 6x
+      // forward P/E — an internal contradiction, not a currency issue (the dollar amounts
+      // upstream are already FX-normalized). Yahoo's diluted/basic/plain share count (already
+      // used for revHistory/niHistory/epsHistory below on this same path) is the one other
+      // independently-sourced share count available here, so a large disagreement between the
+      // two is treated as "Finnhub hasn't caught up with the split," not "the company's share
+      // count changed by 25x overnight" — both the share count and the eps/pe derived from it
+      // fall back to Yahoo's internally-consistent numbers instead of Finnhub's stale one.
+      const yhShares = yh?.sharesDilutedVal ?? yh?.sharesBasicVal ?? yh?.sharesVal ?? null;
+      const trustFinnhubShares = !(finnhubShares != null && yhShares != null
+        && (finnhubShares / yhShares > 3 || yhShares / finnhubShares > 3));
+      const sharesOutstanding = (trustFinnhubShares ? finnhubShares : null) ?? yhShares;
       // fhProfile can resolve to a foreign primary listing (e.g. ticker NVO -> Novo Nordisk's
       // Copenhagen listing, profile2 returns "currency":"DKK") even though /quote above
       // correctly returns the USD ADR price — mixing the two overstates market cap by the FX
@@ -1189,12 +1208,8 @@ export async function GET(request) {
       const marketCap = fhProfile.marketCapitalization && (!fhProfile.currency || fhProfile.currency === 'USD')
         ? fhProfile.marketCapitalization * 1e6
         : null;
-      const eps = m.epsAnnual || m.epsTTM || null;
+      const eps = trustFinnhubShares ? (m.epsAnnual || m.epsTTM || null) : null;
       const pe = eps && currentPrice ? +(currentPrice / eps).toFixed(2) : null;
-
-      // Prefer Yahoo's full financial-statement history for the dollar amounts and charts;
-      // Finnhub fills in TTM ratios and current-price fields that Yahoo may be missing.
-      const yh = yhFundamentals;
       const result = {
         riskFreeRate,
         name: fhProfile.name || ticker,
