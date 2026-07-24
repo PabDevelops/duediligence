@@ -603,7 +603,7 @@ export default function WorkspacePortfolio() {
                               </div>
                             </td>
                             <td style={{ padding: '10px 12px', textAlign: 'center' }}>
-                              {sparklines[p.ticker] && <Sparkline data={sparklines[p.ticker]} width={64} height={22} />}
+                              {sparklines[p.ticker] && <Sparkline data={sparklines[p.ticker]} width={44} height={22} />}
                             </td>
                             <td style={{ padding: '10px 12px', textAlign: 'right' }}>{p.shares.toLocaleString(undefined, { maximumFractionDigits: 4 })}</td>
                             <td style={{ padding: '10px 12px', textAlign: 'right' }}>{p.avgCostNative != null ? formatCurrency(p.avgCostNative, CURRENCIES[p.costCurrency] || p.costCurrency) : fmtC(p.avgCost)}</td>
