@@ -53,6 +53,8 @@ export default function WorkspacePortfolio() {
   const [editingPie, setEditingPie] = useState(null);
   const [transferPie, setTransferPie] = useState(null);
   const [newPieName, setNewPieName] = useState('');
+  const [draggedTicker, setDraggedTicker] = useState(null);
+  const [dragOverPie, setDragOverPie] = useState(null);
   const { rates, toUSD } = useCurrencyRates();
 
   const loadPortfolios = async () => {
@@ -299,6 +301,28 @@ export default function WorkspacePortfolio() {
     }
   };
 
+  const movePositionToPie = async (position, targetPieName) => {
+    const targetPie = targetPieName === 'Unassigned' ? null : targetPieName;
+    if ((position.pie || null) === targetPie) return;
+    try {
+      await Promise.all(position.lots.map(l => fetch('/api/portfolio', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          id: l.id,
+          shares: l.shares,
+          costBasis: l.cost_basis,
+          purchaseDate: l.purchase_date,
+          pie: targetPie,
+          costBasisCurrency: l.cost_basis_currency,
+        }),
+      })));
+      load();
+    } catch (err) {
+      console.error('Error moving holding to pie:', err);
+    }
+  };
+
   const handleRenamePie = async (oldPie, newPie) => {
     if (!newPie || !newPie.trim() || newPie.trim() === oldPie) {
       setEditingPie(null);
@@ -450,8 +474,25 @@ export default function WorkspacePortfolio() {
           {groupedByPie.map(group => {
             const groupAllocation = totals.investedValue > 0 ? (group.value / totals.investedValue) * 100 : 0;
             const isEditing = editingPie === group.name;
+            const isDragOver = dragOverPie === group.name;
             return (
-              <div key={group.name} style={{ marginBottom: '18px' }}>
+              <div key={group.name}
+                style={{
+                  marginBottom: '18px',
+                  outline: isDragOver ? '2px dashed var(--ws-accent)' : '2px dashed transparent',
+                  outlineOffset: '4px',
+                  transition: 'outline-color 0.1s ease',
+                }}
+                onDragOver={e => { if (!draggedTicker) return; e.preventDefault(); e.dataTransfer.dropEffect = 'move'; if (dragOverPie !== group.name) setDragOverPie(group.name); }}
+                onDragLeave={e => { if (e.currentTarget.contains(e.relatedTarget)) return; setDragOverPie(prev => (prev === group.name ? null : prev)); }}
+                onDrop={e => {
+                  e.preventDefault();
+                  const position = positions.find(p => p.ticker === draggedTicker);
+                  if (position) movePositionToPie(position, group.name);
+                  setDraggedTicker(null);
+                  setDragOverPie(null);
+                }}
+              >
                 <div style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '10px 4px', marginBottom: '2px' }}>
                   {isEditing ? (
                     <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
@@ -542,11 +583,15 @@ export default function WorkspacePortfolio() {
                         const lastLot = [...p.lots].sort((a, b) => new Date(b.created_at) - new Date(a.created_at))[0];
                         return (
                           <tr key={p.ticker} onClick={() => openInNewTab(`/stock/${p.ticker}`)}
-                            style={{ borderBottom: '1px solid var(--ws-border)', cursor: 'pointer', background: 'var(--ws-bg-1)' }}
+                            draggable
+                            onDragStart={e => { e.dataTransfer.effectAllowed = 'move'; e.dataTransfer.setData('text/plain', p.ticker); setDraggedTicker(p.ticker); }}
+                            onDragEnd={() => { setDraggedTicker(null); setDragOverPie(null); }}
+                            style={{ borderBottom: '1px solid var(--ws-border)', cursor: 'pointer', background: 'var(--ws-bg-1)', opacity: draggedTicker === p.ticker ? 0.4 : 1 }}
                             onMouseEnter={e => e.currentTarget.style.background = 'var(--ws-bg-2)'}
                             onMouseLeave={e => e.currentTarget.style.background = 'var(--ws-bg-1)'}>
                             <td className="sticky-col" style={{ padding: '10px 12px' }}>
                               <div className="flex items-center gap-2">
+                                <span title="Drag to move to another pie" style={{ cursor: 'grab', color: 'var(--ws-text-3)', fontSize: '13px', lineHeight: 1, userSelect: 'none' }}>⠿</span>
                                 <StockLogo ticker={p.ticker} size={24} />
                                 <div>
                                   <div style={{ fontWeight: 600, color: 'var(--ws-text)', display: 'flex', alignItems: 'center', gap: '6px' }}>
