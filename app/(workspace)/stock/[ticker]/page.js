@@ -16,6 +16,7 @@ import AdSlot from '../../../components/AdSlot';
 import PaywallModal from '../../../components/workspace/PaywallModal';
 import { isInGuestWatchlist, addToGuestWatchlist, removeFromGuestWatchlist } from '../../../../lib/guestWatchlist';
 import { openInNewTab } from '../../../../lib/openInNewTab';
+import { buildEarningsCalendarUrl } from '../../../../lib/googleCalendar';
 import { fmt as sharedFmt, fmtP as sharedFmtP, fmtN as sharedFmtN, formatCurrency } from '../../../../lib/formatters';
 import { useStockData } from '../../../../lib/hooks/useStockData';
 import { useTickerSearch } from '../../../../lib/hooks/useTickerSearch';
@@ -1371,6 +1372,12 @@ function StockPageContent({ params }) {
                           </>
                         )}
                       </div>
+                      <button
+                        onClick={() => openInNewTab(buildEarningsCalendarUrl({ ticker, name: data?.name, date: upcomingEvent.date, hour: upcomingEvent.hour }))}
+                        style={{ fontSize: '11px', padding: '6px 10px', marginTop: '10px', background: 'var(--ws-bg-2)', border: '1px solid var(--ws-border)', color: 'var(--ws-text)', cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
+                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
+                        Add to Google Calendar
+                      </button>
                     </div>
                   ) : (
                     <div style={{ fontSize: '12px', color: 'var(--ws-text-3)' }}>

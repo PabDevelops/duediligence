@@ -6,6 +6,7 @@ import StockLogo from '../../components/workspace/StockLogo';
 import { toKey, startOfMonth, endOfMonth, shiftMonth } from '../../../lib/calendarDates';
 import { openInNewTab } from '../../../lib/openInNewTab';
 import { fmt } from '../../../lib/formatters';
+import { buildEarningsCalendarUrl } from '../../../lib/googleCalendar';
 
 const MONTH_NAMES = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
 const DAY_NAMES = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
@@ -787,6 +788,16 @@ export default function WorkspaceCalendar() {
                             </div>
                           )}
 
+                          {/* Add to Google Calendar */}
+                          {e.type === 'earnings' && (
+                            <button onClick={(event) => { event.stopPropagation(); openInNewTab(buildEarningsCalendarUrl({ ticker: e.ticker, name: e.name, date: e.date, hour: e.hour })); }}
+                              style={{ background: 'none', border: 'none', color: 'var(--ws-text-3)', cursor: 'pointer', fontSize: '14px', padding: '4px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                              className="gcal-btn"
+                              title="Add to Google Calendar">
+                              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
+                            </button>
+                          )}
+
                           {/* Star Watchlist Action Button */}
                           <button onClick={(event) => handleToggleWatchlist(event, e.ticker)}
                             disabled={togglingWatchlist === e.ticker}
@@ -861,6 +872,9 @@ export default function WorkspaceCalendar() {
         .star-btn:hover {
           transform: scale(1.2);
           color: #d99a4e !important;
+        }
+        .gcal-btn:hover {
+          color: var(--ws-accent) !important;
         }
         @media (max-width: 1023px) {
           .calendar-main-grid {
