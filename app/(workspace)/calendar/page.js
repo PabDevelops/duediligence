@@ -5,9 +5,15 @@ import { useUser } from '../../components/AuthProvider';
 import StockLogo from '../../components/workspace/StockLogo';
 import { toKey, startOfMonth, endOfMonth, shiftMonth } from '../../../lib/calendarDates';
 import { openInNewTab } from '../../../lib/openInNewTab';
+import { fmt } from '../../../lib/formatters';
 
 const MONTH_NAMES = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
 const DAY_NAMES = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+
+// Native title tooltip for the compact weekly-view tiles (logo + ticker only) — name, sector
+// and market cap are already on the event object (see the marketCap/sector filters above),
+// just not otherwise visible until the tile is clicked through to the stock page.
+const tileTitle = (e) => [e.ticker, e.name, e.sector, e.marketCap ? fmt(e.marketCap) : null].filter(Boolean).join(' · ');
 
 export default function WorkspaceCalendar() {
   const router = useRouter();
@@ -512,7 +518,7 @@ export default function WorkspaceCalendar() {
                     </div>
                     <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(44px, 1fr))', gap: '6px' }}>
                       {dayGroup.other.map(e => (
-                        <div key={e.ticker} className="weekly-stock-tile" title={`${e.ticker}${e.name ? ` - ${e.name}` : ''}`} onClick={() => openInNewTab(`/stock/${e.ticker}`)}
+                        <div key={e.ticker} className="weekly-stock-tile" title={tileTitle(e)} onClick={() => openInNewTab(`/stock/${e.ticker}`)}
                           style={{ background: 'var(--ws-bg-2)', border: '1px solid var(--ws-border)', borderRadius: '4px', padding: '4px', cursor: 'pointer', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px' }}>
                           <StockLogo ticker={e.ticker} size={28} />
                           <div style={{ fontSize: '9px', fontWeight: 700, color: 'var(--ws-text)', textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap', width: '100%', textAlign: 'center' }}>
@@ -532,7 +538,7 @@ export default function WorkspaceCalendar() {
                   </div>
                   <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(44px, 1fr))', gap: '6px' }}>
                     {dayGroup.bmo.map(e => (
-                      <div key={e.ticker} className="weekly-stock-tile" title={`${e.ticker}${e.name ? ` - ${e.name}` : ''}`} onClick={() => openInNewTab(`/stock/${e.ticker}`)}
+                      <div key={e.ticker} className="weekly-stock-tile" title={tileTitle(e)} onClick={() => openInNewTab(`/stock/${e.ticker}`)}
                         style={{ background: 'var(--ws-bg-2)', border: '1px solid var(--ws-border)', borderRadius: '4px', padding: '4px', cursor: 'pointer', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px' }}>
                         <StockLogo ticker={e.ticker} size={28} />
                         <div style={{ fontSize: '9px', fontWeight: 700, color: 'var(--ws-text)', textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap', width: '100%', textAlign: 'center' }}>
@@ -554,7 +560,7 @@ export default function WorkspaceCalendar() {
                   </div>
                   <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(44px, 1fr))', gap: '6px' }}>
                     {dayGroup.amc.map(e => (
-                      <div key={e.ticker} className="weekly-stock-tile" title={`${e.ticker}${e.name ? ` - ${e.name}` : ''}`} onClick={() => openInNewTab(`/stock/${e.ticker}`)}
+                      <div key={e.ticker} className="weekly-stock-tile" title={tileTitle(e)} onClick={() => openInNewTab(`/stock/${e.ticker}`)}
                         style={{ background: 'var(--ws-bg-2)', border: '1px solid var(--ws-border)', borderRadius: '4px', padding: '4px', cursor: 'pointer', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px' }}>
                         <StockLogo ticker={e.ticker} size={28} />
                         <div style={{ fontSize: '9px', fontWeight: 700, color: 'var(--ws-text)', textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap', width: '100%', textAlign: 'center' }}>
