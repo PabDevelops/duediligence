@@ -13,7 +13,7 @@ const softwareAppJsonLd = {
   name: 'Traqcker',
   applicationCategory: 'FinanceApplication',
   operatingSystem: 'Web',
-  description: 'Terminal-style investment research and portfolio tracking platform using a proprietary GARP-based scoring system built on free cash flow analysis, covering 260+ companies with data from SEC EDGAR and Finnhub.',
+  description: 'Terminal-style investment research and portfolio tracking platform using a proprietary GARP-based scoring system built on free cash flow analysis, covering 80,000+ companies across US and international markets with data from SEC EDGAR and Finnhub.',
   offers: [
     {
       '@type': 'Offer',
