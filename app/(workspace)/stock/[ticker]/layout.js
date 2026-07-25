@@ -9,11 +9,11 @@ export async function generateMetadata({ params }) {
     if (data.error) {
       return {
         title: `${t} Stock Analysis — Traqcker`,
-        description: `Professional investment analysis for ${t}, powered by direct company filings. SEC EDGAR source verification, intrinsic valuation, and financial metrics.`,
+        description: `Professional investment analysis for ${t}, powered by direct company filings. financial data sourced directly from SEC EDGAR filings, intrinsic valuation, and financial metrics.`,
       };
     }
 
-    const descSnippet = `Professional fundamental analysis for ${data.name} (${t}). Verified SEC EDGAR financial statements, intrinsic valuation modeling, and quality scores.`;
+    const descSnippet = `Professional fundamental analysis for ${data.name} (${t}). Financial data sourced directly from SEC EDGAR filings, intrinsic valuation modeling, and quality scores.`;
 
     const ogDesc = [
       data.pe ? `P/E ${data.pe.toFixed(1)}` : null,
@@ -45,7 +45,7 @@ export async function generateMetadata({ params }) {
   } catch {
     return {
       title: `${t} Stock Analysis — Traqcker`,
-      description: `Professional investment analysis for ${t}, powered by direct company filings. SEC EDGAR source verification, intrinsic valuation, and financial metrics.`,
+      description: `Professional investment analysis for ${t}, powered by direct company filings. financial data sourced directly from SEC EDGAR filings, intrinsic valuation, and financial metrics.`,
     };
   }
 }

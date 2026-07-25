@@ -11,7 +11,7 @@ import AdSense from './components/AdSense';
 export const metadata = {
   metadataBase: new URL('https://traqcker.com'),
   title: "Traqcker — Professional Investment Analysis",
-  description: "Professional fundamental analysis powered by direct company filings. SEC EDGAR source verification, normalized multi-currency portfolios, intrinsic valuation modeling, and community intelligence.",
+  description: "Professional fundamental analysis powered by direct company filings. financial data sourced directly from SEC EDGAR filings, normalized multi-currency portfolios, intrinsic valuation modeling, and community intelligence.",
   icons: {
     icon: '/favicon.png',
     apple: '/apple-touch-icon.png',
@@ -19,7 +19,7 @@ export const metadata = {
   },
   openGraph: {
     title: "Traqcker — Professional Investment Analysis",
-    description: "Professional investment analysis powered by direct company filings. SEC EDGAR source verification, normalized multi-currency portfolios, intrinsic valuation modeling, and community intelligence.",
+    description: "Professional investment analysis powered by direct company filings. financial data sourced directly from SEC EDGAR filings, normalized multi-currency portfolios, intrinsic valuation modeling, and community intelligence.",
     url: "https://traqcker.com",
     siteName: "Traqcker",
     images: [
@@ -34,7 +34,7 @@ export const metadata = {
   twitter: {
     card: "summary_large_image",
     title: "Traqcker — Professional Investment Analysis",
-    description: "Professional investment analysis powered by direct company filings. SEC EDGAR source verification, normalized multi-currency portfolios, intrinsic valuation modeling, and community intelligence.",
+    description: "Professional investment analysis powered by direct company filings. financial data sourced directly from SEC EDGAR filings, normalized multi-currency portfolios, intrinsic valuation modeling, and community intelligence.",
     images: ["https://traqcker.com/og-screenshot.png"],
   },
 };
