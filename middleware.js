@@ -37,7 +37,7 @@ function stripSpanishPrefix(pathname) {
 // discovery and, in turn, AdSense's "can the crawler access the site" verification check.
 const CRAWLER_STATIC_FILES = ['/ads.txt', '/robots.txt', '/sitemap.xml'];
 
-function domainRedirect(request, hasVisitedBefore) {
+function domainRedirect(request, isAuthenticated) {
   const host = request.headers.get('host') || '';
   const { pathname, search } = request.nextUrl;
 
@@ -65,14 +65,14 @@ function domainRedirect(request, hasVisitedBefore) {
   const isTerminal = host === 'terminal.traqcker.com';
   if (!isApex && !isTerminal) return null;
 
-  // Anyone who's already been to the site before (carries the tq_gid guest cookie,
-  // minted on their very first-ever request regardless of host — see below) skips the
-  // marketing landing entirely and goes straight into the terminal. Cookie-less visitors
-  // (first real touch, or stateless crawlers/SEO bots) still see the landing normally, so
-  // organic acquisition and indexing are unaffected. Checked before the marketing-path
-  // rules below so it also short-circuits the pointless terminal-root -> apex -> terminal
-  // bounce that isMarketingPath('/') would otherwise trigger.
-  if (pathname === '/' && hasVisitedBefore) {
+  // Signed-in visitors skip the marketing landing entirely and go straight into the
+  // terminal — they already converted, the landing page has nothing left to sell them.
+  // Anonymous visitors (first touch, returning-but-not-yet-signed-up, or stateless
+  // crawlers/SEO bots) still see the landing normally, since that's exactly who the
+  // marketing copy is written to convert. Checked before the marketing-path rules below
+  // so it also short-circuits the pointless terminal-root -> apex -> terminal bounce that
+  // isMarketingPath('/') would otherwise trigger.
+  if (pathname === '/' && isAuthenticated) {
     return NextResponse.redirect(new URL('https://terminal.traqcker.com/home', request.url), 307);
   }
 
@@ -100,14 +100,9 @@ export async function middleware(request, event) {
   }
 
   // Anonymous visitor id, used to scope rate limits and usage caps for guests browsing
-  // the Terminal without an account, and (see domainRedirect) as the "has this browser
-  // been here before" signal that skips the marketing landing. Minted once and kept for
-  // a year; never overwritten once set.
+  // the Terminal without an account. Minted once and kept for a year; never overwritten
+  // once set.
   const existingGuestId = request.cookies.get('tq_gid')?.value;
-
-  const redirect = domainRedirect(request, !!existingGuestId);
-  if (redirect) return redirect;
-
   const guestId = existingGuestId || crypto.randomUUID();
 
   const buildResponse = () => NextResponse.next({ request });
@@ -137,7 +132,17 @@ export async function middleware(request, event) {
     }
   );
 
-  await supabase.auth.getUser();
+  // Resolved before domainRedirect so the '/' -> terminal skip can be gated on a real
+  // session instead of "has a guest cookie" (which is true for almost every repeat visit).
+  const { data: { user } } = await supabase.auth.getUser();
+
+  const redirect = domainRedirect(request, !!user);
+  if (redirect) {
+    // Carry over any auth cookies refreshed by getUser() above so a token rotation
+    // isn't dropped just because this request happens to end in a redirect.
+    response.cookies.getAll().forEach((cookie) => redirect.cookies.set(cookie));
+    return redirect;
+  }
 
   return response;
 }
