@@ -28,7 +28,7 @@ Traqcker pulls financial data directly from SEC EDGAR filings and Finnhub, givin
 
 ## Pricing
 
-Traqcker is freemium. The free tier gives access to the terminal with capped features: some screener categories are hidden, and data for non-US stocks is unavailable without creating a free account. Registered free users unlock additional categories and non-US stock data. Full access (uncapped screener, all categories, complete data) is available via a 14-day free trial, no credit card required, converting to $14.99/month or $119.99/year after the trial.
+Traqcker has three tiers. Visitors browsing without an account get a capped screener (some categories hidden) and US stock data only. Creating a free account unlocks full DCF valuation, the uncapped screener, a watchlist, and international stock data, at no cost. Pro adds a multi-currency Portfolio tracker, full ETF coverage, and unlimited daily discovery, with a 14-day free trial, no credit card required, converting to $14.99/month or $119.99/year after the trial.
 
 ## Who it's for
 
