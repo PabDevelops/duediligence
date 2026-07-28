@@ -1546,7 +1546,7 @@ function StockPageContent({ params }) {
               },
               { label: isFinancial ? 'NET MARGIN' : 'GROSS MARGIN', val: isFinancial ? fmtP(data.netMargin) : fmtP(data.grossMargin), score: easyMode.gmScore, desc: `Threshold: ${(easyMode.gmThreshold * 100).toFixed(0)}% for ${data.sector || 'this sector'}${tierAdjusted ? ` (${easyMode.capTier.short} Cap)` : ''}`, delta: isFinancial ? ppDelta(data.netMargin, data.prevQuarter?.netMargin) : ppDelta(data.grossMargin, data.prevQuarter?.grossMargin), deltaUnit: 'pp' },
               { label: 'OP. MARGIN', val: fmtP(data.opMargin), score: easyMode.omScore, desc: `Threshold: ${(easyMode.omThreshold * 100).toFixed(0)}% for ${data.sector || 'this sector'}${tierAdjusted ? ` (${easyMode.capTier.short} Cap)` : ''}`, delta: ppDelta(data.opMargin, data.prevQuarter?.opMargin), deltaUnit: 'pp' },
-              { label: 'DEBT/EQUITY', val: fmtN(easyMode.netDebtToEquity), score: easyMode.deScore, desc: 'Net of cash · lower is better', delta: pctDelta(easyMode.netDebtToEquity, easyModeBefore?.netDebtToEquity) },
+              { label: 'NET DEBT/EQUITY', val: fmtN(easyMode.netDebtToEquity), score: easyMode.deScore, desc: 'Net of cash · differs from Financials tab’s gross D/E Ratio · lower is better', delta: pctDelta(easyMode.netDebtToEquity, easyModeBefore?.netDebtToEquity) },
               { label: 'CURRENT RATIO', val: easyMode.currentRatio != null ? `${easyMode.currentRatio.toFixed(2)}x` : 'N/A', score: easyMode.crScore, desc: 'Current assets / liabilities', delta: pctDelta(easyMode.currentRatio, easyModeBefore?.currentRatio) },
             ].map(m => (
               <div key={m.label} className="bg-ws-bg-1 p-4">
