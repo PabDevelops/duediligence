@@ -1679,7 +1679,7 @@ function StockPageContent({ params }) {
           </div>
 
           <div className="text-ws-text-3 text-[10px] tracking-[1px]">
-            SECTOR-ADJUSTED THRESHOLDS · CBS = MARGINS + DEBT/EQUITY + CURRENT RATIO + ROIC (20% each) + SURPLUS CASH BONUS · OPPO = P/FCF×55% + FCF YIELD×45% · GQS = ROIC×50% + REV GROWTH×50% ± R&D/SBC INTENSITY
+            SECTOR-ADJUSTED THRESHOLDS · CBS = MARGINS + DEBT/EQUITY + CURRENT RATIO + ROIC (20% each) + SURPLUS CASH BONUS · OPPO = P/FCF×55% + FCF YIELD×45% · GQS = ROIC×50% + REV GROWTH×50% ± R&D/SBC INTENSITY · ALL THREE ARE FURTHER DISCOUNTED (CBS) OR HAIRCUT (OPPO/GQS, CYCLICAL SECTORS ONLY) FOR MULTI-YEAR MARGIN/ROIC INSTABILITY
           </div>
         </>
       );
@@ -2085,20 +2085,20 @@ function StockPageContent({ params }) {
                     <div title="Rough long-run benchmark for this sector — not fitted to this company.">
                       <span className="text-ws-text-3">Sector multiple</span> &nbsp;<b className="text-ws-text">{relativeValue.sectorMultiple.toFixed(1)}x</b>
                     </div>
-                    <div title="How much this company's own Quality Score (CBS/GQS) supports trusting its current multiple over the sector benchmark, whichever direction it's priced.">
-                      <span className="text-ws-text-3">Quality weight</span> &nbsp;<b className="text-ws-text">{(relativeValue.qualityWeight * 100).toFixed(0)}%</b>
+                    <div title={`How much this company's own Quality Score (CBS/GQS) supports trusting its current multiple over the sector benchmark. Applied toward the ${relativeValue.ownMultiple != null && relativeValue.ownMultiple > relativeValue.sectorMultiple ? 'own' : 'sector'} multiple here, since this stock trades ${relativeValue.ownMultiple != null && relativeValue.ownMultiple > relativeValue.sectorMultiple ? 'above' : 'at/below'} its sector's typical multiple.`}>
+                      <span className="text-ws-text-3">Quality weight</span> &nbsp;<b className="text-ws-text">{(relativeValue.qualityWeight * 100).toFixed(0)}%</b> <span className="text-ws-text-3">{relativeValue.ownMultiple != null && relativeValue.ownMultiple > relativeValue.sectorMultiple ? '(→ own)' : '(→ sector)'}</span>
                     </div>
                     <div>
                       <span className="text-ws-text-3">Target multiple</span> &nbsp;<b className="text-ws-text">{relativeValue.targetMultiple.toFixed(1)}x FCF</b>
                     </div>
                     {relativeValue.impliedGrowthPct != null && (
-                      <div title="Reverse-DCF: the single growth rate today's price already implies, at a plain CAPM discount rate — context only, not used to drive the valuation above.">
-                        <span className="text-ws-text-3">Market is pricing in</span> &nbsp;<b className="text-ws-text">{relativeValue.impliedGrowthPct.toFixed(1)}%</b>
+                      <div title="Reverse-DCF: the single FCF growth rate today's price already implies, at a plain CAPM discount rate — context only, not used to drive the valuation above.">
+                        <span className="text-ws-text-3">Market is pricing in <span style={{ opacity: 0.6 }}>(FCF-implied)</span></span> &nbsp;<b className="text-ws-text">{relativeValue.impliedGrowthPct.toFixed(1)}%</b>
                       </div>
                     )}
                     {relativeValue.realGrowthPct != null && (
-                      <div title="This company's own recent, trailing revenue growth (3yr, stub/shock years excluded) — compare against 'Market is pricing in' above.">
-                        <span className="text-ws-text-3">Actually growing at</span> &nbsp;<b className="text-ws-text">{relativeValue.realGrowthPct.toFixed(1)}%</b>
+                      <div title="This company's own recent, trailing 3-year median REVENUE growth (stub/shock years excluded) — a different window and metric than the latest-year revenue growth shown on the Overview/Quality tabs, and not directly comparable to the FCF-implied figure above.">
+                        <span className="text-ws-text-3">Actually growing at <span style={{ opacity: 0.6 }}>(3yr rev. CAGR)</span></span> &nbsp;<b className="text-ws-text">{relativeValue.realGrowthPct.toFixed(1)}%</b>
                       </div>
                     )}
                   </div>
@@ -2155,7 +2155,7 @@ function StockPageContent({ params }) {
                   </div>
 
                   <div className="text-ws-text-3 text-[10px] tracking-[1px]">
-                    TARGET MULTIPLE = OWN CURRENT TRUE P/FCF BLENDED WITH SECTOR-TYPICAL, WEIGHTED BY THIS COMPANY'S OWN QUALITY SCORE (CBS/GQS) · FAIR VALUE = TARGET MULTIPLE × TRUE FCF PER SHARE · NOT INVESTMENT ADVICE
+                    TARGET MULTIPLE = OWN CURRENT TRUE P/FCF BLENDED WITH SECTOR-TYPICAL, WEIGHTED BY THIS COMPANY'S OWN QUALITY SCORE (CBS/GQS) · FAIR VALUE = TARGET MULTIPLE × TRUE FCF PER SHARE · BEAR/BULL = TARGET MULTIPLE ± {(relativeValue.uncertaintyPct * 100).toFixed(0)}% (THIS COMPANY'S OWN MARGIN/ROIC VOLATILITY, 5-25% BAND) × TRUE FCF PER SHARE · NOT INVESTMENT ADVICE
                   </div>
                 </>
               );
