@@ -1836,7 +1836,21 @@ function StockPageContent({ params }) {
                   { label: 'REVENUE (TTM)', val: fmt(data.revVal), sub: data.revGrowth !== null ? `${data.revGrowth > 0 ? '+' : ''}${data.revGrowth}% YOY` : null, good: data.revGrowth > 0 },
                   { label: 'NET INCOME (TTM)', val: fmt(data.niVal), sub: data.netMargin !== null ? `${data.netMargin}% NET MARGIN` : null, good: data.netMargin > 10 },
                   { label: 'OP. MARGIN', val: fmtP(data.opMargin), sub: data.opMargin > 15 ? 'ABOVE THRESHOLD' : 'BELOW THRESHOLD', good: data.opMargin > 15 },
-                  { label: 'ROE', val: fmtP(data.roe), sub: data.roe > 15 ? 'STRONG RETURN' : 'MODERATE RETURN', good: data.roe > 15 },
+                  {
+                    label: 'ROE', val: fmtP(data.roe),
+                    sub: data.roe == null
+                      ? null
+                      : data.equityVal < 0
+                      ? 'NEGATIVE EQUITY — DISTORTED'
+                      : data.roe > 20
+                      ? 'STRONG RETURN'
+                      : data.roe > 10
+                      ? 'MODERATE RETURN'
+                      : data.roe > 0
+                      ? 'WEAK RETURN'
+                      : 'NEGATIVE RETURN',
+                    good: data.equityVal < 0 ? false : data.roe > 15,
+                  },
                 ].map(m => (
                   <div key={m.label} style={{ background: 'var(--ws-bg-1)', border: '1px solid var(--ws-border)', padding: '14px' }}>
                     <div className="text-ws-text-3 text-[10px] tracking-[1px] mb-1.5">{m.label}</div>
