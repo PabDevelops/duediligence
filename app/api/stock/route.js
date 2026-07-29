@@ -885,6 +885,23 @@ async function fetchEarningsReaction(ticker, currentPrice) {
 // fcfVal, equityVal, netDebt) so they move in lockstep with currentPrice instead of waiting for
 // the next full refresh. ebitda isn't stored directly (only the evEbitda ratio is), so it's
 // backed out algebraically from the stale evEbitda/marketCap/netDebt instead of being refetched.
+// A stock's 52-week high/low, wherever it's sourced from (Finnhub's /stock/metric, Yahoo's
+// summaryDetail, or a stale cache row), is a batch-computed stat that can lag the live quote —
+// most visibly right after a big intraday move (verified against real data: the day after an
+// earnings pop took LOGI's quote to $111.66, Finnhub's 52WeekHigh metric was still $102.80,
+// not yet recalculated for the new session). Left unclamped, the 52W-range widget's
+// (currentPrice - low52) / (high52 - low52) renders past 100% or below 0%. A price that has
+// already traded past the cached boundary IS the new boundary, regardless of which upstream
+// stat hasn't caught up yet.
+function clamp52WeekRange(high52, low52, currentPrice) {
+  let high = high52, low = low52;
+  if (currentPrice != null) {
+    if (high != null && currentPrice > high) high = currentPrice;
+    if (low != null && currentPrice < low) low = currentPrice;
+  }
+  return { high52: high, low52: low };
+}
+
 function recomputePriceRatios(data, newPrice) {
   if (!data || newPrice == null) return {};
   const out = {};
@@ -907,15 +924,11 @@ function recomputePriceRatios(data, newPrice) {
     if (impliedEbitda) out.evEbitda = +((marketCap + data.netDebt) / impliedEbitda).toFixed(1);
   }
   // high52/low52 aren't re-fetched here (that's Finnhub's /stock/metric, not /quote — a second
-  // call this path deliberately skips to stay cheap). They barely move day to day, so serving
-  // the stale-but-close cached value is fine — EXCEPT when the fresh price itself is a new
-  // 52-week extreme: without this, the 52W-range widget divides (currentPrice - low52) by
-  // (high52 - low52) and can render a position >100% or <0% the moment a stock breaks out past
-  // its cached range, which reads as a broken widget rather than a genuine new high/low. Simply
-  // extending the boundary to match a price that has already gone past it is correct regardless
-  // of source staleness — a new high really is at least that high.
-  if (data.high52 != null && newPrice > data.high52) out.high52 = newPrice;
-  if (data.low52 != null && newPrice < data.low52) out.low52 = newPrice;
+  // call this path deliberately skips to stay cheap). clamp52WeekRange only extends them to
+  // match a fresh price that's already broken past the cached boundary.
+  const { high52, low52 } = clamp52WeekRange(data.high52, data.low52, newPrice);
+  if (high52 !== data.high52) out.high52 = high52;
+  if (low52 !== data.low52) out.low52 = low52;
   // beta is a statistical property of the stock (price correlation to the market over ~1-5
   // years), not something this fresh single-quote update can derive — it only moves when the
   // full /stock/metric refetch runs, same cadence as before this fix. Left untouched here.
@@ -1108,8 +1121,7 @@ export async function GET(request) {
         priceChange: yh.priceChange,
         priceChangePct: yh.priceChangePct,
         prevClose: yh.prevClose,
-        high52: fundamentals?.high52 ?? yh.high52,
-        low52: fundamentals?.low52 ?? yh.low52,
+        ...clamp52WeekRange(fundamentals?.high52 ?? yh.high52, fundamentals?.low52 ?? yh.low52, yh.currentPrice),
         currency: yh.currency,
         finnhubFallback: !fundamentals,
         internationalSource: 'yahoo',
@@ -1205,8 +1217,7 @@ export async function GET(request) {
           priceChange: yh.priceChange,
           priceChangePct: yh.priceChangePct,
           prevClose: yh.prevClose,
-          high52: fundamentals?.high52 ?? yh.high52,
-          low52: fundamentals?.low52 ?? yh.low52,
+          ...clamp52WeekRange(fundamentals?.high52 ?? yh.high52, fundamentals?.low52 ?? yh.low52, yh.currentPrice),
           currency: yh.currency,
           finnhubFallback: !fundamentals,
           internationalSource: 'yahoo',
@@ -1258,6 +1269,9 @@ export async function GET(request) {
         : null;
       const eps = trustFinnhubShares ? (m.epsAnnual || m.epsTTM || null) : null;
       const pe = eps && currentPrice ? +(currentPrice / eps).toFixed(2) : null;
+      const resolvedCurrentPrice = currentPrice ?? priorCachedData?.currentPrice ?? null;
+      const high52Raw = (fhProfile.currency && fhProfile.currency !== 'USD' ? (yh?.high52 ?? null) : (m['52WeekHigh'] || yh?.high52 || null)) ?? priorCachedData?.high52 ?? null;
+      const low52Raw = (fhProfile.currency && fhProfile.currency !== 'USD' ? (yh?.low52 ?? null) : (m['52WeekLow'] || yh?.low52 || null)) ?? priorCachedData?.low52 ?? null;
       const result = {
         riskFreeRate,
         name: fhProfile.name || ticker,
@@ -1267,7 +1281,7 @@ export async function GET(request) {
         industry: fhProfile.finnhubIndustry || yh?.industry || priorCachedData?.industry || null,
         exchange: fhProfile.exchange || priorCachedData?.exchange || null,
         description: yh?.description || fhProfile.description || await fetchDescription(ticker),
-        currentPrice: currentPrice ?? priorCachedData?.currentPrice ?? null,
+        currentPrice: resolvedCurrentPrice,
         priceChange: fh.d || null,
         priceChangePct: fh.dp || null,
         prevClose: fh.pc || priorCachedData?.prevClose || null,
@@ -1286,8 +1300,9 @@ export async function GET(request) {
         // range for NVO came back 224.25-464.6 against a $49.07 USD quote — Copenhagen DKK
         // range, not USD (Novo's actual USD 52-week range is far narrower). Gated on the same
         // profile-currency check since both Finnhub endpoints resolve the symbol the same way.
-        high52: (fhProfile.currency && fhProfile.currency !== 'USD' ? (yh?.high52 ?? null) : (m['52WeekHigh'] || yh?.high52 || null)) ?? priorCachedData?.high52 ?? null,
-        low52: (fhProfile.currency && fhProfile.currency !== 'USD' ? (yh?.low52 ?? null) : (m['52WeekLow'] || yh?.low52 || null)) ?? priorCachedData?.low52 ?? null,
+        // Clamped against resolvedCurrentPrice — see clamp52WeekRange for why a lagging stat
+        // can otherwise sit below/above the live quote.
+        ...clamp52WeekRange(high52Raw, low52Raw, resolvedCurrentPrice),
         beta: m.beta || yh?.beta || priorCachedData?.beta || null,
         sharesOutstanding: sharesOutstanding ?? yh?.sharesOutstanding ?? null,
         dividendYield: m.dividendYieldIndicatedAnnual || yh?.dividendYield || priorCachedData?.dividendYield || null,
@@ -1942,8 +1957,13 @@ export async function GET(request) {
     const priceChange    = fh.c ? (fh.d || null) : (priorCachedData?.priceChange ?? null);
     const priceChangePct = fh.c ? (fh.dp || null) : (priorCachedData?.priceChangePct ?? null);
     const prevClose      = fh.pc || priorCachedData?.prevClose || null;
-    const high52         = fhBasic?.metric?.['52WeekHigh'] || priorCachedData?.high52 || null;
-    const low52          = fhBasic?.metric?.['52WeekLow'] || priorCachedData?.low52 || null;
+    // clamp52WeekRange guards against Finnhub's /stock/metric 52-week stat lagging a live quote
+    // right after a big intraday move — see its own comment for the LOGI case this was found on.
+    const { high52, low52 } = clamp52WeekRange(
+      fhBasic?.metric?.['52WeekHigh'] || priorCachedData?.high52 || null,
+      fhBasic?.metric?.['52WeekLow'] || priorCachedData?.low52 || null,
+      currentPrice
+    );
     const beta           = fhBasic?.metric?.beta || priorCachedData?.beta || null;
 
     const epsDirect  = getEPS();
