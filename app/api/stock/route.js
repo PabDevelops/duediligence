@@ -2,6 +2,7 @@ import { supabase } from '../../../lib/supabase.js';
 import { getYahooAuth } from '../../../lib/yahooFinance.js';
 import { fetchForm4Transactions, computeInsiderOwnershipPct } from '../../../lib/secInsiders.js';
 import { cleanCompanyName } from '../../../lib/secTickers.js';
+import { flagDataAnomaly } from '../../../lib/dataAnomalies.js';
 
 const FH_KEY = process.env.FINNHUB_API_KEY;
 const AV_KEY = process.env.ALPHA_VANTAGE_API_KEY;
@@ -1287,6 +1288,15 @@ export async function GET(request) {
           : null,
         currentPrice, sharesOutstanding
       );
+      await flagDataAnomaly(ticker, 'sharesOutstanding', [
+        { source: 'finnhub', value: finnhubShares },
+        { source: 'yahoo', value: yhShares },
+      ]);
+      await flagDataAnomaly(ticker, 'marketCap', [
+        { source: 'finnhub', value: (fhProfile.marketCapitalization && (!fhProfile.currency || fhProfile.currency === 'USD')) ? fhProfile.marketCapitalization * 1e6 : null },
+        { source: 'yahoo', value: yh?.marketCap ?? null },
+        { source: 'price_x_shares', value: currentPrice && sharesOutstanding ? currentPrice * sharesOutstanding : null },
+      ]);
       const eps = trustFinnhubShares ? (m.epsAnnual || m.epsTTM || null) : null;
       const pe = eps && currentPrice ? +(currentPrice / eps).toFixed(2) : null;
       const resolvedCurrentPrice = currentPrice ?? priorCachedData?.currentPrice ?? null;
@@ -2009,6 +2019,11 @@ export async function GET(request) {
       && Math.abs(fhImpliedShares - fhShareOutstanding) / fhShareOutstanding < 0.1;
     const xbrlSharesLookPartial = fhSharesSelfConsistent && sharesValAdj != null && sharesValAdj < fhShareOutstanding / 2;
     const sharesForCalc = (xbrlSharesLookPartial ? fhShareOutstanding : sharesValAdj) || sharesFinnhub;
+    await flagDataAnomaly(ticker, 'sharesOutstanding', [
+      { source: 'sec_xbrl', value: sharesValAdj },
+      { source: 'finnhub_metric', value: sharesFinnhub },
+      { source: 'finnhub_profile', value: fhShareOutstanding },
+    ]);
     const epsEdgar   = niVal && sharesForCalc ? +(niVal / sharesForCalc).toFixed(2) : null;
     const epsCalc    = epsDirect || epsEdgar || epsFinnhub || null;
     const peCalc     = epsCalc && currentPrice ? +(currentPrice / epsCalc).toFixed(2) : null;
@@ -2018,6 +2033,10 @@ export async function GET(request) {
       currentPrice, sharesForCalc
     );
     const marketCapFinal = marketCapFinnhub || marketCapCalc || priorCachedData?.marketCap || null;
+    await flagDataAnomaly(ticker, 'marketCap', [
+      { source: 'finnhub', value: fhProfile?.marketCapitalization ? fhProfile.marketCapitalization * 1e6 : null },
+      { source: 'price_x_shares', value: marketCapCalc },
+    ]);
     const ebitdaCalc   = oiVal != null && daVal != null ? oiVal + daVal : null;
     const ebitdaFh     = fhBasic?.metric?.ebitdaTTM ? fhBasic.metric.ebitdaTTM * 1e6 : (fhBasic?.metric?.ebitdaAnnual ? fhBasic.metric.ebitdaAnnual * 1e6 : null);
     const ebitdaFinal  = ebitdaCalc ?? ebitdaFh;
