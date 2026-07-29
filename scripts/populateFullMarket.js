@@ -26,6 +26,7 @@ const path = require('path');
 const https = require('https');
 const http = require('http');
 const { createClient } = require('@supabase/supabase-js');
+const { normalizeSector } = require('../lib/sectorMapping.js');
 
 const envPath = path.join(__dirname, '..', '.env.local');
 if (fs.existsSync(envPath)) {
@@ -113,7 +114,8 @@ async function getProfileWithRetry(ticker, maxRetries = 3) {
       ticker: data.ticker || ticker,
       name: data.name,
       marketCap: data.marketCapitalization ? data.marketCapitalization * 1e6 : null,
-      sector: data.finnhubIndustry || null,
+      sector: normalizeSector(data.finnhubIndustry),
+      industry: data.finnhubIndustry || null,
       exchange: data.exchange || null,
       ipo: data.ipo || null,
       weburl: data.weburl || null,
@@ -131,6 +133,7 @@ function toRow(p) {
     data: {
       name: p.name,
       sector: p.sector,
+      industry: p.industry,
       exchange: p.exchange,
       marketCap: p.marketCap,
       country: p.country,

@@ -3,6 +3,7 @@ import { getYahooAuth } from '../../../lib/yahooFinance.js';
 import { fetchForm4Transactions, computeInsiderOwnershipPct } from '../../../lib/secInsiders.js';
 import { cleanCompanyName } from '../../../lib/secTickers.js';
 import { flagDataAnomaly } from '../../../lib/dataAnomalies.js';
+import { normalizeSector } from '../../../lib/sectorMapping.js';
 
 const FH_KEY = process.env.FINNHUB_API_KEY;
 const AV_KEY = process.env.ALPHA_VANTAGE_API_KEY;
@@ -1307,7 +1308,7 @@ export async function GET(request) {
         name: fhProfile.name || ticker,
         ticker,
         cik: null,
-        sector: fhProfile.finnhubIndustry || yh?.sector || priorCachedData?.sector || null,
+        sector: normalizeSector(fhProfile.finnhubIndustry) || yh?.sector || priorCachedData?.sector || null,
         industry: fhProfile.finnhubIndustry || yh?.industry || priorCachedData?.industry || null,
         exchange: fhProfile.exchange || priorCachedData?.exchange || null,
         description: yh?.description || fhProfile.description || await fetchDescription(ticker),
@@ -2189,7 +2190,7 @@ export async function GET(request) {
       name: cleanCompanyName(company.title),
       ticker,
       cik,
-      sector: fhProfile.finnhubIndustry || priorCachedData?.sector || null,
+      sector: normalizeSector(fhProfile.finnhubIndustry) || priorCachedData?.sector || null,
       industry: fhProfile.finnhubIndustry || priorCachedData?.industry || null,
       exchange: fhProfile.exchange || priorCachedData?.exchange || null,
       description: fhProfile.description || await fetchDescription(ticker),
