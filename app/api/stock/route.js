@@ -1989,8 +1989,26 @@ export async function GET(request) {
     const epsDirect  = getEPS();
     const epsFinnhub = fhBasic?.metric?.epsAnnual || fhBasic?.metric?.epsTTM || null;
     const sharesFinnhub = fhBasic?.metric?.sharesOutstanding ? fhBasic.metric.sharesOutstanding * 1e6 : null;
-const sharesValAdj = sharesVal && sharesVal < 1e6 ? sharesVal * 1e6 : sharesVal;
-const sharesForCalc = sharesValAdj || sharesFinnhub;
+    const sharesValAdj = sharesVal && sharesVal < 1e6 ? sharesVal * 1e6 : sharesVal;
+    // Multi-class ("Up-C") filers tag CommonStockSharesOutstanding per share class on the 10-Q/
+    // 10-K cover page — getMetric/instantSeries above has no dimension awareness, so it silently
+    // grabs whichever single class's fact appears first in SEC's companyfacts JSON instead of the
+    // total across all classes (verified against real data: MNTN's tag returns a fixed 16.4M,
+    // frozen at its 2025-05-22 IPO date across every filing since, while the real total across
+    // its Class A/B share structure is ~73.9M — understating marketCap by ~4.5x). Finnhub's
+    // shareOutstanding and marketCapitalization are both independently sourced and, unlike the
+    // XBRL tag, describe the whole company; when the two agree with each other (marketCap / live
+    // price ≈ shareOutstanding) but imply a share count far above the XBRL figure, that's the
+    // single-class-tag problem rather than a real ~5x share count swing, so the Finnhub total is
+    // trusted over the partial XBRL one for this calc.
+    const fhShareOutstanding = fhProfile?.shareOutstanding ? fhProfile.shareOutstanding * 1e6 : null;
+    const fhImpliedShares = (fhProfile?.marketCapitalization && currentPrice)
+      ? (fhProfile.marketCapitalization * 1e6) / currentPrice
+      : null;
+    const fhSharesSelfConsistent = fhImpliedShares != null && fhShareOutstanding != null
+      && Math.abs(fhImpliedShares - fhShareOutstanding) / fhShareOutstanding < 0.1;
+    const xbrlSharesLookPartial = fhSharesSelfConsistent && sharesValAdj != null && sharesValAdj < fhShareOutstanding / 2;
+    const sharesForCalc = (xbrlSharesLookPartial ? fhShareOutstanding : sharesValAdj) || sharesFinnhub;
     const epsEdgar   = niVal && sharesForCalc ? +(niVal / sharesForCalc).toFixed(2) : null;
     const epsCalc    = epsDirect || epsEdgar || epsFinnhub || null;
     const peCalc     = epsCalc && currentPrice ? +(currentPrice / epsCalc).toFixed(2) : null;
