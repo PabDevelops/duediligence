@@ -688,7 +688,7 @@ async function fetchYahooFundamentals(ticker) {
     if (summary.currency === 'GBp' && currentPrice != null) {
       currentPrice /= 100;
     }
-    const marketCap = num(summary.marketCap) ?? (sharesOutstanding && currentPrice ? currentPrice * sharesOutstanding : null);
+    const marketCap = reconcileMarketCap(num(summary.marketCap), currentPrice, sharesOutstanding) ?? (sharesOutstanding && currentPrice ? currentPrice * sharesOutstanding : null);
     const debtToEquity = num(fin.debtToEquity) != null ? +(num(fin.debtToEquity) / 100).toFixed(2) : d.debtToEquity;
 
     let high52 = num(summary.fiftyTwoWeekHigh) ?? null;
@@ -900,6 +900,24 @@ function clamp52WeekRange(high52, low52, currentPrice) {
     if (low != null && currentPrice < low) low = currentPrice;
   }
   return { high52: high, low52: low };
+}
+
+// Same lagging-batch-stat disease as clamp52WeekRange above, for market cap: Finnhub's
+// /stock/profile2 marketCapitalization and Yahoo's summaryDetail.marketCap are both
+// batch-computed, not derived live from /quote — verified against real data: the day after an
+// earnings pop took ZBRA's quote to $284.40, /stock/profile2's marketCapitalization still
+// implied a $230.69 share price (marketCapitalization / shares outstanding), quietly
+// understating every downstream price ratio (P/FCF, FCF yield, EV/EBITDA, and the valuation
+// model's own multiple) by the same ~19% even though the price shown at the top of the page
+// was correct. A >5% mismatch against currentPrice × shares is treated as staleness rather
+// than a genuinely different figure (e.g. from a share class counted differently) — nulling it
+// out here lets the caller's own `||`/`??` chain fall through to the live currentPrice × shares
+// calc instead.
+function reconcileMarketCap(statMarketCap, currentPrice, shares) {
+  if (statMarketCap == null || !currentPrice || !shares) return statMarketCap;
+  const impliedPrice = statMarketCap / shares;
+  if (Math.abs(impliedPrice - currentPrice) / currentPrice > 0.05) return null;
+  return statMarketCap;
 }
 
 function recomputePriceRatios(data, newPrice) {
@@ -1264,9 +1282,12 @@ export async function GET(request) {
       // correctly returns the USD ADR price — mixing the two overstates market cap by the FX
       // rate. Only trust Finnhub's figure when its own profile currency matches the USD quote;
       // otherwise fall through to Yahoo's currency-normalized market cap below.
-      const marketCap = fhProfile.marketCapitalization && (!fhProfile.currency || fhProfile.currency === 'USD')
-        ? fhProfile.marketCapitalization * 1e6
-        : null;
+      const marketCap = reconcileMarketCap(
+        fhProfile.marketCapitalization && (!fhProfile.currency || fhProfile.currency === 'USD')
+          ? fhProfile.marketCapitalization * 1e6
+          : null,
+        currentPrice, sharesOutstanding
+      );
       const eps = trustFinnhubShares ? (m.epsAnnual || m.epsTTM || null) : null;
       const pe = eps && currentPrice ? +(currentPrice / eps).toFixed(2) : null;
       const resolvedCurrentPrice = currentPrice ?? priorCachedData?.currentPrice ?? null;
@@ -1975,7 +1996,10 @@ const sharesForCalc = sharesValAdj || sharesFinnhub;
     const epsCalc    = epsDirect || epsEdgar || epsFinnhub || null;
     const peCalc     = epsCalc && currentPrice ? +(currentPrice / epsCalc).toFixed(2) : null;
     const marketCapCalc = currentPrice && sharesForCalc ? currentPrice * sharesForCalc : null;
-    const marketCapFinnhub = fhProfile?.marketCapitalization ? fhProfile.marketCapitalization * 1e6 : null;
+    const marketCapFinnhub = reconcileMarketCap(
+      fhProfile?.marketCapitalization ? fhProfile.marketCapitalization * 1e6 : null,
+      currentPrice, sharesForCalc
+    );
     const marketCapFinal = marketCapFinnhub || marketCapCalc || priorCachedData?.marketCap || null;
     const ebitdaCalc   = oiVal != null && daVal != null ? oiVal + daVal : null;
     const ebitdaFh     = fhBasic?.metric?.ebitdaTTM ? fhBasic.metric.ebitdaTTM * 1e6 : (fhBasic?.metric?.ebitdaAnnual ? fhBasic.metric.ebitdaAnnual * 1e6 : null);
