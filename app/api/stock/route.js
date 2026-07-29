@@ -875,6 +875,53 @@ async function fetchEarningsReaction(ticker, currentPrice) {
   }
 }
 
+// The "fast price update" path (cache still fresh for heavy financials, but >2min old) only
+// re-fetches Finnhub's /quote — it doesn't re-run the full SEC EDGAR + /stock/metric pipeline
+// just to move the price. Every ratio computed FROM the old price (marketCap, pe, pfcf,
+// fcfYield, evEbitda, priceToBook) was left untouched in that path, so a page view minutes
+// after a big intraday move showed a fresh currentPrice next to a marketCap/P-FCF/valuation
+// still priced off the stale snapshot — the two disagreeing with each other on the same page.
+// Recomputed here from fields that don't themselves depend on price (sharesOutstanding, eps,
+// fcfVal, equityVal, netDebt) so they move in lockstep with currentPrice instead of waiting for
+// the next full refresh. ebitda isn't stored directly (only the evEbitda ratio is), so it's
+// backed out algebraically from the stale evEbitda/marketCap/netDebt instead of being refetched.
+function recomputePriceRatios(data, newPrice) {
+  if (!data || newPrice == null) return {};
+  const out = {};
+  if (data.sharesOutstanding) {
+    out.marketCap = newPrice * data.sharesOutstanding;
+  }
+  const marketCap = out.marketCap ?? data.marketCap;
+  if (data.eps) {
+    out.pe = +(newPrice / data.eps).toFixed(2);
+  }
+  if (marketCap != null && data.fcfVal) {
+    out.pfcf = data.fcfVal > 0 ? +(marketCap / data.fcfVal).toFixed(1) : null;
+    out.fcfYield = +((data.fcfVal / marketCap) * 100).toFixed(2);
+  }
+  if (marketCap != null && data.equityVal && data.equityVal > 0) {
+    out.priceToBook = +(marketCap / data.equityVal).toFixed(2);
+  }
+  if (marketCap != null && data.evEbitda && data.marketCap != null && data.netDebt != null) {
+    const impliedEbitda = (data.marketCap + data.netDebt) / data.evEbitda;
+    if (impliedEbitda) out.evEbitda = +((marketCap + data.netDebt) / impliedEbitda).toFixed(1);
+  }
+  // high52/low52 aren't re-fetched here (that's Finnhub's /stock/metric, not /quote — a second
+  // call this path deliberately skips to stay cheap). They barely move day to day, so serving
+  // the stale-but-close cached value is fine — EXCEPT when the fresh price itself is a new
+  // 52-week extreme: without this, the 52W-range widget divides (currentPrice - low52) by
+  // (high52 - low52) and can render a position >100% or <0% the moment a stock breaks out past
+  // its cached range, which reads as a broken widget rather than a genuine new high/low. Simply
+  // extending the boundary to match a price that has already gone past it is correct regardless
+  // of source staleness — a new high really is at least that high.
+  if (data.high52 != null && newPrice > data.high52) out.high52 = newPrice;
+  if (data.low52 != null && newPrice < data.low52) out.low52 = newPrice;
+  // beta is a statistical property of the stock (price correlation to the market over ~1-5
+  // years), not something this fresh single-quote update can derive — it only moves when the
+  // full /stock/metric refetch runs, same cadence as before this fix. Left untouched here.
+  return out;
+}
+
 function normalizeStockData(data) {
   if (!data) return data;
   if (data.equityVal != null && (data.debtToEquity == null || data.debtVal == null)) {
@@ -996,7 +1043,8 @@ export async function GET(request) {
                 currentPrice: freshPriceData.currentPrice,
                 priceChange: freshPriceData.priceChange,
                 priceChangePct: freshPriceData.priceChangePct,
-                prevClose: freshPriceData.prevClose
+                prevClose: freshPriceData.prevClose,
+                ...recomputePriceRatios(cached.data, freshPriceData.currentPrice),
               });
               // Update DB cache in background asynchronously
               supabase
