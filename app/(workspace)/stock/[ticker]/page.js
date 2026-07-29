@@ -1599,7 +1599,7 @@ function StockPageContent({ params }) {
           )}
 
           <div className="text-ws-text-3 text-[10px] tracking-[2px] border-b border-ws-border pb-1.5 mb-3">OPPORTUNITY BREAKDOWN</div>
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '1px', background: 'var(--ws-border)', marginBottom: '24px' }}>
+          <div className="grid-3" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '1px', background: 'var(--ws-border)', marginBottom: '24px' }}>
             {[
               { label: 'P/FCF', val: fmtMultiple(easyMode.truePfcf), score: easyMode.pfcfScore, desc: easyMode.truePfcf < 20 ? 'Attractive entry' : easyMode.truePfcf < 35 ? 'Fair valuation' : 'Expensive', delta: pctDelta(easyMode.truePfcf, easyModeBefore?.truePfcf) },
               { label: 'FCF YIELD', val: easyMode.trueFcfYield != null ? `${easyMode.trueFcfYield.toFixed(2)}%` : 'N/A', score: easyMode.fcfYieldScore, desc: easyMode.trueFcfYield > 5 ? 'Strong yield' : easyMode.trueFcfYield > 2 ? 'Moderate yield' : 'Low yield', delta: ppDelta(easyMode.trueFcfYield, easyModeBefore?.trueFcfYield), deltaUnit: 'pp' },

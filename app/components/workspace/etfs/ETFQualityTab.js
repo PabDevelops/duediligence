@@ -24,7 +24,7 @@ export default function ETFQualityTab({ etf }) {
   return (
     <div>
       <div style={{ background: 'var(--ws-bg-1)', border: '1px solid var(--ws-border)', padding: '24px', overflow: 'hidden', marginBottom: '24px' }}>
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr 1fr', gap: '1px', background: 'var(--ws-border)' }}>
+        <div className="grid-4" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr 1fr', gap: '1px', background: 'var(--ws-border)' }}>
           {heroCells.map((c) => {
             const score = c.factor ? c.factor.score : c.score;
             const available = c.factor ? c.factor.available : score != null;
@@ -49,7 +49,7 @@ export default function ETFQualityTab({ etf }) {
       </div>
 
       <div style={{ color: 'var(--ws-text-3)', fontSize: '10px', letterSpacing: '2px', borderBottom: '1px solid var(--ws-border)', paddingBottom: '6px', marginBottom: '12px' }}>FACTOR BREAKDOWN</div>
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '1px', background: 'var(--ws-border)' }}>
+      <div className="grid-3" style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '1px', background: 'var(--ws-border)' }}>
         {Object.values(factors).map((f) => (
           <div key={f.label} style={{ background: 'var(--ws-bg-1)', padding: '16px' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
