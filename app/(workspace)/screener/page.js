@@ -34,7 +34,9 @@ export default function WorkspaceScreener() {
   const [loading, setLoading] = useState(true);
   const [sector, setSector] = useState('All');
   const [capTier, setCapTier] = useState('All');
-  const [market, setMarket] = useState('All');
+  // Array, not a single value — a user comparing US large caps wants NASDAQ *and* NYSE at
+  // once, not one or the other. Empty array means no market filter (same as 'All').
+  const [market, setMarket] = useState([]);
   // Defaults to US — the guest/global dataset spans ~70 exchanges with wildly inconsistent
   // per-market conventions (currency units, filing quality), so US is the one slice that reads
   // clean out of the box. Everything else stays one explicit dropdown pick away.
@@ -97,6 +99,10 @@ export default function WorkspaceScreener() {
     }
   };
 
+  const toggleMarket = (label) => {
+    setMarket(prev => prev.includes(label) ? prev.filter(m => m !== label) : [...prev, label]);
+  };
+
   const applyPreset = (key) => {
     setActivePreset(key);
     setFilters(PRESETS[key].filters);
@@ -115,7 +121,7 @@ export default function WorkspaceScreener() {
     });
     setSector('All');
     setCapTier('All');
-    setMarket('All');
+    setMarket([]);
     setCountry('US');
     setSearch('');
     setPage(1);
@@ -146,7 +152,7 @@ export default function WorkspaceScreener() {
   const sectorFacet = useMemo(() => {
     const list = enrichedStocks
       .filter(s => capTier === 'All' || s.capTierId === capTier)
-      .filter(s => market === 'All' || s.marketGroup === market)
+      .filter(s => market.length === 0 || market.includes(s.marketGroup))
       .filter(s => country === 'All' || s.country === country);
     const counts = {};
     list.forEach(s => { if (s.sector) counts[s.sector] = (counts[s.sector] || 0) + 1; });
@@ -156,7 +162,7 @@ export default function WorkspaceScreener() {
   const capTierFacet = useMemo(() => {
     const list = enrichedStocks
       .filter(s => sector === 'All' || s.sector === sector)
-      .filter(s => market === 'All' || s.marketGroup === market)
+      .filter(s => market.length === 0 || market.includes(s.marketGroup))
       .filter(s => country === 'All' || s.country === country);
     const counts = {};
     list.forEach(s => { if (s.capTierId) counts[s.capTierId] = (counts[s.capTierId] || 0) + 1; });
@@ -178,7 +184,7 @@ export default function WorkspaceScreener() {
     const list = enrichedStocks
       .filter(s => sector === 'All' || s.sector === sector)
       .filter(s => capTier === 'All' || s.capTierId === capTier)
-      .filter(s => market === 'All' || s.marketGroup === market);
+      .filter(s => market.length === 0 || market.includes(s.marketGroup));
     const counts = {};
     list.forEach(s => { if (s.country) counts[s.country] = (counts[s.country] || 0) + 1; });
     return { entries: Object.entries(counts).sort((a, b) => b[1] - a[1]), total: list.length };
@@ -188,7 +194,7 @@ export default function WorkspaceScreener() {
     return enrichedStocks
       .filter(s => sector === 'All' || s.sector === sector)
       .filter(s => capTier === 'All' || s.capTierId === capTier)
-      .filter(s => market === 'All' || s.marketGroup === market)
+      .filter(s => market.length === 0 || market.includes(s.marketGroup))
       .filter(s => country === 'All' || s.country === country)
       .filter(s => !search || s.ticker.includes(search.toUpperCase()) || s.name?.toUpperCase().includes(search.toUpperCase()))
       .filter(s => filters.minMargin === '' || (s.opMargin !== null && s.opMargin >= Number(filters.minMargin)))
@@ -389,19 +395,32 @@ export default function WorkspaceScreener() {
         {/* Market (exchange) + Country */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', borderTop: '1px solid var(--ws-border)', paddingTop: '16px' }}>
           <div>
-            <div style={{ color: 'var(--ws-text-3)', fontFamily: "'JetBrains Mono', monospace", fontSize: '10px', fontWeight: 700, letterSpacing: '1.5px', marginBottom: '8px', textTransform: 'uppercase' }}>
-              MARKET
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
+              <span style={{ color: 'var(--ws-text-3)', fontFamily: "'JetBrains Mono', monospace", fontSize: '10px', fontWeight: 700, letterSpacing: '1.5px', textTransform: 'uppercase' }}>
+                MARKET
+              </span>
+              {market.length > 0 && (
+                <span onClick={() => setMarket([])} style={{ color: 'var(--ws-accent)', fontSize: '10px', fontWeight: 700, cursor: 'pointer' }}>
+                  Clear
+                </span>
+              )}
             </div>
-            <select value={market} onChange={e => setMarket(e.target.value)}
-              style={{
-                width: '100%', background: 'var(--ws-bg-1)', border: '1px solid var(--ws-border)',
-                borderRadius: '6px', color: 'var(--ws-text)', fontSize: '11px', padding: '6px 10px', outline: 'none'
-              }}>
-              <option value="All">All Markets ({marketFacet.total})</option>
+            {/* Multi-select chips — comparing NASDAQ + NYSE together (US large caps split
+                across both) is a common case a single-choice dropdown couldn't do. */}
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
               {EXCHANGE_GROUP_LABELS.filter(l => marketFacet.counts[l]).map(l => (
-                <option key={l} value={l}>{l} ({marketFacet.counts[l]})</option>
+                <button key={l} onClick={() => toggleMarket(l)}
+                  style={{
+                    padding: '5px 10px', fontSize: '11px', borderRadius: '20px',
+                    background: market.includes(l) ? 'var(--ws-accent)' : 'var(--ws-bg-2)',
+                    color: market.includes(l) ? 'var(--ws-bg-1)' : 'var(--ws-text-2)',
+                    border: market.includes(l) ? 'none' : '1px solid var(--ws-border)',
+                    fontWeight: 700, cursor: 'pointer', transition: 'all 0.15s ease'
+                  }}>
+                  {l} ({marketFacet.counts[l]})
+                </button>
               ))}
-            </select>
+            </div>
           </div>
 
           <div>
