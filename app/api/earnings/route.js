@@ -16,8 +16,7 @@ function surprisePercent(actual, estimate) {
 // Every request (page load, month/week navigation, watchlist toggle) previously re-fetched
 // Finnhub + Nasdaq (one request per day in range) + Supabase from scratch, with nothing
 // shared across users or repeat visits — a short in-memory cache keyed by the exact query
-// string cuts that down to one real fetch per [from, to] window per TTL window, same pattern
-// as app/api/small-caps/radar's radarCache.
+// string cuts that down to one real fetch per [from, to] window per TTL window.
 const CACHE_TTL_MS = 90_000;
 const cache = new Map(); // queryString -> { data, cachedAt }
 const CACHE_MAX_ENTRIES = 300;

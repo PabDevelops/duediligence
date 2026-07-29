@@ -6,14 +6,12 @@ import { supabase } from '../../../../lib/supabase';
 // scripts/populateFullMarket.js (name/sector/marketCap, no financials) by calling this app's
 // own /api/stock for a small batch of them -- the same full SEC EDGAR + Finnhub + Form4
 // pipeline a user visiting that ticker's page would trigger on-demand, just automated for the
-// tickers nobody's browsing yet. Same "small batch + spaced-out delay" shape as
-// refresh-small-cap-radar's Form4 sweep, for the same reason: SEC's ~10 req/sec fair-access
-// limit is shared across ALL of Traqcker's traffic, not just this job.
+// tickers nobody's browsing yet. Small batch + spaced-out delay because SEC's ~10 req/sec
+// fair-access limit is shared across ALL of Traqcker's traffic, not just this job.
 //
-// Unlike that route's day-of-year rotation (built for exactly one run/day), this reads
-// "whichever rows still have no revVal, in ticker order" on every call -- each hydrated ticker
-// naturally drops out of the next call's batch, so calling this endpoint many times back-to-
-// back (not just once a day) makes real forward progress instead of repeating the same slice.
+// Reads "whichever rows still have no revVal, in ticker order" on every call -- each hydrated
+// ticker naturally drops out of the next call's batch, so calling this endpoint many times
+// back-to-back makes real forward progress instead of repeating the same slice.
 export const maxDuration = 60;
 
 const BATCH_SIZE = 10;

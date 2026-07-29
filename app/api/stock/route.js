@@ -1,7 +1,6 @@
 import { supabase } from '../../../lib/supabase.js';
 import { getYahooAuth } from '../../../lib/yahooFinance.js';
 import { fetchForm4Transactions, computeInsiderOwnershipPct } from '../../../lib/secInsiders.js';
-import { getCapTier, isSmallOrMicro } from '../../../lib/marketCap.js';
 import { cleanCompanyName } from '../../../lib/secTickers.js';
 
 const FH_KEY = process.env.FINNHUB_API_KEY;
@@ -2144,29 +2143,9 @@ const sharesForCalc = sharesValAdj || sharesFinnhub;
     // Finnhub/Yahoo fallback branches above correctly stay null rather than guessing. Best-
     // effort: a fetch failure here shouldn't take down the whole stock lookup, so it's swallowed
     // the same way the SEC XBRL facts fetch above is.
-    let insiderTxns = [];
     const insiderOwnershipPct = await fetchForm4Transactions(cik, ticker, 15)
-      .then(txns => { insiderTxns = txns; return computeInsiderOwnershipPct(txns, sharesForCalc); })
+      .then(txns => computeInsiderOwnershipPct(txns, sharesForCalc))
       .catch(() => null);
-
-    // Piggyback the same Form 4 fetch above onto the Small & Micro Cap Radar's cross-ticker
-    // insider feed (insider_feed_events) — scoped to small/micro only so ordinary mega/large-cap
-    // traffic doesn't flood a table nobody browsing those tiers cares about. Deliberately not
-    // awaited: this is a side effect for a different feature, and must never add latency to (or
-    // fail) a stock-page load. The daily admin/refresh-small-cap-radar cron sweeps the rest of
-    // the universe, since this alone only fires for tickers someone actually views.
-    if (isSmallOrMicro(marketCapFinal) && insiderTxns.length > 0) {
-      const capTierForFeed = getCapTier(marketCapFinal);
-      const feedRows = insiderTxns.map(t => ({
-        ticker, insider: t.insider, type: t.type, shares: t.shares, price: t.price, value: t.value,
-        date: t.date, cap_tier: capTierForFeed?.id ?? null,
-        is_officer: t.isOfficer, is_director: t.isDirector, is_ten_percent_owner: t.isTenPercentOwner,
-      }));
-      supabase.from('insider_feed_events')
-        .upsert(feedRows, { onConflict: 'ticker,insider,date,type,shares', ignoreDuplicates: true })
-        .then(() => {})
-        .catch(err => console.error(`Failed to upsert insider feed rows for ${ticker}:`, err));
-    }
 
     const result = {
       riskFreeRate,

@@ -2,19 +2,17 @@
 // Full-Market Populate Script — mega to nano cap, ~10,000 tickers
 // ============================================================================
 //
-// Widens scripts/populateRealSmallCaps.js (which only kept sub-$2B names) to the
-// whole cap range, and fixes two things that made that script risky to leave
-// running for hours: it upserts incrementally every BATCH_SIZE tickers instead of
-// holding everything in memory for a single insert at the end (an interruption
-// used to mean losing the whole run), and it never deletes stock_cache — existing
-// rows (including ones with full financials already backfilled by /api/stock on-
-// demand) are left alone; this only fills in tickers that aren't there yet.
+// Scans the full cap range and upserts incrementally every BATCH_SIZE tickers instead of
+// holding everything in memory for a single insert at the end (an interruption used to mean
+// losing the whole run), and never deletes stock_cache — existing rows (including ones with
+// full financials already backfilled by /api/stock on-demand) are left alone; this only fills
+// in tickers that aren't there yet.
 //
 // Writes name/sector/marketCap/exchange only (Finnhub profile2) — financials are
-// intentionally left null and get backfilled the first time a user opens that
-// stock page, same as the small-caps script. That keeps this script to one
-// Finnhub call per ticker instead of also hammering SEC EDGAR/Alpha Vantage for
-// 10,000 tickers, and avoids seeding rows that read as "complete" without being.
+// intentionally left null and get backfilled the first time a user opens that stock page.
+// That keeps this script to one Finnhub call per ticker instead of also hammering SEC
+// EDGAR/Alpha Vantage for 10,000 tickers, and avoids seeding rows that read as "complete"
+// without being.
 //
 // Run with: node scripts/populateFullMarket.js
 // Resume: just run it again — it reloads which tickers already exist in
