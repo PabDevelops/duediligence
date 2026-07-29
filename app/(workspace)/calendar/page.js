@@ -7,6 +7,7 @@ import { toKey, startOfMonth, endOfMonth, shiftMonth } from '../../../lib/calend
 import { openInNewTab } from '../../../lib/openInNewTab';
 import { fmt } from '../../../lib/formatters';
 import { buildEarningsCalendarUrl } from '../../../lib/googleCalendar';
+import { CAP_TIERS, getCapTier } from '../../../lib/marketCap';
 
 const MONTH_NAMES = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
 const DAY_NAMES = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
@@ -34,7 +35,11 @@ export default function WorkspaceCalendar() {
   const [watchlistOnly, setWatchlistOnly] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [typeFilter, setTypeFilter] = useState('all'); // all | earnings | ipos
-  const [marketCapFilter, setMarketCapFilter] = useState('mid-plus');
+  // Mirrors the screener's multi-select cap-tier filter (lib/marketCap.js) — mega/large/mid
+  // selected by default, same "drop sub-$2B noise" starting point the old single-select
+  // 'mid-plus' option gave, but combinable now instead of one bucket at a time. Empty array
+  // means no filter (same convention as the screener), shown as "All Sizes".
+  const [capTierFilter, setCapTierFilter] = useState(['mega', 'large', 'mid']);
   const [sectorFilter, setSectorFilter] = useState('all');
   const [watchlistTickers, setWatchlistTickers] = useState(new Set());
   const [selectedDate, setSelectedDate] = useState(null);
@@ -133,8 +138,9 @@ export default function WorkspaceCalendar() {
 
   // Compile calendar events by Date
   const allEventsThisMonth = useMemo(() => {
-    const earnList = (earnings || []).map(e => ({ ...e, type: 'earnings' }));
-    const ipoList = ipos.map(i => ({ ...i, type: 'ipo' }));
+    const withCapTier = (e) => ({ ...e, capTierId: getCapTier(e.marketCap)?.id ?? null });
+    const earnList = (earnings || []).map(e => withCapTier({ ...e, type: 'earnings' }));
+    const ipoList = ipos.map(i => withCapTier({ ...i, type: 'ipo' }));
     return [...earnList, ...ipoList];
   }, [earnings, ipos]);
 
@@ -164,25 +170,19 @@ export default function WorkspaceCalendar() {
         if (!matchesTicker && !matchesName) return false;
       }
 
-      // 4. Market Cap filter
-      if (marketCapFilter !== 'all') {
-        const mc = event.marketCap || 0;
-        if (marketCapFilter === 'mega' && mc < 200000000000) return false;
-        if (marketCapFilter === 'large' && (mc < 10000000000 || mc >= 200000000000)) return false;
-        if (marketCapFilter === 'mid' && (mc < 2000000000 || mc >= 10000000000)) return false;
-        if (marketCapFilter === 'small' && mc >= 2000000000) return false;
-        // Default view: drop sub-$2B tickers *and* the ones with no market cap on file
-        // (small community banks, OTC micro-caps not yet in stock_cache) — together they
-        // were most of the "Time TBD" noise on a typical earnings day.
-        if (marketCapFilter === 'mid-plus' && mc < 2000000000) return false;
-      }
+      // 4. Market Cap filter — capTierId is null for tickers with no market cap on file (small
+      // community banks, OTC micro-caps not yet in stock_cache), same as the screener's
+      // getCapTier. Excluded whenever a specific tier is selected rather than silently counted
+      // as "small" (previously `event.marketCap || 0` treated missing data as a $0 market cap,
+      // so mega/large caps not yet enriched in stock_cache showed up under the Small Cap filter).
+      if (capTierFilter.length > 0 && !capTierFilter.includes(event.capTierId)) return false;
 
       // 5. Sector filter
       if (sectorFilter !== 'all' && event.sector !== sectorFilter) return false;
 
       return true;
     });
-  }, [allEventsThisMonth, watchlistOnly, watchlistTickers, typeFilter, searchQuery, marketCapFilter, sectorFilter]);
+  }, [allEventsThisMonth, watchlistOnly, watchlistTickers, typeFilter, searchQuery, capTierFilter, sectorFilter]);
 
   // Categorize filtered events by date
   const byDate = useMemo(() => {
@@ -409,17 +409,30 @@ export default function WorkspaceCalendar() {
         
         <div className="calendar-filter-controls" style={{ display: 'flex', alignItems: 'center', gap: '12px', flexWrap: 'wrap' }}>
           {/* Market Cap & Sector Filters */}
-          <div style={{ display: 'flex', gap: '8px' }}>
-            <select value={marketCapFilter} onChange={e => setMarketCapFilter(e.target.value)}
-              style={{ background: 'var(--ws-bg-2)', border: '1px solid var(--ws-border)', color: 'var(--ws-text)', fontSize: '11px', fontWeight: 600, padding: '4px 8px', borderRadius: '4px', outline: 'none', cursor: 'pointer' }}>
-              <option value="mid-plus">Mid Cap &amp; Up (default)</option>
-              <option value="all">All Sizes</option>
-              <option value="mega">Mega Cap (&gt;$200B)</option>
-              <option value="large">Large Cap ($10B-$200B)</option>
-              <option value="mid">Mid Cap ($2B-$10B)</option>
-              <option value="small">Small Cap (&lt;$2B)</option>
-            </select>
-            
+          <div style={{ display: 'flex', gap: '8px', alignItems: 'center', flexWrap: 'wrap' }}>
+            {/* Multi-select chips, same convention as the screener's cap-tier filter — empty
+                selection means no filter ("All Sizes"), combinable (e.g. Mega + Large together). */}
+            <div style={{ display: 'flex', gap: '4px', flexWrap: 'wrap' }}>
+              {CAP_TIERS.map(t => (
+                <button key={t.id} type="button" onClick={() => setCapTierFilter(prev => prev.includes(t.id) ? prev.filter(id => id !== t.id) : [...prev, t.id])}
+                  title={`${t.label} (${t.id === 'mega' ? '>$200B' : t.id === 'large' ? '$10B-$200B' : t.id === 'mid' ? '$2B-$10B' : t.id === 'small' ? '$300M-$2B' : t.id === 'micro' ? '$50M-$300M' : '<$50M'})`}
+                  style={{
+                    padding: '4px 9px', fontSize: '11px', borderRadius: '20px', fontWeight: 700, cursor: 'pointer', transition: 'all 0.15s ease',
+                    background: capTierFilter.includes(t.id) ? 'var(--ws-accent)' : 'var(--ws-bg-2)',
+                    color: capTierFilter.includes(t.id) ? 'var(--ws-bg-1)' : 'var(--ws-text-2)',
+                    border: capTierFilter.includes(t.id) ? 'none' : '1px solid var(--ws-border)',
+                  }}>
+                  {t.short}
+                </button>
+              ))}
+              {capTierFilter.length > 0 && (
+                <button type="button" onClick={() => setCapTierFilter([])}
+                  style={{ padding: '4px 9px', fontSize: '11px', borderRadius: '20px', fontWeight: 700, cursor: 'pointer', background: 'none', border: '1px solid var(--ws-border)', color: 'var(--ws-accent)' }}>
+                  All sizes
+                </button>
+              )}
+            </div>
+
             <select value={sectorFilter} onChange={e => setSectorFilter(e.target.value)}
               style={{ background: 'var(--ws-bg-2)', border: '1px solid var(--ws-border)', color: 'var(--ws-text)', fontSize: '11px', fontWeight: 600, padding: '4px 8px', borderRadius: '4px', outline: 'none', cursor: 'pointer', maxWidth: '140px' }}>
               <option value="all">All Sectors</option>
