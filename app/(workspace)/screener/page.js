@@ -5,6 +5,15 @@ import { useUser } from '../../components/AuthProvider';
 import Sparkline from '../../components/Sparkline';
 import { fmt, fmtP, fmtN } from '../../../lib/formatters';
 import { openInNewTab } from '../../../lib/openInNewTab';
+import { getCapTier, CAP_TIERS } from '../../../lib/marketCap';
+import { normalizeExchange, EXCHANGE_GROUP_LABELS, US_EXCHANGE_GROUPS } from '../../../lib/exchanges';
+
+// Intl.DisplayNames turns the ISO-3166 alpha-2 codes stock_cache stores (US, JP, GB...) into
+// readable names for the country filter, with zero maintenance as new countries show up.
+const regionNames = typeof Intl !== 'undefined' && Intl.DisplayNames ? new Intl.DisplayNames(['en'], { type: 'region' }) : null;
+const countryName = (code) => {
+  try { return regionNames?.of(code) ?? code; } catch { return code; }
+};
 
 // Mirrors ANON_RESULT_LIMIT in app/api/screener/route.js — used only for the
 // guest banner copy, the actual cap is enforced server-side.
@@ -24,6 +33,12 @@ export default function WorkspaceScreener() {
   const [stocks, setStocks] = useState([]);
   const [loading, setLoading] = useState(true);
   const [sector, setSector] = useState('All');
+  const [capTier, setCapTier] = useState('All');
+  const [market, setMarket] = useState('All');
+  // Defaults to US — the guest/global dataset spans ~70 exchanges with wildly inconsistent
+  // per-market conventions (currency units, filing quality), so US is the one slice that reads
+  // clean out of the box. Everything else stays one explicit dropdown pick away.
+  const [country, setCountry] = useState('US');
   const [sortBy, setSortBy] = useState('marketCap');
   const [sortDir, setSortDir] = useState('desc');
   const [sparklines, setSparklines] = useState({});
@@ -69,7 +84,7 @@ export default function WorkspaceScreener() {
 
   useEffect(() => {
     if (tableRef.current) tableRef.current.scrollTop = 0;
-  }, [search, sector, filters]);
+  }, [search, sector, capTier, market, country, filters]);
 
   const loadSparkline = async (ticker) => {
     if (sparklines[ticker]) return;
@@ -99,24 +114,82 @@ export default function WorkspaceScreener() {
       minGrossMargin: ''
     });
     setSector('All');
+    setCapTier('All');
+    setMarket('All');
+    setCountry('US');
     setSearch('');
     setPage(1);
   };
 
-  // Compute sector counts
-  const sectorCounts = useMemo(() => {
+  // Cap tier + normalized exchange group computed once per stock, rather than re-derived on
+  // every filter/render — both are pure functions of fields already on the row. country falls
+  // back to 'US' when it's missing but the exchange is a US one: app/api/stock/route.js's
+  // on-demand full refresh never writes a country field (unlike the bulk populate script), so
+  // a ticker that's been visited enough to get refreshed silently loses its country tag —
+  // without this fallback, the most-viewed US names (AAPL, MSFT, ...) drop out of the default
+  // US country filter below.
+  const enrichedStocks = useMemo(() => stocks.map(s => {
+    const marketGroup = normalizeExchange(s.exchange);
+    return {
+      ...s,
+      capTierId: getCapTier(s.marketCap)?.id ?? null,
+      marketGroup,
+      country: s.country || (US_EXCHANGE_GROUPS.includes(marketGroup) ? 'US' : s.country),
+    };
+  }), [stocks]);
+
+  // Each facet's counts (and its "All" total) are computed against the OTHER three active
+  // filters, excluding itself -- picking a market cap tier narrows what shows up under
+  // Sectors/Market/Country, and vice versa, the standard cascading-facet pattern. Only these
+  // four categorical filters cascade into each other; search and the numeric thresholds don't
+  // (those only ever narrow the final table, not the filter lists themselves).
+  const sectorFacet = useMemo(() => {
+    const list = enrichedStocks
+      .filter(s => capTier === 'All' || s.capTierId === capTier)
+      .filter(s => market === 'All' || s.marketGroup === market)
+      .filter(s => country === 'All' || s.country === country);
     const counts = {};
-    stocks.forEach(s => {
-      if (s.sector) {
-        counts[s.sector] = (counts[s.sector] || 0) + 1;
-      }
-    });
-    return counts;
-  }, [stocks]);
+    list.forEach(s => { if (s.sector) counts[s.sector] = (counts[s.sector] || 0) + 1; });
+    return { counts, total: list.length };
+  }, [enrichedStocks, capTier, market, country]);
+
+  const capTierFacet = useMemo(() => {
+    const list = enrichedStocks
+      .filter(s => sector === 'All' || s.sector === sector)
+      .filter(s => market === 'All' || s.marketGroup === market)
+      .filter(s => country === 'All' || s.country === country);
+    const counts = {};
+    list.forEach(s => { if (s.capTierId) counts[s.capTierId] = (counts[s.capTierId] || 0) + 1; });
+    return { counts, total: list.length };
+  }, [enrichedStocks, sector, market, country]);
+
+  const marketFacet = useMemo(() => {
+    const list = enrichedStocks
+      .filter(s => sector === 'All' || s.sector === sector)
+      .filter(s => capTier === 'All' || s.capTierId === capTier)
+      .filter(s => country === 'All' || s.country === country);
+    const counts = {};
+    list.forEach(s => { if (s.marketGroup) counts[s.marketGroup] = (counts[s.marketGroup] || 0) + 1; });
+    return { counts, total: list.length };
+  }, [enrichedStocks, sector, capTier, country]);
+
+  // Sorted by count desc so the dropdown leads with the countries that actually have stocks.
+  const countryFacet = useMemo(() => {
+    const list = enrichedStocks
+      .filter(s => sector === 'All' || s.sector === sector)
+      .filter(s => capTier === 'All' || s.capTierId === capTier)
+      .filter(s => market === 'All' || s.marketGroup === market);
+    const counts = {};
+    list.forEach(s => { if (s.country) counts[s.country] = (counts[s.country] || 0) + 1; });
+    return { entries: Object.entries(counts).sort((a, b) => b[1] - a[1]), total: list.length };
+  }, [enrichedStocks, sector, capTier, market]);
 
   const filtered = useMemo(() => {
-    return stocks
+    return enrichedStocks
       .filter(s => sector === 'All' || s.sector === sector)
+      .filter(s => capTier === 'All' || s.capTierId === capTier)
+      .filter(s => market === 'All' || s.marketGroup === market)
+      .filter(s => country === 'All' || s.country === country)
       .filter(s => !search || s.ticker.includes(search.toUpperCase()) || s.name?.toUpperCase().includes(search.toUpperCase()))
       .filter(s => filters.minMargin === '' || (s.opMargin !== null && s.opMargin >= Number(filters.minMargin)))
       .filter(s => filters.maxPE === '' || (s.pe !== null && s.pe > 0 && s.pe <= Number(filters.maxPE)))
@@ -129,7 +202,7 @@ export default function WorkspaceScreener() {
         const bv = b[sortBy] ?? (sortDir === 'desc' ? -Infinity : Infinity);
         return sortDir === 'desc' ? bv - av : av - bv;
       });
-  }, [stocks, sector, search, filters, sortBy, sortDir]);
+  }, [enrichedStocks, sector, capTier, market, country, search, filters, sortBy, sortDir]);
 
   const totalPages = Math.ceil(filtered.length / PAGE_SIZE);
   const paginated = useMemo(() => {
@@ -255,9 +328,9 @@ export default function WorkspaceScreener() {
                 transition: 'all 0.15s ease'
               }}>
               <span>All Sectors</span>
-              <span style={{ opacity: 0.6, fontSize: '10px' }}>({stocks.length})</span>
+              <span style={{ opacity: 0.6, fontSize: '10px' }}>({sectorFacet.total})</span>
             </button>
-            {Object.keys(sectorCounts).sort().map(sec => (
+            {Object.keys(sectorFacet.counts).sort().map(sec => (
               <button key={sec} onClick={() => setSector(sec)}
                 style={{
                   display: 'flex',
@@ -276,9 +349,75 @@ export default function WorkspaceScreener() {
                   transition: 'all 0.15s ease'
                 }}>
                 <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', marginRight: '6px' }}>{sec}</span>
-                <span style={{ opacity: 0.6, fontSize: '10px' }}>({sectorCounts[sec]})</span>
+                <span style={{ opacity: 0.6, fontSize: '10px' }}>({sectorFacet.counts[sec]})</span>
               </button>
             ))}
+          </div>
+        </div>
+
+        {/* Market Cap tier */}
+        <div style={{ borderTop: '1px solid var(--ws-border)', paddingTop: '16px' }}>
+          <div style={{ color: 'var(--ws-text-3)', fontFamily: "'JetBrains Mono', monospace", fontSize: '10px', fontWeight: 700, letterSpacing: '1.5px', marginBottom: '8px', textTransform: 'uppercase' }}>
+            MARKET CAP
+          </div>
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
+            <button onClick={() => setCapTier('All')}
+              style={{
+                padding: '5px 10px', fontSize: '11px', borderRadius: '20px',
+                background: capTier === 'All' ? 'var(--ws-accent)' : 'var(--ws-bg-2)',
+                color: capTier === 'All' ? 'var(--ws-bg-1)' : 'var(--ws-text-2)',
+                border: capTier === 'All' ? 'none' : '1px solid var(--ws-border)',
+                fontWeight: 700, cursor: 'pointer', transition: 'all 0.15s ease'
+              }}>
+              All ({capTierFacet.total})
+            </button>
+            {CAP_TIERS.map(t => (
+              <button key={t.id} onClick={() => setCapTier(t.id)}
+                style={{
+                  padding: '5px 10px', fontSize: '11px', borderRadius: '20px',
+                  background: capTier === t.id ? 'var(--ws-accent)' : 'var(--ws-bg-2)',
+                  color: capTier === t.id ? 'var(--ws-bg-1)' : 'var(--ws-text-2)',
+                  border: capTier === t.id ? 'none' : '1px solid var(--ws-border)',
+                  fontWeight: 700, cursor: 'pointer', transition: 'all 0.15s ease'
+                }}>
+                {t.short} {capTierFacet.counts[t.id] ? `(${capTierFacet.counts[t.id]})` : ''}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* Market (exchange) + Country */}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', borderTop: '1px solid var(--ws-border)', paddingTop: '16px' }}>
+          <div>
+            <div style={{ color: 'var(--ws-text-3)', fontFamily: "'JetBrains Mono', monospace", fontSize: '10px', fontWeight: 700, letterSpacing: '1.5px', marginBottom: '8px', textTransform: 'uppercase' }}>
+              MARKET
+            </div>
+            <select value={market} onChange={e => setMarket(e.target.value)}
+              style={{
+                width: '100%', background: 'var(--ws-bg-1)', border: '1px solid var(--ws-border)',
+                borderRadius: '6px', color: 'var(--ws-text)', fontSize: '11px', padding: '6px 10px', outline: 'none'
+              }}>
+              <option value="All">All Markets ({marketFacet.total})</option>
+              {EXCHANGE_GROUP_LABELS.filter(l => marketFacet.counts[l]).map(l => (
+                <option key={l} value={l}>{l} ({marketFacet.counts[l]})</option>
+              ))}
+            </select>
+          </div>
+
+          <div>
+            <div style={{ color: 'var(--ws-text-3)', fontFamily: "'JetBrains Mono', monospace", fontSize: '10px', fontWeight: 700, letterSpacing: '1.5px', marginBottom: '8px', textTransform: 'uppercase' }}>
+              COUNTRY
+            </div>
+            <select value={country} onChange={e => setCountry(e.target.value)}
+              style={{
+                width: '100%', background: 'var(--ws-bg-1)', border: '1px solid var(--ws-border)',
+                borderRadius: '6px', color: 'var(--ws-text)', fontSize: '11px', padding: '6px 10px', outline: 'none'
+              }}>
+              <option value="All">All Countries ({countryFacet.total})</option>
+              {countryFacet.entries.map(([code, count]) => (
+                <option key={code} value={code}>{countryName(code)} ({count})</option>
+              ))}
+            </select>
           </div>
         </div>
 
