@@ -176,12 +176,14 @@ export async function GET(req) {
     // recently). Clicking an event still routes to /stock/[ticker], which fetches fresh data
     // on a cache miss, so there's no reason to gate the calendar on caching state.
     const seen = new Set();
+    const coveredTickers = new Set();
     const earnings = [];
     for (const e of earningsResults) {
       if (e.symbol && e.date) {
         const key = `${e.symbol}-${e.date}`;
         if (!seen.has(key)) {
           seen.add(key);
+          coveredTickers.add(e.symbol);
           earnings.push({
             ticker: e.symbol,
             date: e.date,
@@ -212,10 +214,19 @@ export async function GET(req) {
     // had to be limited to the caller's watchlist to bound latency, this covers every ticker
     // reporting in the window for roughly the same cost (fetched above, in parallel with
     // Finnhub).
+    //
+    // Gated on coveredTickers rather than the exact ticker-date `seen` key: Nasdaq's calendar
+    // often lists an estimated date that differs from Finnhub's confirmed one for the same
+    // report, so a date-only dedup let both through as separate entries — the same ticker
+    // showing up twice on different days (verified against real data: DVLT listed on both
+    // Aug 17, from Finnhub, and Aug 18 "Est. date", from Nasdaq). Nasdaq is meant to fill
+    // coverage gaps, not add a second date for a ticker already covered — including by an
+    // earlier day's Nasdaq result within the same window.
     for (const e of nasdaqEarnings) {
       const key = `${e.ticker}-${e.date}`;
-      if (!seen.has(key)) {
+      if (!seen.has(key) && !coveredTickers.has(e.ticker)) {
         seen.add(key);
+        coveredTickers.add(e.ticker);
         earnings.push(e);
       }
     }
