@@ -33,14 +33,15 @@ export default function WorkspaceScreener() {
   const [stocks, setStocks] = useState([]);
   const [loading, setLoading] = useState(true);
   const [sector, setSector] = useState('All');
-  const [capTier, setCapTier] = useState('All');
-  // Array, not a single value — a user comparing US large caps wants NASDAQ *and* NYSE at
-  // once, not one or the other. Empty array means no market filter (same as 'All').
+  // Arrays, not single values — a user comparing US large caps wants NASDAQ *and* NYSE at
+  // once, or Mega *and* Large together, not one or the other. Empty array means no filter
+  // (same as 'All').
+  const [capTier, setCapTier] = useState([]);
   const [market, setMarket] = useState([]);
-  // Defaults to US — the guest/global dataset spans ~70 exchanges with wildly inconsistent
-  // per-market conventions (currency units, filing quality), so US is the one slice that reads
-  // clean out of the box. Everything else stays one explicit dropdown pick away.
-  const [country, setCountry] = useState('US');
+  // Defaults to just US — the guest/global dataset spans ~70 exchanges with wildly
+  // inconsistent per-market conventions (currency units, filing quality), so US is the one
+  // slice that reads clean out of the box. Everything else stays one explicit pick away.
+  const [country, setCountry] = useState(['US']);
   const [sortBy, setSortBy] = useState('marketCap');
   const [sortDir, setSortDir] = useState('desc');
   const [sparklines, setSparklines] = useState({});
@@ -103,6 +104,14 @@ export default function WorkspaceScreener() {
     setMarket(prev => prev.includes(label) ? prev.filter(m => m !== label) : [...prev, label]);
   };
 
+  const toggleCapTier = (id) => {
+    setCapTier(prev => prev.includes(id) ? prev.filter(t => t !== id) : [...prev, id]);
+  };
+
+  const toggleCountry = (code) => {
+    setCountry(prev => prev.includes(code) ? prev.filter(c => c !== code) : [...prev, code]);
+  };
+
   const applyPreset = (key) => {
     setActivePreset(key);
     setFilters(PRESETS[key].filters);
@@ -120,9 +129,9 @@ export default function WorkspaceScreener() {
       minGrossMargin: ''
     });
     setSector('All');
-    setCapTier('All');
+    setCapTier([]);
     setMarket([]);
-    setCountry('US');
+    setCountry(['US']);
     setSearch('');
     setPage(1);
   };
@@ -151,9 +160,9 @@ export default function WorkspaceScreener() {
   // (those only ever narrow the final table, not the filter lists themselves).
   const sectorFacet = useMemo(() => {
     const list = enrichedStocks
-      .filter(s => capTier === 'All' || s.capTierId === capTier)
+      .filter(s => capTier.length === 0 || capTier.includes(s.capTierId))
       .filter(s => market.length === 0 || market.includes(s.marketGroup))
-      .filter(s => country === 'All' || s.country === country);
+      .filter(s => country.length === 0 || country.includes(s.country));
     const counts = {};
     list.forEach(s => { if (s.sector) counts[s.sector] = (counts[s.sector] || 0) + 1; });
     return { counts, total: list.length };
@@ -163,7 +172,7 @@ export default function WorkspaceScreener() {
     const list = enrichedStocks
       .filter(s => sector === 'All' || s.sector === sector)
       .filter(s => market.length === 0 || market.includes(s.marketGroup))
-      .filter(s => country === 'All' || s.country === country);
+      .filter(s => country.length === 0 || country.includes(s.country));
     const counts = {};
     list.forEach(s => { if (s.capTierId) counts[s.capTierId] = (counts[s.capTierId] || 0) + 1; });
     return { counts, total: list.length };
@@ -172,18 +181,18 @@ export default function WorkspaceScreener() {
   const marketFacet = useMemo(() => {
     const list = enrichedStocks
       .filter(s => sector === 'All' || s.sector === sector)
-      .filter(s => capTier === 'All' || s.capTierId === capTier)
-      .filter(s => country === 'All' || s.country === country);
+      .filter(s => capTier.length === 0 || capTier.includes(s.capTierId))
+      .filter(s => country.length === 0 || country.includes(s.country));
     const counts = {};
     list.forEach(s => { if (s.marketGroup) counts[s.marketGroup] = (counts[s.marketGroup] || 0) + 1; });
     return { counts, total: list.length };
   }, [enrichedStocks, sector, capTier, country]);
 
-  // Sorted by count desc so the dropdown leads with the countries that actually have stocks.
+  // Sorted by count desc so the list leads with the countries that actually have stocks.
   const countryFacet = useMemo(() => {
     const list = enrichedStocks
       .filter(s => sector === 'All' || s.sector === sector)
-      .filter(s => capTier === 'All' || s.capTierId === capTier)
+      .filter(s => capTier.length === 0 || capTier.includes(s.capTierId))
       .filter(s => market.length === 0 || market.includes(s.marketGroup));
     const counts = {};
     list.forEach(s => { if (s.country) counts[s.country] = (counts[s.country] || 0) + 1; });
@@ -193,9 +202,9 @@ export default function WorkspaceScreener() {
   const filtered = useMemo(() => {
     return enrichedStocks
       .filter(s => sector === 'All' || s.sector === sector)
-      .filter(s => capTier === 'All' || s.capTierId === capTier)
+      .filter(s => capTier.length === 0 || capTier.includes(s.capTierId))
       .filter(s => market.length === 0 || market.includes(s.marketGroup))
-      .filter(s => country === 'All' || s.country === country)
+      .filter(s => country.length === 0 || country.includes(s.country))
       .filter(s => !search || s.ticker.includes(search.toUpperCase()) || s.name?.toUpperCase().includes(search.toUpperCase()))
       .filter(s => filters.minMargin === '' || (s.opMargin !== null && s.opMargin >= Number(filters.minMargin)))
       .filter(s => filters.maxPE === '' || (s.pe !== null && s.pe > 0 && s.pe <= Number(filters.maxPE)))
@@ -363,27 +372,25 @@ export default function WorkspaceScreener() {
 
         {/* Market Cap tier */}
         <div style={{ borderTop: '1px solid var(--ws-border)', paddingTop: '16px' }}>
-          <div style={{ color: 'var(--ws-text-3)', fontFamily: "'JetBrains Mono', monospace", fontSize: '10px', fontWeight: 700, letterSpacing: '1.5px', marginBottom: '8px', textTransform: 'uppercase' }}>
-            MARKET CAP
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
+            <span style={{ color: 'var(--ws-text-3)', fontFamily: "'JetBrains Mono', monospace", fontSize: '10px', fontWeight: 700, letterSpacing: '1.5px', textTransform: 'uppercase' }}>
+              MARKET CAP
+            </span>
+            {capTier.length > 0 && (
+              <span onClick={() => setCapTier([])} style={{ color: 'var(--ws-accent)', fontSize: '10px', fontWeight: 700, cursor: 'pointer' }}>
+                Clear
+              </span>
+            )}
           </div>
+          {/* Multi-select chips — e.g. comparing Mega + Large together. */}
           <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
-            <button onClick={() => setCapTier('All')}
-              style={{
-                padding: '5px 10px', fontSize: '11px', borderRadius: '20px',
-                background: capTier === 'All' ? 'var(--ws-accent)' : 'var(--ws-bg-2)',
-                color: capTier === 'All' ? 'var(--ws-bg-1)' : 'var(--ws-text-2)',
-                border: capTier === 'All' ? 'none' : '1px solid var(--ws-border)',
-                fontWeight: 700, cursor: 'pointer', transition: 'all 0.15s ease'
-              }}>
-              All ({capTierFacet.total})
-            </button>
             {CAP_TIERS.map(t => (
-              <button key={t.id} onClick={() => setCapTier(t.id)}
+              <button key={t.id} onClick={() => toggleCapTier(t.id)}
                 style={{
                   padding: '5px 10px', fontSize: '11px', borderRadius: '20px',
-                  background: capTier === t.id ? 'var(--ws-accent)' : 'var(--ws-bg-2)',
-                  color: capTier === t.id ? 'var(--ws-bg-1)' : 'var(--ws-text-2)',
-                  border: capTier === t.id ? 'none' : '1px solid var(--ws-border)',
+                  background: capTier.includes(t.id) ? 'var(--ws-accent)' : 'var(--ws-bg-2)',
+                  color: capTier.includes(t.id) ? 'var(--ws-bg-1)' : 'var(--ws-text-2)',
+                  border: capTier.includes(t.id) ? 'none' : '1px solid var(--ws-border)',
                   fontWeight: 700, cursor: 'pointer', transition: 'all 0.15s ease'
                 }}>
                 {t.short} {capTierFacet.counts[t.id] ? `(${capTierFacet.counts[t.id]})` : ''}
@@ -424,19 +431,35 @@ export default function WorkspaceScreener() {
           </div>
 
           <div>
-            <div style={{ color: 'var(--ws-text-3)', fontFamily: "'JetBrains Mono', monospace", fontSize: '10px', fontWeight: 700, letterSpacing: '1.5px', marginBottom: '8px', textTransform: 'uppercase' }}>
-              COUNTRY
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
+              <span style={{ color: 'var(--ws-text-3)', fontFamily: "'JetBrains Mono', monospace", fontSize: '10px', fontWeight: 700, letterSpacing: '1.5px', textTransform: 'uppercase' }}>
+                COUNTRY
+              </span>
+              {country.length > 0 && (
+                <span onClick={() => setCountry([])} style={{ color: 'var(--ws-accent)', fontSize: '10px', fontWeight: 700, cursor: 'pointer' }}>
+                  Clear
+                </span>
+              )}
             </div>
-            <select value={country} onChange={e => setCountry(e.target.value)}
-              style={{
-                width: '100%', background: 'var(--ws-bg-1)', border: '1px solid var(--ws-border)',
-                borderRadius: '6px', color: 'var(--ws-text)', fontSize: '11px', padding: '6px 10px', outline: 'none'
-              }}>
-              <option value="All">All Countries ({countryFacet.total})</option>
+            {/* Vertical multi-select list, not chips — country names run long, and the
+                candidate list can run to dozens of entries once no other facet narrows it. */}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '2px', maxHeight: '180px', overflowY: 'auto' }}>
               {countryFacet.entries.map(([code, count]) => (
-                <option key={code} value={code}>{countryName(code)} ({count})</option>
+                <button key={code} onClick={() => toggleCountry(code)}
+                  style={{
+                    display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                    width: '100%', padding: '6px 10px', fontSize: '11px',
+                    background: country.includes(code) ? 'var(--ws-accent-dim)' : 'none',
+                    border: 'none', borderRadius: '6px', cursor: 'pointer',
+                    fontWeight: country.includes(code) ? 700 : 500,
+                    color: country.includes(code) ? 'var(--ws-accent)' : 'var(--ws-text-2)',
+                    textAlign: 'left', transition: 'all 0.15s ease'
+                  }}>
+                  <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', marginRight: '6px' }}>{countryName(code)}</span>
+                  <span style={{ opacity: 0.6, fontSize: '10px', flexShrink: 0 }}>({count})</span>
+                </button>
               ))}
-            </select>
+            </div>
           </div>
         </div>
 
