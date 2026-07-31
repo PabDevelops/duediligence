@@ -4,7 +4,7 @@ import Footer from '../../components/marketing/Footer';
 import { PrimaryButton, SecondaryButton } from '../../components/marketing/Buttons';
 import { WindowChrome, Shot } from '../../components/WindowChrome';
 
-const MONO = "'JetBrains Mono', monospace";
+const MONO = "'Inter', sans-serif";
 
 const BENTO_SHOTS = [
   { src: '/screenshots/stock.png', alt: 'Stock analysis page sourced directly from SEC filings', span: 2 },

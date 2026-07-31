@@ -30,7 +30,7 @@ export default function WorkspaceProfile() {
   const [securityMsg, setSecurityMsg] = useState({ type: '', text: '' });
 
   // Customization state
-  const [accentColor, setAccentColor] = useState('#0f766e');
+  const [accentColor, setAccentColor] = useState('#059669');
   const [fontSize, setFontSize] = useState('normal');
   const [scanlines, setScanlines] = useState(false);
 
@@ -53,7 +53,7 @@ export default function WorkspaceProfile() {
     setDisplayName(user.user_metadata?.full_name || localStorage.getItem('traq_user_fullname') || '');
     
     // Load saved preferences
-    setAccentColor(localStorage.getItem('ws_accent_color') || '#0f766e');
+    setAccentColor(localStorage.getItem('ws_accent_color') || '#059669');
     setFontSize(localStorage.getItem('ws_font_size') || 'normal');
     setScanlines(localStorage.getItem('ws_scanlines') === 'true');
 
@@ -207,7 +207,7 @@ export default function WorkspaceProfile() {
   };
 
   if (!isLoaded || loading) return (
-    <div style={{ padding: '24px', fontFamily: "'JetBrains Mono', monospace" }}>
+    <div style={{ padding: '24px', fontFamily: "'Inter', sans-serif" }}>
       <div style={{ border: '1px solid var(--ws-border)', background: 'var(--ws-bg-1)', overflow: 'hidden' }}>
         <div style={{ background: 'var(--ws-bg-2)', borderBottom: '1px solid var(--ws-border)', padding: '7px 16px' }}>
           <span style={{ fontSize: '11px', color: 'var(--ws-accent)', fontWeight: 700, letterSpacing: '1px' }}>$ loading profile...</span>
@@ -309,7 +309,7 @@ export default function WorkspaceProfile() {
               <div style={{ fontSize: '8px', fontWeight: 700, color: 'var(--ws-text-3)', letterSpacing: '1px', textTransform: 'uppercase', marginBottom: '4px' }}>
                 {stat.label}
               </div>
-              <div style={{ fontSize: '20px', fontWeight: 800, color: stat.color, fontFamily: "'JetBrains Mono', monospace" }}>
+              <div style={{ fontSize: '20px', fontWeight: 800, color: stat.color, fontFamily: "'Inter', sans-serif" }}>
                 {stat.count}
               </div>
             </div>
@@ -522,7 +522,7 @@ export default function WorkspaceProfile() {
 
             <div style={{ display: 'flex', gap: '8px' }}>
               <input type="text" readOnly value={apiToken}
-                className="ws-input" style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: '11px', background: 'var(--ws-bg-2)' }} />
+                className="ws-input" style={{ fontFamily: "'Inter', sans-serif", fontSize: '11px', background: 'var(--ws-bg-2)' }} />
               
               <button onClick={copyTokenToClipboard} className="ws-btn" style={{ padding: '8px 12px', flexShrink: 0 }}>
                 {copiedToken ? 'Copied' : 'Copy'}

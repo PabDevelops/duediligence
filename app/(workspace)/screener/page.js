@@ -289,7 +289,7 @@ export default function WorkspaceScreener() {
 
       {/* Terminal title bar */}
       <div style={{ background: 'var(--ws-bg-2)', borderBottom: '1px solid var(--ws-border)', padding: '7px 16px', flexShrink: 0 }}>
-        <span style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: '11px', color: 'var(--ws-accent)', fontWeight: 700, letterSpacing: '1px' }}>
+        <span style={{ fontFamily: "'Inter', sans-serif", fontSize: '11px', color: 'var(--ws-accent)', fontWeight: 700, letterSpacing: '1px' }}>
           $ traq screener
         </span>
       </div>
@@ -304,7 +304,7 @@ export default function WorkspaceScreener() {
       {/* Filters Sidebar */}
       <div className={`screener-filters-sidebar ${showFilters ? 'open' : ''}`}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          <div style={{ color: 'var(--ws-text)', fontFamily: "'JetBrains Mono', monospace", fontSize: '11px', fontWeight: 700, letterSpacing: '1.5px' }}>
+          <div style={{ color: 'var(--ws-text)', fontFamily: "'Inter', sans-serif", fontSize: '11px', fontWeight: 700, letterSpacing: '1.5px' }}>
             SCREENER FILTERS
           </div>
           <button onClick={resetFilters} style={{
@@ -321,7 +321,7 @@ export default function WorkspaceScreener() {
 
         {/* Sectors list */}
         <div>
-          <div style={{ color: 'var(--ws-text-3)', fontFamily: "'JetBrains Mono', monospace", fontSize: '10px', fontWeight: 700, letterSpacing: '1.5px', marginBottom: '8px', textTransform: 'uppercase' }}>
+          <div style={{ color: 'var(--ws-text-3)', fontFamily: "'Inter', sans-serif", fontSize: '10px', fontWeight: 700, letterSpacing: '1.5px', marginBottom: '8px', textTransform: 'uppercase' }}>
             SECTORS
           </div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
@@ -373,7 +373,7 @@ export default function WorkspaceScreener() {
         {/* Market Cap tier */}
         <div style={{ borderTop: '1px solid var(--ws-border)', paddingTop: '16px' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
-            <span style={{ color: 'var(--ws-text-3)', fontFamily: "'JetBrains Mono', monospace", fontSize: '10px', fontWeight: 700, letterSpacing: '1.5px', textTransform: 'uppercase' }}>
+            <span style={{ color: 'var(--ws-text-3)', fontFamily: "'Inter', sans-serif", fontSize: '10px', fontWeight: 700, letterSpacing: '1.5px', textTransform: 'uppercase' }}>
               MARKET CAP
             </span>
             {capTier.length > 0 && (
@@ -403,7 +403,7 @@ export default function WorkspaceScreener() {
         <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', borderTop: '1px solid var(--ws-border)', paddingTop: '16px' }}>
           <div>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
-              <span style={{ color: 'var(--ws-text-3)', fontFamily: "'JetBrains Mono', monospace", fontSize: '10px', fontWeight: 700, letterSpacing: '1.5px', textTransform: 'uppercase' }}>
+              <span style={{ color: 'var(--ws-text-3)', fontFamily: "'Inter', sans-serif", fontSize: '10px', fontWeight: 700, letterSpacing: '1.5px', textTransform: 'uppercase' }}>
                 MARKET
               </span>
               {market.length > 0 && (
@@ -432,7 +432,7 @@ export default function WorkspaceScreener() {
 
           <div>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
-              <span style={{ color: 'var(--ws-text-3)', fontFamily: "'JetBrains Mono', monospace", fontSize: '10px', fontWeight: 700, letterSpacing: '1.5px', textTransform: 'uppercase' }}>
+              <span style={{ color: 'var(--ws-text-3)', fontFamily: "'Inter', sans-serif", fontSize: '10px', fontWeight: 700, letterSpacing: '1.5px', textTransform: 'uppercase' }}>
                 COUNTRY
               </span>
               {country.length > 0 && (
@@ -465,7 +465,7 @@ export default function WorkspaceScreener() {
 
         {/* Numeric Filters */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', borderTop: '1px solid var(--ws-border)', paddingTop: '16px' }}>
-          <div style={{ color: 'var(--ws-text-3)', fontFamily: "'JetBrains Mono', monospace", fontSize: '10px', fontWeight: 700, letterSpacing: '1.5px', marginBottom: '4px', textTransform: 'uppercase' }}>
+          <div style={{ color: 'var(--ws-text-3)', fontFamily: "'Inter', sans-serif", fontSize: '10px', fontWeight: 700, letterSpacing: '1.5px', marginBottom: '4px', textTransform: 'uppercase' }}>
             METRIC THRESHOLDS
           </div>
 
@@ -660,7 +660,7 @@ export default function WorkspaceScreener() {
             <div style={{ padding: '80px 20px', textAlign: 'center', color: 'var(--ws-text-3)' }}>
               <div style={{ display: 'inline-flex', alignItems: 'center', gap: '10px' }}>
                 <span style={{ color: 'var(--ws-accent)', fontSize: '11px' }}>▶</span>
-                <span style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: '11px', letterSpacing: '1px' }}>LOADING QUANTITATIVE DATASET...</span>
+                <span style={{ fontFamily: "'Inter', sans-serif", fontSize: '11px', letterSpacing: '1px' }}>LOADING QUANTITATIVE DATASET...</span>
               </div>
             </div>
           ) : (

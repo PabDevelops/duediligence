@@ -24,7 +24,7 @@ export default function AchievementToast({ achievement, onClose }) {
       zIndex: 10000,
       maxWidth: isMobile ? 'calc(100% - 32px)' : '320px',
       animation: isMobile ? 'slideInMobile 0.4s ease-out' : 'slideInDesktop 0.4s ease-out',
-      fontFamily: 'JetBrains Mono, monospace'
+      fontFamily: 'Inter, sans-serif'
     }}>
       <style>{`
         @keyframes slideInDesktop {

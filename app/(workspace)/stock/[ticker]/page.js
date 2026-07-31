@@ -70,8 +70,8 @@ function DeltaTag({ value, unit = '%' }) {
 }
 
 // Animated fill bar for the main Quality Score. Was an ASCII '█'/'░' character string —
-// besides not being animatable, mixing two block-drawing glyphs at a font weight (400) that
-// isn't one of the loaded JetBrains Mono weights (500/700) meant the two characters could
+// besides not being animatable, mixing two block-drawing glyphs at a font weight that
+// isn't one of the loaded weights meant the two characters could
 // render via different font-matching paths and end up visually mismatched in size. A real
 // div-based bar sidesteps both problems. Defined at module scope (not inside StockPage's
 // render body, where the equivalent ScoreBar below lives) so its identity — and animation
@@ -221,7 +221,7 @@ function GemRevealBar({ score100 }) {
             }} />
           ))}
         </div>
-        <span style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: '28px', fontWeight: 700, color: '#1D9E75', lineHeight: 1 }}>{score100}</span>
+        <span style={{ fontFamily: "'Inter', sans-serif", fontSize: '28px', fontWeight: 700, color: '#1D9E75', lineHeight: 1 }}>{score100}</span>
       </div>
 
       <div style={{
@@ -237,8 +237,8 @@ function GemRevealBar({ score100 }) {
           <GemDiamondIcon size={46} />
         </div>
         <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
-          <span style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: '17px', fontWeight: 700, color: '#85B7EB', letterSpacing: '0.5px', lineHeight: 1.1 }}>HIDDEN GEM</span>
-          <span style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: '9px', color: '#5a7ba0', letterSpacing: '1px' }}>QUALITY OFF THE CHARTS</span>
+          <span style={{ fontFamily: "'Inter', sans-serif", fontSize: '17px', fontWeight: 700, color: '#85B7EB', letterSpacing: '0.5px', lineHeight: 1.1 }}>HIDDEN GEM</span>
+          <span style={{ fontFamily: "'Inter', sans-serif", fontSize: '9px', color: '#5a7ba0', letterSpacing: '1px' }}>QUALITY OFF THE CHARTS</span>
         </div>
       </div>
     </div>
@@ -698,7 +698,7 @@ function StockPageContent({ params }) {
   };
 
   if (loading) return (
-    <div style={{ padding: '24px', fontFamily: "'JetBrains Mono', monospace" }}>
+    <div style={{ padding: '24px', fontFamily: "'Inter', sans-serif" }}>
       <div style={{ border: '1px solid var(--ws-border)', background: 'var(--ws-bg-1)', overflow: 'hidden', marginBottom: '16px' }}>
         <div style={{ background: 'var(--ws-bg-2)', borderBottom: '1px solid var(--ws-border)', padding: '7px 16px' }}>
           <span style={{ fontSize: '10px', color: 'var(--ws-accent)', letterSpacing: '1px' }}>$ traq {ticker}</span>
@@ -722,7 +722,7 @@ function StockPageContent({ params }) {
   );
 
   if (error) return (
-    <div style={{ padding: '24px', fontFamily: "'JetBrains Mono', monospace" }}>
+    <div style={{ padding: '24px', fontFamily: "'Inter', sans-serif" }}>
       <div style={{ border: '1px solid var(--ws-border)', background: 'var(--ws-bg-1)', overflow: 'hidden', maxWidth: '560px' }}>
         <div style={{ background: 'var(--ws-bg-2)', borderBottom: '1px solid var(--ws-border)', padding: '7px 16px' }}>
           <span style={{ fontSize: '10px', color: 'var(--ws-red)', letterSpacing: '1px' }}>$ traq {ticker} — ERROR</span>
@@ -826,11 +826,11 @@ function StockPageContent({ params }) {
       <div style={{ border: '1px solid var(--ws-border)', background: 'var(--ws-bg-1)', marginBottom: '20px', overflow: 'hidden' }}>
         {/* Terminal title bar */}
         <div style={{ background: 'var(--ws-bg-2)', borderBottom: '1px solid var(--ws-border)', padding: '7px 16px', display: 'flex', alignItems: 'center', gap: '12px' }}>
-          <span style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: '11px', color: 'var(--ws-accent)', fontWeight: 700, letterSpacing: '1px' }}>
+          <span style={{ fontFamily: "'Inter', sans-serif", fontSize: '11px', color: 'var(--ws-accent)', fontWeight: 700, letterSpacing: '1px' }}>
             $ traq {ticker}
           </span>
           {data.finnhubFallback && (
-            <span style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: '9px', color: 'var(--ws-text-3)', letterSpacing: '1px' }}>
+            <span style={{ fontFamily: "'Inter', sans-serif", fontSize: '9px', color: 'var(--ws-text-3)', letterSpacing: '1px' }}>
               [LIMITED DATA]
             </span>
           )}
@@ -853,7 +853,7 @@ function StockPageContent({ params }) {
                 height: '24px',
                 padding: '0 8px',
                 fontSize: '10px',
-                fontFamily: "'JetBrains Mono', monospace",
+                fontFamily: "'Inter', sans-serif",
                 letterSpacing: '0.5px',
                 border: '1px solid var(--ws-border)',
                 borderRadius: 'var(--ws-radius)',
@@ -882,10 +882,10 @@ function StockPageContent({ params }) {
                     style={{ padding: '7px 10px', cursor: 'pointer', display: 'flex', gap: '8px', alignItems: 'baseline', fontSize: '11px' }}
                     onMouseEnter={e => e.currentTarget.style.background = 'var(--ws-bg-2)'}
                     onMouseLeave={e => e.currentTarget.style.background = 'transparent'}>
-                    <span style={{ color: 'var(--ws-accent)', fontWeight: 700, fontFamily: "'JetBrains Mono', monospace", minWidth: '44px' }}>{s.ticker}</span>
+                    <span style={{ color: 'var(--ws-accent)', fontWeight: 700, fontFamily: "'Inter', sans-serif", minWidth: '44px' }}>{s.ticker}</span>
                     <span style={{ color: 'var(--ws-text-2)', flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{s.name}</span>
                     {s.isEtf && (
-                      <span style={{ fontFamily: "'JetBrains Mono', monospace", fontWeight: 700, fontSize: '9px', letterSpacing: '0.5px', color: 'var(--ws-text-3)', border: '1px solid var(--ws-border)', borderRadius: '4px', padding: '1px 4px', flexShrink: 0 }}>
+                      <span style={{ fontFamily: "'Inter', sans-serif", fontWeight: 700, fontSize: '9px', letterSpacing: '0.5px', color: 'var(--ws-text-3)', border: '1px solid var(--ws-border)', borderRadius: '4px', padding: '1px 4px', flexShrink: 0 }}>
                         ETF
                       </span>
                     )}
@@ -906,17 +906,17 @@ function StockPageContent({ params }) {
                   src={`https://img.logo.dev/ticker/${ticker}?token=pk_B4aaLZF6S4G1YbCgqZq2Ug`}
                   alt={data.name}
                   style={{ width: '54px', height: '54px', objectFit: 'contain' }}
-                  onError={e => { e.target.style.display = 'none'; e.target.parentElement.innerHTML = `<span style="color:var(--ws-accent);font-weight:700;font-size:22px;font-family:'JetBrains Mono',monospace">${ticker.slice(0,2)}</span>`; e.target.parentElement.style.background = 'var(--ws-bg-2)'; }}
+                  onError={e => { e.target.style.display = 'none'; e.target.parentElement.innerHTML = `<span style="color:var(--ws-accent);font-weight:700;font-size:22px;font-family:'Inter',sans-serif">${ticker.slice(0,2)}</span>`; e.target.parentElement.style.background = 'var(--ws-bg-2)'; }}
                 />
               </div>
               <div style={{ minWidth: 0 }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '5px', flexWrap: 'wrap' }}>
-                  <span style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: '10px', color: 'var(--ws-text-3)', letterSpacing: '1.5px' }}>
+                  <span style={{ fontFamily: "'Inter', sans-serif", fontSize: '10px', color: 'var(--ws-text-3)', letterSpacing: '1.5px' }}>
                     {ticker} · {data.exchange || 'NASDAQ'}{data.sector ? ` · ${data.sector.toUpperCase()}` : ''}
                   </span>
                   {marketCapTier(data.marketCap) && (
                     <span style={{
-                      fontFamily: "'JetBrains Mono', monospace",
+                      fontFamily: "'Inter', sans-serif",
                       fontSize: '9px',
                       fontWeight: 700,
                       letterSpacing: '1px',
@@ -934,8 +934,8 @@ function StockPageContent({ params }) {
                 <h1 style={{ fontSize: '22px', fontWeight: 800, letterSpacing: '-0.5px', marginBottom: '10px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', lineHeight: 1.2, color: 'var(--ws-text)' }}>{data.name}</h1>
                 {price && (
                   <div style={{ display: 'flex', alignItems: 'baseline', gap: '12px', flexWrap: 'wrap' }}>
-                    <span style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: '28px', fontWeight: 700, letterSpacing: '-1px', color: 'var(--ws-text)' }}>{curSym(data.currency)}{price.toFixed(2)}</span>
-                    <span style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: '13px', fontWeight: 700, color: change >= 0 ? 'var(--ws-accent)' : 'var(--ws-red)' }}>
+                    <span style={{ fontFamily: "'Inter', sans-serif", fontSize: '28px', fontWeight: 700, letterSpacing: '-1px', color: 'var(--ws-text)' }}>{curSym(data.currency)}{price.toFixed(2)}</span>
+                    <span style={{ fontFamily: "'Inter', sans-serif", fontSize: '13px', fontWeight: 700, color: change >= 0 ? 'var(--ws-accent)' : 'var(--ws-red)' }}>
                       {change >= 0 ? '+' : ''}{changePct?.toFixed(2)}%
                     </span>
                     <MarketStatusDot ticker={ticker} showLabel />
@@ -952,11 +952,11 @@ function StockPageContent({ params }) {
             {/* Right: terminal score block */}
             <div className="stock-hero-score" style={{ alignItems: 'flex-start', gap: '10px' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap' }}>
-                <div style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: '9px', letterSpacing: '2px', color: 'var(--ws-text-3)', fontWeight: 700 }}>QUALITY SCORE</div>
+                <div style={{ fontFamily: "'Inter', sans-serif", fontSize: '9px', letterSpacing: '2px', color: 'var(--ws-text-3)', fontWeight: 700 }}>QUALITY SCORE</div>
                 {tierAdjusted && (
                   <span title={`Margin/ROIC bars and the CBS/OPPO/GQS blend are calibrated for ${easyMode.capTier.label} — see the Quality tab for the exact weighting.`}
                     style={{
-                      fontFamily: "'JetBrains Mono', monospace", fontSize: '8px', fontWeight: 700, letterSpacing: '0.5px',
+                      fontFamily: "'Inter', sans-serif", fontSize: '8px', fontWeight: 700, letterSpacing: '0.5px',
                       color: easyMode.capTier.color, border: `1px solid ${easyMode.capTier.color}`, borderRadius: '3px', padding: '1px 5px',
                     }}>
                     {easyMode.capTier.label} CALIBRATED
@@ -974,12 +974,12 @@ function StockPageContent({ params }) {
               ) : (
                 <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
                   <QualityScoreBar score100={easyMode.score100} color={easyMode.verdictColor} />
-                  <span style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: '28px', fontWeight: 700, color: easyMode.verdictColor, lineHeight: 1 }}>
+                  <span style={{ fontFamily: "'Inter', sans-serif", fontSize: '28px', fontWeight: 700, color: easyMode.verdictColor, lineHeight: 1 }}>
                     {easyMode.score100}
                   </span>
                 </div>
               )}
-              <div style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: '11px', fontWeight: 700, color: easyMode.verdictColor, letterSpacing: '1px' }}>
+              <div style={{ fontFamily: "'Inter', sans-serif", fontSize: '11px', fontWeight: 700, color: easyMode.verdictColor, letterSpacing: '1px' }}>
                 {easyMode.verdict.toUpperCase()}
               </div>
               <div style={{ fontSize: '11px', color: 'var(--ws-text-3)', maxWidth: '200px', lineHeight: 1.6, borderLeft: '2px solid var(--ws-border)', paddingLeft: '10px', marginTop: '2px' }}>
@@ -1004,7 +1004,7 @@ function StockPageContent({ params }) {
                 borderBottom: tab === n.key ? '2px solid var(--ws-accent)' : '2px solid transparent',
                 background: 'transparent',
                 color: tab === n.key ? 'var(--ws-text)' : 'var(--ws-text-3)',
-                fontFamily: "'JetBrains Mono', monospace",
+                fontFamily: "'Inter', sans-serif",
                 fontWeight: tab === n.key ? 700 : 500,
                 fontSize: '11px',
                 letterSpacing: '1.5px',
@@ -1134,7 +1134,7 @@ function StockPageContent({ params }) {
               {/* Numbers, Simplified */}
               {hasFundamentals && (
               <div>
-                <div style={{ color: 'var(--ws-text-3)', fontSize: '10px', fontFamily: "'JetBrains Mono', monospace", letterSpacing: '1.5px', marginBottom: '10px', fontWeight: 700 }}>THE NUMBERS, SIMPLIFIED</div>
+                <div style={{ color: 'var(--ws-text-3)', fontSize: '10px', fontFamily: "'Inter', sans-serif", letterSpacing: '1.5px', marginBottom: '10px', fontWeight: 700 }}>THE NUMBERS, SIMPLIFIED</div>
                 <div style={{ background: 'var(--ws-bg-1)', border: '1px solid var(--ws-border)', padding: '18px 20px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
                   {(() => {
                     // Same 3-tier (accent/neutral/red) + "unavailable" shape for every row, with the
@@ -1206,7 +1206,7 @@ function StockPageContent({ params }) {
               {/* NEWS */}
               {news.length > 0 && (
                 <div>
-                  <div style={{ color: 'var(--ws-text-3)', fontSize: '10px', fontFamily: "'JetBrains Mono', monospace", letterSpacing: '1.5px', marginBottom: '10px', fontWeight: 700 }}>NEWS</div>
+                  <div style={{ color: 'var(--ws-text-3)', fontSize: '10px', fontFamily: "'Inter', sans-serif", letterSpacing: '1.5px', marginBottom: '10px', fontWeight: 700 }}>NEWS</div>
                   <div style={{ display: 'flex', gap: '14px', overflowX: 'auto', paddingBottom: '6px' }}>
                     {news.slice(0, 5).map((n, i) => (
                       <a key={n.id || i} href={n.url} target="_blank" rel="noopener noreferrer"
@@ -1233,7 +1233,7 @@ function StockPageContent({ params }) {
               {/* Related reading */}
               {relatedPosts.length > 0 && (
                 <div>
-                  <div style={{ color: 'var(--ws-text-3)', fontSize: '10px', fontFamily: "'JetBrains Mono', monospace", letterSpacing: '1.5px', marginBottom: '10px', fontWeight: 700 }}>RELATED READING</div>
+                  <div style={{ color: 'var(--ws-text-3)', fontSize: '10px', fontFamily: "'Inter', sans-serif", letterSpacing: '1.5px', marginBottom: '10px', fontWeight: 700 }}>RELATED READING</div>
                   <div style={{ background: 'var(--ws-bg-1)', border: '1px solid var(--ws-border)', padding: '16px 18px', display: 'flex', flexDirection: 'column', gap: '10px' }}>
                     {relatedPosts.map(post => {
                       const dotColor = post.sentiment === 'positive' ? 'var(--ws-accent)' : post.sentiment === 'negative' ? 'var(--ws-red)' : 'var(--ws-text-2)';
@@ -1260,7 +1260,7 @@ function StockPageContent({ params }) {
                 const short = data.description.slice(0, LIMIT);
                 return (
                   <div className="bg-ws-bg-1 border border-ws-border px-[18px] py-4">
-                    <div style={{ fontSize: '10px', color: 'var(--ws-text-3)', fontFamily: "'JetBrains Mono', monospace", letterSpacing: '1.5px', fontWeight: 700, marginBottom: '8px' }}>ABOUT</div>
+                    <div style={{ fontSize: '10px', color: 'var(--ws-text-3)', fontFamily: "'Inter', sans-serif", letterSpacing: '1.5px', fontWeight: 700, marginBottom: '8px' }}>ABOUT</div>
                     <div style={{ color: 'var(--ws-text-2)', fontSize: '12px', lineHeight: 1.75 }}>
                       {expanded ? data.description : `${short}${data.description.length > LIMIT ? '…' : ''}`}
                       {data.description.length > LIMIT && (
@@ -1302,7 +1302,7 @@ function StockPageContent({ params }) {
               {(!loadingEvent || upcomingEvent) && (
                 <div className="bg-ws-bg-1 border border-ws-border px-[18px] py-4">
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
-                    <div style={{ fontSize: '10px', color: 'var(--ws-text-3)', fontFamily: "'JetBrains Mono', monospace", letterSpacing: '1.5px', fontWeight: 700 }}>UPCOMING EVENT</div>
+                    <div style={{ fontSize: '10px', color: 'var(--ws-text-3)', fontFamily: "'Inter', sans-serif", letterSpacing: '1.5px', fontWeight: 700 }}>UPCOMING EVENT</div>
                     {upcomingEvent && (() => {
                       const daysDiff = Math.ceil((new Date(upcomingEvent.date + 'T00:00:00') - new Date().setHours(0,0,0,0)) / (1000 * 60 * 60 * 24));
                       let badgeText = '';
@@ -1399,7 +1399,7 @@ function StockPageContent({ params }) {
 
               {/* Share */}
               <div className="bg-ws-bg-1 border border-ws-border px-[18px] py-4">
-                <div style={{ fontSize: '10px', color: 'var(--ws-text-3)', fontFamily: "'JetBrains Mono', monospace", letterSpacing: '1.5px', fontWeight: 700, marginBottom: '12px' }}>SHARE</div>
+                <div style={{ fontSize: '10px', color: 'var(--ws-text-3)', fontFamily: "'Inter', sans-serif", letterSpacing: '1.5px', fontWeight: 700, marginBottom: '12px' }}>SHARE</div>
                  <ShareCardComponent
                   ticker={ticker}
                   name={data?.name || 'N/A'}
@@ -1456,7 +1456,7 @@ function StockPageContent({ params }) {
                               style={{
                                 width: '100%', fontSize: '10px', padding: '5px 6px',
                                 background: 'var(--ws-bg-2)', border: '1px solid var(--ws-border)',
-                                color: 'var(--ws-text)', outline: 'none', fontFamily: "'JetBrains Mono', monospace"
+                                color: 'var(--ws-text)', outline: 'none', fontFamily: "'Inter', sans-serif"
                               }}
                             />
                           </form>

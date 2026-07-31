@@ -33,7 +33,7 @@ export default function GrowthChart({ snapshots, currentValue, currentCost, rate
   if (data.length < 2) {
     return (
       <div className="border border-ws-border p-4">
-        <div style={{ fontSize: '11px', fontFamily: "'JetBrains Mono', monospace", fontWeight: 700, color: 'var(--ws-text-3)', letterSpacing: '1.5px', marginBottom: '8px' }}>PORTFOLIO GROWTH</div>
+        <div style={{ fontSize: '11px', fontFamily: "'Inter', sans-serif", fontWeight: 700, color: 'var(--ws-text-3)', letterSpacing: '1.5px', marginBottom: '8px' }}>PORTFOLIO GROWTH</div>
         <div style={{ fontSize: '12px', color: 'var(--ws-text-3)', padding: '20px 0', textAlign: 'center' }}>
           Come back tomorrow to start seeing your growth chart — we snapshot your portfolio value daily.
         </div>
@@ -65,7 +65,7 @@ export default function GrowthChart({ snapshots, currentValue, currentCost, rate
     <div className="border border-ws-border p-4">
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '10px', marginBottom: '12px' }}>
         <div>
-          <div style={{ fontSize: '11px', fontFamily: "'JetBrains Mono', monospace", fontWeight: 700, color: 'var(--ws-text-3)', letterSpacing: '1.5px', marginBottom: '6px' }}>PORTFOLIO GROWTH</div>
+          <div style={{ fontSize: '11px', fontFamily: "'Inter', sans-serif", fontWeight: 700, color: 'var(--ws-text-3)', letterSpacing: '1.5px', marginBottom: '6px' }}>PORTFOLIO GROWTH</div>
           <div style={{ fontSize: '20px', fontWeight: 700, color: periodGain >= 0 ? 'var(--ws-accent)' : 'var(--ws-red)' }}>
             {periodGain >= 0 ? '+' : ''}{fmtC(periodGain)}{periodGainPct != null && ` (${periodGainPct >= 0 ? '+' : ''}${periodGainPct.toFixed(1)}%)`}
           </div>

@@ -170,7 +170,7 @@ export default function ETFsPage() {
 
   if (loadingList) {
     return (
-      <div style={{ padding: '24px', fontFamily: "'JetBrains Mono', monospace" }}>
+      <div style={{ padding: '24px', fontFamily: "'Inter', sans-serif" }}>
         <div style={{ border: '1px solid var(--ws-border)', background: 'var(--ws-bg-1)', overflow: 'hidden' }}>
           <div style={{ background: 'var(--ws-bg-2)', borderBottom: '1px solid var(--ws-border)', padding: '7px 16px' }}>
             <span style={{ fontSize: '11px', color: 'var(--ws-accent)', fontWeight: 700, letterSpacing: '1px' }}>$ traq etfs</span>
@@ -200,7 +200,7 @@ export default function ETFsPage() {
       {/* Terminal title bar */}
       <div style={{ border: '1px solid var(--ws-border)', background: 'var(--ws-bg-1)', overflow: 'hidden' }}>
         <div style={{ background: 'var(--ws-bg-2)', borderBottom: '1px solid var(--ws-border)', padding: '7px 16px' }}>
-          <span style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: '11px', color: 'var(--ws-accent)', fontWeight: 700, letterSpacing: '1px' }}>
+          <span style={{ fontFamily: "'Inter', sans-serif", fontSize: '11px', color: 'var(--ws-accent)', fontWeight: 700, letterSpacing: '1px' }}>
             $ traq etfs
           </span>
         </div>
@@ -223,7 +223,7 @@ export default function ETFsPage() {
               height: '38px',
               padding: '0 14px',
               fontSize: '13px',
-              fontFamily: "'JetBrains Mono', monospace",
+              fontFamily: "'Inter', sans-serif",
               border: '1px solid var(--ws-border)',
               borderRadius: '8px',
               background: 'var(--ws-bg-2)',
@@ -239,7 +239,7 @@ export default function ETFsPage() {
               height: '38px',
               padding: '0 18px',
               fontSize: '12px',
-              fontFamily: "'JetBrains Mono', monospace",
+              fontFamily: "'Inter', sans-serif",
               fontWeight: 700,
               background: 'var(--ws-text)',
               color: 'var(--ws-bg)',
@@ -256,7 +256,7 @@ export default function ETFsPage() {
 
       {/* ERROR STATUS */}
       {searchError && (
-        <div style={{ background: 'rgba(239, 68, 68, 0.08)', border: '1px solid var(--ws-red)', padding: '16px', borderRadius: '6px', color: 'var(--ws-red)', fontSize: '13px', fontFamily: "'JetBrains Mono', monospace" }}>
+        <div style={{ background: 'rgba(239, 68, 68, 0.08)', border: '1px solid var(--ws-red)', padding: '16px', borderRadius: '6px', color: 'var(--ws-red)', fontSize: '13px', fontFamily: "'Inter', sans-serif" }}>
           [ERROR] Ticker &quot;{searchQuery.trim().toUpperCase()}&quot; was not found or failed to load. Make sure it is a valid US or international ETF symbol.
         </div>
       )}
@@ -306,7 +306,7 @@ export default function ETFsPage() {
                   width: '90px',
                   padding: '0 8px',
                   fontSize: '11px',
-                  fontFamily: "'JetBrains Mono', monospace",
+                  fontFamily: "'Inter', sans-serif",
                   border: '1px solid var(--ws-border)',
                   borderRadius: '4px',
                   background: 'var(--ws-bg-2)',
@@ -345,22 +345,22 @@ export default function ETFsPage() {
                     transition: 'background 0.15s ease'
                   }}
                 >
-                  <td style={{ padding: '10px 12px', fontFamily: "'JetBrains Mono', monospace", fontWeight: 800, color: 'var(--ws-text)' }}>
+                  <td style={{ padding: '10px 12px', fontFamily: "'Inter', sans-serif", fontWeight: 800, color: 'var(--ws-text)' }}>
                     {item.ticker}
                   </td>
                   <td style={{ padding: '10px 12px', color: 'var(--ws-text-2)', fontWeight: 600, maxWidth: '280px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                     {item.name}
                   </td>
-                  <td style={{ padding: '10px 12px', textAlign: 'right', fontFamily: "'JetBrains Mono', monospace", fontWeight: 600, color: 'var(--ws-text)' }}>
+                  <td style={{ padding: '10px 12px', textAlign: 'right', fontFamily: "'Inter', sans-serif", fontWeight: 600, color: 'var(--ws-text)' }}>
                     {item.aum}
                   </td>
-                  <td style={{ padding: '10px 12px', textAlign: 'right', fontFamily: "'JetBrains Mono', monospace", color: 'var(--ws-text-3)' }}>
+                  <td style={{ padding: '10px 12px', textAlign: 'right', fontFamily: "'Inter', sans-serif", color: 'var(--ws-text-3)' }}>
                     {item.expenseRatio}
                   </td>
-                  <td style={{ padding: '10px 12px', textAlign: 'right', fontFamily: "'JetBrains Mono', monospace", color: 'var(--ws-text-3)' }}>
+                  <td style={{ padding: '10px 12px', textAlign: 'right', fontFamily: "'Inter', sans-serif", color: 'var(--ws-text-3)' }}>
                     {item.yield}
                   </td>
-                  <td style={{ padding: '10px 12px', textAlign: 'right', fontFamily: "'JetBrains Mono', monospace", color: 'var(--ws-text-3)' }}>
+                  <td style={{ padding: '10px 12px', textAlign: 'right', fontFamily: "'Inter', sans-serif", color: 'var(--ws-text-3)' }}>
                     {item.volume}
                   </td>
                 </tr>
@@ -377,7 +377,7 @@ export default function ETFsPage() {
 
         {/* PAGINATION CONTROLS */}
         {totalPages > 1 && (
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingTop: '14px', borderTop: '1px solid var(--ws-border)', fontSize: '11px', fontFamily: "'JetBrains Mono', monospace" }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingTop: '14px', borderTop: '1px solid var(--ws-border)', fontSize: '11px', fontFamily: "'Inter', sans-serif" }}>
             <button
               disabled={currentPage === 1}
               onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}

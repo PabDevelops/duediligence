@@ -217,7 +217,7 @@ export default function LeadersPage() {
           {loading ? (
             <div style={{ padding: '60px 20px', textAlign: 'center', color: 'var(--ws-text-3)' }}>
               <div style={{ width: '32px', height: '32px', border: '2px solid var(--ws-accent)', borderTopColor: 'transparent', borderRadius: '50%', animation: 'spinLoader 1s linear infinite', margin: '0 auto 16px' }} />
-              <div style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: '11px', letterSpacing: '1px' }}>COMPILING FULL DATASET...</div>
+              <div style={{ fontFamily: "'Inter', sans-serif", fontSize: '11px', letterSpacing: '1px' }}>COMPILING FULL DATASET...</div>
             </div>
           ) : leadersList.length === 0 ? (
             <div style={{ padding: '40px 20px', textAlign: 'center', color: 'var(--ws-text-3)', fontSize: '13px' }}>
@@ -416,14 +416,14 @@ export default function LeadersPage() {
                 ) : (
                   <>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                      <span style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: '13px', color: spotlightQuality.verdictColor, letterSpacing: '1.5px', lineHeight: 1 }}>
+                      <span style={{ fontFamily: "'Inter', sans-serif", fontSize: '13px', color: spotlightQuality.verdictColor, letterSpacing: '1.5px', lineHeight: 1 }}>
                         {'█'.repeat(Math.round(spotlightQuality.score100 / 10))}{'░'.repeat(10 - Math.round(spotlightQuality.score100 / 10))}
                       </span>
-                      <span style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: '22px', fontWeight: 700, color: spotlightQuality.verdictColor, lineHeight: 1 }}>
+                      <span style={{ fontFamily: "'Inter', sans-serif", fontSize: '22px', fontWeight: 700, color: spotlightQuality.verdictColor, lineHeight: 1 }}>
                         {spotlightQuality.score100}
                       </span>
                     </div>
-                    <div style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: '10px', fontWeight: 700, color: spotlightQuality.verdictColor, letterSpacing: '1px', marginTop: '4px' }}>
+                    <div style={{ fontFamily: "'Inter', sans-serif", fontSize: '10px', fontWeight: 700, color: spotlightQuality.verdictColor, letterSpacing: '1px', marginTop: '4px' }}>
                       {spotlightQuality.verdict.toUpperCase()}
                     </div>
                   </>

@@ -170,7 +170,7 @@ function GemRevealBar({ score100 }) {
             }} />
           ))}
         </div>
-        <span style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: '28px', fontWeight: 700, color: '#1D9E75', lineHeight: 1 }}>{score100}</span>
+        <span style={{ fontFamily: "'Inter', sans-serif", fontSize: '28px', fontWeight: 700, color: '#1D9E75', lineHeight: 1 }}>{score100}</span>
       </div>
 
       <div style={{
@@ -186,8 +186,8 @@ function GemRevealBar({ score100 }) {
           <GemDiamondIcon size={46} />
         </div>
         <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
-          <span style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: '17px', fontWeight: 700, color: '#85B7EB', letterSpacing: '0.5px', lineHeight: 1.1 }}>HIDDEN GEM</span>
-          <span style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: '9px', color: '#5a7ba0', letterSpacing: '1px' }}>QUALITY OFF THE CHARTS</span>
+          <span style={{ fontFamily: "'Inter', sans-serif", fontSize: '17px', fontWeight: 700, color: '#85B7EB', letterSpacing: '0.5px', lineHeight: 1.1 }}>HIDDEN GEM</span>
+          <span style={{ fontFamily: "'Inter', sans-serif", fontSize: '9px', color: '#5a7ba0', letterSpacing: '1px' }}>QUALITY OFF THE CHARTS</span>
         </div>
       </div>
     </div>
@@ -796,7 +796,7 @@ export default function WorkspaceHome() {
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '6px' }}>
                     <span style={{ fontSize: '11px', fontWeight: 700, color: 'var(--ws-text)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{idx.label}</span>
                     <span style={{
-                      fontFamily: "'JetBrains Mono', monospace",
+                      fontFamily: "'Inter', sans-serif",
                       fontSize: '9px',
                       fontWeight: 700,
                       color: positive ? '#10b981' : 'var(--ws-red)',
@@ -806,7 +806,7 @@ export default function WorkspaceHome() {
                       {changeStr}
                     </span>
                   </div>
-                  <div style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: '15px', fontWeight: 800, color: 'var(--ws-text)', marginTop: '6px' }}>{priceStr}</div>
+                  <div style={{ fontFamily: "'Inter', sans-serif", fontSize: '15px', fontWeight: 800, color: 'var(--ws-text)', marginTop: '6px' }}>{priceStr}</div>
                 </div>
                 
                 {closePrices.length > 1 ? (
@@ -1162,7 +1162,7 @@ export default function WorkspaceHome() {
               <div className="text-[10px] text-ws-text-3 font-bold uppercase">
                 Portfolio Value
               </div>
-              <div style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: '17px', fontWeight: 800, color: 'var(--ws-text)', marginTop: '2px' }}>
+              <div style={{ fontFamily: "'Inter', sans-serif", fontSize: '17px', fontWeight: 800, color: 'var(--ws-text)', marginTop: '2px' }}>
                 {currencySymbol}{(totalValue * fxRate).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
               </div>
             </div>
@@ -1170,7 +1170,7 @@ export default function WorkspaceHome() {
               <div className="text-[10px] text-ws-text-3 font-bold uppercase">
                 Today
               </div>
-              <div style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: '12px', fontWeight: 700, color: todayPositive ? '#10b981' : 'var(--ws-red)', marginTop: '4px' }}>
+              <div style={{ fontFamily: "'Inter', sans-serif", fontSize: '12px', fontWeight: 700, color: todayPositive ? '#10b981' : 'var(--ws-red)', marginTop: '4px' }}>
                 {todayPositive ? '+' : '-'} {currencySymbol}{Math.abs(totalTodayChange * fxRate).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} ({totalTodayPct.toFixed(2)}%)
               </div>
             </div>
@@ -1178,7 +1178,7 @@ export default function WorkspaceHome() {
               <div className="text-[10px] text-ws-text-3 font-bold uppercase">
                 Total Return
               </div>
-              <div style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: '12px', fontWeight: 700, color: positive ? '#10b981' : 'var(--ws-red)', marginTop: '4px' }}>
+              <div style={{ fontFamily: "'Inter', sans-serif", fontSize: '12px', fontWeight: 700, color: positive ? '#10b981' : 'var(--ws-red)', marginTop: '4px' }}>
                 {positive ? '+' : '-'} {currencySymbol}{Math.abs(totalReturn * fxRate).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} ({totalReturnPct.toFixed(2)}%)
               </div>
             </div>
@@ -2177,7 +2177,7 @@ export default function WorkspaceHome() {
                           fontSize: '9px', 
                           fontWeight: 700, 
                           color: tickerEasyMode.verdictColor || 'var(--ws-text-3)',
-                          fontFamily: 'JetBrains Mono, monospace',
+                          fontFamily: 'Inter, sans-serif',
                           background: 'var(--ws-bg-2)',
                           padding: '2px 5px',
                           border: `1px solid ${tickerEasyMode.verdictColor || 'var(--ws-border)'}`,
@@ -2338,7 +2338,7 @@ export default function WorkspaceHome() {
                           color: isActive ? '#000' : 'var(--ws-text-3)',
                           border: 'none',
                           cursor: 'pointer',
-                          fontFamily: 'JetBrains Mono, monospace',
+                          fontFamily: 'Inter, sans-serif',
                           transition: 'all 0.1s'
                         }}
                       >
@@ -2365,7 +2365,7 @@ export default function WorkspaceHome() {
                           color: isActive ? '#000' : 'var(--ws-text-3)',
                           border: 'none',
                           cursor: 'pointer',
-                          fontFamily: 'JetBrains Mono, monospace',
+                          fontFamily: 'Inter, sans-serif',
                           transition: 'all 0.1s'
                         }}
                       >
@@ -2548,12 +2548,12 @@ export default function WorkspaceHome() {
                     ) : (
                       <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
                         <QualityScoreBar score100={easyMode.score100} color={easyMode.verdictColor} />
-                        <span style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: '28px', fontWeight: 700, color: easyMode.verdictColor, lineHeight: 1 }}>
+                        <span style={{ fontFamily: "'Inter', sans-serif", fontSize: '28px', fontWeight: 700, color: easyMode.verdictColor, lineHeight: 1 }}>
                           {easyMode.score100}
                         </span>
                       </div>
                     )}
-                    <div style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: '11px', fontWeight: 700, color: easyMode.verdictColor, letterSpacing: '1px', textTransform: 'uppercase' }}>
+                    <div style={{ fontFamily: "'Inter', sans-serif", fontSize: '11px', fontWeight: 700, color: easyMode.verdictColor, letterSpacing: '1px', textTransform: 'uppercase' }}>
                       {easyMode.verdict}
                     </div>
                   </div>
@@ -2680,7 +2680,7 @@ export default function WorkspaceHome() {
                         <div key={i} style={{ display: 'flex', flexDirection: 'column', gap: '3px' }}>
                           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', gap: '8px' }}>
                             <span style={{ fontSize: '10px', color: 'var(--ws-text-2)', lineHeight: 1.3 }}>{m.label}</span>
-                            <span style={{ fontSize: '9px', fontWeight: 700, flexShrink: 0, color: m.color, fontFamily: "'JetBrains Mono', monospace" }}>{m.value}</span>
+                            <span style={{ fontSize: '9px', fontWeight: 700, flexShrink: 0, color: m.color, fontFamily: "'Inter', sans-serif" }}>{m.value}</span>
                           </div>
                           <div style={{ height: '4px', background: 'var(--ws-bg-1)', overflow: 'hidden' }}>
                             <div style={{ height: '100%', width: `${m.pct}%`, background: m.color }} />

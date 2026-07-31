@@ -248,7 +248,7 @@ export default function MarketRadar() {
 
   if (loading) {
     return (
-      <div style={{ padding: '24px', fontFamily: "'JetBrains Mono', monospace" }}>
+      <div style={{ padding: '24px', fontFamily: "'Inter', sans-serif" }}>
         <div style={{ border: '1px solid var(--ws-border)', background: 'var(--ws-bg-1)', overflow: 'hidden' }}>
           <div style={{ background: 'var(--ws-bg-2)', borderBottom: '1px solid var(--ws-border)', padding: '7px 16px' }}>
             <span style={{ fontSize: '11px', color: 'var(--ws-accent)', fontWeight: 700, letterSpacing: '1px' }}>$ traq radar</span>
@@ -281,7 +281,7 @@ export default function MarketRadar() {
         {/* Terminal title bar */}
         <div style={{ border: '1px solid var(--ws-border)', background: 'var(--ws-bg-1)', overflow: 'hidden' }}>
           <div style={{ background: 'var(--ws-bg-2)', borderBottom: '1px solid var(--ws-border)', padding: '7px 16px' }}>
-            <span style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: '11px', color: 'var(--ws-accent)', fontWeight: 700, letterSpacing: '1px' }}>
+            <span style={{ fontFamily: "'Inter', sans-serif", fontSize: '11px', color: 'var(--ws-accent)', fontWeight: 700, letterSpacing: '1px' }}>
               $ traq radar
             </span>
           </div>
@@ -324,7 +324,7 @@ export default function MarketRadar() {
 
         {/* Sectors performance matrix */}
         <div>
-          <div style={{ fontSize: '10px', fontFamily: "'JetBrains Mono', monospace", fontWeight: 700, color: 'var(--ws-text-3)', letterSpacing: '1.5px', marginBottom: '10px' }}>SECTOR MOMENTUM INDEX</div>
+          <div style={{ fontSize: '10px', fontFamily: "'Inter', sans-serif", fontWeight: 700, color: 'var(--ws-text-3)', letterSpacing: '1.5px', marginBottom: '10px' }}>SECTOR MOMENTUM INDEX</div>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '10px' }}>
               {sectorPulse.map(sec => {
                 const isUp = sec.avgChange >= 0;
@@ -808,14 +808,14 @@ export default function MarketRadar() {
                 ) : (
                   <>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                      <span style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: '13px', color: spotlightQuality.verdictColor, letterSpacing: '1.5px', lineHeight: 1 }}>
+                      <span style={{ fontFamily: "'Inter', sans-serif", fontSize: '13px', color: spotlightQuality.verdictColor, letterSpacing: '1.5px', lineHeight: 1 }}>
                         {'█'.repeat(Math.round(spotlightQuality.score100 / 10))}{'░'.repeat(10 - Math.round(spotlightQuality.score100 / 10))}
                       </span>
-                      <span style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: '22px', fontWeight: 700, color: spotlightQuality.verdictColor, lineHeight: 1 }}>
+                      <span style={{ fontFamily: "'Inter', sans-serif", fontSize: '22px', fontWeight: 700, color: spotlightQuality.verdictColor, lineHeight: 1 }}>
                         {spotlightQuality.score100}
                       </span>
                     </div>
-                    <div style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: '10px', fontWeight: 700, color: spotlightQuality.verdictColor, letterSpacing: '1px', marginTop: '4px' }}>
+                    <div style={{ fontFamily: "'Inter', sans-serif", fontSize: '10px', fontWeight: 700, color: spotlightQuality.verdictColor, letterSpacing: '1px', marginTop: '4px' }}>
                       {spotlightQuality.verdict.toUpperCase()}
                     </div>
                   </>

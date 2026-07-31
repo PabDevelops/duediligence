@@ -179,7 +179,7 @@ export default function ProjectionChart({ ticker, data, fundamentalGrowth, price
             step="0.1"
             value={driftInput}
             onChange={e => { setDriftInput(e.target.value); setDriftTouched(true); }}
-            style={{ width: '58px', background: 'var(--ws-bg-2)', border: '1px solid var(--ws-border)', color: 'var(--ws-text)', fontSize: '11px', fontWeight: 700, padding: '3px 5px', fontFamily: "'JetBrains Mono', monospace" }}
+            style={{ width: '58px', background: 'var(--ws-bg-2)', border: '1px solid var(--ws-border)', color: 'var(--ws-text)', fontSize: '11px', fontWeight: 700, padding: '3px 5px', fontFamily: "'Inter', sans-serif" }}
           />
           <span className="text-ws-text-3">%</span>
           {driftTouched && driftAnnual != null && (
@@ -211,7 +211,7 @@ export default function ProjectionChart({ ticker, data, fundamentalGrowth, price
       <div style={{ display: 'flex', gap: '1px', background: 'var(--ws-border)', marginBottom: '12px' }}>
         {HORIZONS.map(h => (
           <button key={h.key} onClick={() => setHorizonKey(h.key)}
-            style={{ padding: '5px 12px', fontSize: '10px', letterSpacing: '1px', background: horizonKey === h.key ? 'var(--ws-accent)' : 'var(--ws-bg-2)', color: horizonKey === h.key ? '#000' : 'var(--ws-text-3)', border: 'none', cursor: 'pointer', fontFamily: "'JetBrains Mono', monospace", fontWeight: horizonKey === h.key ? 700 : 500 }}>
+            style={{ padding: '5px 12px', fontSize: '10px', letterSpacing: '1px', background: horizonKey === h.key ? 'var(--ws-accent)' : 'var(--ws-bg-2)', color: horizonKey === h.key ? '#000' : 'var(--ws-text-3)', border: 'none', cursor: 'pointer', fontFamily: "'Inter', sans-serif", fontWeight: horizonKey === h.key ? 700 : 500 }}>
             {h.label}
           </button>
         ))}

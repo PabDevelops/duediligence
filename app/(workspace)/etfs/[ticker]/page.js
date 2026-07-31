@@ -125,7 +125,7 @@ export default function ETFTickerPage({ params }) {
 
   if (loadingEtf) {
     return (
-      <div style={{ padding: '24px', fontFamily: "'JetBrains Mono', monospace" }}>
+      <div style={{ padding: '24px', fontFamily: "'Inter', sans-serif" }}>
         <div style={{ border: '1px solid var(--ws-border)', background: 'var(--ws-bg-1)', overflow: 'hidden' }}>
           <div style={{ background: 'var(--ws-bg-2)', borderBottom: '1px solid var(--ws-border)', padding: '7px 16px' }}>
             <span style={{ fontSize: '11px', color: 'var(--ws-accent)', fontWeight: 700, letterSpacing: '1px' }}>$ traq etfs {ticker}</span>
@@ -151,7 +151,7 @@ export default function ETFTickerPage({ params }) {
 
   if (etfError || !etf) {
     return (
-      <div style={{ padding: '24px', fontFamily: "'JetBrains Mono', monospace" }}>
+      <div style={{ padding: '24px', fontFamily: "'Inter', sans-serif" }}>
         <div style={{ border: '1px solid var(--ws-border)', background: 'var(--ws-bg-1)', overflow: 'hidden', maxWidth: '560px' }}>
           <div style={{ background: 'var(--ws-bg-2)', borderBottom: '1px solid var(--ws-border)', padding: '7px 16px' }}>
             <span style={{ fontSize: '10px', color: 'var(--ws-red)', letterSpacing: '1px' }}>$ traq etfs {ticker} — ERROR</span>
@@ -181,7 +181,7 @@ export default function ETFTickerPage({ params }) {
       {/* TERMINAL HERO */}
       <div style={{ border: '1px solid var(--ws-border)', background: 'var(--ws-bg-1)', marginBottom: '20px', overflow: 'hidden' }}>
         <div style={{ background: 'var(--ws-bg-2)', borderBottom: '1px solid var(--ws-border)', padding: '7px 16px' }}>
-          <span style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: '11px', color: 'var(--ws-accent)', fontWeight: 700, letterSpacing: '1px' }}>
+          <span style={{ fontFamily: "'Inter', sans-serif", fontSize: '11px', color: 'var(--ws-accent)', fontWeight: 700, letterSpacing: '1px' }}>
             $ traq etfs {ticker}
           </span>
         </div>
@@ -192,23 +192,23 @@ export default function ETFTickerPage({ params }) {
             <div className="stock-hero-left" style={{ gap: '16px' }}>
               <div style={{ minWidth: 0 }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '5px', flexWrap: 'wrap' }}>
-                  <span style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: '10px', color: 'var(--ws-text-3)', letterSpacing: '1.5px' }}>
+                  <span style={{ fontFamily: "'Inter', sans-serif", fontSize: '10px', color: 'var(--ws-text-3)', letterSpacing: '1.5px' }}>
                     {ticker} · {rawPriceData?.exchange || 'NASDAQ'} · ETF FUND SUMMARY
                   </span>
                 </div>
                 <h1 style={{ fontSize: '22px', fontWeight: 800, letterSpacing: '-0.5px', marginBottom: '10px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', lineHeight: 1.2, color: 'var(--ws-text)' }}>{etf.name}</h1>
                 {loadingPrice ? (
-                  <span style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: '20px', color: 'var(--ws-text-3)' }}>LOADING...</span>
+                  <span style={{ fontFamily: "'Inter', sans-serif", fontSize: '20px', color: 'var(--ws-text-3)' }}>LOADING...</span>
                 ) : price != null ? (
                   <div style={{ display: 'flex', alignItems: 'baseline', gap: '12px', flexWrap: 'wrap' }}>
-                    <span style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: '28px', fontWeight: 700, letterSpacing: '-1px', color: 'var(--ws-text)' }}>{curSym(currency)}{price.toFixed(2)}</span>
-                    <span style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: '13px', fontWeight: 700, color: isPositive ? 'var(--ws-accent)' : 'var(--ws-red)' }}>
+                    <span style={{ fontFamily: "'Inter', sans-serif", fontSize: '28px', fontWeight: 700, letterSpacing: '-1px', color: 'var(--ws-text)' }}>{curSym(currency)}{price.toFixed(2)}</span>
+                    <span style={{ fontFamily: "'Inter', sans-serif", fontSize: '13px', fontWeight: 700, color: isPositive ? 'var(--ws-accent)' : 'var(--ws-red)' }}>
                       {isPositive ? '+' : ''}{change?.toFixed(2)}%
                     </span>
                     <MarketStatusDot ticker={ticker} showLabel />
                   </div>
                 ) : (
-                  <span style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: '13px', color: 'var(--ws-text-3)' }}>
+                  <span style={{ fontFamily: "'Inter', sans-serif", fontSize: '13px', color: 'var(--ws-text-3)' }}>
                     {priceFetchError ? 'PRICE N/A' : ''}
                   </span>
                 )}
@@ -222,13 +222,13 @@ export default function ETFTickerPage({ params }) {
 
             {/* Right: quality score block */}
             <div className="stock-hero-score" style={{ alignItems: 'flex-start', gap: '10px' }}>
-              <div style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: '9px', letterSpacing: '2px', color: 'var(--ws-text-3)', fontWeight: 700 }}>QUALITY SCORE</div>
+              <div style={{ fontFamily: "'Inter', sans-serif", fontSize: '9px', letterSpacing: '2px', color: 'var(--ws-text-3)', fontWeight: 700 }}>QUALITY SCORE</div>
               <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                <span style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: '28px', fontWeight: 700, color: scoreColor(quality?.composite), lineHeight: 1 }}>
+                <span style={{ fontFamily: "'Inter', sans-serif", fontSize: '28px', fontWeight: 700, color: scoreColor(quality?.composite), lineHeight: 1 }}>
                   {quality?.composite != null ? Math.round(quality.composite) : 'N/A'}
                 </span>
               </div>
-              <div style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: '11px', fontWeight: 700, color: scoreColor(quality?.composite), letterSpacing: '1px' }}>
+              <div style={{ fontFamily: "'Inter', sans-serif", fontSize: '11px', fontWeight: 700, color: scoreColor(quality?.composite), letterSpacing: '1px' }}>
                 {scoreVerdict(quality?.composite)}
               </div>
               <div style={{ fontSize: '11px', color: 'var(--ws-text-3)', maxWidth: '200px', lineHeight: 1.6, borderLeft: '2px solid var(--ws-border)', paddingLeft: '10px', marginTop: '2px' }}>
@@ -251,7 +251,7 @@ export default function ETFTickerPage({ params }) {
                 borderBottom: tab === n.key ? '2px solid var(--ws-accent)' : '2px solid transparent',
                 background: 'transparent',
                 color: tab === n.key ? 'var(--ws-text)' : 'var(--ws-text-3)',
-                fontFamily: "'JetBrains Mono', monospace",
+                fontFamily: "'Inter', sans-serif",
                 fontWeight: tab === n.key ? 700 : 500,
                 fontSize: '11px',
                 letterSpacing: '1.5px',
@@ -286,7 +286,7 @@ export default function ETFTickerPage({ params }) {
             {/* PERFORMANCE CHART */}
             <div style={{ background: 'var(--ws-bg-1)', border: '1px solid var(--ws-border)', overflow: 'hidden' }}>
               <div style={{ background: 'var(--ws-bg-2)', borderBottom: '1px solid var(--ws-border)', padding: '10px 16px' }}>
-                <span style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: '10px', color: 'var(--ws-text-3)', letterSpacing: '1px', fontWeight: 700 }}>PERFORMANCE & CHART HISTORICALS</span>
+                <span style={{ fontFamily: "'Inter', sans-serif", fontSize: '10px', color: 'var(--ws-text-3)', letterSpacing: '1px', fontWeight: 700 }}>PERFORMANCE & CHART HISTORICALS</span>
               </div>
               <StockChart ticker={ticker} currency={currency} />
             </div>
@@ -304,7 +304,7 @@ export default function ETFTickerPage({ params }) {
                 { label: 'INCEPTION DATE', value: etf.inception, desc: 'Fund creation date' },
               ].map((m, i) => (
                 <div key={i} style={{ background: 'var(--ws-bg-1)', border: '1px solid var(--ws-border)', padding: '14px 16px' }}>
-                  <div style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: '9px', color: 'var(--ws-text-3)', letterSpacing: '1px', fontWeight: 700, marginBottom: '6px' }}>
+                  <div style={{ fontFamily: "'Inter', sans-serif", fontSize: '9px', color: 'var(--ws-text-3)', letterSpacing: '1px', fontWeight: 700, marginBottom: '6px' }}>
                     {m.label}
                   </div>
                   <div style={{ fontSize: '16px', fontWeight: 800, color: m.label === 'EXPENSE RATIO' ? 'var(--ws-accent)' : 'var(--ws-text)', marginBottom: '4px' }}>
@@ -323,7 +323,7 @@ export default function ETFTickerPage({ params }) {
               {/* TOP HOLDINGS */}
               <div style={{ background: 'var(--ws-bg-1)', border: '1px solid var(--ws-border)' }}>
                 <div style={{ background: 'var(--ws-bg-2)', borderBottom: '1px solid var(--ws-border)', padding: '10px 16px' }}>
-                  <span style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: '10px', color: 'var(--ws-text-3)', letterSpacing: '1px', fontWeight: 700 }}>PORTFOLIO TOP HOLDINGS</span>
+                  <span style={{ fontFamily: "'Inter', sans-serif", fontSize: '10px', color: 'var(--ws-text-3)', letterSpacing: '1px', fontWeight: 700 }}>PORTFOLIO TOP HOLDINGS</span>
                 </div>
                 <div style={{ padding: '16px', display: 'flex', flexDirection: 'column', gap: '12px' }}>
                   {etf.holdings.length === 0 ? (
@@ -333,8 +333,8 @@ export default function ETFTickerPage({ params }) {
                     return (
                       <div key={i} style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
                         <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '11px', fontWeight: 600 }}>
-                          <span style={{ color: 'var(--ws-text-2)' }}>{h.name} <span style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: '9px', color: 'var(--ws-accent)', marginLeft: '4px' }}>{h.ticker}</span></span>
-                          <span style={{ fontFamily: "'JetBrains Mono', monospace", color: 'var(--ws-text)' }}>{h.weight}</span>
+                          <span style={{ color: 'var(--ws-text-2)' }}>{h.name} <span style={{ fontFamily: "'Inter', sans-serif", fontSize: '9px', color: 'var(--ws-accent)', marginLeft: '4px' }}>{h.ticker}</span></span>
+                          <span style={{ fontFamily: "'Inter', sans-serif", color: 'var(--ws-text)' }}>{h.weight}</span>
                         </div>
                         <div style={{ height: '5px', background: 'var(--ws-bg-2)', borderRadius: '2px', overflow: 'hidden' }}>
                           <div style={{ height: '100%', width: `${weightPct}%`, background: 'var(--ws-accent)', borderRadius: '2px' }} />
@@ -348,7 +348,7 @@ export default function ETFTickerPage({ params }) {
               {/* SECTOR EXPOSURE */}
               <div style={{ background: 'var(--ws-bg-1)', border: '1px solid var(--ws-border)' }}>
                 <div style={{ background: 'var(--ws-bg-2)', borderBottom: '1px solid var(--ws-border)', padding: '10px 16px' }}>
-                  <span style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: '10px', color: 'var(--ws-text-3)', letterSpacing: '1px', fontWeight: 700 }}>SECTOR ALLOCATION EXPOSURE</span>
+                  <span style={{ fontFamily: "'Inter', sans-serif", fontSize: '10px', color: 'var(--ws-text-3)', letterSpacing: '1px', fontWeight: 700 }}>SECTOR ALLOCATION EXPOSURE</span>
                 </div>
                 <div style={{ padding: '16px', display: 'flex', flexDirection: 'column', gap: '12px' }}>
                   {etf.sectors.length === 0 ? (
@@ -359,7 +359,7 @@ export default function ETFTickerPage({ params }) {
                       <div key={i} style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
                         <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '11px', fontWeight: 600 }}>
                           <span style={{ color: 'var(--ws-text-2)' }}>{s.name}</span>
-                          <span style={{ fontFamily: "'JetBrains Mono', monospace", color: 'var(--ws-text)' }}>{s.weight}</span>
+                          <span style={{ fontFamily: "'Inter', sans-serif", color: 'var(--ws-text)' }}>{s.weight}</span>
                         </div>
                         <div style={{ height: '5px', background: 'var(--ws-bg-2)', borderRadius: '2px', overflow: 'hidden' }}>
                           <div style={{ height: '100%', width: `${weightPct}%`, background: 'var(--ws-text-2)', borderRadius: '2px' }} />

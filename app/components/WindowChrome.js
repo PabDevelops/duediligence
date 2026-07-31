@@ -1,4 +1,4 @@
-const MONO = "'JetBrains Mono', monospace";
+const MONO = "'Inter', sans-serif";
 
 export function WindowChrome({ title, children, maxWidth = '980px' }) {
   return (

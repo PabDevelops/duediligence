@@ -131,7 +131,7 @@ export default function ETFCompareTab({ tickers, etfsList, onAddTicker, onRemove
         ))}
         {tickers.length < 4 && (
           <select value={addValue} onChange={handleAdd}
-            style={{ height: '28px', padding: '0 8px', fontSize: '11px', fontFamily: "'JetBrains Mono', monospace", border: '1px dashed var(--ws-border)', borderRadius: '20px', background: 'var(--ws-bg-2)', color: 'var(--ws-text-2)', outline: 'none', cursor: 'pointer' }}>
+            style={{ height: '28px', padding: '0 8px', fontSize: '11px', fontFamily: "'Inter', sans-serif", border: '1px dashed var(--ws-border)', borderRadius: '20px', background: 'var(--ws-bg-2)', color: 'var(--ws-text-2)', outline: 'none', cursor: 'pointer' }}>
             <option value="">+ Add ETF to compare</option>
             {addableOptions.map(e => <option key={e.ticker} value={e.ticker}>{e.ticker} — {e.name}</option>)}
           </select>

@@ -58,7 +58,7 @@ export default function WorkspaceTopbar() {
       {/* Terminal command search */}
       <div style={{ position: 'relative', flex: 1, maxWidth: '480px', display: 'flex', alignItems: 'center' }}>
         <span style={{
-          fontFamily: "'JetBrains Mono', monospace",
+          fontFamily: "'Inter', sans-serif",
           fontSize: '12px',
           color: focused ? 'var(--ws-accent)' : 'var(--ws-text-3)',
           fontWeight: 700,
@@ -93,7 +93,7 @@ export default function WorkspaceTopbar() {
             height: '32px',
             padding: '0 10px',
             fontSize: '12px',
-            fontFamily: "'JetBrains Mono', monospace",
+            fontFamily: "'Inter', sans-serif",
             letterSpacing: '0.5px',
             border: `1px solid ${focused ? 'var(--ws-accent)' : 'var(--ws-border)'}`,
             borderLeft: 'none',
@@ -111,7 +111,7 @@ export default function WorkspaceTopbar() {
             top: '50%',
             transform: 'translateY(-50%)',
             fontSize: '10px',
-            fontFamily: "'JetBrains Mono', monospace",
+            fontFamily: "'Inter', sans-serif",
             color: 'var(--ws-text-3)',
             pointerEvents: 'none',
             border: '1px solid var(--ws-border)',
@@ -137,16 +137,16 @@ export default function WorkspaceTopbar() {
             zIndex: 20,
           }}>
             <div style={{ padding: '6px 10px', borderBottom: '1px solid var(--ws-border)', display: 'flex', alignItems: 'center', gap: '6px' }}>
-              <span style={{ fontSize: '9px', fontFamily: "'JetBrains Mono', monospace", color: 'var(--ws-text-3)', letterSpacing: '1px' }}>RESULTS</span>
+              <span style={{ fontSize: '9px', fontFamily: "'Inter', sans-serif", color: 'var(--ws-text-3)', letterSpacing: '1px' }}>RESULTS</span>
             </div>
             {suggestions.map(s => (
               <div key={s.ticker} onMouseDown={() => onSelect(s.ticker)}
                 style={{ padding: '9px 12px', cursor: 'pointer', display: 'flex', gap: '10px', alignItems: 'baseline', fontSize: '12px', transition: 'background 0.1s' }}
                 onMouseEnter={e => e.currentTarget.style.background = 'var(--ws-bg-2)'}
                 onMouseLeave={e => e.currentTarget.style.background = 'transparent'}>
-                <span style={{ color: 'var(--ws-accent)', fontWeight: 700, fontFamily: "'JetBrains Mono', monospace", minWidth: '48px' }}>{s.ticker}</span>
+                <span style={{ color: 'var(--ws-accent)', fontWeight: 700, fontFamily: "'Inter', sans-serif", minWidth: '48px' }}>{s.ticker}</span>
                 <span style={{ color: 'var(--ws-text-2)', flex: 1 }}>{s.name}</span>
-                <span style={{ color: 'var(--ws-text-3)', fontSize: '10px', fontFamily: "'JetBrains Mono', monospace" }}>{s.exchange}</span>
+                <span style={{ color: 'var(--ws-text-3)', fontSize: '10px', fontFamily: "'Inter', sans-serif" }}>{s.exchange}</span>
               </div>
             ))}
           </div>
@@ -160,7 +160,7 @@ export default function WorkspaceTopbar() {
           height: '32px',
           padding: '0 14px',
           fontSize: '11px',
-          fontFamily: "'JetBrains Mono', monospace",
+          fontFamily: "'Inter', sans-serif",
           fontWeight: 700,
           letterSpacing: '1px',
           color: 'var(--ws-text-3)',

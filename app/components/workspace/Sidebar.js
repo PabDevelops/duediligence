@@ -173,7 +173,7 @@ export default function Sidebar({ theme, onToggleTheme, collapsed = false, onTog
             width: collapsed ? '34px' : '100%',
             height: collapsed ? '34px' : '26px',
             fontSize: '10px',
-            fontFamily: "'JetBrains Mono', monospace",
+            fontFamily: "'Inter', sans-serif",
             fontWeight: 700,
             letterSpacing: collapsed ? '0' : '1.5px',
             color: 'var(--ws-text-3)',
@@ -242,7 +242,7 @@ export default function Sidebar({ theme, onToggleTheme, collapsed = false, onTog
                 <kbd style={{
                   fontSize: '9px', color: 'var(--ws-text-3)', background: 'var(--ws-bg-2)',
                   border: '1px solid var(--ws-border)', borderRadius: '3px', padding: '1px 5px',
-                  fontFamily: "'JetBrains Mono', monospace", flexShrink: 0,
+                  fontFamily: "'Inter', sans-serif", flexShrink: 0,
                 }}>/</kbd>
               )}
             </Link>
@@ -400,7 +400,7 @@ export default function Sidebar({ theme, onToggleTheme, collapsed = false, onTog
             cursor: 'pointer',
             padding: '8px',
             fontSize: '11px',
-            fontFamily: "'JetBrains Mono', monospace",
+            fontFamily: "'Inter', sans-serif",
             fontWeight: 700,
             display: 'flex',
             alignItems: 'center',

@@ -33,7 +33,7 @@ export default function WatchlistWidget() {
   if (!isSignedIn) return null;
 
   return (
-    <div className="watchlist-widget" style={{ position: 'fixed', bottom: '24px', right: '24px', zIndex: 50, fontFamily: 'JetBrains Mono, monospace' }}>
+    <div className="watchlist-widget" style={{ position: 'fixed', bottom: '24px', right: '24px', zIndex: 50, fontFamily: 'Inter, sans-serif' }}>
       {open && (
         <div style={{ background: 'var(--bg-1)', border: '1px solid var(--border)', marginBottom: '8px', width: '280px', maxHeight: '420px', overflowY: 'auto' }}>
           <div style={{ padding: '10px 14px', borderBottom: '1px solid var(--border)', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
@@ -77,7 +77,7 @@ export default function WatchlistWidget() {
 
       <button
         onClick={() => setOpen(!open)}
-        style={{ background: open ? 'var(--accent)' : 'var(--bg-1)', border: '1px solid var(--border)', color: open ? '#000' : 'var(--accent)', fontFamily: 'JetBrains Mono, monospace', fontSize: '10px', fontWeight: 700, padding: '8px 16px', cursor: 'pointer', letterSpacing: '2px', display: 'flex', alignItems: 'center', gap: '8px', marginLeft: 'auto' }}>
+        style={{ background: open ? 'var(--accent)' : 'var(--bg-1)', border: '1px solid var(--border)', color: open ? '#000' : 'var(--accent)', fontFamily: 'Inter, sans-serif', fontSize: '10px', fontWeight: 700, padding: '8px 16px', cursor: 'pointer', letterSpacing: '2px', display: 'flex', alignItems: 'center', gap: '8px', marginLeft: 'auto' }}>
         <svg width="10" height="10" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
           <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
         </svg>
