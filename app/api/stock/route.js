@@ -990,6 +990,7 @@ export async function GET(request) {
   // 1-3 months prior, despite obviously having happened) and can't be trusted alone to tell
   // isFinancialsCacheFresh's grace-period check that an earnings date has actually passed.
   let priorCachedData = null;
+  let priorCachedUpdatedAt = null;
 
   try {
     const { data: cached } = await supabase
@@ -1000,6 +1001,7 @@ export async function GET(request) {
 
     cachedIsEtf = cached?.data?.isEtf === true;
     priorCachedData = cached?.data ?? null;
+    priorCachedUpdatedAt = cached?.updated_at ?? null;
 
     const forceRefresh = searchParams.get('refresh') === 'true';
     if (cached && !forceRefresh) {
@@ -1048,7 +1050,7 @@ export async function GET(request) {
         if (missingInsiderData) backfillInsiderOwnership(cached.data.cik, ticker, cached.data.sharesOutstanding);
         const minsOld = hoursOld * 60;
         if (minsOld < 2) {
-          return Response.json({ ...normData, cached: true });
+          return Response.json({ ...normData, cached: true, updatedAt: cached.updated_at });
         } else {
           // Cache is valid for heavy financials, but update the stock price in real-time
           try {
@@ -1070,6 +1072,7 @@ export async function GET(request) {
               }
             }
             if (freshPriceData && freshPriceData.currentPrice != null) {
+              const priceUpdatedAt = new Date().toISOString();
               const updatedData = normalizeStockData({
                 ...cached.data,
                 currentPrice: freshPriceData.currentPrice,
@@ -1081,21 +1084,57 @@ export async function GET(request) {
               // Update DB cache in background asynchronously
               supabase
                 .from('stock_cache')
-                .upsert({ ticker, data: updatedData, updated_at: new Date().toISOString() })
+                .upsert({ ticker, data: updatedData, updated_at: priceUpdatedAt })
                 .then(() => {})
                 .catch(() => {});
-              return Response.json({ ...updatedData, cached: true, priceUpdated: true });
+              return Response.json({ ...updatedData, cached: true, priceUpdated: true, updatedAt: priceUpdatedAt });
             }
           } catch (err) {
             console.error('Error doing fast price update:', err);
           }
-          return Response.json({ ...normData, cached: true });
+          return Response.json({ ...normData, cached: true, updatedAt: cached.updated_at });
         }
       }
     }
   } catch (e) {}
 
+  // Serverless (Vercel) functions share no in-process memory across concurrent invocations, so an
+  // in-memory dedup map can't stop N users opening the same stale/uncached ticker at once from
+  // each independently hitting SEC EDGAR/Finnhub's shared rate limits. This DB-backed lock makes
+  // only the first request do the real fetch; the rest fall back to whatever is already cached
+  // (even if stale) instead of piling on. `lockAcquired` gates the release in `finally` below so
+  // a request that never got the lock doesn't delete the real holder's lock out from under it.
+  let lockAcquired = false;
+
   try {
+    const LOCK_STALE_MS = 30 * 1000;
+    const { error: lockInsertError } = await supabase
+      .from('stock_cache_locks')
+      .insert({ ticker, locked_at: new Date().toISOString() });
+
+    if (!lockInsertError) {
+      lockAcquired = true;
+    } else if (lockInsertError.code === '23505') {
+      const { data: existingLock } = await supabase
+        .from('stock_cache_locks')
+        .select('locked_at')
+        .eq('ticker', ticker)
+        .maybeSingle();
+      const lockAgeMs = existingLock ? Date.now() - new Date(existingLock.locked_at).getTime() : Infinity;
+      if (lockAgeMs >= LOCK_STALE_MS) {
+        // Previous holder crashed/timed out before releasing — steal the lock rather than
+        // block this ticker's refresh forever.
+        await supabase.from('stock_cache_locks').update({ locked_at: new Date().toISOString() }).eq('ticker', ticker);
+        lockAcquired = true;
+      } else if (priorCachedData) {
+        return Response.json({ ...normalizeStockData(priorCachedData), cached: true, stale: true, updatedAt: priorCachedUpdatedAt });
+      }
+      // No cached fallback (brand-new ticker requested concurrently) — fall through and fetch
+      // anyway rather than returning nothing.
+    }
+    // Any other insert error (e.g. transient network issue): fail open and fetch without a lock.
+
+    const fetchedAt = new Date().toISOString();
     const tickerMap = await getSecTickerMap();
     const company = tickerMap?.get(ticker) ?? null;
 
@@ -1148,10 +1187,10 @@ export async function GET(request) {
       };
 
       try {
-        await supabase.from('stock_cache').upsert({ ticker, data: result, updated_at: new Date().toISOString() });
+        await supabase.from('stock_cache').upsert({ ticker, data: result, updated_at: fetchedAt });
       } catch (e) {}
 
-      return Response.json(result);
+      return Response.json({ ...result, updatedAt: fetchedAt });
     }
 
     let hasSecFacts = false;
@@ -1244,10 +1283,10 @@ export async function GET(request) {
         };
 
         try {
-          await supabase.from('stock_cache').upsert({ ticker, data: yhResult, updated_at: new Date().toISOString() });
+          await supabase.from('stock_cache').upsert({ ticker, data: yhResult, updated_at: fetchedAt });
         } catch (e) {}
 
-        return Response.json(yhResult);
+        return Response.json({ ...yhResult, updatedAt: fetchedAt });
       }
 
       const m = fhBasic?.metric || {};
@@ -1423,11 +1462,11 @@ export async function GET(request) {
       const isEtfFallback = result.sector === 'ETF' || result.industry === 'ETF';
       if (valCountFallback >= 2 || (isEtfFallback && result.currentPrice != null)) {
         try {
-          await supabase.from('stock_cache').upsert({ ticker, data: result, updated_at: new Date().toISOString() });
+          await supabase.from('stock_cache').upsert({ ticker, data: result, updated_at: fetchedAt });
         } catch (e) {}
       }
 
-      return Response.json(result);
+      return Response.json({ ...result, updatedAt: fetchedAt });
     }
 
     const usgaap = facts.facts?.['us-gaap'] || {};
@@ -2316,16 +2355,20 @@ export async function GET(request) {
       try {
         await supabase
           .from('stock_cache')
-          .upsert({ ticker, data: result, updated_at: new Date().toISOString() });
+          .upsert({ ticker, data: result, updated_at: fetchedAt });
       } catch (e) {}
     }
 
-    return Response.json(result);
-
-    
+    return Response.json({ ...result, updatedAt: fetchedAt });
 
   } catch (e) {
     console.error(e);
     return Response.json({ error: 'Error al conectar con las fuentes de datos' }, { status: 500 });
+  } finally {
+    if (lockAcquired) {
+      try {
+        await supabase.from('stock_cache_locks').delete().eq('ticker', ticker);
+      } catch (e) {}
+    }
   }
 }

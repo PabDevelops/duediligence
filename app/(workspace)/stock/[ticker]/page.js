@@ -17,7 +17,7 @@ import PaywallModal from '../../../components/workspace/PaywallModal';
 import { isInGuestWatchlist, addToGuestWatchlist, removeFromGuestWatchlist } from '../../../../lib/guestWatchlist';
 import { openInNewTab } from '../../../../lib/openInNewTab';
 import { buildEarningsCalendarUrl } from '../../../../lib/googleCalendar';
-import { fmt as sharedFmt, fmtP as sharedFmtP, fmtN as sharedFmtN, formatCurrency } from '../../../../lib/formatters';
+import { fmt as sharedFmt, fmtP as sharedFmtP, fmtN as sharedFmtN, formatCurrency, formatTimeAgo } from '../../../../lib/formatters';
 import { useStockData } from '../../../../lib/hooks/useStockData';
 import { useTickerSearch } from '../../../../lib/hooks/useTickerSearch';
 import {
@@ -411,7 +411,7 @@ function StockPageContent({ params }) {
   // nothing but reload the page. Wiring it here is what makes it force a fresh /api/stock fetch.
   const searchParams = useSearchParams();
   const forceRefresh = searchParams.get('refresh') === 'true';
-  const { data, error, loading } = useStockData(ticker, { refresh: forceRefresh });
+  const { data, error, loading, refreshing, refetch } = useStockData(ticker, { refresh: forceRefresh });
   const [tab, setTab] = useState('overview');
   const [jumpQuery, setJumpQuery] = useState('');
   const [showJumpSuggestions, setShowJumpSuggestions] = useState(false);
@@ -1469,11 +1469,17 @@ function StockPageContent({ params }) {
                   style={{ fontSize: '12px', padding: '10px 8px', width: '100%', background: 'var(--ws-accent)', color: '#fff', border: 'none', fontWeight: 600, cursor: 'pointer' }}>
                   + Add to Portfolio
                 </button>
-                <button onClick={() => { window.location.href = `/stock/${ticker}?refresh=true`; }}
-                  style={{ fontSize: '12px', padding: '10px 8px', width: '100%', background: 'var(--ws-bg-1)', border: '1px solid var(--ws-border)', color: 'var(--ws-text)', cursor: 'pointer' }}>
-                  ↻ Refresh data
+                <button onClick={refetch} disabled={refreshing}
+                  style={{ fontSize: '12px', padding: '10px 8px', width: '100%', background: 'var(--ws-bg-1)', border: '1px solid var(--ws-border)', color: 'var(--ws-text)', cursor: refreshing ? 'not-allowed' : 'pointer', opacity: refreshing ? 0.6 : 1 }}>
+                  {refreshing ? 'Actualizando…' : '↻ Actualizar datos'}
                 </button>
               </div>
+
+              {data?.updatedAt && (
+                <div style={{ color: 'var(--ws-text-3)', fontSize: '10px', paddingTop: '2px' }}>
+                  Actualizado {formatTimeAgo(data.updatedAt)}
+                </div>
+              )}
 
               <div style={{ color: 'var(--ws-text-3)', fontSize: '10px', letterSpacing: '1px', paddingTop: '4px' }}>
                 SOURCE: SEC EDGAR (XBRL) · ALPHA VANTAGE · FINNHUB · NOT INVESTMENT ADVICE
