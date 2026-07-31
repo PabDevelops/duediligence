@@ -30,7 +30,7 @@ export default function HomeView({ dict }) {
       <header style={{ position: 'sticky', top: 0, zIndex: 50, background: 'rgba(255,255,255,0.92)', backdropFilter: 'blur(10px)', borderBottom: '1px solid var(--border)' }}>
         <div style={{ ...CONTAINER, padding: '18px clamp(16px, 5vw, 24px)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '16px' }}>
           <a href="/" style={{ display: 'flex', alignItems: 'center', gap: '8px', textDecoration: 'none', flexShrink: 0 }}>
-            <img src="/logo-traqcker-new.png" alt="Traqcker" style={{ height: '18px', width: 'auto' }} />
+            <img src="/logo-bulltrace-new.png" alt="Bulltrace" style={{ height: '18px', width: 'auto' }} />
           </a>
 
           <nav className="desktop-only" style={{ display: 'flex', gap: '32px', alignItems: 'center' }}>
@@ -42,7 +42,7 @@ export default function HomeView({ dict }) {
           <div className="desktop-only" style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
             <a href="/sign-in" style={navLink}>{t.signIn}</a>
             {/* PrimaryButton renders a plain <a>, not <Link> — this crosses
-                from the apex marketing domain to terminal.traqcker.com in
+                from the apex marketing domain to terminal.bulltrace.app in
                 production, which needs a real navigation so middleware.js's
                 host redirect fires. */}
             <PrimaryButton href="/home" style={{ height: '38px', padding: '0 16px', borderRadius: '0', boxShadow: 'none' }}>{t.cta}</PrimaryButton>
@@ -133,8 +133,8 @@ export default function HomeView({ dict }) {
             zIndex: 0
           }} />
           <div style={{ position: 'relative', zIndex: 1 }}>
-            <WindowChrome title="terminal.traqcker.com/home — Market Overview Dashboard" maxWidth="880px">
-              <Shot src="/screenshots/stock.png" alt="Traqcker Terminal Stock Analysis Screen" />
+            <WindowChrome title="terminal.bulltrace.app/home — Market Overview Dashboard" maxWidth="880px">
+              <Shot src="/screenshots/stock.png" alt="Bulltrace Terminal Stock Analysis Screen" />
             </WindowChrome>
           </div>
         </div>

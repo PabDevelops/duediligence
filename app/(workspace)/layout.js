@@ -41,14 +41,14 @@ export default function WorkspaceLayout({ children }) {
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
 
   useEffect(() => {
-    const saved = localStorage.getItem('traqcker_sidebar_collapsed') === 'true';
+    const saved = localStorage.getItem('bulltrace_sidebar_collapsed') === 'true';
     setSidebarCollapsed(saved);
   }, []);
 
   const toggleSidebarCollapse = () => {
     setSidebarCollapsed(prev => {
       const next = !prev;
-      localStorage.setItem('traqcker_sidebar_collapsed', String(next));
+      localStorage.setItem('bulltrace_sidebar_collapsed', String(next));
       return next;
     });
   };
@@ -145,8 +145,8 @@ export default function WorkspaceLayout({ children }) {
           ☰
         </button>
         <img
-          src={isDark ? '/logo-traqcker-new-w.png' : '/logo-traqcker-new.png'}
-          alt="Traqcker"
+          src={isDark ? '/logo-bulltrace-new-w.png' : '/logo-bulltrace-new.png'}
+          alt="Bulltrace"
           style={{ height: '14px', width: 'auto' }}
         />
         <div style={{ width: '28px' }} /> {/* spacer to balance layout */}
@@ -176,9 +176,9 @@ export default function WorkspaceLayout({ children }) {
 
       {access === 'denied' && !isPublic && (
         <PaywallModal
-          eyebrow="TRAQCKER TERMINAL"
+          eyebrow="BULLTRACE TERMINAL"
           title="Subscribe to unlock the terminal"
-          description="The screener, portfolio tracker, full financials and the rest of the terminal are available with Traqcker Pro — 14 days free to start."
+          description="The screener, portfolio tracker, full financials and the rest of the terminal are available with Bulltrace Pro — 14 days free to start."
           ctaLabel="Start 14-day free trial"
           ctaHref="/pricing"
           onClose={closePaywall}

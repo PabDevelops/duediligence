@@ -64,8 +64,8 @@ export default function AboutView({ dict }) {
         </div>
 
         <div style={{ maxWidth: '900px', margin: '56px auto 0', position: 'relative', zIndex: 1 }}>
-          <WindowChrome title="terminal.traqcker.com/home — Market Overview Dashboard" maxWidth="900px">
-            <Shot src="/screenshots/home.png" alt="Traqcker home dashboard" />
+          <WindowChrome title="terminal.bulltrace.app/home — Market Overview Dashboard" maxWidth="900px">
+            <Shot src="/screenshots/home.png" alt="Bulltrace home dashboard" />
           </WindowChrome>
         </div>
       </section>
@@ -121,7 +121,7 @@ export default function AboutView({ dict }) {
         </div>
       </section>
 
-      {/* WHY TRAQCKER EXISTS */}
+      {/* WHY BULLTRACE EXISTS */}
       <section style={{ maxWidth: '820px', margin: '0 auto', padding: '80px 24px' }}>
         <div style={{ color: 'var(--text-3)', fontSize: '11px', letterSpacing: '2px', fontWeight: 700, marginBottom: '36px' }}>{t.why.eyebrow}</div>
 

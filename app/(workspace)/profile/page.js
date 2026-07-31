@@ -338,7 +338,7 @@ export default function WorkspaceProfile() {
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '12px' }}>
               <div>
                 <div style={{ fontSize: '15px', fontWeight: 800, color: 'var(--ws-text)' }}>
-                  {isPro ? 'Traqcker Pro Plan' : 'Traqcker Free Tier'}
+                  {isPro ? 'Bulltrace Pro Plan' : 'Bulltrace Free Tier'}
                 </div>
                 <div style={{ fontSize: '11px', color: 'var(--ws-text-3)', marginTop: '2px' }}>
                   {isPro ? 'You have full institutional terminal access.' : 'Upgrade to unlock global screening, financials, DCF models, and backtesting.'}

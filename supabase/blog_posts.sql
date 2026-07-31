@@ -8,7 +8,7 @@ create table if not exists blog_posts (
   tag text not null default 'Fundamentals',
   tickers text[] not null default '{}',
   sentiment text not null default 'neutral',
-  author text not null default 'Traqcker Team',
+  author text not null default 'Bulltrace Team',
   content jsonb not null default '[]',
   content_html text,
   published boolean not null default true,
@@ -38,7 +38,7 @@ insert into blog_posts (slug, title, description, date, read_time, tag, tickers,
     {"type":"p","text":"Compare ROIC to the company''s cost of capital (WACC), usually somewhere around 7-10% for most US businesses. If ROIC consistently exceeds WACC by a wide margin, the company is creating real value with every dollar it reinvests. If ROIC is below WACC, growth is actually destroying value — the company would be better off returning cash to shareholders than reinvesting it."},
     {"type":"p","text":"As a rough guide: above 15% is strong, above 25% is exceptional (think Apple, Visa), and below 8% deserves scrutiny regardless of how fast revenue is growing."},
     {"type":"h2","text":"Where to find it"},
-    {"type":"p","text":"Traqcker calculates ROIC automatically from SEC filings for any of the 8,000+ stocks we cover — no spreadsheet required. Search a ticker and it''s right there in the quality score breakdown."}
+    {"type":"p","text":"Bulltrace calculates ROIC automatically from SEC filings for any of the 8,000+ stocks we cover — no spreadsheet required. Search a ticker and it''s right there in the quality score breakdown."}
   ]'::jsonb,
   true
 ),
@@ -60,7 +60,7 @@ insert into blog_posts (slug, title, description, date, read_time, tag, tickers,
     {"type":"h2","text":"Reading the output as a margin of safety"},
     {"type":"p","text":"The useful way to use a DCF isn''t to trust the exact fair value number. It''s to compare the current price against a range of outcomes. If a stock trades well below even a conservative DCF estimate, you have a margin of safety — room for your assumptions to be wrong and still come out ahead. If it trades well above even an optimistic estimate, the market is pricing in years of perfect execution."},
     {"type":"h2","text":"The shortcut"},
-    {"type":"p","text":"Building a full DCF by hand requires forecasting revenue, margins, capex, and a terminal value — easy to get wrong. Traqcker runs a simplified fair value estimate (based on the Graham formula and current fundamentals) on every stock page, so you get a sanity check on valuation without opening a spreadsheet."}
+    {"type":"p","text":"Building a full DCF by hand requires forecasting revenue, margins, capex, and a terminal value — easy to get wrong. Bulltrace runs a simplified fair value estimate (based on the Graham formula and current fundamentals) on every stock page, so you get a sanity check on valuation without opening a spreadsheet."}
   ]'::jsonb,
   true
 ),
@@ -80,7 +80,7 @@ insert into blog_posts (slug, title, description, date, read_time, tag, tickers,
     {"type":"p","text":"A high P/E often reflects expected growth — the market is paying up for earnings it believes will be much bigger in a few years. Sometimes that growth materializes. Sometimes the multiple was simply too optimistic and compresses hard when growth disappoints."},
     {"type":"h2","text":"The fix: compare P/E to growth and quality"},
     {"type":"p","text":"P/E means little in isolation. Pair it with: revenue growth (is the multiple justified by the trajectory?), ROIC (is the business actually efficient, or is the P/E low because it deserves to be?), and the sector average (a 25 P/E is expensive for a utility, cheap for a software company)."},
-    {"type":"p","text":"Traqcker shows P/E alongside ROIC, margins, and growth on every stock page specifically so the number isn''t read on its own."}
+    {"type":"p","text":"Bulltrace shows P/E alongside ROIC, margins, and growth on every stock page specifically so the number isn''t read on its own."}
   ]'::jsonb,
   true
 )

@@ -5,7 +5,7 @@ const fs = require('fs');
 // Config por defecto para que el instalador funcione sin pasos manuales.
 // Se puede sobrescribir editando el config.json que se crea en userData.
 const DEFAULT_CONFIG = {
-  apiUrl: 'https://traqcker.com/api/admin/user-stats',
+  apiUrl: 'https://bulltrace.app/api/admin/user-stats',
   secret: '2303372cf64a084995ebde6ec21c7da1e5ec6c9b1ffe1cc7',
   pollIntervalSeconds: 30,
 };
@@ -85,7 +85,7 @@ function createTray() {
     { label: 'Mostrar/Ocultar', click: () => win?.isVisible() ? win.hide() : win?.show() },
     { label: 'Salir', click: () => app.quit() },
   ]);
-  tray.setToolTip('Traqcker User Stats');
+  tray.setToolTip('Bulltrace User Stats');
   tray.setContextMenu(menu);
 }
 

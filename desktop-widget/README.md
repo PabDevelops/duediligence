@@ -1,4 +1,4 @@
-# Traqcker User Stats Widget
+# Bulltrace User Stats Widget
 
 Widget de escritorio (Electron) que muestra usuarios registrados totales y usuarios
 activos en las últimas 24h, refrescando cada 30s contra `/api/admin/user-stats`.
@@ -11,7 +11,7 @@ npm install
 npm run dist
 ```
 
-Genera `desktop-widget/dist/Traqcker User Stats Setup 1.0.0.exe`. Ejecútalo y
+Genera `desktop-widget/dist/Bulltrace User Stats Setup 1.0.0.exe`. Ejecútalo y
 sigue el asistente (puedes elegir carpeta de instalación, crea accesos directos
 en el Escritorio y el Menú Inicio). La app trae ya configurados el `apiUrl` de
 producción y el secreto, no requiere tocar ningún archivo.
@@ -24,7 +24,7 @@ El arranque automático con Windows se registra solo, en el primer arranque de
 la app instalada (usa `app.setLoginItemSettings`, visible/desactivable desde
 Configuración → Aplicaciones → Inicio, o Administrador de tareas → Inicio).
 
-Para desinstalar: Configuración → Aplicaciones → "Traqcker User Stats" → Desinstalar.
+Para desinstalar: Configuración → Aplicaciones → "Bulltrace User Stats" → Desinstalar.
 
 ## Ejecutar en desarrollo (sin instalar)
 
@@ -37,7 +37,7 @@ npm start
 En modo desarrollo puedes sobreescribir la config creando un `config.json`
 junto a `config.example.json` (apuntando a `localhost:3000`, por ejemplo). En
 la versión instalada, la config vive en
-`%APPDATA%\traqcker-user-stats-widget\config.json` y se puede editar a mano si
+`%APPDATA%\bulltrace-user-stats-widget\config.json` y se puede editar a mano si
 alguna vez rota el secreto.
 
 ## Notas

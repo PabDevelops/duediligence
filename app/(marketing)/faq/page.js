@@ -2,8 +2,8 @@ import { getDictionary } from '../../../lib/i18n/getDictionary';
 import FaqView from './FaqView';
 
 export const metadata = {
-  title: 'FAQ — Traqcker',
-  description: 'Common questions about Traqcker: what it is, how the GARP scoring engine works, coverage, and pricing.',
+  title: 'FAQ — Bulltrace',
+  description: 'Common questions about Bulltrace: what it is, how the GARP scoring engine works, coverage, and pricing.',
   alternates: {
     canonical: '/faq',
   },

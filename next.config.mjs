@@ -4,7 +4,7 @@ const nextConfig = {
     return [
       {
         source: '/__clerk/:path*',
-        destination: 'https://clerk.traqcker.com/__clerk/:path*',
+        destination: 'https://clerk.bulltrace.app/__clerk/:path*',
       },
     ];
   },

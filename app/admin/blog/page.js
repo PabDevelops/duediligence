@@ -38,7 +38,7 @@ export default function AdminBlogPage() {
   };
 
   const startNew = () => {
-    setEditing({ slug: '', title: '', description: '', date: new Date().toISOString().slice(0, 10), readTime: '4 min read', tag: 'Fundamentals', sentiment: 'neutral', author: 'Traqcker Team', published: true });
+    setEditing({ slug: '', title: '', description: '', date: new Date().toISOString().slice(0, 10), readTime: '4 min read', tag: 'Fundamentals', sentiment: 'neutral', author: 'Bulltrace Team', published: true });
     setHtmlBody('');
     setTickersInput('');
     setError('');
@@ -60,7 +60,7 @@ export default function AdminBlogPage() {
 
     const payload = {
       slug, title: editing.title, description: editing.description, date: editing.date,
-      readTime: editing.readTime, tag: editing.tag, tickers, sentiment: editing.sentiment || 'neutral', author: editing.author || 'Traqcker Team',
+      readTime: editing.readTime, tag: editing.tag, tickers, sentiment: editing.sentiment || 'neutral', author: editing.author || 'Bulltrace Team',
       content: [], contentHtml: htmlBody, published: editing.published,
     };
 
@@ -168,7 +168,7 @@ export default function AdminBlogPage() {
                 </div>
                 <div>
                   <label style={labelStyle}>AUTHOR</label>
-                  <input style={inputStyle} value={editing.author || ''} onChange={e => setEditing({ ...editing, author: e.target.value })} placeholder="Traqcker Team" />
+                  <input style={inputStyle} value={editing.author || ''} onChange={e => setEditing({ ...editing, author: e.target.value })} placeholder="Bulltrace Team" />
                 </div>
               </div>
 

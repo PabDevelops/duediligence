@@ -216,7 +216,7 @@ export default function MarketRadar() {
       .sort((a, b) => b.avgChange - a.avgChange);
   }, [movers]);
 
-  // Compute local Traqcker Score 100 for Spotlight details
+  // Compute local Bulltrace Score 100 for Spotlight details
   const spotlightQuality = useMemo(() => {
     if (!spotlightData) return null;
     const hasFundamentals = spotlightData.revVal != null || spotlightData.niVal != null || spotlightData.marketCap != null
@@ -581,7 +581,7 @@ export default function MarketRadar() {
           <div>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '14px', flexWrap: 'wrap', gap: '10px' }}>
               <div style={{ fontSize: '11px', color: 'var(--ws-text-3)', fontWeight: 500, letterSpacing: '0.3px' }}>
-                Ranked by unified Traqcker algorithms. Click any ticker to open analyzer sidebar.
+                Ranked by unified Bulltrace algorithms. Click any ticker to open analyzer sidebar.
               </div>
               <Link href="/radar/leaders" style={{ fontSize: '11px', fontWeight: 800, color: 'var(--ws-accent)', textDecoration: 'none', display: 'flex', alignItems: 'center', gap: '4px', letterSpacing: '1.2px', transition: 'opacity 0.15s' }} onMouseEnter={e => e.currentTarget.style.opacity = 0.85} onMouseLeave={e => e.currentTarget.style.opacity = 1}>
                 <span>VIEW TOP 100 LEADERBOARD →</span>
@@ -591,7 +591,7 @@ export default function MarketRadar() {
             {/* Top Score */}
             <div className="bg-ws-bg-1 border border-ws-border p-4 flex flex-col gap-2.5">
               <div className="border-b border-ws-border pb-2">
-                <span className="text-[11px] font-extrabold text-ws-accent tracking-[1px]">TRAQCKER SCORE</span>
+                <span className="text-[11px] font-extrabold text-ws-accent tracking-[1px]">BULLTRACE SCORE</span>
               </div>
               <div className="flex flex-col gap-0.5">
                 {(movers?.topScore || []).slice(0, 5).map(s => (

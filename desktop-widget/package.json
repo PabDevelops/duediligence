@@ -1,8 +1,8 @@
 {
-  "name": "traqcker-user-stats-widget",
+  "name": "bulltrace-user-stats-widget",
   "version": "1.0.0",
   "private": true,
-  "description": "Widget de escritorio: usuarios registrados y activos de Traqcker en tiempo real",
+  "description": "Widget de escritorio: usuarios registrados y activos de Bulltrace en tiempo real",
   "main": "main.js",
   "scripts": {
     "start": "electron .",
@@ -13,8 +13,8 @@
     "electron-builder": "^25.1.8"
   },
   "build": {
-    "appId": "com.traqcker.userstatswidget",
-    "productName": "Traqcker User Stats",
+    "appId": "com.bulltrace.userstatswidget",
+    "productName": "Bulltrace User Stats",
     "files": ["main.js", "preload.js", "index.html", "renderer.js", "style.css"],
     "win": {
       "target": ["nsis"],
@@ -26,7 +26,7 @@
       "allowToChangeInstallationDirectory": true,
       "createDesktopShortcut": true,
       "createStartMenuShortcut": true,
-      "shortcutName": "Traqcker User Stats"
+      "shortcutName": "Bulltrace User Stats"
     }
   }
 }

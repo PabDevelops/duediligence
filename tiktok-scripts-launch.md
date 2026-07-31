@@ -1,4 +1,4 @@
-# TRAQCKER TIKTOK SCRIPTS - 2 WEEK LAUNCH PLAN
+# BULLTRACE TIKTOK SCRIPTS - 2 WEEK LAUNCH PLAN
 ## 3 videos/week × 2 weeks = 6 videos total
 ## Format: 30-45 seconds each
 ## Tone: Casual, authentic, educational
@@ -7,20 +7,20 @@
 
 ## WEEK 1 (3 videos)
 
-### VIDEO 1: "Why I rebuilt Traqcker" (HOOK: Problem)
+### VIDEO 1: "Why I rebuilt Bulltrace" (HOOK: Problem)
 **Hook (first 3 seconds - CRITICAL):**
-"Most stock tools are either expensive or confusing. So I rebuilt Traqcker."
+"Most stock tools are either expensive or confusing. So I rebuilt Bulltrace."
 
 **Script (30 seconds total):**
 - (0-3s) Hook above
 - (3-10s) "Before: deep analysis. Fancy formulas. Nobody understood it."
 - (10-20s) "Problem: people don't want more data. They want ONE ANSWER."
-- (20-30s) "So Traqcker 2.0 is: one score. One verdict. Done."
+- (20-30s) "So Bulltrace 2.0 is: one score. One verdict. Done."
 - (30-35s) Call to action: "Launching in 2 weeks. Tap link in bio."
 
 **B-roll/Visuals:**
 - Show confusing stock apps (confuse the viewer intentionally)
-- Quick cuts of Traqcker interface
+- Quick cuts of Bulltrace interface
 - Easy Mode Score circle animation
 - Text overlays: "Before" → "After"
 
@@ -40,10 +40,10 @@
 - (22-30s) "Show the score on screen, reveal verdict"
 - (30-38s) "Plus: see what other investors voted"
 - (38-43s) "No algorithms. Real people."
-- (43-45s) CTA: "Try it free at traqcker.com"
+- (43-45s) CTA: "Try it free at bulltrace.app"
 
 **B-roll/Visuals:**
-- Open Traqcker on phone
+- Open Bulltrace on phone
 - Show GOOGL stock page
 - Zoom in on Easy Mode Score ring (animated if possible)
 - Show "HOLD" verdict popup
@@ -80,7 +80,7 @@
 
 ### VIDEO 4: "One week until launch" (COUNTDOWN)
 **Hook:**
-"I spent 3 months rebuilding Traqcker. Here's why."
+"I spent 3 months rebuilding Bulltrace. Here's why."
 
 **Script (40 seconds):**
 - (0-3s) Hook above
@@ -89,11 +89,11 @@
 - (17-24s) "Problem #3: They push trades that benefit them, not you"
 - (24-32s) "So I built what I wished existed: Simple. Free. Community-powered."
 - (32-38s) "Launching in ONE WEEK"
-- (38-40s) CTA: "Save the link: traqcker.com"
+- (38-40s) CTA: "Save the link: bulltrace.app"
 
 **B-roll/Visuals:**
-- B-roll of you (or screen) working on Traqcker
-- Split screen: "Before" (confusing apps) vs "After" (Traqcker clean UI)
+- B-roll of you (or screen) working on Bulltrace
+- Split screen: "Before" (confusing apps) vs "After" (Bulltrace clean UI)
 - Clips of features
 - Calendar showing launch date (day 7)
 
@@ -115,7 +115,7 @@
 - (40-45s) "It's crowdsourced stock intelligence"
 
 **B-roll/Visuals:**
-- Open Traqcker homepage
+- Open Bulltrace homepage
 - Click on "Stock of the Week" section
 - Show voting buttons (BUY/HOLD/SELL)
 - Show live percentages updating
@@ -127,7 +127,7 @@
 
 ### VIDEO 6: "LIVE NOW" (LAUNCH ANNOUNCEMENT)
 **Hook:**
-"Traqcker 2.0 just launched."
+"Bulltrace 2.0 just launched."
 
 **Script (30 seconds):**
 - (0-2s) Hook above
@@ -139,7 +139,7 @@
   - Share card
 - (15-25s) "Everything free. No hidden paywalls."
 - (25-28s) "Link in bio. Go analyze."
-- (28-30s) "Welcome to Traqcker 2.0"
+- (28-30s) "Welcome to Bulltrace 2.0"
 
 **B-roll/Visuals:**
 - Fast cuts of app screenshots
@@ -181,7 +181,7 @@
 - Start with hook STRONG (first 3 seconds make or break)
 
 **B-roll (screen recordings):**
-- On your phone, open Traqcker
+- On your phone, open Bulltrace
 - Record yourself clicking, voting, navigating
 - Zoom in on key elements (Easy Mode Score ring, achievement popup, etc)
 
@@ -223,7 +223,7 @@ By end of 2 weeks:
 - Target: 1,000-2,000 followers
 - Target: 50k-100k total views
 - Target: 5-10 comments per video average
-- Target: Link clicks to traqcker.com (track via UTM: traqcker.com?source=tiktok)
+- Target: Link clicks to bulltrace.app (track via UTM: bulltrace.app?source=tiktok)
 
 Realistic? Yes. Easy? No. Worth it? Absolutely.
 

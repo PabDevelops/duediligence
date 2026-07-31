@@ -4,9 +4,9 @@ import { getCookieDomain } from './lib/cookieDomain';
 import { detectAiBot } from './lib/aiBots';
 import { logBotVisit } from './lib/botLogger';
 
-// Marketing/informational pages that live on the apex domain (traqcker.com).
+// Marketing/informational pages that live on the apex domain (bulltrace.app).
 // Everything else is the app/workspace terminal, served from
-// terminal.traqcker.com instead.
+// terminal.bulltrace.app instead.
 const MARKETING_PREFIXES = [
   '/', '/about', '/pricing', '/faq', '/privacy', '/terms',
   '/sign-in', '/sign-up', '/auth', '/start-trial', '/success',
@@ -48,21 +48,21 @@ function domainRedirect(request, hasVisitedBefore) {
     const dest = request.nextUrl.clone();
     dest.pathname = '/';
     dest.search = '';
-    if (host === 'terminal.traqcker.com') dest.host = 'traqcker.com';
+    if (host === 'terminal.bulltrace.app') dest.host = 'bulltrace.app';
     return NextResponse.redirect(dest, 307);
   }
 
   if (isSpanishPath(pathname)) {
     const dest = request.nextUrl.clone();
     dest.pathname = stripSpanishPrefix(pathname);
-    if (host === 'terminal.traqcker.com') dest.host = 'traqcker.com';
+    if (host === 'terminal.bulltrace.app') dest.host = 'bulltrace.app';
     return NextResponse.redirect(dest, 308);
   }
 
   // Only enforce the domain split on the real production hostnames — never in
   // local dev or on Vercel preview deployments, where there's only one domain.
-  const isApex = host === 'traqcker.com' || host === 'www.traqcker.com';
-  const isTerminal = host === 'terminal.traqcker.com';
+  const isApex = host === 'bulltrace.app' || host === 'www.bulltrace.app';
+  const isTerminal = host === 'terminal.bulltrace.app';
   if (!isApex && !isTerminal) return null;
 
   // Anyone who's already been to the site before (carries the tq_gid guest cookie,
@@ -73,14 +73,14 @@ function domainRedirect(request, hasVisitedBefore) {
   // rules below so it also short-circuits the pointless terminal-root -> apex -> terminal
   // bounce that isMarketingPath('/') would otherwise trigger.
   if (pathname === '/' && hasVisitedBefore) {
-    return NextResponse.redirect(new URL('https://terminal.traqcker.com/home', request.url), 307);
+    return NextResponse.redirect(new URL('https://terminal.bulltrace.app/home', request.url), 307);
   }
 
   if (isApex && !isMarketingPath(pathname)) {
-    return NextResponse.redirect(new URL(`https://terminal.traqcker.com${pathname}${search}`, request.url), 307);
+    return NextResponse.redirect(new URL(`https://terminal.bulltrace.app${pathname}${search}`, request.url), 307);
   }
   if (isTerminal && isMarketingPath(pathname)) {
-    return NextResponse.redirect(new URL(`https://traqcker.com${pathname}${search}`, request.url), 307);
+    return NextResponse.redirect(new URL(`https://bulltrace.app${pathname}${search}`, request.url), 307);
   }
   return null;
 }

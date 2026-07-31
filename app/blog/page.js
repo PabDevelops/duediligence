@@ -20,7 +20,7 @@ export default function BlogIndex() {
         <div style={{ marginBottom: '56px' }}>
           <div style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', background: 'var(--accent-dim)', border: '1px solid var(--accent)', padding: '4px 14px', borderRadius: '20px', marginBottom: '20px' }}>
             <span style={{ width: 6, height: 6, borderRadius: '50%', background: 'var(--green)', display: 'inline-block' }} />
-            <span style={{ color: 'var(--accent)', fontSize: '11px', letterSpacing: '2px', fontWeight: 700 }}>TRAQCKER BLOG</span>
+            <span style={{ color: 'var(--accent)', fontSize: '11px', letterSpacing: '2px', fontWeight: 700 }}>BULLTRACE BLOG</span>
           </div>
           <h1 style={{ fontSize: '42px', fontWeight: 900, letterSpacing: '-1.5px', lineHeight: 1.1, marginBottom: '16px' }}>
             Investing concepts,<br />
@@ -44,7 +44,7 @@ export default function BlogIndex() {
                 </div>
                 <h2 style={{ fontSize: '20px', fontWeight: 800, marginBottom: '8px', letterSpacing: '-0.3px' }}>{post.title}</h2>
                 <p style={{ color: 'var(--text-3)', fontSize: '14px', lineHeight: 1.7, marginBottom: '10px' }}>{post.description}</p>
-                <div style={{ color: 'var(--text-3)', fontSize: '12px', fontWeight: 600 }}>By {post.author || 'Traqcker Team'}</div>
+                <div style={{ color: 'var(--text-3)', fontSize: '12px', fontWeight: 600 }}>By {post.author || 'Bulltrace Team'}</div>
               </div>
             ))}
             {posts.length === 0 && <div style={{ color: 'var(--text-3)', fontSize: '14px' }}>No posts yet — check back soon.</div>}

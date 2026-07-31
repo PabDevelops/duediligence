@@ -3,7 +3,7 @@ import { createClient } from '@supabase/supabase-js';
 const ACHIEVEMENTS = {
   stock_explorer:    { title: 'Explorer',            description: 'Search 20+ different stocks',            icon: '🔍', rarity: 'common' },
   watchlist_builder: { title: 'Watchlist Builder',  description: 'Add 5 stocks to your watchlist',         icon: '⭐', rarity: 'common' },
-  pro_subscriber:    { title: 'Pro Member',          description: 'Upgraded to Traqcker Pro',                icon: '💎', rarity: 'uncommon' },
+  pro_subscriber:    { title: 'Pro Member',          description: 'Upgraded to Bulltrace Pro',                icon: '💎', rarity: 'uncommon' },
 };
 
 function getSupabase() {

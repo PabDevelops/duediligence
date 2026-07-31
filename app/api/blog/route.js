@@ -34,7 +34,7 @@ export async function POST(req) {
     tag: tag || 'Fundamentals',
     tickers: tickers || [],
     sentiment: sentiment || 'neutral',
-    author: author || 'Traqcker Team',
+    author: author || 'Bulltrace Team',
     content: content || [],
     content_html: contentHtml || null,
     published: published !== false,

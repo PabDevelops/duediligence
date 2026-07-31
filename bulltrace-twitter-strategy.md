@@ -1,4 +1,4 @@
-# TRAQCKER 2.0 PRODUCT HUNT LAUNCH - TWITTER STRATEGY
+# BULLTRACE 2.0 PRODUCT HUNT LAUNCH - TWITTER STRATEGY
 ## Tone: Professional but Accessible | Mix of Features + Story + Vision
 
 ---
@@ -6,7 +6,7 @@
 ## MAIN LAUNCH TWEET (Post on Product Hunt day)
 **Max impact, high engagement**
 
-We just rebuilt Traqcker from the ground up.
+We just rebuilt Bulltrace from the ground up.
 
 The problem: most stock analysis tools are either too expensive, too complicated, or designed to push trades that benefit them—not you.
 
@@ -16,7 +16,7 @@ Easy Mode for everyday investors.
 
 Launching today on Product Hunt.
 
-traqcker.com | producthunt.com/posts/traqcker
+bulltrace.app | producthunt.com/posts/bulltrace
 
 ---
 
@@ -66,7 +66,7 @@ This is day one of a bigger vision: making stock research accessible, community-
 
 Come analyze with us.
 
-traqcker.com
+bulltrace.app
 
 ---
 
@@ -75,14 +75,14 @@ traqcker.com
 **Week 1 - Build Anticipation (3-4 tweets)**
 
 **Tweet A:**
-Building in public: Traqcker 2.0 is shipping in two weeks.
+Building in public: Bulltrace 2.0 is shipping in two weeks.
 
 We've completely redesigned how you discover if a stock is worth buying. Spoiler: it's not a rabbit hole of spreadsheets anymore.
 
 Stay tuned.
 
 **Tweet B:**
-Stock of the Week voting launches with Traqcker 2.0.
+Stock of the Week voting launches with Bulltrace 2.0.
 
 Every week, one stock in focus. You vote your thesis. The community votes theirs. See alignment or divergence in real time.
 
@@ -100,14 +100,14 @@ Because it is.
 
 We spent 3 months answering that question. The answer is simpler than we expected. Launching in 10 days.
 
-traqcker.com (coming soon banner)
+bulltrace.app (coming soon banner)
 
 ---
 
 **Week 2 - Final Push (2-3 tweets)**
 
 **Tweet E:**
-5 days to Traqcker 2.0.
+5 days to Bulltrace 2.0.
 
 This started as frustration: most stock tools either cost too much or hide the signal in noise. We built what we wished existed.
 
@@ -120,16 +120,16 @@ Last 48 hours.
 
 If you've wanted to understand stocks without a PhD in finance—or without paying $200/month—this is for you.
 
-Traqcker 2.0 on Product Hunt tomorrow.
+Bulltrace 2.0 on Product Hunt tomorrow.
 
 **Tweet G (Launch Day - early morning):**
 Today's the day.
 
-Traqcker 2.0 is live on Product Hunt.
+Bulltrace 2.0 is live on Product Hunt.
 
 If you believe stock analysis should be simple, free, and community-powered—come check it out. Your vote matters.
 
-producthunt.com/posts/traqcker
+producthunt.com/posts/bulltrace
 
 ---
 
@@ -183,9 +183,9 @@ Don't overuse—max 2 per tweet, only on main tweets.
 
 ## ENGAGEMENT CHECKLIST
 
-- [ ] Monitor @Traqcker mentions during launch week
+- [ ] Monitor @Bulltrace mentions during launch week
 - [ ] Respond to Product Hunt comments within 1 hour
-- [ ] Track which tweets drive most traffic to traqcker.com
+- [ ] Track which tweets drive most traffic to bulltrace.app
 - [ ] Screenshot/celebrate wins (achievements unlocked, community votes, etc.)
 - [ ] Thank early supporters publicly
 
@@ -207,6 +207,6 @@ Even if PH launch is "done," keep momentum:
 
 - Target: 500+ Product Hunt upvotes by end of day
 - Engagement: 15%+ reply rate on threads
-- Traffic: 2-3k unique visitors to traqcker.com from PH/Twitter
+- Traffic: 2-3k unique visitors to bulltrace.app from PH/Twitter
 - Community: 50+ achievement unlocks on launch week
 - Follow growth: +200-300 followers (organic)

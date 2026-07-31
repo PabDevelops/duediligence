@@ -83,9 +83,9 @@ export default function BlogPost({ params }) {
           headline: post.title,
           description: post.description,
           datePublished: post.date,
-          author: { '@type': (!post.author || post.author === 'Traqcker Team') ? 'Organization' : 'Person', name: post.author || 'Traqcker Team' },
-          publisher: { '@type': 'Organization', name: 'Traqcker', logo: { '@type': 'ImageObject', url: 'https://traqcker.com/favicon.png' } },
-          mainEntityOfPage: { '@type': 'WebPage', '@id': `https://traqcker.com/blog/${post.slug}` },
+          author: { '@type': (!post.author || post.author === 'Bulltrace Team') ? 'Organization' : 'Person', name: post.author || 'Bulltrace Team' },
+          publisher: { '@type': 'Organization', name: 'Bulltrace', logo: { '@type': 'ImageObject', url: 'https://bulltrace.app/favicon.png' } },
+          mainEntityOfPage: { '@type': 'WebPage', '@id': `https://bulltrace.app/blog/${post.slug}` },
         }) }} />
 
         <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '16px' }}>
@@ -100,7 +100,7 @@ export default function BlogPost({ params }) {
           <div style={{ width: 28, height: 28, borderRadius: '50%', background: 'linear-gradient(135deg, #0f766e, #2563eb)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '12px', fontWeight: 800, color: '#fff', flexShrink: 0 }}>
             {(post.author || 'T').charAt(0).toUpperCase()}
           </div>
-          <span style={{ color: 'var(--text-2)', fontSize: '13px', fontWeight: 700 }}>{post.author || 'Traqcker Team'}</span>
+          <span style={{ color: 'var(--text-2)', fontSize: '13px', fontWeight: 700 }}>{post.author || 'Bulltrace Team'}</span>
         </div>
 
         <div className="blog-post-body">
@@ -134,7 +134,7 @@ export default function BlogPost({ params }) {
         <div className="glass" style={{ padding: '24px', marginTop: '40px', textAlign: 'center' }}>
           <div style={{ fontSize: '16px', fontWeight: 800, marginBottom: '6px' }}>Want to see the numbers, not just the theory?</div>
           <div style={{ color: 'var(--text-3)', fontSize: '14px', marginBottom: '16px' }}>Search thousands of global equities and get the quality score, fair value, and financial statements.</div>
-          <a href="/pricing" className="btn-primary">Start Traqcker Pro Trial →</a>
+          <a href="/pricing" className="btn-primary">Start Bulltrace Pro Trial →</a>
         </div>
 
         <div style={{ marginTop: '20px' }}>

@@ -331,7 +331,7 @@ const ScoreBox = ({ score, size = 48 }) => {
   );
 };
 
-// Half-circle speedometer for the analyst consensus, with a second needle for Traqcker's
+// Half-circle speedometer for the analyst consensus, with a second needle for Bulltrace's
 // own Quality Score overlaid on the same dial. `score` is the 1 (strong sell) to 5 (strong
 // buy) weighted average from /api/analyst-rating; `qualityScore100` is easyMode.score100
 // (0-100), linearly rescaled to the same 1-5 axis so both needles share one angle formula.
@@ -370,7 +370,7 @@ function AnalystGauge({ score, qualityScore100 }) {
         <path key={a.key} d={a.d} fill="none" stroke={a.color} strokeWidth={strokeWidth} strokeLinecap="butt" />
       ))}
       
-      {/* Traqcker Quality Score — a shorter, thinner tapered blade in brand teal */}
+      {/* Bulltrace Quality Score — a shorter, thinner tapered blade in brand teal */}
       {qualityRotation != null && (
         <g transform={`rotate(${qualityRotation} ${cx} ${cy})`} style={{ transition: 'transform 0.6s cubic-bezier(0.16, 1, 0.3, 1)' }}>
           <polygon points={`${cx - 2.5},${cy} ${cx + 2.5},${cy} ${cx},${cy - 62}`} fill="var(--ws-accent)" />
@@ -807,7 +807,7 @@ function StockPageContent({ params }) {
   if (viewGate === 'blocked') {
     return (
       <PaywallModal
-        eyebrow="TRAQCKER TERMINAL"
+        eyebrow="BULLTRACE TERMINAL"
         title="You've hit today's free limit"
         description={isSignedIn
           ? "You've viewed 5 stocks today. Upgrade to Pro for unlimited access."
@@ -1040,14 +1040,14 @@ function StockPageContent({ params }) {
                   easyMode ? (
                     <>
                       <div style={{ fontSize: '11px', color: 'var(--ws-text-3)', marginBottom: '10px' }}>
-                        No analyst coverage available. Showing Traqcker model consensus.
+                        No analyst coverage available. Showing Bulltrace model consensus.
                       </div>
                       <AnalystGauge score={easyMode.finalNote} qualityScore100={null} />
                       <div style={{ textAlign: 'center', fontSize: '20px', fontWeight: 800, color: easyMode.verdictColor, margin: '4px 0 16px' }}>
                         {easyMode.verdict}
                       </div>
                       <div style={{ borderTop: '1px solid var(--ws-border)', paddingTop: '14px', fontSize: '11px', color: 'var(--ws-text-2)', lineHeight: 1.6 }}>
-                        This automated consensus is calculated using Traqcker's quantitative quality score metrics (CBS, OPPO, GQS) and balance sheet health.
+                        This automated consensus is calculated using Bulltrace's quantitative quality score metrics (CBS, OPPO, GQS) and balance sheet health.
                       </div>
                     </>
                   ) : (
@@ -1087,7 +1087,7 @@ function StockPageContent({ params }) {
                       )}
                       {easyMode && (
                         <div style={{ textAlign: 'center', fontSize: '10px', color: 'var(--ws-text-3)', marginBottom: '16px' }}>
-                          <span style={{ color: QUALITY_NEEDLE_COLOR }}>●</span> Traqcker Quality Score ({easyMode.score100}/100)
+                          <span style={{ color: QUALITY_NEEDLE_COLOR }}>●</span> Bulltrace Quality Score ({easyMode.score100}/100)
                         </div>
                       )}
                       <div style={{ borderTop: '1px solid var(--ws-border)', paddingTop: '14px', display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', rowGap: '14px' }}>
@@ -1274,7 +1274,7 @@ function StockPageContent({ params }) {
                 );
               })()}
 
-              {/* Fair value — Traqcker's DCF estimate. Hidden entirely when the DCF can't
+              {/* Fair value — Bulltrace's DCF estimate. Hidden entirely when the DCF can't
                   run (negative/missing FCF); the Valuation tab explains why. Signed-out
                   visitors get a locked card instead of the real cheap/fair/expensive call —
                   that call is the product, not something to leak for free. */}

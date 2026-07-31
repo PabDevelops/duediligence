@@ -16,13 +16,13 @@ const USERS = [
   { clerkId: 'user_3ErDH9fUpGmm20icUaYMHyVYDvs', email: 'anuja45v@gmail.com' },
   { clerkId: 'user_3EpEymsKFMSUeQeuEnD832WRLjY', email: 'adorehandcrafted@gmail.com' },
   { clerkId: 'user_3EmwqC1Ggl0F2s8hX6ZdPiYew1Z', email: 'prodriguezrial@gmail.com' },
-  { clerkId: 'user_3EmwT8Q4EV3r1iqNWXWzv4PbKPz', email: 'media@traqcker.com' },
+  { clerkId: 'user_3EmwT8Q4EV3r1iqNWXWzv4PbKPz', email: 'media@bulltrace.app' },
 ];
 
 // Lifetime Pro accounts — after migration their subscription status is forced
 // to 'active' regardless of what (if anything) existed before, since they
 // don't renew through Stripe.
-const LIFETIME_PRO_EMAILS = ['prodriguezrial@gmail.com', 'media@traqcker.com'];
+const LIFETIME_PRO_EMAILS = ['prodriguezrial@gmail.com', 'media@bulltrace.app'];
 
 const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
@@ -34,7 +34,7 @@ if (!SUPABASE_URL || !SERVICE_ROLE_KEY) {
   throw new Error('NEXT_PUBLIC_SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY must be set');
 }
 if (!APP_URL) {
-  throw new Error('MIGRATION_APP_URL must be set explicitly, e.g. MIGRATION_APP_URL=https://traqcker.com node scripts/migrate-clerk-users.mjs');
+  throw new Error('MIGRATION_APP_URL must be set explicitly, e.g. MIGRATION_APP_URL=https://bulltrace.app node scripts/migrate-clerk-users.mjs');
 }
 
 const supabase = createClient(SUPABASE_URL, SERVICE_ROLE_KEY);

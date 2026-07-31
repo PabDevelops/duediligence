@@ -229,7 +229,7 @@ export default function WorkspaceHome() {
     setSlotRanges(prev => {
       const next = [...prev];
       next[activeSlot] = newRange;
-      try { localStorage.setItem('traqcker_slot_ranges', JSON.stringify(next)); } catch (e) {}
+      try { localStorage.setItem('bulltrace_slot_ranges', JSON.stringify(next)); } catch (e) {}
       return next;
     });
   };
@@ -238,28 +238,28 @@ export default function WorkspaceHome() {
     setSlotModes(prev => {
       const next = [...prev];
       next[activeSlot] = newMode;
-      try { localStorage.setItem('traqcker_slot_modes', JSON.stringify(next)); } catch (e) {}
+      try { localStorage.setItem('bulltrace_slot_modes', JSON.stringify(next)); } catch (e) {}
       return next;
     });
   };
 
   useEffect(() => {
     try {
-      const saved = localStorage.getItem('traqcker_widget_visibility');
+      const saved = localStorage.getItem('bulltrace_widget_visibility');
       if (saved) {
         setWidgetVisibility(prev => ({ ...prev, ...JSON.parse(saved) }));
       }
-      const savedAdvanced = localStorage.getItem('traqcker_advanced_mode');
+      const savedAdvanced = localStorage.getItem('bulltrace_advanced_mode');
       if (savedAdvanced) setAdvancedMode(savedAdvanced === 'true');
-      const savedCharts = localStorage.getItem('traqcker_chart_tickers');
+      const savedCharts = localStorage.getItem('bulltrace_chart_tickers');
       if (savedCharts) setChartTickers(JSON.parse(savedCharts));
-      const savedLayout = localStorage.getItem('traqcker_layout_mode');
+      const savedLayout = localStorage.getItem('bulltrace_layout_mode');
       if (savedLayout) setLayoutMode(savedLayout);
-      const savedSlots = localStorage.getItem('traqcker_slot_tickers');
+      const savedSlots = localStorage.getItem('bulltrace_slot_tickers');
       if (savedSlots) setSlotTickers(JSON.parse(savedSlots));
-      const savedRanges = localStorage.getItem('traqcker_slot_ranges');
+      const savedRanges = localStorage.getItem('bulltrace_slot_ranges');
       if (savedRanges) setSlotRanges(JSON.parse(savedRanges));
-      const savedModes = localStorage.getItem('traqcker_slot_modes');
+      const savedModes = localStorage.getItem('bulltrace_slot_modes');
       if (savedModes) setSlotModes(JSON.parse(savedModes));
     } catch (e) {}
   }, []);
@@ -269,20 +269,20 @@ export default function WorkspaceHome() {
   // appear/disappear live without a reload while already on Home.
   useEffect(() => {
     const handler = (e) => setAdvancedMode(e.detail);
-    window.addEventListener('traqcker-advanced-mode-changed', handler);
-    return () => window.removeEventListener('traqcker-advanced-mode-changed', handler);
+    window.addEventListener('bulltrace-advanced-mode-changed', handler);
+    return () => window.removeEventListener('bulltrace-advanced-mode-changed', handler);
   }, []);
 
   const changeLayoutMode = (mode) => {
     setLayoutMode(mode);
-    try { localStorage.setItem('traqcker_layout_mode', mode); } catch (e) {}
+    try { localStorage.setItem('bulltrace_layout_mode', mode); } catch (e) {}
   };
 
   const updateSlotTicker = (slotIdx, ticker) => {
     setSlotTickers(prev => {
       const updated = [...prev];
       updated[slotIdx] = ticker;
-      try { localStorage.setItem('traqcker_slot_tickers', JSON.stringify(updated)); } catch (e) {}
+      try { localStorage.setItem('bulltrace_slot_tickers', JSON.stringify(updated)); } catch (e) {}
       return updated;
     });
   };
@@ -296,7 +296,7 @@ export default function WorkspaceHome() {
     setWidgetVisibility(prev => {
       const updated = { ...prev, [id]: !prev[id] };
       try {
-        localStorage.setItem('traqcker_widget_visibility', JSON.stringify(updated));
+        localStorage.setItem('bulltrace_widget_visibility', JSON.stringify(updated));
       } catch (e) {}
       return updated;
     });
@@ -308,7 +308,7 @@ export default function WorkspaceHome() {
     if (!t || chartTickers.includes(t) || chartTickers.length >= MAX_CHART_TICKERS) return;
     const updated = [...chartTickers, t];
     setChartTickers(updated);
-    try { localStorage.setItem('traqcker_chart_tickers', JSON.stringify(updated)); } catch (e) {}
+    try { localStorage.setItem('bulltrace_chart_tickers', JSON.stringify(updated)); } catch (e) {}
     setNewChartTicker('');
     selectTerminalTicker(t);
   };
@@ -316,7 +316,7 @@ export default function WorkspaceHome() {
   const removeChartTicker = (ticker) => {
     const updated = chartTickers.filter(t => t !== ticker);
     setChartTickers(updated);
-    try { localStorage.setItem('traqcker_chart_tickers', JSON.stringify(updated)); } catch (e) {}
+    try { localStorage.setItem('bulltrace_chart_tickers', JSON.stringify(updated)); } catch (e) {}
   };
 
   // Responsive layout columns detector: 1 (<1024px), 2 (1024px-1600px), 3 (>1600px)
@@ -469,7 +469,7 @@ export default function WorkspaceHome() {
         .catch(() => {});
     } else {
       try {
-        const saved = localStorage.getItem('traqcker_portfolio');
+        const saved = localStorage.getItem('bulltrace_portfolio');
         if (saved) {
           setPortfolio(JSON.parse(saved));
         } else {
@@ -478,7 +478,7 @@ export default function WorkspaceHome() {
             { ticker: 'MSFT', shares: 5, avgPrice: 380.20, pie: 'Tech' },
             { ticker: 'NVDA', shares: 20, avgPrice: 450.00, pie: 'AI' }
           ];
-          localStorage.setItem('traqcker_portfolio', JSON.stringify(seed));
+          localStorage.setItem('bulltrace_portfolio', JSON.stringify(seed));
           setPortfolio(seed);
         }
       } catch (e) {}
@@ -675,7 +675,7 @@ export default function WorkspaceHome() {
 
   const savePortfolio = (newPort) => {
     setPortfolio(newPort);
-    localStorage.setItem('traqcker_portfolio', JSON.stringify(newPort));
+    localStorage.setItem('bulltrace_portfolio', JSON.stringify(newPort));
   };
 
   const handleAddTx = async (e) => {
@@ -889,7 +889,7 @@ export default function WorkspaceHome() {
                       <th className="px-[18px] py-2.5 text-right font-semibold text-ws-text-3 text-[10px]" title="Core Business Score · ROIC · Margins · Liquidity">CBS</th>
                       <th className="px-[18px] py-2.5 text-right font-semibold text-ws-text-3 text-[10px]" title="Opportunity Score · P/FCF · FCF Yield">OPPO</th>
                       <th className="px-[18px] py-2.5 text-right font-semibold text-ws-text-3 text-[10px]" title="Growth Quality Score · Revenue · R&D · SBC">GQS</th>
-                      <th className="px-[18px] py-2.5 text-right font-semibold text-ws-text-3 text-[10px]" title="Final Note · Traqcker Score · Weighted composite (CBS 45% · OPPO 30% · GQS 25% · Moat ±20%)">QUALITY</th>
+                      <th className="px-[18px] py-2.5 text-right font-semibold text-ws-text-3 text-[10px]" title="Final Note · Bulltrace Score · Weighted composite (CBS 45% · OPPO 30% · GQS 25% · Moat ±20%)">QUALITY</th>
                       <th className="px-[18px] py-2.5 text-left font-semibold text-ws-text-3 text-[10px]">ADDED</th>
                       <th className="px-[18px] py-2.5" />
                     </tr>
@@ -959,7 +959,7 @@ export default function WorkspaceHome() {
                       <th className="px-[18px] py-2.5 text-right font-semibold text-ws-text-3 text-[10px]" title="Core Business Score · ROIC · Margins · Liquidity">CBS</th>
                       <th className="px-[18px] py-2.5 text-right font-semibold text-ws-text-3 text-[10px]" title="Opportunity Score · P/FCF · FCF Yield">OPPO</th>
                       <th className="px-[18px] py-2.5 text-right font-semibold text-ws-text-3 text-[10px]" title="Growth Quality Score · Revenue · R&D · SBC">GQS</th>
-                      <th className="px-[18px] py-2.5 text-right font-semibold text-ws-text-3 text-[10px]" title="Final Note · Traqcker Score · Weighted composite (CBS 45% · OPPO 30% · GQS 25% · Moat ±20%)">QUALITY</th>
+                      <th className="px-[18px] py-2.5 text-right font-semibold text-ws-text-3 text-[10px]" title="Final Note · Bulltrace Score · Weighted composite (CBS 45% · OPPO 30% · GQS 25% · Moat ±20%)">QUALITY</th>
                       <th className="px-[18px] py-2.5" />
                     </tr>
                   </thead>
@@ -1637,7 +1637,7 @@ export default function WorkspaceHome() {
     return (
       <Card
         title="Fundamental Leaders"
-        subtitle="Top 10 highest-rated companies by Traqcker Score."
+        subtitle="Top 10 highest-rated companies by Bulltrace Score."
         rightElement={
           <Link href="/radar/leaders" style={{ fontSize: '10px', fontWeight: 700, color: 'var(--ws-accent)', textDecoration: 'none' }}>
             See Top 100 →

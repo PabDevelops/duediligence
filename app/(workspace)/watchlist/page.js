@@ -263,7 +263,7 @@ export default function WatchlistPage() {
               { h: 'CBS', title: 'Core Business Score · ROIC · Margins · Liquidity' },
               { h: 'OPPO', title: 'Opportunity Score · P/FCF · FCF Yield' },
               { h: 'GQS', title: 'Growth Quality Score · Revenue · R&D · SBC' },
-              { h: 'Quality', title: 'Final Note · Traqcker Score · Weighted composite (CBS 45% · OPPO 30% · GQS 25% · Moat ±20%)' },
+              { h: 'Quality', title: 'Final Note · Bulltrace Score · Weighted composite (CBS 45% · OPPO 30% · GQS 25% · Moat ±20%)' },
               { h: '' },
             ].map(({ h, title }) => (
               <th key={h} title={title} className={h === 'Stock' ? 'sticky-col' : ''} style={{ padding: '9px 12px', textAlign: h === 'Stock' ? 'left' : h === '1M' ? 'center' : 'right', fontWeight: 600, fontSize: '10px', color: 'var(--ws-text-3)' }}>{h}</th>
@@ -313,7 +313,7 @@ export default function WatchlistPage() {
                 <td style={{ padding: '10px 12px', textAlign: 'right', fontWeight: 600, color: easyMode ? scoreColor(easyMode.gqs) : 'var(--ws-text-3)' }}>
                   {easyMode ? Math.round(easyMode.gqs * 20) : '—'}
                 </td>
-                <td style={{ padding: '10px 12px', textAlign: 'right' }} title={easyMode ? `Traqcker Score · ${easyMode.verdict}` : 'Not enough fundamentals yet'}>
+                <td style={{ padding: '10px 12px', textAlign: 'right' }} title={easyMode ? `Bulltrace Score · ${easyMode.verdict}` : 'Not enough fundamentals yet'}>
                   {easyMode ? (
                     <div style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', justifyContent: 'flex-end', whiteSpace: 'nowrap' }}>
                       <span style={{ fontWeight: 700, color: easyMode.verdictColor }}>{easyMode.score100}</span>

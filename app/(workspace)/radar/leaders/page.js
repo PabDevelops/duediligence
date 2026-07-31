@@ -113,7 +113,7 @@ export default function LeadersPage() {
     }
   };
 
-  // Compute local Traqcker Score 100 for Spotlight details
+  // Compute local Bulltrace Score 100 for Spotlight details
   const spotlightQuality = useMemo(() => {
     if (!spotlightData) return null;
     const hasFundamentals = spotlightData.revVal != null || spotlightData.niVal != null || spotlightData.marketCap != null
@@ -182,7 +182,7 @@ export default function LeadersPage() {
             <div>
               <h1 style={{ fontSize: '24px', fontWeight: 900, margin: 0, letterSpacing: '-0.5px' }}>Fundamental Leaderboard (Top 100)</h1>
               <p style={{ fontSize: '13px', color: 'var(--ws-text-3)', margin: '6px 0 0 0', maxWidth: '640px', lineHeight: 1.5 }}>
-                Unified rankings based on institutional quality algorithms. Click column headers to sort by Traqcker Score, Core Business (CBS), Opportunity (Oppo), or Growth Quality (GQS).
+                Unified rankings based on institutional quality algorithms. Click column headers to sort by Bulltrace Score, Core Business (CBS), Opportunity (Oppo), or Growth Quality (GQS).
               </p>
             </div>
             
@@ -237,7 +237,7 @@ export default function LeadersPage() {
                       onClick={() => handleSort('score')} 
                       style={{ padding: '12px 16px', textAlign: 'right', fontWeight: 800, fontSize: '10px', color: sortKey === 'score' ? 'var(--ws-accent)' : 'var(--ws-text-3)', cursor: 'pointer', userSelect: 'none', width: '130px' }}
                     >
-                      TRAQCKER SCORE{renderSortArrow('score')}
+                      BULLTRACE SCORE{renderSortArrow('score')}
                     </th>
                     <th 
                       onClick={() => handleSort('cbs')} 

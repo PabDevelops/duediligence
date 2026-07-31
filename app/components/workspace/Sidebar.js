@@ -53,7 +53,7 @@ const NAV_ITEMS = [
 ];
 
 const DEFAULT_NAV_ORDER = NAV_ITEMS.map(item => item.id);
-const NAV_ORDER_KEY = 'traqcker_sidebar_order';
+const NAV_ORDER_KEY = 'bulltrace_sidebar_order';
 
 export default function Sidebar({ theme, onToggleTheme, collapsed = false, onToggleCollapse }) {
   const path = usePathname();
@@ -68,15 +68,15 @@ export default function Sidebar({ theme, onToggleTheme, collapsed = false, onTog
   const [advancedMode, setAdvancedMode] = useState(false);
   useEffect(() => {
     try {
-      setAdvancedMode(localStorage.getItem('traqcker_advanced_mode') === 'true');
+      setAdvancedMode(localStorage.getItem('bulltrace_advanced_mode') === 'true');
     } catch (e) {}
   }, []);
   const toggleAdvancedMode = () => {
     setAdvancedMode(prev => {
       const next = !prev;
       try {
-        localStorage.setItem('traqcker_advanced_mode', String(next));
-        window.dispatchEvent(new CustomEvent('traqcker-advanced-mode-changed', { detail: next }));
+        localStorage.setItem('bulltrace_advanced_mode', String(next));
+        window.dispatchEvent(new CustomEvent('bulltrace-advanced-mode-changed', { detail: next }));
       } catch (e) {}
       return next;
     });
@@ -153,13 +153,13 @@ export default function Sidebar({ theme, onToggleTheme, collapsed = false, onTog
           {collapsed ? (
             <img
               src={theme === 'dark' ? '/logo-icon-new-w.png' : '/logo-icon-new.png'}
-              alt="Traqcker"
+              alt="Bulltrace"
               style={{ height: '22px', width: 'auto' }}
             />
           ) : (
             <img
-              src={theme === 'dark' ? '/logo-traqcker-new-w.png' : '/logo-traqcker-new.png'}
-              alt="Traqcker"
+              src={theme === 'dark' ? '/logo-bulltrace-new-w.png' : '/logo-bulltrace-new.png'}
+              alt="Bulltrace"
               style={{ height: '16px', width: 'auto' }}
             />
           )}
@@ -302,7 +302,7 @@ export default function Sidebar({ theme, onToggleTheme, collapsed = false, onTog
             <Link href="/privacy" style={{ fontSize: '10px', color: 'var(--ws-text-3)', textDecoration: 'none' }}
               onMouseEnter={e => e.currentTarget.style.color = 'var(--ws-text-2)'}
               onMouseLeave={e => e.currentTarget.style.color = 'var(--ws-text-3)'}>Privacy</Link>
-            <a href="mailto:support@traqcker.com" style={{ fontSize: '10px', color: 'var(--ws-text-3)', textDecoration: 'none' }}
+            <a href="mailto:support@bulltrace.app" style={{ fontSize: '10px', color: 'var(--ws-text-3)', textDecoration: 'none' }}
               onMouseEnter={e => e.currentTarget.style.color = 'var(--ws-text-2)'}
               onMouseLeave={e => e.currentTarget.style.color = 'var(--ws-text-3)'}>Support</a>
           </div>

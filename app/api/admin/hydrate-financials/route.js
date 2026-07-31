@@ -7,7 +7,7 @@ import { supabase } from '../../../../lib/supabase';
 // own /api/stock for a small batch of them -- the same full SEC EDGAR + Finnhub + Form4
 // pipeline a user visiting that ticker's page would trigger on-demand, just automated for the
 // tickers nobody's browsing yet. Small batch + spaced-out delay because SEC's ~10 req/sec
-// fair-access limit is shared across ALL of Traqcker's traffic, not just this job.
+// fair-access limit is shared across ALL of Bulltrace's traffic, not just this job.
 //
 // Reads "whichever rows still have no revVal, in ticker order" on every call -- each hydrated
 // ticker naturally drops out of the next call's batch, so calling this endpoint many times
