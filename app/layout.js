@@ -49,7 +49,7 @@ export default function RootLayout({ children }) {
     <AuthProvider>
       <html lang="en" suppressHydrationWarning>
         <head suppressHydrationWarning>
-          <script dangerouslySetInnerHTML={{ __html: `(function(){try{var t=localStorage.getItem('ws_theme')||'light';document.documentElement.setAttribute('data-ws-theme',t)}catch(e){}})()` }} />
+          <script dangerouslySetInnerHTML={{ __html: `(function(){try{document.documentElement.setAttribute('data-ws-theme','dark')}catch(e){}})()` }} />
           <AdSense />
         </head>
         <body suppressHydrationWarning>

@@ -34,7 +34,6 @@ export default function WorkspaceLayout({ children }) {
   // to render the loading screen or the paywall while waiting on auth/subscription state
   // that a public route was never supposed to need.
   const isPublic = isPublicPath(path);
-  const [theme, setTheme] = useState('light');
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [scanlines, setScanlines] = useState(false);
 
@@ -68,10 +67,6 @@ export default function WorkspaceLayout({ children }) {
 
   useEffect(() => {
     const handleSettingsChanged = () => {
-      const savedTheme = localStorage.getItem('ws_theme') || 'light';
-      setTheme(savedTheme);
-      document.documentElement.setAttribute('data-ws-theme', savedTheme);
-
       const savedAccent = localStorage.getItem('ws_accent_color');
       if (savedAccent) {
         document.documentElement.style.setProperty('--ws-accent', savedAccent);
@@ -99,20 +94,12 @@ export default function WorkspaceLayout({ children }) {
     setSidebarOpen(false);
   }, [path]);
 
-  const toggleTheme = () => {
-    const nextTheme = theme === 'dark' ? 'light' : 'dark';
-    setTheme(nextTheme);
-    localStorage.setItem('ws_theme', nextTheme);
-    document.documentElement.setAttribute('data-ws-theme', nextTheme);
-  };
-
   if (access === 'checking' && !isPublic) return <LoadingScreen />;
 
-  const isDark = theme === 'dark';
   const closePaywall = () => router.push('/home');
 
   return (
-    <div className={`workspace ${theme}`} style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh', position: 'relative', '--ws-sidebar-width': sidebarCollapsed ? '68px' : '240px' }}>
+    <div className="workspace" style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh', position: 'relative', '--ws-sidebar-width': sidebarCollapsed ? '68px' : '240px' }}>
       {scanlines && (
         <div style={{
           position: 'fixed',
@@ -145,7 +132,7 @@ export default function WorkspaceLayout({ children }) {
           ☰
         </button>
         <img
-          src={isDark ? '/logo-bulltrace-new-w.png' : '/logo-bulltrace-new.png'}
+          src="/logo-bulltrace-new-w.png"
           alt="Bulltrace"
           style={{ height: '14px', width: 'auto' }}
         />
@@ -155,7 +142,7 @@ export default function WorkspaceLayout({ children }) {
       <div style={{ display: 'flex', flex: 1, minHeight: 0 }}>
         {/* SIDEBAR SLOT */}
         <div className={`ws-sidebar-slot ${sidebarOpen ? 'open' : ''}`}>
-          <Sidebar theme={theme} onToggleTheme={toggleTheme} collapsed={sidebarCollapsed} onToggleCollapse={toggleSidebarCollapse} />
+          <Sidebar collapsed={sidebarCollapsed} onToggleCollapse={toggleSidebarCollapse} />
         </div>
 
         {/* SIDEBAR BACKDROP */}

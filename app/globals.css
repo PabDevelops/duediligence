@@ -17,7 +17,7 @@
 .text-ws-text-3 { color: var(--ws-text-3); }
 .border-ws-border { border-color: var(--ws-border); }
 .bg-ws-accent { background-color: var(--ws-accent); }
-.text-ws-accent { color: var(--ws-accent); }
+.text-ws-accent { color: var(--ws-accent-text); }
 .border-ws-accent { border-color: var(--ws-accent); }
 .bg-ws-accent-dim { background-color: var(--ws-accent-dim); }
 .bg-ws-red { background-color: var(--ws-red); }
@@ -28,18 +28,19 @@
   /* Marketing theme — matches the app's own --ws-* light palette below, so
      the landing and other public pages (about, blog, pricing, privacy, terms)
      look like the same product as the workspace, not a separate dark site. */
-  --bg: #f8f9fa;
+  --bg: #F5F7F2;
   --bg-1: #ffffff;
   --bg-2: #f1f3f5;
   --bg-3: #e9ecef;
   --border: #e5e7eb;
   --border-2: #d1d5db;
-  --text: #1f2937;
+  --text: #171717;
   --text-2: #4b5563;
   --text-3: #9ca3af;
-  --accent: #059669;
-  --accent-2: #10b981;
-  --accent-dim: rgba(5, 150, 105, 0.08);
+  --accent: #C7FF38;
+  --accent-2: #C7FF38;
+  --accent-dim: rgba(199, 255, 56, 0.08);
+  --accent-text: #171717;
   --green: #059669;
   --green-dim: rgba(5, 150, 105, 0.12);
   --amber: #d97706;
@@ -47,28 +48,30 @@
   --red: #dc2626;
   --red-dim: rgba(220, 38, 38, 0.10);
   --blue: #2563eb;
-  --glow: 0 0 80px rgba(5, 150, 105, 0.15);
-  --glow-sm: 0 0 24px rgba(5, 150, 105, 0.12);
+  --glow: 0 0 80px rgba(199, 255, 56, 0.15);
+  --glow-sm: 0 0 24px rgba(199, 255, 56, 0.12);
   --radius: 16px;
   --radius-sm: 10px;
   --radius-lg: 24px;
   --font-display: 'Inter', sans-serif;
   --font-body: 'Inter', sans-serif;
 
-  /* Workspace (light) theme — scoped to .workspace, does not affect the tokens above */
-  --ws-bg: #f8f9fa;
-  --ws-bg-1: #ffffff;
-  --ws-bg-2: #f1f3f5;
-  --ws-text: #1f2937;
-  --ws-text-2: #4b5563;
-  --ws-text-3: #9ca3af;
-  --ws-border: #e5e7eb;
-  --ws-accent: #059669;
-  --ws-accent-dim: rgba(5, 150, 105, 0.08);
-  --ws-red: #ef4444;
-  --ws-red-dim: rgba(239, 68, 68, 0.08);
+  /* Workspace theme — scoped to .workspace, does not affect the tokens above.
+     Dark is the only workspace theme (no light variant, no toggle). */
+  --ws-bg: #171717;
+  --ws-bg-1: #1f1f1f;
+  --ws-bg-2: #262626;
+  --ws-text: #F5F7F2;
+  --ws-text-2: #b5b5b5;
+  --ws-text-3: #7a7a7a;
+  --ws-border: #2e2e2e;
+  --ws-accent: #C7FF38;
+  --ws-accent-dim: rgba(199, 255, 56, 0.15);
+  --ws-accent-text: #C7FF38;
+  --ws-red: #f87171;
+  --ws-red-dim: rgba(248, 113, 113, 0.15);
   --ws-amber: #f59e0b;
-  --ws-amber-dim: rgba(245, 158, 11, 0.08);
+  --ws-amber-dim: rgba(245, 158, 11, 0.15);
   --ws-radius: 12px;
   --ws-sidebar-width: 240px;
 }
@@ -85,22 +88,6 @@
      that side effect. */
   max-width: 100%;
   overflow-x: clip;
-}
-.workspace.dark,
-html[data-ws-theme="dark"] .workspace {
-  --ws-bg: #0b0d13;
-  --ws-bg-1: #111420;
-  --ws-bg-2: #191c2b;
-  --ws-text: #f3f4f6;
-  --ws-text-2: #a3aed0;
-  --ws-text-3: #5f6b8b;
-  --ws-border: #1f2538;
-  --ws-accent: #10b981;
-  --ws-accent-dim: rgba(16, 185, 129, 0.15);
-  --ws-red: #f87171;
-  --ws-red-dim: rgba(248, 113, 113, 0.15);
-  --ws-amber: #f59e0b;
-  --ws-amber-dim: rgba(245, 158, 11, 0.15);
 }
 .workspace * {
   font-family: inherit;
@@ -138,7 +125,7 @@ html, body {
 /* Unified button style */
 .btn-primary {
   background: linear-gradient(135deg, var(--accent), var(--accent-2));
-  color: #fff;
+  color: var(--accent-text);
   border: none;
   padding: 12px 28px;
   border-radius: 12px;
@@ -153,7 +140,7 @@ html, body {
 }
 .btn-primary:hover {
   opacity: 0.9;
-  box-shadow: 0 0 24px rgba(5, 150, 105, 0.35);
+  box-shadow: 0 0 24px rgba(199, 255, 56, 0.35);
 }
 .btn-secondary {
   background: rgba(15, 23, 42, 0.04);
@@ -171,8 +158,8 @@ html, body {
   display: inline-block;
 }
 .btn-secondary:hover {
-  border-color: rgba(5, 150, 105, 0.4);
-  color: var(--accent);
+  border-color: rgba(199, 255, 56, 0.4);
+  color: var(--accent-text);
 }
 
 
@@ -219,8 +206,8 @@ html, body {
   transition: border-color 0.25s, box-shadow 0.25s;
 }
 .glass:hover {
-  border-color: rgba(5, 150, 105, 0.3);
-  box-shadow: 0 0 40px rgba(5, 150, 105, 0.1), inset 0 1px 0 rgba(255,255,255,0.5);
+  border-color: rgba(199, 255, 56, 0.3);
+  box-shadow: 0 0 40px rgba(199, 255, 56, 0.1), inset 0 1px 0 rgba(255,255,255,0.5);
 }
 .glass-strong {
   background: rgba(15, 23, 42, 0.045);
@@ -251,7 +238,7 @@ html, body {
   transform: translate(-50%, -50%);
   width: 600px;
   height: 300px;
-  background: radial-gradient(ellipse, rgba(5, 150, 105, 0.1) 0%, transparent 70%);
+  background: radial-gradient(ellipse, rgba(199, 255, 56, 0.1) 0%, transparent 70%);
   pointer-events: none;
   z-index: 0;
 }
@@ -307,10 +294,10 @@ html, body {
 .topbar-search-mobile { width: 100%; font-size: 14px; padding: 7px 12px; }
 
 .topbar-discover {
-  background: rgba(5, 150, 105, 0.08);
-  border: 1px solid rgba(5, 150, 105, 0.25);
+  background: rgba(199, 255, 56, 0.08);
+  border: 1px solid rgba(199, 255, 56, 0.25);
   border-radius: 10px;
-  color: var(--accent);
+  color: var(--accent-text);
   font-family: 'Inter', sans-serif;
   font-size: 13px;
   font-weight: 600;
@@ -318,7 +305,7 @@ html, body {
   cursor: pointer;
   transition: background 0.2s;
 }
-.topbar-discover:hover { background: rgba(5, 150, 105, 0.16); }
+.topbar-discover:hover { background: rgba(199, 255, 56, 0.16); }
 
 .topbar-nav-link {
   color: var(--text-3);
@@ -329,7 +316,7 @@ html, body {
   transition: color 0.15s;
 }
 .topbar-nav-link:hover,
-.topbar-nav-link.active { color: var(--accent); }
+.topbar-nav-link.active { color: var(--accent-text); }
 .topbar-nav-link.active { font-weight: 700; }
 
 /* Suggestion dropdown */
@@ -359,14 +346,14 @@ html, body {
 }
 .suggestion-item:hover { background: var(--bg-2); }
 .suggestion-item:last-child { border-bottom: none; }
-.suggestion-ticker { color: var(--accent); font-size: 13px; font-weight: 700; min-width: 52px; flex-shrink: 0; }
+.suggestion-ticker { color: var(--accent-text); font-size: 13px; font-weight: 700; min-width: 52px; flex-shrink: 0; }
 .suggestion-name   { color: var(--text-2); font-size: 13px; flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .suggestion-exchange { color: var(--text-3); font-size: 11px; flex-shrink: 0; }
 
 /* Pro badge */
 .pro-badge {
   background: linear-gradient(135deg, var(--accent), var(--accent-2));
-  color: #fff;
+  color: var(--accent-text);
   font-size: 10px;
   font-weight: 700;
   padding: 2px 8px;
@@ -397,14 +384,14 @@ html, body {
   transition: color 0.15s;
 }
 .topbar-mobile-link:last-child { border-bottom: none; }
-.topbar-mobile-link:hover { color: var(--accent); }
-.topbar-mobile-link.active { color: var(--accent); font-weight: 700; }
+.topbar-mobile-link:hover { color: var(--accent-text); }
+.topbar-mobile-link.active { color: var(--accent-text); font-weight: 700; }
 
 /* ─────────────────────────────────────────────────────────── */
 
 ::selection {
   background: var(--accent-dim);
-  color: var(--accent);
+  color: var(--accent-text);
 }
 
 ::-webkit-scrollbar {
@@ -988,7 +975,7 @@ tr:hover td.sticky-col {
   font-weight: 700;
   background: var(--ws-accent);
   border: none;
-  color: #fff;
+  color: var(--accent-text);
   cursor: pointer;
   text-align: center;
   transition: opacity 0.20s;
@@ -1014,7 +1001,7 @@ tr:hover td.sticky-col {
 }
 .ws-btn-secondary:hover {
   border-color: var(--ws-accent);
-  color: var(--ws-accent);
+  color: var(--ws-accent-text);
 }
 
 .ws-btn-danger {

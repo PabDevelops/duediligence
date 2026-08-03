@@ -55,7 +55,7 @@ const NAV_ITEMS = [
 const DEFAULT_NAV_ORDER = NAV_ITEMS.map(item => item.id);
 const NAV_ORDER_KEY = 'bulltrace_sidebar_order';
 
-export default function Sidebar({ theme, onToggleTheme, collapsed = false, onToggleCollapse }) {
+export default function Sidebar({ collapsed = false, onToggleCollapse }) {
   const path = usePathname();
   const router = useRouter();
   const [plan, setPlan] = useState(null);
@@ -152,13 +152,13 @@ export default function Sidebar({ theme, onToggleTheme, collapsed = false, onTog
         <Link href="/home" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', textDecoration: 'none', padding: '4px 8px', marginBottom: '14px' }}>
           {collapsed ? (
             <img
-              src={theme === 'dark' ? '/logo-icon-new-w.png' : '/logo-icon-new.png'}
+              src="/logo-icon-new-w.png"
               alt="Bulltrace"
               style={{ height: '22px', width: 'auto' }}
             />
           ) : (
             <img
-              src={theme === 'dark' ? '/logo-bulltrace-new-w.png' : '/logo-bulltrace-new.png'}
+              src="/logo-bulltrace-new-w.png"
               alt="Bulltrace"
               style={{ height: '16px', width: 'auto' }}
             />
@@ -358,35 +358,9 @@ export default function Sidebar({ theme, onToggleTheme, collapsed = false, onTog
           {!collapsed && <span style={{ flex: 1, minWidth: 0 }}>Profile & Settings</span>}
         </Link>
 
-        {/* User + Theme row */}
-        <div style={{ display: 'flex', flexDirection: collapsed ? 'column' : 'row', alignItems: 'center', justifyContent: collapsed ? 'center' : 'space-between', borderTop: '1px solid var(--ws-border)', paddingTop: '12px', gap: '8px' }}>
+        {/* User row */}
+        <div style={{ display: 'flex', flexDirection: collapsed ? 'column' : 'row', alignItems: 'center', justifyContent: collapsed ? 'center' : 'flex-start', borderTop: '1px solid var(--ws-border)', paddingTop: '12px', gap: '8px' }}>
           <UserMenu variant="light" dropUp collapsed={collapsed} />
-          <button
-            onClick={onToggleTheme}
-            id="theme-toggle-btn"
-            title={collapsed ? (theme === 'dark' ? 'Switch to Light' : 'Switch to Dark') : undefined}
-            style={{
-              background: 'var(--ws-bg-2)', border: '1px solid var(--ws-border)', borderRadius: '20px',
-              padding: collapsed ? '0' : '4px 10px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px',
-              color: 'var(--ws-text)', transition: 'all 0.15s ease', outline: 'none',
-              width: collapsed ? '32px' : 'auto',
-              height: collapsed ? '32px' : 'auto',
-            }}
-            onMouseEnter={e => { e.currentTarget.style.borderColor = 'var(--ws-accent)'; e.currentTarget.style.background = 'var(--ws-bg-1)'; }}
-            onMouseLeave={e => { e.currentTarget.style.borderColor = 'var(--ws-border)'; e.currentTarget.style.background = 'var(--ws-bg-2)'; }}
-          >
-            {theme === 'dark' ? (
-              <>
-                <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/></svg>
-                {!collapsed && <span style={{ fontSize: '10px', fontWeight: 700 }}>Dark</span>}
-              </>
-            ) : (
-              <>
-                <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2"/><path d="M12 20v2"/><path d="m4.93 4.93 1.41 1.41"/><path d="m17.66 17.66 1.41 1.41"/><path d="M2 12h2"/><path d="M20 12h2"/><path d="m6.34 17.66-1.41 1.41"/><path d="m19.07 4.93-1.41 1.41"/></svg>
-                {!collapsed && <span style={{ fontSize: '10px', fontWeight: 700 }}>Light</span>}
-              </>
-            )}
-          </button>
         </div>
 
         {/* Collapse Sidebar Button */}
