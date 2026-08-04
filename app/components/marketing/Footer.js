@@ -4,10 +4,10 @@ const CONTAINER = { maxWidth: '1160px', margin: '0 auto', padding: '0 clamp(16px
 
 export default function Footer({ dict }) {
   return (
-    <footer style={{ borderTop: '1px solid var(--border)', background: '#fafafa', padding: 'clamp(40px, 6vw, 60px) clamp(16px, 5vw, 24px) clamp(56px, 8vw, 80px)' }}>
+    <footer style={{ borderTop: '1px solid var(--border)', background: 'var(--bg-1)', padding: 'clamp(40px, 6vw, 60px) clamp(16px, 5vw, 24px) clamp(56px, 8vw, 80px)' }}>
       <div style={{ ...CONTAINER, padding: 0, display: 'flex', justifyContent: 'space-between', flexWrap: 'wrap', gap: '40px' }}>
         <div style={{ maxWidth: '280px' }}>
-          <img src="/logo-bulltrace-new.png" alt="Bulltrace" style={{ height: '16px', width: 'auto', marginBottom: '16px' }} />
+          <img src={dict.logoSrc || '/logo-bulltrace-new.png'} alt="Bulltrace" style={{ height: '16px', width: 'auto', marginBottom: '16px' }} />
           <p style={{ fontSize: '12px', color: 'var(--text-3)', lineHeight: 1.5 }}>
             {dict.tagline}
           </p>

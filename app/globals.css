@@ -76,6 +76,24 @@
   --ws-sidebar-width: 240px;
 }
 
+/* Dark-by-default marketing page (currently just the homepage — see HomeView.js). Shadows
+   the same --bg/--text/--border token names the marketing :root above defines, scoped to
+   this class, so components written against those tokens (Footer, PrimaryButton, ...) go
+   dark automatically wherever this class wraps them, with no separate dark/light branch
+   and no risk to the other marketing pages that stay on the light :root values. */
+.home-dark {
+  --bg: #111111;
+  --bg-1: #1a1a1a;
+  --bg-2: #222222;
+  --bg-3: #2a2a2a;
+  --border: #2a2a2a;
+  --border-2: #383838;
+  --text: #F5F7F2;
+  --text-2: #b0b0a8;
+  --text-3: #75776d;
+  --accent-dim: rgba(199, 255, 56, 0.15);
+}
+
 .workspace {
   background: var(--ws-bg);
   color: var(--ws-text);
@@ -720,6 +738,27 @@ html, body {
     gap: 16px !important;
     flex-wrap: wrap !important;
     justify-content: center !important;
+  }
+  /* Home page redesign — stats/features/methodology teaser/pricing grids */
+  .home-stats-grid {
+    grid-template-columns: 1fr !important;
+  }
+  .home-stats-grid > div {
+    border-left: none !important;
+    border-top: 1px solid var(--border);
+  }
+  .home-stats-grid > div:first-child {
+    border-top: none !important;
+  }
+  .home-features-grid {
+    grid-template-columns: 1fr !important;
+  }
+  .method-teaser-grid {
+    grid-template-columns: 1fr 1fr !important;
+    gap: 28px !important;
+  }
+  .home-pricing-grid {
+    grid-template-columns: 1fr !important;
   }
 }
 
