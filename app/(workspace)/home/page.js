@@ -58,7 +58,7 @@ export default function WorkspaceHome() {
   const [stockDetails, setStockDetails] = useState({}); // ticker -> full stock api data
   const [txCurrency, setTxCurrency] = useState('USD');
   const [currency, setCurrency] = useState('USD');
-  const { rates: fxRates, toUSD } = useCurrencyRates();
+  const { rates: fxRates, toUSD, toUSDStable } = useCurrencyRates();
 
   useEffect(() => {
     const saved = localStorage.getItem('portfolio_currency');
@@ -284,7 +284,7 @@ export default function WorkspaceHome() {
       const p = byTicker[l.ticker] ||= { ticker: l.ticker, shares: 0, cost: 0, costUSD: 0, pie: '', costCurrency: l.costCurrency };
       p.shares += l.shares;
       p.cost += l.shares * l.costBasis;
-      p.costUSD += l.shares * toUSD(l.costBasis, l.costCurrency);
+      p.costUSD += l.shares * toUSDStable(l.costBasis, l.costCurrency);
       if (!p.pie && l.pie) p.pie = l.pie;
     });
     return Object.values(byTicker).map(p => ({
@@ -305,7 +305,7 @@ export default function WorkspaceHome() {
       const priceCurrency = stockDetails[item.ticker]?.currency || 'USD';
       const priceNative = prices[item.ticker];
       const currentPriceUSD = toUSD(priceNative, priceCurrency);
-      const avgPriceUSD = item.avgPriceUSD ?? toUSD(item.avgPrice, item.costCurrency);
+      const avgPriceUSD = item.avgPriceUSD ?? toUSDStable(item.avgPrice, item.costCurrency);
       cost += item.shares * avgPriceUSD;
       value += item.shares * (currentPriceUSD ?? avgPriceUSD);
     });
@@ -330,7 +330,7 @@ export default function WorkspaceHome() {
       const priceCurrency = stockDetails[item.ticker]?.currency || 'USD';
       const priceNative = prices[item.ticker] ?? item.avgPrice;
       const currentPriceUSD = toUSD(priceNative, priceCurrency);
-      const avgPriceUSD = item.avgPriceUSD ?? toUSD(item.avgPrice, item.costCurrency);
+      const avgPriceUSD = item.avgPriceUSD ?? toUSDStable(item.avgPrice, item.costCurrency);
       const value = item.shares * currentPriceUSD;
       const cost = item.shares * avgPriceUSD;
       const changePct = dayChanges[item.ticker];

@@ -55,7 +55,7 @@ export default function WorkspacePortfolio() {
   const [newPieName, setNewPieName] = useState('');
   const [draggedTicker, setDraggedTicker] = useState(null);
   const [dragOverPie, setDragOverPie] = useState(null);
-  const { rates, toUSD } = useCurrencyRates();
+  const { rates, toUSD, toUSDStable } = useCurrencyRates();
 
   const loadPortfolios = async () => {
     if (!isSignedIn) return;
@@ -163,7 +163,7 @@ export default function WorkspacePortfolio() {
     holdingsArray.forEach(h => {
       const p = byTicker[h.ticker] ||= { ticker: h.ticker, shares: 0, cost: 0, costNative: 0, lots: [] };
       p.shares += Number(h.shares);
-      p.cost += Number(h.shares) * toUSD(Number(h.cost_basis), h.cost_basis_currency);
+      p.cost += Number(h.shares) * toUSDStable(Number(h.cost_basis), h.cost_basis_currency);
       p.costNative += Number(h.shares) * Number(h.cost_basis); // only valid when all lots share one currency
       p.lots.push(h);
     });
