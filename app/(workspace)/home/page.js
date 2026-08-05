@@ -85,6 +85,13 @@ export default function WorkspaceHome() {
   const [movers, setMovers] = useState(null);
   const [newsFeed, setNewsFeed] = useState([]);
 
+  // Earnings dates and SEC filings for the portfolio's own tickers (not market-wide) — the
+  // "Upcoming for your holdings" row, fetched once per unique ticker set instead of once
+  // per ticker.
+  const [holdingsEarnings, setHoldingsEarnings] = useState([]);
+  const [holdingsFilings, setHoldingsFilings] = useState([]);
+  const [holdingsEventsLoading, setHoldingsEventsLoading] = useState(true);
+
   useEffect(() => {
     // Fetch watchlist from Supabase
     fetch('/api/watchlist')
@@ -168,6 +175,36 @@ export default function WorkspaceHome() {
       return [...new Set(portfolio.map(p => p.ticker))];
     }
   }, [holdings, portfolio, isSignedIn]);
+
+  // Upcoming earnings + recent SEC filings for the portfolio's own tickers. Earnings reuses
+  // the existing range-based /api/earnings endpoint (one fetch, filtered client-side) rather
+  // than a per-ticker call; filings hits SEC EDGAR's submissions feed directly per ticker via
+  // /api/holdings-filings, same pattern as the personalized /api/filings news call.
+  useEffect(() => {
+    if (activeTickers.length === 0) {
+      setHoldingsEarnings([]);
+      setHoldingsFilings([]);
+      setHoldingsEventsLoading(false);
+      return;
+    }
+    setHoldingsEventsLoading(true);
+    const tickerSet = new Set(activeTickers);
+    const today = new Date();
+    const from = today.toISOString().slice(0, 10);
+    const to = new Date(today.getTime() + 45 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10);
+
+    Promise.all([
+      fetch(`/api/earnings?from=${from}&to=${to}`).then(r => r.json()).catch(() => ({ earnings: [] })),
+      fetch(`/api/holdings-filings?tickers=${activeTickers.join(',')}`).then(r => r.json()).catch(() => ({ filings: [] })),
+    ]).then(([earningsData, filingsData]) => {
+      const filtered = (earningsData.earnings || [])
+        .filter(e => tickerSet.has(e.ticker))
+        .sort((a, b) => a.date.localeCompare(b.date));
+      setHoldingsEarnings(filtered);
+      setHoldingsFilings(filingsData.filings || []);
+      setHoldingsEventsLoading(false);
+    });
+  }, [activeTickers]);
 
   // Portfolio + watchlist tickers, deduped — the set the dashboard actually cares about.
   const trackedTickers = useMemo(() => {
@@ -1154,6 +1191,87 @@ export default function WorkspaceHome() {
     );
   };
 
+  const FORM_LABELS = { '10-K': '10-K', '10-K/A': '10-K/A', '10-Q': '10-Q', '10-Q/A': '10-Q/A', '8-K': '8-K', '8-K/A': '8-K/A', '20-F': '20-F', '20-F/A': '20-F/A', '6-K': '6-K' };
+  const EARNINGS_HOUR_LABELS = { bmo: 'Before open', amc: 'After close', dmh: 'During hours' };
+
+  const daysUntilLabel = (dateStr) => {
+    const days = Math.round((new Date(dateStr + 'T00:00:00') - new Date(new Date().toDateString())) / 86400000);
+    if (days === 0) return 'Today';
+    if (days === 1) return 'Tomorrow';
+    return `In ${days}d`;
+  };
+
+  const renderUpcomingEarnings = () => {
+    const rows = holdingsEarnings.slice(0, 5);
+    return (
+      <Card title="Upcoming Earnings" subtitle="Next reports for your holdings">
+        {activeTickers.length === 0 ? (
+          <div className="p-[30px] text-center text-ws-text-3 text-xs">Add holdings to see upcoming earnings.</div>
+        ) : holdingsEventsLoading ? (
+          <div className="p-[30px] text-center text-ws-text-3 text-xs">Loading earnings...</div>
+        ) : rows.length === 0 ? (
+          <div className="p-[30px] text-center text-ws-text-3 text-xs">No earnings scheduled in the next 45 days.</div>
+        ) : (
+          <div style={{ flex: 1, display: 'flex', flexDirection: 'column', justifyContent: rows.length > 1 ? 'space-between' : 'flex-start' }}>
+            {rows.map((e, idx) => (
+              <div key={e.ticker + e.date} onClick={() => openInNewTab(`/stock/${e.ticker}`)}
+                style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '10px', padding: '10px 16px', cursor: 'pointer', borderTop: idx === 0 ? 'none' : '1px solid var(--ws-border)' }}
+                onMouseEnter={ev => ev.currentTarget.style.background = 'var(--ws-bg-2)'}
+                onMouseLeave={ev => ev.currentTarget.style.background = 'transparent'}
+              >
+                <div style={{ minWidth: 0 }}>
+                  <div style={{ fontSize: '12px', fontWeight: 700, color: 'var(--ws-text)' }}>{e.ticker}</div>
+                  <div style={{ fontSize: '10px', color: 'var(--ws-text-3)', marginTop: '2px' }}>
+                    {new Date(e.date + 'T00:00:00').toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}
+                    {e.hour && EARNINGS_HOUR_LABELS[e.hour] ? ` · ${EARNINGS_HOUR_LABELS[e.hour]}` : ''}
+                  </div>
+                </div>
+                <span style={{ fontSize: '10px', fontWeight: 700, color: 'var(--ws-accent)', background: 'var(--ws-accent-dim)', padding: '3px 8px', borderRadius: '20px', flexShrink: 0 }}>
+                  {daysUntilLabel(e.date)}
+                </span>
+              </div>
+            ))}
+          </div>
+        )}
+      </Card>
+    );
+  };
+
+  const renderRecentFilings = () => {
+    const rows = holdingsFilings.slice(0, 5);
+    return (
+      <Card title="Recent Filings" subtitle="Latest SEC filings for your holdings">
+        {activeTickers.length === 0 ? (
+          <div className="p-[30px] text-center text-ws-text-3 text-xs">Add holdings to see recent filings.</div>
+        ) : holdingsEventsLoading ? (
+          <div className="p-[30px] text-center text-ws-text-3 text-xs">Loading filings...</div>
+        ) : rows.length === 0 ? (
+          <div className="p-[30px] text-center text-ws-text-3 text-xs">No recent filings found.</div>
+        ) : (
+          <div style={{ flex: 1, display: 'flex', flexDirection: 'column', justifyContent: rows.length > 1 ? 'space-between' : 'flex-start' }}>
+            {rows.map((f, idx) => (
+              <a key={f.ticker + f.date + f.form} href={f.url} target="_blank" rel="noopener noreferrer"
+                style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '10px', padding: '10px 16px', textDecoration: 'none', borderTop: idx === 0 ? 'none' : '1px solid var(--ws-border)' }}
+                onMouseEnter={ev => ev.currentTarget.style.background = 'var(--ws-bg-2)'}
+                onMouseLeave={ev => ev.currentTarget.style.background = 'transparent'}
+              >
+                <div style={{ minWidth: 0 }}>
+                  <div style={{ fontSize: '12px', fontWeight: 700, color: 'var(--ws-text)' }}>{f.ticker}</div>
+                  <div style={{ fontSize: '10px', color: 'var(--ws-text-3)', marginTop: '2px' }}>
+                    {new Date(f.date + 'T00:00:00').toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}
+                  </div>
+                </div>
+                <span style={{ fontSize: '10px', fontWeight: 700, color: 'var(--ws-text-2)', background: 'var(--ws-bg-2)', border: '1px solid var(--ws-border)', padding: '3px 8px', borderRadius: '6px', flexShrink: 0 }}>
+                  {FORM_LABELS[f.form] || f.form}
+                </span>
+              </a>
+            ))}
+          </div>
+        )}
+      </Card>
+    );
+  };
+
   const displayName = user?.user_metadata?.full_name?.split(' ')[0] || user?.email?.split('@')[0];
   const todayLabel = new Date().toLocaleDateString(undefined, { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
 
@@ -1201,6 +1319,15 @@ export default function WorkspaceHome() {
       }}>
         {renderWorkspace()}
         {renderHeatmap()}
+      </div>
+
+      <div className="home-main-grid" style={{
+        display: 'grid',
+        gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr',
+        gap: '20px'
+      }}>
+        {renderUpcomingEarnings()}
+        {renderRecentFilings()}
       </div>
 
       <AdSlot slot={process.env.NEXT_PUBLIC_ADSENSE_SLOT_HOME} style={{ minHeight: '90px' }} />
