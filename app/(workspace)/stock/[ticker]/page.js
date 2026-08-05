@@ -483,8 +483,14 @@ function StockPageContent({ params }) {
     fetch(`/api/filings?tickers=${ticker}`).then(r => r.json()).then(d => setNews(d.holdingsNews || [])).catch(() => {});
   }, [ticker]);
 
+  // Used to gate on `tab === 'insiders'` (only fetch once that tab was clicked) — now that
+  // every section renders continuously in one scroll instead of one panel at a time, Insiders
+  // being the last/shortest section meant it could never scroll far enough into the
+  // IntersectionObserver's trigger band to ever become the active `tab` in the first place
+  // (verified: maxScroll < insiders' un-loaded top), so the fetch never fired at all. Fetches
+  // on mount like every other data effect on this page instead.
   useEffect(() => {
-    if (tab !== 'insiders' || insiderTrades !== null) return;
+    if (insiderTrades !== null) return;
     setInsiderLoading(true);
     fetch(`/api/insider-trades?ticker=${ticker}&limit=25`)
       .then(r => r.json())
@@ -496,7 +502,7 @@ function StockPageContent({ params }) {
       .then(r => r.json())
       .then(d => setInsiderChart(d.candles || []))
       .catch(() => setInsiderChart([]));
-  }, [tab, ticker, insiderTrades]);
+  }, [ticker, insiderTrades]);
 
   // Filters apply to both the table and the summary metrics so they stay consistent.
   const filteredInsiderTrades = useMemo(() => {
@@ -643,6 +649,34 @@ function StockPageContent({ params }) {
       .then(d => setSotw(d.ticker))
       .catch(() => {});
   }, []);
+
+  // All 6 NAV sections now render continuously (see the <section id="..."> wrappers below)
+  // instead of one panel being switched on/off, so `tab` is no longer set by clicking a nav
+  // pill — it tracks whichever section is currently scrolled into view, purely to keep the
+  // nav's active-pill highlight in sync (the insiders data fetch above no longer depends on
+  // it — see the comment there for why). rootMargin trims the observed viewport to a thin
+  // band starting 20% from the top and
+  // ending 70% from the bottom, so a section only "counts" once it's crossed into the upper
+  // fifth of the screen — not the instant its top pixel appears at the very bottom edge.
+  useEffect(() => {
+    if (loading || error) return;
+    const ids = NAV.map(n => n.key);
+    const sections = ids.map(id => document.getElementById(id)).filter(Boolean);
+    if (sections.length === 0) return;
+    const observer = new IntersectionObserver(
+      (entries) => {
+        const visible = entries.filter(e => e.isIntersecting);
+        if (visible.length === 0) return;
+        // If several sections qualify at once (e.g. a short one fully on-screen alongside
+        // its neighbor), the one closest to the top of the viewport wins.
+        visible.sort((a, b) => a.boundingClientRect.top - b.boundingClientRect.top);
+        setTab(visible[0].target.id);
+      },
+      { rootMargin: '-20% 0px -70% 0px', threshold: 0 }
+    );
+    sections.forEach(el => observer.observe(el));
+    return () => observer.disconnect();
+  }, [loading, error, ticker]);
 
   const getDimScore = (dim) => sharedGetDimScore(dim, QUESTIONS, answers);
   const totalScore = () => sharedTotalScore(DIMS, QUESTIONS, answers);
@@ -994,10 +1028,12 @@ function StockPageContent({ params }) {
 
       <div style={{ padding: '0 0 40px' }}>
 
-        {/* TERMINAL TAB NAV */}
-        <div className="stock-tab-nav" style={{ display: 'flex', borderBottom: '1px solid var(--ws-border)', marginBottom: '24px', overflowX: 'auto', WebkitOverflowScrolling: 'touch' }}>
+        {/* TERMINAL TAB NAV — sticky under the 48px WorkspaceTopbar; scrolls the page to the
+            matching <section id="..."> instead of switching panels. `tab` (the active pill) is
+            now driven by the IntersectionObserver effect above, not by this click handler. */}
+        <div className="stock-tab-nav" style={{ display: 'flex', borderBottom: '1px solid var(--ws-border)', marginBottom: '24px', overflowX: 'auto', WebkitOverflowScrolling: 'touch', position: 'sticky', top: '48px', zIndex: 5, background: 'var(--ws-bg)' }}>
           {NAV.map(n => (
-            <button key={n.key} onClick={() => { setTab(n.key); window.scrollTo({ top: 0, behavior: 'smooth' }); }}
+            <button key={n.key} onClick={() => document.getElementById(n.key)?.scrollIntoView({ behavior: 'smooth', block: 'start' })}
               style={{
                 padding: '8px 20px',
                 border: 'none',
@@ -1020,7 +1056,7 @@ function StockPageContent({ params }) {
         </div>
 
         {/* OVERVIEW TAB — 2-column layout */}
-        {tab === 'overview' && (tabsLocked ? (
+        <section id="overview">{(tabsLocked ? (
           <LockedPanel
             title="Overview"
             description="Full data for this international market unlocks with a free account."
@@ -1487,10 +1523,10 @@ function StockPageContent({ params }) {
 
             </div>
           </div>
-        ))}
+        ))}</section>
 
         {/* QUALITY TAB */}
-        {tab === 'quality' && easyMode && (!isSignedIn ? (
+        <section id="quality">{easyMode && (!isSignedIn ? (
           <LockedPanel
             title="Quality Score"
             description="The full Quality Score breakdown unlocks with a free account."
@@ -1691,20 +1727,20 @@ function StockPageContent({ params }) {
       );
     })()}
   </div>
-))}
+))}</section>
 
         {/* FINANCIALS TAB */}
-        {tab === 'financials' && (tabsLocked ? (
+        <section id="financials">{(tabsLocked ? (
           <LockedPanel
             title="Financials"
             description="Full financial statements unlock with a free account."
           />
         ) : (
   <div>
-    <div style={{ display: 'flex', gap: '8px', marginBottom: '16px' }}>
+    <div style={{ display: 'flex', gap: '3px', marginBottom: '16px', background: 'var(--ws-bg-2)', border: '1px solid var(--ws-border)', borderRadius: '8px', padding: '3px' }}>
       {[['snapshot', 'SNAPSHOT'], ['income', 'INCOME'], ['balance', 'BALANCE'], ['cashflow', 'CASH FLOW']].map(([key, label]) => (
         <button key={key} onClick={() => setFinTab(key)}
-          style={{ flex: 1, padding: '10px 8px', fontSize: '13px', letterSpacing: '0.3px', background: finTab === key ? 'var(--ws-text)' : 'var(--ws-bg-1)', color: finTab === key ? 'var(--ws-bg)' : 'var(--ws-text-2)', border: finTab === key ? 'none' : '1px solid var(--ws-border)', cursor: 'pointer', fontWeight: 600 }}>
+          style={{ flex: 1, padding: '10px 8px', fontSize: '13px', letterSpacing: '0.3px', borderRadius: '6px', background: finTab === key ? 'var(--ws-accent)' : 'transparent', color: finTab === key ? 'var(--ws-bg-1)' : 'var(--ws-text-2)', border: 'none', cursor: 'pointer', fontWeight: 600 }}>
           {label}
         </button>
       ))}
@@ -2048,11 +2084,11 @@ function StockPageContent({ params }) {
       SOURCE: SEC EDGAR (XBRL) · FINNHUB · NOT INVESTMENT ADVICE
     </div>
   </div>
-))}
+))}</section>
 
         {/* VALUATION TAB — locked entirely for guests, not just blurred: the valuation
             call itself is the product. */}
-        {tab === 'dcf' && (!isSignedIn ? (
+        <section id="dcf">{(!isSignedIn ? (
           <LockedPanel
             title="Relative Valuation"
             description="The full valuation range, bull/bear scenarios and quality-weighted target multiple unlock with a free account."
@@ -2177,21 +2213,21 @@ function StockPageContent({ params }) {
               </div>
             )}
           </div>
-        ))}
+        ))}</section>
 
         {/* PROJECTION TAB — GBM random-walk price path + analytic confidence band.
             Locked entirely for guests, same reasoning as the DCF tab above. */}
-        {tab === 'projection' && (!isSignedIn ? (
+        <section id="projection">{(!isSignedIn ? (
           <LockedPanel
             title="Projections"
             description="Future price projections (Monte Carlo + confidence band) unlock with a free account."
           />
         ) : (
           <ProjectionChart ticker={ticker} data={data} fundamentalGrowth={fundamentalGrowth} price={price} currency={data.currency} />
-        ))}
+        ))}</section>
 
         {/* INSIDERS TAB — Form 3/4/5 buy/sell activity, SEC EDGAR primary / Finnhub fallback */}
-        {tab === 'insiders' && (!isSignedIn ? (
+        <section id="insiders">{(!isSignedIn ? (
           <LockedPanel
             title="Insiders"
             description="Insider activity (Form 3/4/5) unlocks with a free account."
@@ -2279,37 +2315,43 @@ function StockPageContent({ params }) {
 
                 {/* Filters */}
                 <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', marginBottom: '14px', alignItems: 'center' }}>
-                  {[
-                    { key: 'ALL', label: 'All time', state: insiderDateFilter, set: setInsiderDateFilter, val: 'ALL' },
-                    { key: '30D', label: 'Last 30 days', state: insiderDateFilter, set: setInsiderDateFilter, val: '30D' },
-                  ].map(f => (
-                    <button key={f.label} onClick={() => f.set(f.val)}
-                      style={{ padding: '6px 12px', fontSize: '10px', fontWeight: 700, letterSpacing: '0.5px', border: '1px solid var(--ws-border)', background: f.state === f.val ? 'var(--ws-text)' : 'var(--ws-bg-1)', color: f.state === f.val ? 'var(--ws-bg)' : 'var(--ws-text-2)', cursor: 'pointer' }}>
-                      {f.label}
-                    </button>
-                  ))}
+                  <div style={{ display: 'flex', gap: '3px', background: 'var(--ws-bg-2)', border: '1px solid var(--ws-border)', borderRadius: '8px', padding: '3px' }}>
+                    {[
+                      { key: 'ALL', label: 'All time', state: insiderDateFilter, set: setInsiderDateFilter, val: 'ALL' },
+                      { key: '30D', label: 'Last 30 days', state: insiderDateFilter, set: setInsiderDateFilter, val: '30D' },
+                    ].map(f => (
+                      <button key={f.label} onClick={() => f.set(f.val)}
+                        style={{ padding: '6px 12px', fontSize: '10px', fontWeight: 700, letterSpacing: '0.5px', borderRadius: '6px', border: 'none', background: f.state === f.val ? 'var(--ws-accent)' : 'transparent', color: f.state === f.val ? 'var(--ws-bg-1)' : 'var(--ws-text-2)', cursor: 'pointer' }}>
+                        {f.label}
+                      </button>
+                    ))}
+                  </div>
                   <span style={{ width: '1px', height: '16px', background: 'var(--ws-border)' }} />
-                  {[
-                    { label: 'All types', val: 'ALL' },
-                    { label: 'Buys', val: 'BUY' },
-                    { label: 'Sells', val: 'SELL' },
-                  ].map(f => (
-                    <button key={f.label} onClick={() => setInsiderTypeFilter(f.val)}
-                      style={{ padding: '6px 12px', fontSize: '10px', fontWeight: 700, letterSpacing: '0.5px', border: '1px solid var(--ws-border)', background: insiderTypeFilter === f.val ? 'var(--ws-text)' : 'var(--ws-bg-1)', color: insiderTypeFilter === f.val ? 'var(--ws-bg)' : 'var(--ws-text-2)', cursor: 'pointer' }}>
-                      {f.label}
-                    </button>
-                  ))}
+                  <div style={{ display: 'flex', gap: '3px', background: 'var(--ws-bg-2)', border: '1px solid var(--ws-border)', borderRadius: '8px', padding: '3px' }}>
+                    {[
+                      { label: 'All types', val: 'ALL' },
+                      { label: 'Buys', val: 'BUY' },
+                      { label: 'Sells', val: 'SELL' },
+                    ].map(f => (
+                      <button key={f.label} onClick={() => setInsiderTypeFilter(f.val)}
+                        style={{ padding: '6px 12px', fontSize: '10px', fontWeight: 700, letterSpacing: '0.5px', borderRadius: '6px', border: 'none', background: insiderTypeFilter === f.val ? 'var(--ws-accent)' : 'transparent', color: insiderTypeFilter === f.val ? 'var(--ws-bg-1)' : 'var(--ws-text-2)', cursor: 'pointer' }}>
+                        {f.label}
+                      </button>
+                    ))}
+                  </div>
                   <span style={{ width: '1px', height: '16px', background: 'var(--ws-border)' }} />
-                  {[
-                    { label: 'All roles', val: 'ALL' },
-                    { label: 'Only executives', val: 'EXEC' },
-                    { label: 'Owners >10%', val: 'OWNER10' },
-                  ].map(f => (
-                    <button key={f.label} onClick={() => setInsiderRoleFilter(f.val)}
-                      style={{ padding: '6px 12px', fontSize: '10px', fontWeight: 700, letterSpacing: '0.5px', border: '1px solid var(--ws-border)', background: insiderRoleFilter === f.val ? 'var(--ws-text)' : 'var(--ws-bg-1)', color: insiderRoleFilter === f.val ? 'var(--ws-bg)' : 'var(--ws-text-2)', cursor: 'pointer' }}>
-                      {f.label}
-                    </button>
-                  ))}
+                  <div style={{ display: 'flex', gap: '3px', background: 'var(--ws-bg-2)', border: '1px solid var(--ws-border)', borderRadius: '8px', padding: '3px' }}>
+                    {[
+                      { label: 'All roles', val: 'ALL' },
+                      { label: 'Only executives', val: 'EXEC' },
+                      { label: 'Owners >10%', val: 'OWNER10' },
+                    ].map(f => (
+                      <button key={f.label} onClick={() => setInsiderRoleFilter(f.val)}
+                        style={{ padding: '6px 12px', fontSize: '10px', fontWeight: 700, letterSpacing: '0.5px', borderRadius: '6px', border: 'none', background: insiderRoleFilter === f.val ? 'var(--ws-accent)' : 'transparent', color: insiderRoleFilter === f.val ? 'var(--ws-bg-1)' : 'var(--ws-text-2)', cursor: 'pointer' }}>
+                        {f.label}
+                      </button>
+                    ))}
+                  </div>
                   {selectedInsiderName && (
                     <button onClick={() => setSelectedInsiderName(null)}
                       style={{ padding: '6px 12px', fontSize: '10px', fontWeight: 700, border: '1px solid var(--ws-accent)', background: 'var(--ws-bg-1)', color: 'var(--ws-accent)', cursor: 'pointer' }}>
@@ -2391,7 +2433,7 @@ function StockPageContent({ params }) {
               SOURCE: SEC EDGAR FORM 4 (PRIMARY) · FINNHUB (FALLBACK FOR NON-SEC TICKERS) · ★ = OFFICER TITLE MATCHES CEO/CFO · GRAY LABELS (GRANT/EXERCISE/TAX WITHHOLD/GIFT) ARE NOT OPEN-MARKET TRADES · NOT INVESTMENT ADVICE
             </div>
           </div>
-        ))}
+        ))}</section>
 
       </div>
 

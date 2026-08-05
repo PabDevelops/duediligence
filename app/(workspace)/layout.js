@@ -156,8 +156,13 @@ export default function WorkspaceLayout({ children }) {
           }} />
         )}
 
-        <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', maxWidth: '100%', overflowX: 'hidden' }}>
-          <main style={{ flex: 1, maxWidth: '100%', overflowX: 'hidden' }}>{(access === 'granted' || isPublic) ? children : null}</main>
+        {/* overflow-x: clip, not hidden — hidden establishes a scroll container (per the CSS
+            overflow spec, setting only overflow-x forces the other axis to auto), which becomes
+            the nearest scrolling ancestor for any descendant's position: sticky instead of the
+            real viewport, silently breaking it. Same reasoning as .workspace's own overflow-x in
+            globals.css. clip still clamps horizontal overflow without that side effect. */}
+        <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', maxWidth: '100%', overflowX: 'clip' }}>
+          <main style={{ flex: 1, maxWidth: '100%', overflowX: 'clip' }}>{(access === 'granted' || isPublic) ? children : null}</main>
         </div>
       </div>
 
