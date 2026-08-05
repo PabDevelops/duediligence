@@ -685,10 +685,21 @@ async function fetchYahooFundamentals(ticker) {
     }
 
     let currentPrice = num(fin.currentPrice) ?? num(summary.regularMarketPreviousClose) ?? null;
-    const sharesOutstanding = num(keyStats.sharesOutstanding);
     if (summary.currency === 'GBp' && currentPrice != null) {
       currentPrice /= 100;
     }
+    // keyStats.sharesOutstanding is a Yahoo batch stat that can be narrower than the company's
+    // real total share count (verified against real data: INTR's keyStats.sharesOutstanding
+    // came back 325.77M against a ~443M diluted count in histories.sharesHistory, computed
+    // above from the same fundamentals-timeseries endpoint — silently understating marketCap,
+    // pfcf, and fcfYield below by ~26%). Prefer the statement-derived count when the two
+    // disagree by more than 15%; keyStats stays the fallback since sharesHistory is empty for
+    // some thinly-covered tickers.
+    const keyStatsShares = num(keyStats.sharesOutstanding);
+    const historyShares = histories.sharesHistory.length ? histories.sharesHistory[histories.sharesHistory.length - 1].val : null;
+    const sharesOutstanding = (keyStatsShares != null && historyShares != null && Math.abs(keyStatsShares - historyShares) / historyShares > 0.15)
+      ? historyShares
+      : (keyStatsShares ?? historyShares);
     const marketCap = reconcileMarketCap(num(summary.marketCap), currentPrice, sharesOutstanding) ?? (sharesOutstanding && currentPrice ? currentPrice * sharesOutstanding : null);
     const debtToEquity = num(fin.debtToEquity) != null ? +(num(fin.debtToEquity) / 100).toFixed(2) : d.debtToEquity;
 
@@ -1337,7 +1348,15 @@ export async function GET(request) {
         { source: 'yahoo', value: yh?.marketCap ?? null },
         { source: 'price_x_shares', value: currentPrice && sharesOutstanding ? currentPrice * sharesOutstanding : null },
       ]);
-      const eps = trustFinnhubShares ? (m.epsAnnual || m.epsTTM || null) : null;
+      // Same foreign-listing currency mismatch as marketCap/52-week range above (verified
+      // against real data: INTR's Finnhub profile reports "currency":"BRL" even though the
+      // NASDAQ-listed shares trade in USD, so epsAnnual/epsTTM come back BRL-denominated —
+      // e.g. 2.98 BRL vs. the real ~0.62 USD trailing EPS — which then inflated eps ~5x and
+      // collapsed the derived pe to a nonsensical ~1.9x against a real ~9.2x trailing P/E).
+      // Gated on the same profile-currency check; falls through to Yahoo's already
+      // currency-normalized eps when Finnhub's profile currency isn't USD.
+      const eps = trustFinnhubShares && (!fhProfile.currency || fhProfile.currency === 'USD')
+        ? (m.epsAnnual || m.epsTTM || null) : null;
       const pe = eps && currentPrice ? +(currentPrice / eps).toFixed(2) : null;
       const resolvedCurrentPrice = currentPrice ?? priorCachedData?.currentPrice ?? null;
       const high52Raw = (fhProfile.currency && fhProfile.currency !== 'USD' ? (yh?.high52 ?? null) : (m['52WeekHigh'] || yh?.high52 || null)) ?? priorCachedData?.high52 ?? null;
@@ -1361,8 +1380,14 @@ export async function GET(request) {
         // no marketCap for it either — this was the only path left to a usable number). Prior
         // cache's own last-known-good marketCap is the final fallback, same reasoning as the
         // hasSecFacts branch above: a transient Finnhub/Yahoo failure shouldn't blank a value
-        // this fetch already had.
-        marketCap: marketCap ?? yh?.marketCap ?? (currentPrice && sharesOutstanding ? currentPrice * sharesOutstanding : null) ?? priorCachedData?.marketCap ?? null,
+        // this fetch already had. yh.marketCap is itself reconciled inside fetchYahooFundamentals,
+        // but only against Yahoo's OWN keyStats.sharesOutstanding — which can silently be a
+        // narrower share count than the cross-validated one resolved above (verified against real
+        // data: INTR's keyStats.sharesOutstanding was 325.77M vs. the real ~441.49M total shares
+        // that both Finnhub and Yahoo's own summaryDetail.marketCap agreed on, understating
+        // marketCap by ~26%). Re-reconcile yh.marketCap here against the already cross-validated
+        // sharesOutstanding so a bad Yahoo-internal share count doesn't leak through.
+        marketCap: marketCap ?? reconcileMarketCap(yh?.marketCap, currentPrice, sharesOutstanding) ?? (currentPrice && sharesOutstanding ? currentPrice * sharesOutstanding : null) ?? priorCachedData?.marketCap ?? null,
         eps: eps ?? yh?.eps ?? null,
         pe: pe ?? yh?.pe ?? null,
         forwardPE: yh?.forwardPE ?? null,
