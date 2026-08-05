@@ -2,28 +2,193 @@
 import Topbar from '../../components/Topbar';
 import Footer from '../../components/marketing/Footer';
 import { PrimaryButton, SecondaryButton } from '../../components/marketing/Buttons';
-import { WindowChrome, Shot } from '../../components/WindowChrome';
+import { WindowChrome } from '../../components/WindowChrome';
 
 const MONO = "'Inter', sans-serif";
+const PANEL = '#1f1f1f';
+const PBORDER = '#2e2e2e';
+const DIM = '#8b8d82';
+const LIME = 'var(--accent)';
 
-const BENTO_SHOTS = [
-  { src: '/screenshots/stock.png', alt: 'Stock analysis page sourced directly from SEC filings', span: 2 },
-  { src: '/screenshots/portfolio.png', alt: 'Multi-currency portfolio tracker', span: 1 },
-  { src: '/screenshots/screener.png', alt: 'Quantitative stock screener', span: 1 },
-  { src: '/screenshots/watchlist.png', alt: 'Live ticker headlines and real-time prices feed', span: 2 },
+function Metric({ label, value, sub }) {
+  return (
+    <div style={{ background: PANEL, border: `1px solid ${PBORDER}`, borderRadius: '8px', padding: '10px 12px' }}>
+      <div style={{ fontSize: '9.5px', letterSpacing: '0.06em', textTransform: 'uppercase', color: DIM }}>{label}</div>
+      <div style={{ fontSize: '15px', fontWeight: 800, color: '#F5F7F2', marginTop: '4px', fontVariantNumeric: 'tabular-nums' }}>{value}</div>
+      {sub && <div style={{ fontSize: '10px', color: DIM, marginTop: '2px' }}>{sub}</div>}
+    </div>
+  );
+}
+
+// Hero mockup — compact echo of the real /home dashboard: KPI row, sparkline, holdings.
+function HeroMockup() {
+  return (
+    <div style={{ padding: '20px' }}>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '18px' }}>
+        <div>
+          <div style={{ fontSize: '10px', letterSpacing: '0.06em', textTransform: 'uppercase', color: DIM }}>Portfolio value</div>
+          <div style={{ fontSize: '26px', fontWeight: 800, color: '#F5F7F2', marginTop: '4px', fontVariantNumeric: 'tabular-nums' }}>$184,220</div>
+        </div>
+        <div style={{ textAlign: 'right' }}>
+          <div style={{ fontSize: '10px', letterSpacing: '0.06em', textTransform: 'uppercase', color: DIM }}>Since inception</div>
+          <div style={{ fontSize: '16px', fontWeight: 800, color: 'var(--green)', marginTop: '4px', fontVariantNumeric: 'tabular-nums' }}>+18.4%</div>
+        </div>
+      </div>
+      <svg viewBox="0 0 600 100" preserveAspectRatio="none" width="100%" height="100" style={{ display: 'block', marginBottom: '18px' }}>
+        <polyline points="0,80 40,74 80,78 120,64 160,68 200,52 240,58 280,40 320,46 360,28 400,34 440,18 480,24 520,10 560,16 600,4" fill="none" stroke={LIME} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
+      </svg>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '10px', marginBottom: '16px' }}>
+        <Metric label="Quality score" value="81" sub="Portfolio-weighted" />
+        <Metric label="FCF yield" value="4.6%" sub="Weighted avg" />
+        <Metric label="Positions" value="14" sub="3 currencies" />
+      </div>
+      <div style={{ border: `1px solid ${PBORDER}`, borderRadius: '8px', overflow: 'hidden' }}>
+        {[
+          { t: 'AAPL', n: 'Apple Inc.', p: '$308.91', c: '+2.14%', up: true },
+          { t: 'ASML', n: 'ASML Holding', p: '€612.40', c: '+0.87%', up: true },
+          { t: 'MELI', n: 'MercadoLibre', p: '$1,842.10', c: '-1.32%', up: false },
+        ].map((row, i) => (
+          <div key={row.t} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '9px 12px', background: PANEL, borderTop: i ? `1px solid ${PBORDER}` : 'none' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '10px', minWidth: 0 }}>
+              <span style={{ color: '#F5F7F2', fontSize: '12px', fontWeight: 700, width: '44px', flexShrink: 0 }}>{row.t}</span>
+              <span style={{ color: DIM, fontSize: '11px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{row.n}</span>
+            </div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexShrink: 0 }}>
+              <span style={{ color: '#F5F7F2', fontSize: '12px', fontVariantNumeric: 'tabular-nums' }}>{row.p}</span>
+              <span style={{ color: row.up ? 'var(--green)' : '#f87171', fontSize: '11px', fontWeight: 700, fontVariantNumeric: 'tabular-nums', width: '52px', textAlign: 'right' }}>{row.c}</span>
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+// Direct SEC Financials — a metric traced back to its exact source filing row.
+function SecFilingMockup() {
+  return (
+    <div style={{ padding: '18px' }}>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '14px' }}>
+        <div>
+          <div style={{ fontSize: '9.5px', letterSpacing: '0.06em', textTransform: 'uppercase', color: DIM }}>Gross margin</div>
+          <div style={{ fontSize: '22px', fontWeight: 800, color: '#F5F7F2', marginTop: '4px', fontVariantNumeric: 'tabular-nums' }}>43.2%</div>
+        </div>
+        <div style={{ fontSize: '11px', fontWeight: 700, color: 'var(--green)' }}>+1.4pp YoY</div>
+      </div>
+      <div style={{ background: PANEL, border: `1px solid ${PBORDER}`, borderRadius: '8px', padding: '10px 12px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '10px' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', minWidth: 0 }}>
+          <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: LIME, flexShrink: 0 }} />
+          <span style={{ fontSize: '11px', color: DIM, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>SEC 10-K · Item 8 · Income Statement</span>
+        </div>
+        <span style={{ fontSize: '10px', fontWeight: 700, color: LIME, flexShrink: 0 }}>View source →</span>
+      </div>
+    </div>
+  );
+}
+
+// Multi-Currency Tracker — positions and P/L normalized across exchanges.
+function CurrencyTrackerMockup() {
+  const rows = [
+    { t: 'AAPL', cur: 'USD', v: '$42,180', c: '+8.2%', up: true },
+    { t: 'ASML', cur: 'EUR', v: '€18,940', c: '+3.1%', up: true },
+    { t: 'RIO',  cur: 'GBP', v: '£9,410',  c: '-2.4%', up: false },
+  ];
+  return (
+    <div style={{ padding: '18px' }}>
+      <div style={{ fontSize: '9.5px', letterSpacing: '0.06em', textTransform: 'uppercase', color: DIM, marginBottom: '10px' }}>Positions · reporting currency USD</div>
+      <div style={{ border: `1px solid ${PBORDER}`, borderRadius: '8px', overflow: 'hidden' }}>
+        {rows.map((row, i) => (
+          <div key={row.t} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px 12px', background: PANEL, borderTop: i ? `1px solid ${PBORDER}` : 'none' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <span style={{ color: '#F5F7F2', fontSize: '12px', fontWeight: 700 }}>{row.t}</span>
+              <span style={{ fontSize: '9px', fontWeight: 700, color: DIM, background: 'rgba(245,247,242,0.06)', borderRadius: '4px', padding: '2px 5px' }}>{row.cur}</span>
+            </div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+              <span style={{ color: '#F5F7F2', fontSize: '12px', fontVariantNumeric: 'tabular-nums' }}>{row.v}</span>
+              <span style={{ color: row.up ? 'var(--green)' : '#f87171', fontSize: '11px', fontWeight: 700, width: '46px', textAlign: 'right' }}>{row.c}</span>
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+// Quantitative Universe Filter — filter chips driving a ranked result set.
+function ScreenerMockup() {
+  return (
+    <div style={{ padding: '18px' }}>
+      <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px', marginBottom: '12px' }}>
+        {['FCF yield > 5%', 'Debt/Equity < 1', 'Margin > 20%'].map(chip => (
+          <span key={chip} style={{ fontSize: '10px', fontWeight: 600, color: LIME, background: 'rgba(199,255,56,0.1)', border: '1px solid rgba(199,255,56,0.25)', borderRadius: '20px', padding: '4px 10px' }}>{chip}</span>
+        ))}
+      </div>
+      <div style={{ border: `1px solid ${PBORDER}`, borderRadius: '8px', overflow: 'hidden' }}>
+        {[
+          { t: 'NVR', s: 92 },
+          { t: 'FICO', s: 89 },
+          { t: 'MOAT', s: 85 },
+        ].map((row, i) => (
+          <div key={row.t} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '9px 12px', background: PANEL, borderTop: i ? `1px solid ${PBORDER}` : 'none' }}>
+            <span style={{ color: '#F5F7F2', fontSize: '12px', fontWeight: 700 }}>{row.t}</span>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <div style={{ display: 'flex', gap: '2px' }}>
+                {Array.from({ length: 10 }, (_, j) => (
+                  <span key={j} style={{ width: '8px', height: '5px', borderRadius: '1px', background: j < row.s / 10 ? LIME : PBORDER, display: 'inline-block' }} />
+                ))}
+              </div>
+              <span style={{ color: LIME, fontSize: '12px', fontWeight: 800, fontVariantNumeric: 'tabular-nums', width: '20px', textAlign: 'right' }}>{row.s}</span>
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+// Global Filing & Price Feed — live alerts the moment filings land.
+function LiveFeedMockup() {
+  const rows = [
+    { t: 'TSM', label: '8-K filed', ago: '2m ago' },
+    { t: 'NOVO-B', label: 'Price alert · -3.1%', ago: '11m ago' },
+    { t: 'ASML', label: '10-Q filed', ago: '38m ago' },
+  ];
+  return (
+    <div style={{ padding: '18px' }}>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '1px', border: `1px solid ${PBORDER}`, borderRadius: '8px', overflow: 'hidden' }}>
+        {rows.map((row, i) => (
+          <div key={row.t + i} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px 12px', background: PANEL, borderTop: i ? `1px solid ${PBORDER}` : 'none' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', minWidth: 0 }}>
+              <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: LIME, flexShrink: 0 }} />
+              <span style={{ color: '#F5F7F2', fontSize: '12px', fontWeight: 700, flexShrink: 0 }}>{row.t}</span>
+              <span style={{ color: DIM, fontSize: '11px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{row.label}</span>
+            </div>
+            <span style={{ color: DIM, fontSize: '10px', flexShrink: 0 }}>{row.ago}</span>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+const BENTO_MOCKUPS = [
+  { Mockup: SecFilingMockup, title: 'terminal.bulltrace.app/stock/AAPL — Financials', span: 2 },
+  { Mockup: CurrencyTrackerMockup, title: 'terminal.bulltrace.app/portfolio', span: 1 },
+  { Mockup: ScreenerMockup, title: 'terminal.bulltrace.app/screener', span: 1 },
+  { Mockup: LiveFeedMockup, title: 'terminal.bulltrace.app/watchlist — Live feed', span: 2 },
 ];
 
 export default function AboutView({ dict }) {
   const t = dict.about;
-  const bentoTiles = t.bento.tiles.map((tile, i) => ({ ...tile, ...BENTO_SHOTS[i] }));
+  const bentoTiles = t.bento.tiles.map((tile, i) => ({ ...tile, ...BENTO_MOCKUPS[i] }));
 
   return (
-    <div style={{ background: '#ffffff', minHeight: '100vh', color: 'var(--text)', fontFamily: 'Inter, sans-serif' }}>
+    <div style={{ background: 'var(--bg)', minHeight: '100vh', color: 'var(--text)', fontFamily: 'Inter, sans-serif' }}>
       <Topbar />
 
-      {/* HERO — light, matches the rest of the marketing site */}
+      {/* HERO */}
       <section style={{
-        background: '#ffffff',
+        background: 'var(--bg)',
         borderBottom: '1px solid var(--border)',
         padding: '90px 24px 100px',
         position: 'relative',
@@ -37,13 +202,13 @@ export default function AboutView({ dict }) {
           width: '70%',
           height: '60%',
           background: 'radial-gradient(circle, var(--accent) 0%, transparent 70%)',
-          opacity: 0.08,
+          opacity: 0.1,
           filter: 'blur(60px)',
           pointerEvents: 'none'
         }} />
 
         <div style={{ maxWidth: '820px', margin: '0 auto', textAlign: 'center', position: 'relative', zIndex: 1 }}>
-          <div style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', background: 'var(--accent-dim)', border: '1px solid rgba(15,118,110,0.35)', padding: '4px 14px', borderRadius: '20px', marginBottom: '24px' }}>
+          <div style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', background: 'var(--accent-dim)', border: '1px solid rgba(199,255,56,0.3)', padding: '4px 14px', borderRadius: '20px', marginBottom: '24px' }}>
             <span style={{ width: 6, height: 6, borderRadius: '50%', background: 'var(--accent)', display: 'inline-block' }} />
             <span style={{ color: 'var(--accent)', fontSize: '11px', letterSpacing: '2px', fontWeight: 700 }}>{t.hero.eyebrow}</span>
           </div>
@@ -65,7 +230,7 @@ export default function AboutView({ dict }) {
 
         <div style={{ maxWidth: '900px', margin: '56px auto 0', position: 'relative', zIndex: 1 }}>
           <WindowChrome title="terminal.bulltrace.app/home — Market Overview Dashboard" maxWidth="900px">
-            <Shot src="/screenshots/home.png" alt="Bulltrace home dashboard" />
+            <HeroMockup />
           </WindowChrome>
         </div>
       </section>
@@ -84,7 +249,7 @@ export default function AboutView({ dict }) {
               border: '1px solid var(--border)',
               borderRadius: '16px',
               padding: '28px',
-              background: '#fafafa',
+              background: 'var(--bg-1)',
               display: 'flex',
               flexDirection: 'column',
               gap: '20px',
@@ -100,8 +265,8 @@ export default function AboutView({ dict }) {
                 <h3 style={{ fontSize: '19px', fontWeight: 800, color: 'var(--text)', marginBottom: '8px' }}>{tile.title}</h3>
                 <p style={{ fontSize: '13px', color: 'var(--text-2)', lineHeight: 1.6 }}>{tile.desc}</p>
               </div>
-              <WindowChrome title={tile.alt}>
-                <Shot src={tile.src} alt={tile.alt} />
+              <WindowChrome title={tile.title}>
+                <tile.Mockup />
               </WindowChrome>
             </div>
           ))}
@@ -109,7 +274,7 @@ export default function AboutView({ dict }) {
       </section>
 
       {/* FOUNDER'S LETTER / MISSION */}
-      <section style={{ borderTop: '1px solid var(--border)', borderBottom: '1px solid var(--border)', background: '#fafafa', padding: '80px 24px' }}>
+      <section style={{ borderTop: '1px solid var(--border)', borderBottom: '1px solid var(--border)', background: 'var(--bg-1)', padding: '80px 24px' }}>
         <div style={{ maxWidth: '820px', margin: '0 auto' }}>
           <div style={{ fontSize: '28px', fontWeight: 800, letterSpacing: '-1px', color: 'var(--text)', marginBottom: '32px', borderLeft: '3px solid var(--accent)', paddingLeft: '24px', lineHeight: 1.3 }}>
             &ldquo;{t.letter.quote}&rdquo;
@@ -165,7 +330,7 @@ export default function AboutView({ dict }) {
       </section>
 
       {/* TL;DR — short, citable, self-contained summary */}
-      <section style={{ borderTop: '1px solid var(--border)', background: '#fafafa', padding: '56px 24px' }}>
+      <section style={{ borderTop: '1px solid var(--border)', background: 'var(--bg-1)', padding: '56px 24px' }}>
         <div style={{ maxWidth: '820px', margin: '0 auto' }}>
           <h2 style={{ fontSize: '13px', fontWeight: 800, letterSpacing: '1.5px', color: 'var(--accent)', marginBottom: '18px', textTransform: 'uppercase' }}>{t.tldr.title}</h2>
           <ul style={{ margin: 0, padding: '0 0 0 20px', color: 'var(--text-2)', fontSize: '14px', lineHeight: 1.9 }}>
@@ -175,10 +340,10 @@ export default function AboutView({ dict }) {
       </section>
 
       {/* TEAM SECTION */}
-      <section style={{ borderTop: '1px solid var(--border)', background: '#fafafa', padding: '80px 24px' }}>
+      <section style={{ borderTop: '1px solid var(--border)', background: 'var(--bg-1)', padding: '80px 24px' }}>
         <div style={{ maxWidth: '820px', margin: '0 auto' }}>
           <div style={{ color: 'var(--text-3)', fontSize: '11px', letterSpacing: '2px', fontWeight: 700, marginBottom: '28px' }}>{t.team.eyebrow}</div>
-          <div style={{ border: '1px solid var(--border)', borderRadius: '16px', padding: '32px', display: 'flex', alignItems: 'center', gap: '28px', background: '#ffffff' }}>
+          <div style={{ border: '1px solid var(--border)', borderRadius: '16px', padding: '32px', display: 'flex', alignItems: 'center', gap: '28px', background: 'var(--bg)' }}>
             <img src="/pablo2.jpg" alt={t.team.name} style={{ width: '88px', height: '88px', objectFit: 'cover', borderRadius: '50%', flexShrink: 0, border: '2px solid var(--border)' }} />
             <div>
               <div style={{ fontSize: '20px', fontWeight: 800, marginBottom: '4px', color: 'var(--text)' }}>{t.team.name}</div>
@@ -197,7 +362,7 @@ export default function AboutView({ dict }) {
 
       {/* FINAL CTA */}
       <section style={{ maxWidth: '820px', margin: '0 auto', padding: '80px 24px 100px' }}>
-        <div style={{ border: '1px solid var(--border)', borderRadius: '24px', padding: '48px 40px', textAlign: 'center', background: '#fafafa' }}>
+        <div style={{ border: '1px solid var(--border)', borderRadius: '24px', padding: '48px 40px', textAlign: 'center', background: 'var(--bg-1)' }}>
           <h2 style={{ fontSize: '28px', fontWeight: 900, letterSpacing: '-0.5px', marginBottom: '12px', color: 'var(--text)' }}>
             {t.finalCta.title}
           </h2>

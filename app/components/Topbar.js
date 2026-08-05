@@ -32,7 +32,7 @@ export default function Topbar() {
       <div className="topbar">
         {/* Logo */}
         <a href="/" className="topbar-logo" style={{ display: 'flex', alignItems: 'center' }}>
-          <img src="/logo-bulltrace-new.png" alt="Bulltrace" style={{ height: '18px', width: 'auto' }} />
+          <img src="/logo-bulltrace-new-w.png" alt="Bulltrace" style={{ height: '18px', width: 'auto' }} />
         </a>
 
         {/* Desktop nav — informational only; the terminal itself is behind sign-up + subscription */}

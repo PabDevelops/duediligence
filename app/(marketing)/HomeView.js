@@ -85,7 +85,7 @@ export default function HomeView({ dict }) {
   const eyebrow = { fontSize: '12px', fontWeight: 700, letterSpacing: '0.12em', textTransform: 'uppercase', color: 'var(--text-3)' };
 
   return (
-    <div className="home-dark" style={{ background: 'var(--bg)', minHeight: '100vh', color: 'var(--text)', fontFamily: 'Inter, sans-serif' }}>
+    <div style={{ background: 'var(--bg)', minHeight: '100vh', color: 'var(--text)', fontFamily: 'Inter, sans-serif' }}>
 
       {/* HEADER */}
       <header style={{ position: 'sticky', top: 0, zIndex: 50, background: 'rgba(17,17,17,0.85)', backdropFilter: 'blur(10px)', borderBottom: '1px solid var(--border)' }}>
@@ -279,7 +279,7 @@ export default function HomeView({ dict }) {
         </div>
       </section>
 
-      <Footer dict={{ ...t.footer, logoSrc: '/logo-bulltrace-new-w.png' }} />
+      <Footer dict={t.footer} />
 
     </div>
   );

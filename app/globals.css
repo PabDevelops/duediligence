@@ -25,21 +25,21 @@
 .border-ws-red { border-color: var(--ws-red); }
 
 :root {
-  /* Marketing theme — matches the app's own --ws-* light palette below, so
-     the landing and other public pages (about, blog, pricing, privacy, terms)
-     look like the same product as the workspace, not a separate dark site. */
-  --bg: #F5F7F2;
-  --bg-1: #ffffff;
-  --bg-2: #f1f3f5;
-  --bg-3: #e9ecef;
-  --border: #e5e7eb;
-  --border-2: #d1d5db;
-  --text: #171717;
-  --text-2: #4b5563;
-  --text-3: #9ca3af;
+  /* Marketing theme — dark by default (Graphite/Acid Lime/Cloud White), matching
+     the workspace app so the landing and other public pages (about, blog, pricing,
+     privacy, terms) look like the same product, not a separate light site. */
+  --bg: #111111;
+  --bg-1: #1a1a1a;
+  --bg-2: #222222;
+  --bg-3: #2a2a2a;
+  --border: #2a2a2a;
+  --border-2: #383838;
+  --text: #F5F7F2;
+  --text-2: #b0b0a8;
+  --text-3: #75776d;
   --accent: #C7FF38;
   --accent-2: #C7FF38;
-  --accent-dim: rgba(199, 255, 56, 0.08);
+  --accent-dim: rgba(199, 255, 56, 0.15);
   --accent-text: #171717;
   --green: #059669;
   --green-dim: rgba(5, 150, 105, 0.12);
@@ -74,24 +74,6 @@
   --ws-amber-dim: rgba(245, 158, 11, 0.15);
   --ws-radius: 12px;
   --ws-sidebar-width: 240px;
-}
-
-/* Dark-by-default marketing page (currently just the homepage — see HomeView.js). Shadows
-   the same --bg/--text/--border token names the marketing :root above defines, scoped to
-   this class, so components written against those tokens (Footer, PrimaryButton, ...) go
-   dark automatically wherever this class wraps them, with no separate dark/light branch
-   and no risk to the other marketing pages that stay on the light :root values. */
-.home-dark {
-  --bg: #111111;
-  --bg-1: #1a1a1a;
-  --bg-2: #222222;
-  --bg-3: #2a2a2a;
-  --border: #2a2a2a;
-  --border-2: #383838;
-  --text: #F5F7F2;
-  --text-2: #b0b0a8;
-  --text-3: #75776d;
-  --accent-dim: rgba(199, 255, 56, 0.15);
 }
 
 .workspace {
@@ -161,9 +143,9 @@ html, body {
   box-shadow: 0 0 24px rgba(199, 255, 56, 0.35);
 }
 .btn-secondary {
-  background: rgba(15, 23, 42, 0.04);
+  background: rgba(245, 247, 242, 0.05);
   color: var(--text-2);
-  border: 1px solid rgba(15, 23, 42, 0.1);
+  border: 1px solid rgba(245, 247, 242, 0.12);
   padding: 12px 28px;
   border-radius: 12px;
   font-family: 'Inter', sans-serif;
@@ -177,7 +159,7 @@ html, body {
 }
 .btn-secondary:hover {
   border-color: rgba(199, 255, 56, 0.4);
-  color: var(--accent-text);
+  color: var(--accent);
 }
 
 
@@ -216,24 +198,24 @@ html, body {
 
 /* Glass card — landing only */
 .glass {
-  background: rgba(15, 23, 42, 0.03);
+  background: rgba(245, 247, 242, 0.04);
   backdrop-filter: blur(24px);
   -webkit-backdrop-filter: blur(24px);
-  border: 1px solid rgba(15, 23, 42, 0.08);
+  border: 1px solid rgba(245, 247, 242, 0.08);
   border-radius: 20px;
   transition: border-color 0.25s, box-shadow 0.25s;
 }
 .glass:hover {
   border-color: rgba(199, 255, 56, 0.3);
-  box-shadow: 0 0 40px rgba(199, 255, 56, 0.1), inset 0 1px 0 rgba(255,255,255,0.5);
+  box-shadow: 0 0 40px rgba(199, 255, 56, 0.1), inset 0 1px 0 rgba(245,247,242,0.06);
 }
 .glass-strong {
-  background: rgba(15, 23, 42, 0.045);
+  background: rgba(245, 247, 242, 0.06);
   backdrop-filter: blur(40px);
   -webkit-backdrop-filter: blur(40px);
-  border: 1px solid rgba(15, 23, 42, 0.1);
+  border: 1px solid rgba(245, 247, 242, 0.1);
   border-radius: 20px;
-  box-shadow: inset 0 1px 0 rgba(255,255,255,0.5);
+  box-shadow: inset 0 1px 0 rgba(245,247,242,0.06);
 }
 
 /* Gradient text utility */
@@ -275,7 +257,7 @@ html, body {
   justify-content: space-between;
   position: sticky;
   top: 0;
-  background: rgba(255,255,255,0.85);
+  background: rgba(17,17,17,0.85);
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
   z-index: 10;
@@ -296,7 +278,7 @@ html, body {
 }
 
 .topbar-search {
-  background: rgba(15, 23, 42, 0.04);
+  background: rgba(245, 247, 242, 0.06);
   border: 1px solid var(--border);
   border-radius: 10px;
   color: var(--text);
@@ -315,7 +297,7 @@ html, body {
   background: rgba(199, 255, 56, 0.08);
   border: 1px solid rgba(199, 255, 56, 0.25);
   border-radius: 10px;
-  color: var(--accent-text);
+  color: var(--accent);
   font-family: 'Inter', sans-serif;
   font-size: 13px;
   font-weight: 600;
@@ -334,7 +316,7 @@ html, body {
   transition: color 0.15s;
 }
 .topbar-nav-link:hover,
-.topbar-nav-link.active { color: var(--accent-text); }
+.topbar-nav-link.active { color: var(--accent); }
 .topbar-nav-link.active { font-weight: 700; }
 
 /* Suggestion dropdown */
@@ -364,7 +346,7 @@ html, body {
 }
 .suggestion-item:hover { background: var(--bg-2); }
 .suggestion-item:last-child { border-bottom: none; }
-.suggestion-ticker { color: var(--accent-text); font-size: 13px; font-weight: 700; min-width: 52px; flex-shrink: 0; }
+.suggestion-ticker { color: var(--accent); font-size: 13px; font-weight: 700; min-width: 52px; flex-shrink: 0; }
 .suggestion-name   { color: var(--text-2); font-size: 13px; flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .suggestion-exchange { color: var(--text-3); font-size: 11px; flex-shrink: 0; }
 
@@ -383,7 +365,7 @@ html, body {
 .topbar-mobile-menu {
   display: flex;
   flex-direction: column;
-  background: rgba(255,255,255,0.95);
+  background: rgba(17,17,17,0.95);
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
   border-bottom: 1px solid var(--border);
@@ -402,14 +384,14 @@ html, body {
   transition: color 0.15s;
 }
 .topbar-mobile-link:last-child { border-bottom: none; }
-.topbar-mobile-link:hover { color: var(--accent-text); }
-.topbar-mobile-link.active { color: var(--accent-text); font-weight: 700; }
+.topbar-mobile-link:hover { color: var(--accent); }
+.topbar-mobile-link.active { color: var(--accent); font-weight: 700; }
 
 /* ─────────────────────────────────────────────────────────── */
 
 ::selection {
   background: var(--accent-dim);
-  color: var(--accent-text);
+  color: var(--accent);
 }
 
 ::-webkit-scrollbar {

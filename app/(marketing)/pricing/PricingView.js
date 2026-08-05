@@ -41,8 +41,8 @@ export default function PricingView({ dict }) {
   const plans = [freePlan, ...proPlans];
 
   return (
-    <div style={{ background: '#ffffff', minHeight: '100vh', color: 'var(--text)', fontFamily: 'Inter, sans-serif', position: 'relative', overflow: 'hidden' }}>
-      <div style={{ position: 'absolute', top: '80px', left: '20%', width: '600px', height: '400px', background: 'radial-gradient(ellipse, rgba(15,118,110,0.08) 0%, transparent 70%)', pointerEvents: 'none', zIndex: 0 }} />
+    <div style={{ background: 'var(--bg)', minHeight: '100vh', color: 'var(--text)', fontFamily: 'Inter, sans-serif', position: 'relative', overflow: 'hidden' }}>
+      <div style={{ position: 'absolute', top: '80px', left: '20%', width: '600px', height: '400px', background: 'radial-gradient(ellipse, rgba(199,255,56,0.08) 0%, transparent 70%)', pointerEvents: 'none', zIndex: 0 }} />
       <Topbar />
 
       <div style={{ maxWidth: '1100px', margin: '0 auto', padding: '56px 20px 80px', position: 'relative', zIndex: 1 }}>
@@ -62,7 +62,7 @@ export default function PricingView({ dict }) {
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: '20px', maxWidth: '980px', margin: '0 auto' }}>
           {plans.map(plan => (
             <div key={plan.id} style={{
-              background: plan.highlight ? 'rgba(15,118,110,0.06)' : '#ffffff',
+              background: plan.highlight ? 'rgba(199,255,56,0.06)' : 'var(--bg-1)',
               border: plan.highlight ? '1.5px solid var(--accent)' : '1px solid var(--border)',
               padding: '28px',
               position: 'relative',
@@ -72,7 +72,7 @@ export default function PricingView({ dict }) {
               {plan.highlight && (
                 <div style={{
                   position: 'absolute', top: '-13px', right: '20px',
-                  background: 'var(--accent)', color: '#fff', fontSize: '11px', fontWeight: 800,
+                  background: 'var(--accent)', color: 'var(--accent-text)', fontSize: '11px', fontWeight: 800,
                   padding: '4px 14px', fontFamily: 'Inter, sans-serif',
                 }}>
                   {t.badge}
@@ -98,7 +98,7 @@ export default function PricingView({ dict }) {
                   fontWeight: 700,
                   fontFamily: 'Inter, sans-serif',
                   background: plan.highlight ? 'var(--accent)' : 'transparent',
-                  color: plan.highlight ? '#fff' : 'var(--text)',
+                  color: plan.highlight ? 'var(--accent-text)' : 'var(--text)',
                   border: plan.highlight ? 'none' : '1px solid var(--text)',
                   borderRadius: 0,
                   cursor: 'pointer',
