@@ -503,7 +503,7 @@ export default function WorkspaceHome() {
         }
       >
         {heatmapTab === 'holdings' ? (
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(90px, 1fr))', gap: '6px', padding: '16px', alignContent: 'start' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(90px, 1fr))', gridAutoRows: '1fr', gap: '8px', padding: '16px', flex: 1, alignContent: 'stretch' }}>
             {heatTiles.map(t => {
               const c = t.changePct;
               const positive = c != null && c >= 0;
@@ -528,7 +528,7 @@ export default function WorkspaceHome() {
             })}
           </div>
         ) : (
-          <div style={{ display: 'flex', gap: '10px', overflowX: 'auto', padding: '16px' }}>
+          <div style={{ display: 'flex', gap: '10px', overflowX: 'auto', padding: '16px', flex: 1, alignItems: 'center' }}>
             {sectorRows.map(row => {
               const positive = row.returnPct >= 0;
               return (
@@ -1113,14 +1113,18 @@ export default function WorkspaceHome() {
     );
     return (
       <Card title="Top Movers" subtitle="Today">
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr' }}>
-          <div style={{ padding: '16px', borderRight: '1px solid var(--ws-border)' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', flex: 1, minHeight: 0 }}>
+          <div style={{ padding: '16px', borderRight: '1px solid var(--ws-border)', display: 'flex', flexDirection: 'column' }}>
             <div style={{ fontSize: '10px', fontWeight: 700, color: '#10b981', textTransform: 'uppercase', marginBottom: '8px' }}>Gainers</div>
-            {gainers.length === 0 ? <div style={{ fontSize: '11px', color: 'var(--ws-text-3)' }}>—</div> : gainers.map(s => renderRow(s, '#10b981'))}
+            <div style={{ flex: 1, display: 'flex', flexDirection: 'column', justifyContent: gainers.length > 1 ? 'space-between' : 'flex-start' }}>
+              {gainers.length === 0 ? <div style={{ fontSize: '11px', color: 'var(--ws-text-3)' }}>—</div> : gainers.map(s => renderRow(s, '#10b981'))}
+            </div>
           </div>
-          <div style={{ padding: '16px' }}>
+          <div style={{ padding: '16px', display: 'flex', flexDirection: 'column' }}>
             <div style={{ fontSize: '10px', fontWeight: 700, color: 'var(--ws-red)', textTransform: 'uppercase', marginBottom: '8px' }}>Losers</div>
-            {losers.length === 0 ? <div style={{ fontSize: '11px', color: 'var(--ws-text-3)' }}>—</div> : losers.map(s => renderRow(s, 'var(--ws-red)'))}
+            <div style={{ flex: 1, display: 'flex', flexDirection: 'column', justifyContent: losers.length > 1 ? 'space-between' : 'flex-start' }}>
+              {losers.length === 0 ? <div style={{ fontSize: '11px', color: 'var(--ws-text-3)' }}>—</div> : losers.map(s => renderRow(s, 'var(--ws-red)'))}
+            </div>
           </div>
         </div>
       </Card>
