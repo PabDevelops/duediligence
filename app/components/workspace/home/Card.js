@@ -46,7 +46,7 @@ export default function Card({ title, subtitle, rightElement, dragProps, childre
         </div>
         {rightElement}
       </div>
-      <div className="widget-card-body" style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
+      <div className="widget-card-body" style={{ flex: 1, display: 'flex', flexDirection: 'column', minHeight: 0 }}>
         {children}
       </div>
     </div>

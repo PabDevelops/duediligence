@@ -1020,7 +1020,7 @@ export default function WorkspaceHome() {
           </div>
         }
       >
-        <div style={{ padding: '16px', height: '280px' }}>
+        <div style={{ padding: '16px', flex: 1, minHeight: '280px' }}>
           <ResponsiveContainer width="100%" height="100%">
             <LineChart data={performanceData}>
               <XAxis dataKey="date" tick={{ fontSize: 10, fill: 'var(--ws-text-3)' }} tickFormatter={d => new Date(d).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })} minTickGap={30} />
@@ -1047,11 +1047,11 @@ export default function WorkspaceHome() {
 
     return (
       <Card title="Allocation" subtitle="This week">
-        <div style={{ padding: '16px', display: 'flex', flexDirection: 'column', gap: '14px' }}>
+        <div style={{ padding: '16px', flex: 1, display: 'flex', flexDirection: 'column', gap: '14px', minHeight: 0 }}>
           <div style={{ fontSize: '22px', fontWeight: 800, color: 'var(--ws-text)' }}>
             {currencySymbol}{(totalValue * fxRate).toLocaleString(undefined, { maximumFractionDigits: 0 })}
           </div>
-          <div style={{ height: '70px' }}>
+          <div style={{ flex: 1, minHeight: '70px' }}>
             {weeklyTrend.length >= 2 ? (
               <ResponsiveContainer width="100%" height="100%">
                 <AreaChart data={weeklyTrend}>
@@ -1070,7 +1070,7 @@ export default function WorkspaceHome() {
               </div>
             )}
           </div>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '10px', paddingTop: '10px', borderTop: '1px solid var(--ws-border)' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '10px', paddingTop: '10px', borderTop: '1px solid var(--ws-border)', marginTop: 'auto' }}>
             <div>
               <div style={{ fontSize: '9px', color: 'var(--ws-text-3)', fontWeight: 700, textTransform: 'uppercase' }}>Positions</div>
               <div style={{ fontSize: '13px', fontWeight: 700, color: 'var(--ws-text)', marginTop: '2px' }}>{positions}</div>
@@ -1174,8 +1174,7 @@ export default function WorkspaceHome() {
       <div className="home-main-grid" style={{
         display: 'grid',
         gridTemplateColumns: isMobile ? '1fr' : '2fr 1fr',
-        gap: '20px',
-        alignItems: 'start'
+        gap: '20px'
       }}>
         {renderBenchmarkChart()}
         {renderHoldingsList()}
@@ -1184,8 +1183,7 @@ export default function WorkspaceHome() {
       <div className="home-main-grid" style={{
         display: 'grid',
         gridTemplateColumns: isMobile ? '1fr' : 'repeat(3, 1fr)',
-        gap: '20px',
-        alignItems: 'start'
+        gap: '20px'
       }}>
         {renderAllocation()}
         {renderTopMovers()}
@@ -1195,8 +1193,7 @@ export default function WorkspaceHome() {
       <div className="home-main-grid" style={{
         display: 'grid',
         gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr',
-        gap: '20px',
-        alignItems: 'start'
+        gap: '20px'
       }}>
         {renderWorkspace()}
         {renderHeatmap()}
