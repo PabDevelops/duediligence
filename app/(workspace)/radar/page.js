@@ -491,8 +491,8 @@ export default function MarketRadar() {
                               title={inWatchlist ? 'Remove from Watchlist' : 'Add to Watchlist'}
                               style={{
                                 width: '22px', height: '22px', borderRadius: '4px', border: '1px solid var(--ws-border)',
-                                background: inWatchlist ? 'var(--ws-text)' : 'var(--ws-bg-2)',
-                                color: inWatchlist ? 'var(--ws-bg)' : 'var(--ws-text)',
+                                background: inWatchlist ? 'var(--ws-accent)' : 'var(--ws-bg-2)',
+                                color: inWatchlist ? 'var(--ws-accent-text)' : 'var(--ws-text)',
                                 fontSize: '12px', fontWeight: 700, cursor: 'pointer', lineHeight: 1,
                               }}>
                               {inWatchlist ? '✓' : '+'}

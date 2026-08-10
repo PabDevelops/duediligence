@@ -17,7 +17,7 @@ function isPublicPath(path) {
 
 function LoadingScreen() {
   return (
-    <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#f8f9fa', color: '#9ca3af', fontFamily: 'Inter, sans-serif', fontSize: '13px' }}>
+    <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'var(--ws-bg)', color: 'var(--ws-text-3)', fontFamily: 'Inter, sans-serif', fontSize: '13px' }}>
       Loading terminal…
     </div>
   );

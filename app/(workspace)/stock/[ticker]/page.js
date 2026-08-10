@@ -1532,7 +1532,7 @@ function StockPageContent({ params }) {
                   )}
                 </div>
                 <button onClick={() => { if (!isSignedIn) { window.location.href = '/sign-in'; return; } setShowAddHolding(true); }}
-                  style={{ fontSize: '12px', padding: '10px 8px', width: '100%', background: 'var(--ws-accent)', color: '#fff', border: 'none', fontWeight: 600, cursor: 'pointer' }}>
+                  style={{ fontSize: '12px', padding: '10px 8px', width: '100%', background: 'var(--ws-accent)', color: 'var(--ws-accent-text)', border: 'none', fontWeight: 600, cursor: 'pointer' }}>
                   + Add to Portfolio
                 </button>
                 <button onClick={refetch} disabled={refreshing}

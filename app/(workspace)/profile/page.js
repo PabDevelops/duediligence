@@ -5,6 +5,7 @@ import { useUser } from '../../components/AuthProvider';
 import { createClient } from '../../../lib/supabase/client';
 
 const ACCENT_COLORS = [
+  { name: 'Acid Lime', hex: '#C7FF38' },
   { name: 'Classic Mint', hex: '#0f766e' },
   { name: 'Cyber Teal', hex: '#14b8a6' },
   { name: 'Emerald Green', hex: '#10b981' },
@@ -30,7 +31,7 @@ export default function WorkspaceProfile() {
   const [securityMsg, setSecurityMsg] = useState({ type: '', text: '' });
 
   // Customization state
-  const [accentColor, setAccentColor] = useState('#059669');
+  const [accentColor, setAccentColor] = useState('#C7FF38');
   const [fontSize, setFontSize] = useState('normal');
   const [scanlines, setScanlines] = useState(false);
 
@@ -53,7 +54,7 @@ export default function WorkspaceProfile() {
     setDisplayName(user.user_metadata?.full_name || localStorage.getItem('traq_user_fullname') || '');
     
     // Load saved preferences
-    setAccentColor(localStorage.getItem('ws_accent_color') || '#059669');
+    setAccentColor(localStorage.getItem('ws_accent_color') || '#C7FF38');
     setFontSize(localStorage.getItem('ws_font_size') || 'normal');
     setScanlines(localStorage.getItem('ws_scanlines') === 'true');
 
@@ -476,7 +477,7 @@ export default function WorkspaceProfile() {
                       fontWeight: 700,
                       cursor: 'pointer',
                       background: fontSize === opt.id ? 'var(--ws-accent)' : 'var(--ws-bg-2)',
-                      color: fontSize === opt.id ? '#fff' : 'var(--ws-text-2)',
+                      color: fontSize === opt.id ? 'var(--ws-accent-text)' : 'var(--ws-text-2)',
                       transition: 'all 0.15s ease'
                     }}
                   >
@@ -500,7 +501,7 @@ export default function WorkspaceProfile() {
                   fontWeight: 700,
                   border: '1px solid var(--ws-border)',
                   background: scanlines ? 'var(--ws-accent)' : 'var(--ws-bg-1)',
-                  color: scanlines ? '#fff' : 'var(--ws-text-2)',
+                  color: scanlines ? 'var(--ws-accent-text)' : 'var(--ws-text-2)',
                   cursor: 'pointer',
                   transition: 'all 0.15s ease'
                 }}

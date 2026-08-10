@@ -357,9 +357,9 @@ export default function WorkspacePortfolio() {
               <div style={{ fontSize: '20px', fontWeight: 700, color: 'var(--ws-text)' }}>Portfolio</div>
               {isSignedIn && portfolios.length > 0 && (
                 <div style={{ display: 'flex', gap: '4px', marginLeft: '8px' }}>
-                  <button onClick={() => setSelectedPortfolioId('all')} style={{ padding: '4px 10px', borderRadius: '14px', border: 'none', cursor: 'pointer', fontSize: '12px', fontWeight: 600, background: selectedPortfolioId === 'all' ? 'var(--ws-text)' : 'var(--ws-bg-2)', color: selectedPortfolioId === 'all' ? 'var(--ws-bg-1)' : 'var(--ws-text-2)' }}>All Portfolios</button>
+                  <button onClick={() => setSelectedPortfolioId('all')} style={{ padding: '4px 10px', borderRadius: '14px', border: 'none', cursor: 'pointer', fontSize: '12px', fontWeight: 600, background: selectedPortfolioId === 'all' ? 'var(--ws-accent)' : 'var(--ws-bg-2)', color: selectedPortfolioId === 'all' ? 'var(--ws-accent-text)' : 'var(--ws-text-2)' }}>All Portfolios</button>
                   {portfolios.map(p => (
-                    <button key={p.id} onClick={() => setSelectedPortfolioId(p.id)} style={{ padding: '4px 10px', borderRadius: '14px', border: 'none', cursor: 'pointer', fontSize: '12px', fontWeight: 600, background: selectedPortfolioId === p.id ? 'var(--ws-text)' : 'var(--ws-bg-2)', color: selectedPortfolioId === p.id ? 'var(--ws-bg-1)' : 'var(--ws-text-2)' }}>{p.name}</button>
+                    <button key={p.id} onClick={() => setSelectedPortfolioId(p.id)} style={{ padding: '4px 10px', borderRadius: '14px', border: 'none', cursor: 'pointer', fontSize: '12px', fontWeight: 600, background: selectedPortfolioId === p.id ? 'var(--ws-accent)' : 'var(--ws-bg-2)', color: selectedPortfolioId === p.id ? 'var(--ws-accent-text)' : 'var(--ws-text-2)' }}>{p.name}</button>
                   ))}
                   {portfolios.length < 3 && <button onClick={() => setCreatingPortfolio(true)} style={{ padding: '4px 10px', borderRadius: '14px', border: '1px dashed var(--ws-border)', cursor: 'pointer', fontSize: '12px', fontWeight: 600, background: 'transparent', color: 'var(--ws-text-3)' }}>+ Create</button>}
                 </div>

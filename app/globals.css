@@ -17,7 +17,7 @@
 .text-ws-text-3 { color: var(--ws-text-3); }
 .border-ws-border { border-color: var(--ws-border); }
 .bg-ws-accent { background-color: var(--ws-accent); }
-.text-ws-accent { color: var(--ws-accent-text); }
+.text-ws-accent { color: var(--ws-accent); }
 .border-ws-accent { border-color: var(--ws-accent); }
 .bg-ws-accent-dim { background-color: var(--ws-accent-dim); }
 .bg-ws-red { background-color: var(--ws-red); }
@@ -67,7 +67,7 @@
   --ws-border: #2e2e2e;
   --ws-accent: #C7FF38;
   --ws-accent-dim: rgba(199, 255, 56, 0.15);
-  --ws-accent-text: #C7FF38;
+  --ws-accent-text: #171717;
   --ws-red: #f87171;
   --ws-red-dim: rgba(248, 113, 113, 0.15);
   --ws-amber: #f59e0b;
@@ -1022,7 +1022,7 @@ tr:hover td.sticky-col {
 }
 .ws-btn-secondary:hover {
   border-color: var(--ws-accent);
-  color: var(--ws-accent-text);
+  color: var(--ws-accent);
 }
 
 .ws-btn-danger {
