@@ -1023,6 +1023,36 @@ function StockPageContent({ params }) {
               )}
             </div>
           </div>
+
+          {/* Key stats strip — same real fields already shown in Financials/Valuation
+              (fmt/fmtMultiple/fmtN, pctDelta vs prevQuarter, DeltaTag), just surfaced here
+              too for a quick scan without switching tabs. Hidden entirely for tickers with
+              no fundamentals, same gate as the Quality Score block above. */}
+          {hasFundamentals && (
+            <div style={{
+              display: 'flex', flexWrap: 'wrap', gap: '1px', background: 'var(--ws-border)',
+              border: '1px solid var(--ws-border)', marginTop: '20px', overflow: 'hidden',
+            }}>
+              {[
+                { label: 'Market Cap', val: fmt(data.marketCap), delta: pctDelta(data.marketCap, data.prevQuarter?.marketCap) },
+                { label: 'P/E', val: fmtMultiple(data.pe), delta: pctDelta(data.pe, data.prevQuarter?.pe) },
+                { label: '52W High', val: data.high52 ? `${curSym(data.currency)}${data.high52}` : 'N/A' },
+                { label: '52W Low', val: data.low52 ? `${curSym(data.currency)}${data.low52}` : 'N/A' },
+                { label: 'Beta', val: fmtN(data.beta) },
+                { label: 'Shs Outstanding', val: data.sharesOutstanding ? `${(data.sharesOutstanding / 1e6).toFixed(0)}M` : 'N/A', delta: pctDelta(data.sharesOutstanding, data.prevQuarter?.sharesOutstanding) },
+              ].map(kpi => (
+                <div key={kpi.label} style={{ flex: '1 1 150px', background: 'var(--ws-bg-1)', padding: '12px 16px' }}>
+                  <div style={{ fontFamily: "'Inter', sans-serif", fontSize: '9px', letterSpacing: '1.5px', color: 'var(--ws-text-3)', fontWeight: 700, marginBottom: '6px' }}>
+                    {kpi.label.toUpperCase()}
+                  </div>
+                  <div style={{ fontFamily: "'Inter', sans-serif", fontSize: '16px', fontWeight: 700, color: 'var(--ws-text)', fontVariantNumeric: 'tabular-nums', whiteSpace: 'nowrap' }}>
+                    {kpi.val}
+                    {kpi.delta != null && <DeltaTag value={kpi.delta} />}
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
       </div>{/* end terminal hero */}
 
