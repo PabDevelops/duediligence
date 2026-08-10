@@ -262,10 +262,8 @@ const TXN_CODE_LABELS = {
 
 const NAV = [
     { key: 'overview', label: 'OVERVIEW' },
-    { key: 'quality', label: 'QUALITY' },
     { key: 'financials', label: 'FINANCIALS' },
-    { key: 'dcf', label: 'VALUATION' },
-    { key: 'projection', label: 'PROJECTION' },
+    { key: 'valuation', label: 'VALUATION' },
     { key: 'insiders', label: 'INSIDERS' },
   ];
 
@@ -433,7 +431,8 @@ function StockPageContent({ params }) {
   const [insiderRoleFilter, setInsiderRoleFilter] = useState('ALL');
   const [selectedInsiderName, setSelectedInsiderName] = useState(null);
   const [answers, setAnswers] = useState({});
-  const [finTab, setFinTab] = useState('snapshot');
+  const [finTab, setFinTab] = useState('quality');
+  const [valTab, setValTab] = useState('valuation');
   const [evidence, setEvidence] = useState({});
   const [sparklineData, setSparklineData] = useState(null);
   const [isPro, setIsPro] = useState(false);
@@ -649,34 +648,6 @@ function StockPageContent({ params }) {
       .then(d => setSotw(d.ticker))
       .catch(() => {});
   }, []);
-
-  // All 6 NAV sections now render continuously (see the <section id="..."> wrappers below)
-  // instead of one panel being switched on/off, so `tab` is no longer set by clicking a nav
-  // pill — it tracks whichever section is currently scrolled into view, purely to keep the
-  // nav's active-pill highlight in sync (the insiders data fetch above no longer depends on
-  // it — see the comment there for why). rootMargin trims the observed viewport to a thin
-  // band starting 20% from the top and
-  // ending 70% from the bottom, so a section only "counts" once it's crossed into the upper
-  // fifth of the screen — not the instant its top pixel appears at the very bottom edge.
-  useEffect(() => {
-    if (loading || error) return;
-    const ids = NAV.map(n => n.key);
-    const sections = ids.map(id => document.getElementById(id)).filter(Boolean);
-    if (sections.length === 0) return;
-    const observer = new IntersectionObserver(
-      (entries) => {
-        const visible = entries.filter(e => e.isIntersecting);
-        if (visible.length === 0) return;
-        // If several sections qualify at once (e.g. a short one fully on-screen alongside
-        // its neighbor), the one closest to the top of the viewport wins.
-        visible.sort((a, b) => a.boundingClientRect.top - b.boundingClientRect.top);
-        setTab(visible[0].target.id);
-      },
-      { rootMargin: '-20% 0px -70% 0px', threshold: 0 }
-    );
-    sections.forEach(el => observer.observe(el));
-    return () => observer.disconnect();
-  }, [loading, error, ticker]);
 
   const getDimScore = (dim) => sharedGetDimScore(dim, QUESTIONS, answers);
   const totalScore = () => sharedTotalScore(DIMS, QUESTIONS, answers);
@@ -1058,12 +1029,10 @@ function StockPageContent({ params }) {
 
       <div style={{ padding: '0 0 40px' }}>
 
-        {/* TERMINAL TAB NAV — sticky under the 48px WorkspaceTopbar; scrolls the page to the
-            matching <section id="..."> instead of switching panels. `tab` (the active pill) is
-            now driven by the IntersectionObserver effect above, not by this click handler. */}
-        <div className="stock-tab-nav" style={{ display: 'flex', borderBottom: '1px solid var(--ws-border)', marginBottom: '24px', overflowX: 'auto', WebkitOverflowScrolling: 'touch', position: 'sticky', top: '48px', zIndex: 5, background: 'var(--ws-bg)' }}>
+        {/* TERMINAL TAB NAV — classic click-to-switch tabs, one panel visible at a time. */}
+        <div className="stock-tab-nav" style={{ display: 'flex', borderBottom: '1px solid var(--ws-border)', marginBottom: '24px', overflowX: 'auto', WebkitOverflowScrolling: 'touch' }}>
           {NAV.map(n => (
-            <button key={n.key} onClick={() => document.getElementById(n.key)?.scrollIntoView({ behavior: 'smooth', block: 'start' })}
+            <button key={n.key} onClick={() => setTab(n.key)}
               style={{
                 padding: '8px 20px',
                 border: 'none',
@@ -1086,7 +1055,7 @@ function StockPageContent({ params }) {
         </div>
 
         {/* OVERVIEW TAB — 2-column layout */}
-        <section id="overview">{(tabsLocked ? (
+        {tab === 'overview' && (tabsLocked ? (
           <LockedPanel
             title="Overview"
             description="Full data for this international market unlocks with a free account."
@@ -1553,10 +1522,26 @@ function StockPageContent({ params }) {
 
             </div>
           </div>
-        ))}</section>
+        ))}
 
-        {/* QUALITY TAB */}
-        <section id="quality">{easyMode && (!isSignedIn ? (
+        {/* FINANCIALS TAB */}
+        {tab === 'financials' && (tabsLocked ? (
+          <LockedPanel
+            title="Financials"
+            description="Full financial statements unlock with a free account."
+          />
+        ) : (
+  <div>
+    <div style={{ display: 'flex', gap: '3px', marginBottom: '16px', background: 'var(--ws-bg-2)', border: '1px solid var(--ws-border)', borderRadius: '8px', padding: '3px' }}>
+      {[['quality', 'QUALITY SCORE'], ['snapshot', 'SNAPSHOT'], ['income', 'INCOME'], ['balance', 'BALANCE'], ['cashflow', 'CASH FLOW']].map(([key, label]) => (
+        <button key={key} onClick={() => setFinTab(key)}
+          style={{ flex: 1, padding: '10px 8px', fontSize: '13px', letterSpacing: '0.3px', borderRadius: '6px', background: finTab === key ? 'var(--ws-accent)' : 'transparent', color: finTab === key ? 'var(--ws-bg-1)' : 'var(--ws-text-2)', border: 'none', cursor: 'pointer', fontWeight: 600 }}>
+          {label}
+        </button>
+      ))}
+    </div>
+
+    {finTab === 'quality' && (easyMode && (!isSignedIn ? (
           <LockedPanel
             title="Quality Score"
             description="The full Quality Score breakdown unlocks with a free account."
@@ -1757,24 +1742,7 @@ function StockPageContent({ params }) {
       );
     })()}
   </div>
-))}</section>
-
-        {/* FINANCIALS TAB */}
-        <section id="financials">{(tabsLocked ? (
-          <LockedPanel
-            title="Financials"
-            description="Full financial statements unlock with a free account."
-          />
-        ) : (
-  <div>
-    <div style={{ display: 'flex', gap: '3px', marginBottom: '16px', background: 'var(--ws-bg-2)', border: '1px solid var(--ws-border)', borderRadius: '8px', padding: '3px' }}>
-      {[['snapshot', 'SNAPSHOT'], ['income', 'INCOME'], ['balance', 'BALANCE'], ['cashflow', 'CASH FLOW']].map(([key, label]) => (
-        <button key={key} onClick={() => setFinTab(key)}
-          style={{ flex: 1, padding: '10px 8px', fontSize: '13px', letterSpacing: '0.3px', borderRadius: '6px', background: finTab === key ? 'var(--ws-accent)' : 'transparent', color: finTab === key ? 'var(--ws-bg-1)' : 'var(--ws-text-2)', border: 'none', cursor: 'pointer', fontWeight: 600 }}>
-          {label}
-        </button>
-      ))}
-    </div>
+)))}
 
     {finTab === 'snapshot' && <div>
               <div style={{ marginBottom: '16px' }}>
@@ -2114,11 +2082,24 @@ function StockPageContent({ params }) {
       SOURCE: SEC EDGAR (XBRL) · FINNHUB · NOT INVESTMENT ADVICE
     </div>
   </div>
-))}</section>
+))}
 
-        {/* VALUATION TAB — locked entirely for guests, not just blurred: the valuation
-            call itself is the product. */}
-        <section id="dcf">{(!isSignedIn ? (
+        {/* VALUATION TAB — merges the old Relative Valuation and Price Projection tabs behind
+            a sub-nav (valTab), same segmented-control style as FINANCIALS' finTab above.
+            Locked entirely for guests, not just blurred: the valuation call itself is the
+            product. */}
+        {tab === 'valuation' && (
+          <div>
+            <div style={{ display: 'flex', gap: '3px', marginBottom: '16px', background: 'var(--ws-bg-2)', border: '1px solid var(--ws-border)', borderRadius: '8px', padding: '3px' }}>
+              {[['valuation', 'RELATIVE VALUATION'], ['projection', 'PRICE PROJECTION']].map(([key, label]) => (
+                <button key={key} onClick={() => setValTab(key)}
+                  style={{ flex: 1, padding: '10px 8px', fontSize: '13px', letterSpacing: '0.3px', borderRadius: '6px', background: valTab === key ? 'var(--ws-accent)' : 'transparent', color: valTab === key ? 'var(--ws-bg-1)' : 'var(--ws-text-2)', border: 'none', cursor: 'pointer', fontWeight: 600 }}>
+                  {label}
+                </button>
+              ))}
+            </div>
+
+        {valTab === 'valuation' && (!isSignedIn ? (
           <LockedPanel
             title="Relative Valuation"
             description="The full valuation range, bull/bear scenarios and quality-weighted target multiple unlock with a free account."
@@ -2243,21 +2224,23 @@ function StockPageContent({ params }) {
               </div>
             )}
           </div>
-        ))}</section>
+        ))}
 
-        {/* PROJECTION TAB — GBM random-walk price path + analytic confidence band.
-            Locked entirely for guests, same reasoning as the DCF tab above. */}
-        <section id="projection">{(!isSignedIn ? (
+        {/* PRICE PROJECTION sub-tab — GBM random-walk price path + analytic confidence band.
+            Locked entirely for guests, same reasoning as Relative Valuation above. */}
+        {valTab === 'projection' && (!isSignedIn ? (
           <LockedPanel
             title="Projections"
             description="Future price projections (Monte Carlo + confidence band) unlock with a free account."
           />
         ) : (
           <ProjectionChart ticker={ticker} data={data} fundamentalGrowth={fundamentalGrowth} price={price} currency={data.currency} />
-        ))}</section>
+        ))}
+          </div>
+        )}
 
         {/* INSIDERS TAB — Form 3/4/5 buy/sell activity, SEC EDGAR primary / Finnhub fallback */}
-        <section id="insiders">{(!isSignedIn ? (
+        {tab === 'insiders' && (!isSignedIn ? (
           <LockedPanel
             title="Insiders"
             description="Insider activity (Form 3/4/5) unlocks with a free account."
@@ -2463,7 +2446,7 @@ function StockPageContent({ params }) {
               SOURCE: SEC EDGAR FORM 4 (PRIMARY) · FINNHUB (FALLBACK FOR NON-SEC TICKERS) · ★ = OFFICER TITLE MATCHES CEO/CFO · GRAY LABELS (GRANT/EXERCISE/TAX WITHHOLD/GIFT) ARE NOT OPEN-MARKET TRADES · NOT INVESTMENT ADVICE
             </div>
           </div>
-        ))}</section>
+        ))}
 
       </div>
 
