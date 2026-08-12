@@ -267,6 +267,35 @@ const NAV = [
     { key: 'insiders', label: 'INSIDERS' },
   ];
 
+// Small line icons for the tab nav — plain inline SVG (stroke="currentColor" so each one
+// automatically follows the tab's own active/inactive text color) rather than an icon
+// package dependency, matching this file's existing hand-drawn-SVG convention (see
+// GemDiamondIcon above).
+const NAV_ICONS = {
+  overview: (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <rect x="3" y="3" width="8" height="8" rx="1.5" /><rect x="13" y="3" width="8" height="8" rx="1.5" />
+      <rect x="3" y="13" width="8" height="8" rx="1.5" /><rect x="13" y="13" width="8" height="8" rx="1.5" />
+    </svg>
+  ),
+  financials: (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <line x1="5" y1="21" x2="5" y2="10" /><line x1="12" y1="21" x2="12" y2="4" /><line x1="19" y1="21" x2="19" y2="14" />
+    </svg>
+  ),
+  valuation: (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <circle cx="12" cy="12" r="9" /><circle cx="12" cy="12" r="4" /><circle cx="12" cy="12" r="0.5" fill="currentColor" />
+    </svg>
+  ),
+  insiders: (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M17 21v-2a4 4 0 0 0-4-4H7a4 4 0 0 0-4 4v2" /><circle cx="10" cy="7" r="4" />
+      <path d="M22 21v-2a4 4 0 0 0-3-3.87" /><path d="M16 3.13a4 4 0 0 1 0 7.75" />
+    </svg>
+  ),
+};
+
 const QUESTIONS = [
   { dim: 'Management', text: 'Has management consistently met quarterly guidance?' },
   { dim: 'Management', text: 'Is exec compensation aligned with long-term metrics?' },
@@ -298,7 +327,11 @@ const MiniBar = ({ data, color = 'var(--ws-text-2)' }) => {
           contentStyle={{ background: 'var(--ws-bg-1)', border: '1px solid var(--ws-border)', fontSize: 10 }}
         />
         <Bar dataKey="value" radius={[2, 2, 0, 0]}>
-          {data.map((_, i) => <Cell key={i} fill={i === data.length - 1 ? color : color + '55'} />)}
+          {/* fillOpacity (not string-concatenating an alpha suffix onto `color`) so this
+              still works when `color` is a CSS custom property like 'var(--ws-accent)' —
+              'var(--ws-accent)55' is not a valid color and silently fails to paint,
+              leaving every bar but the last one invisible. */}
+          {data.map((_, i) => <Cell key={i} fill={color} fillOpacity={i === data.length - 1 ? 1 : 0.33} />)}
         </Bar>
       </BarChart>
     </ResponsiveContainer>
@@ -827,204 +860,143 @@ function StockPageContent({ params }) {
   return (
     <div className="p-6">
 
-      {/* TERMINAL HERO */}
-      <div style={{ border: '1px solid var(--ws-border)', background: 'var(--ws-bg-1)', marginBottom: '20px', overflow: 'hidden' }}>
-        {/* Terminal title bar */}
-        <div style={{ background: 'var(--ws-bg-2)', borderBottom: '1px solid var(--ws-border)', padding: '7px 16px', display: 'flex', alignItems: 'center', gap: '12px' }}>
-          <span style={{ fontFamily: "'Inter', sans-serif", fontSize: '11px', color: 'var(--ws-accent)', fontWeight: 700, letterSpacing: '1px' }}>
-            $ traq {ticker}
-          </span>
-          {data.finnhubFallback && (
-            <span style={{ fontFamily: "'Inter', sans-serif", fontSize: '9px', color: 'var(--ws-text-3)', letterSpacing: '1px' }}>
-              [LIMITED DATA]
-            </span>
-          )}
+      {/* TERMINAL HERO — logo/name/ticker + watchlist star on top, price + compact quality
+          badge below, then the range-tab chart and a KPI strip. Replaces the old
+          terminal-title-bar + 3-column layout with the header treatment approved in the
+          mockup (logo, name, ticker size/weight, KPI grid under the chart). */}
+      <div style={{ border: '1px solid var(--ws-border)', background: 'var(--ws-bg-1)', marginBottom: '20px', overflow: 'hidden', padding: '20px 24px' }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '16px', flexWrap: 'wrap', marginBottom: '18px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '14px', minWidth: 0 }}>
+            <div style={{ width: '44px', height: '44px', borderRadius: '10px', background: 'white', border: '1px solid var(--ws-border)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, overflow: 'hidden' }}>
+              <img
+                src={`https://img.logo.dev/ticker/${ticker}?token=pk_B4aaLZF6S4G1YbCgqZq2Ug`}
+                alt={data.name}
+                style={{ width: '30px', height: '30px', objectFit: 'contain' }}
+                onError={e => { e.target.style.display = 'none'; e.target.parentElement.innerHTML = `<span style="color:var(--ws-bg);font-weight:700;font-size:14px;font-family:'Inter',sans-serif">${ticker.slice(0,2)}</span>`; }}
+              />
+            </div>
+            <div style={{ minWidth: 0 }}>
+              <div style={{ display: 'flex', alignItems: 'baseline', gap: '10px', flexWrap: 'wrap' }}>
+                <h1 style={{ fontSize: '24px', fontWeight: 800, letterSpacing: '-0.5px', color: 'var(--ws-text)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{data.name}</h1>
+                <span style={{ fontFamily: "'Inter', sans-serif", fontSize: '17px', fontWeight: 500, color: 'var(--ws-text-3)' }}>{ticker}</span>
+              </div>
+              <div style={{ fontFamily: "'Inter', sans-serif", fontSize: '10px', color: 'var(--ws-text-3)', letterSpacing: '1.5px', marginTop: '3px' }}>
+                {data.exchange || 'NASDAQ'}{data.sector ? ` · ${data.sector.toUpperCase()}` : ''}{data.finnhubFallback ? ' · LIMITED DATA' : ''}
+              </div>
+            </div>
+          </div>
 
-          {/* Jump-to-ticker search, so you can move between stocks without leaving the page */}
-          <div style={{ marginLeft: 'auto', position: 'relative', width: '200px' }}>
-            <input
-              ref={jumpInputRef}
-              value={jumpQuery}
-              onChange={e => { setJumpQuery(e.target.value); setShowJumpSuggestions(true); }}
-              onKeyDown={e => {
-                if (e.key === 'Enter' && jumpQuery.trim()) goToTicker(jumpQuery);
-                if (e.key === 'Escape') { setShowJumpSuggestions(false); jumpInputRef.current?.blur(); }
-              }}
-              onFocus={() => { if (jumpQuery) setShowJumpSuggestions(true); }}
-              onBlur={() => setTimeout(() => setShowJumpSuggestions(false), 150)}
-              placeholder="jump to ticker..."
+          <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexShrink: 0 }}>
+            {/* Jump-to-ticker search, so you can move between stocks without leaving the page */}
+            <div style={{ position: 'relative', width: '180px' }}>
+              <input
+                ref={jumpInputRef}
+                value={jumpQuery}
+                onChange={e => { setJumpQuery(e.target.value); setShowJumpSuggestions(true); }}
+                onKeyDown={e => {
+                  if (e.key === 'Enter' && jumpQuery.trim()) goToTicker(jumpQuery);
+                  if (e.key === 'Escape') { setShowJumpSuggestions(false); jumpInputRef.current?.blur(); }
+                }}
+                onFocus={() => { if (jumpQuery) setShowJumpSuggestions(true); }}
+                onBlur={() => setTimeout(() => setShowJumpSuggestions(false), 150)}
+                placeholder="jump to ticker..."
+                style={{
+                  width: '100%', height: '30px', padding: '0 10px', fontSize: '11px',
+                  fontFamily: "'Inter', sans-serif", border: '1px solid var(--ws-border)', borderRadius: '8px',
+                  background: 'var(--ws-bg-2)', color: 'var(--ws-text)', outline: 'none',
+                }}
+              />
+              {showJumpSuggestions && jumpSuggestions.length > 0 && (
+                <div style={{
+                  position: 'absolute', top: '34px', right: 0, width: '260px',
+                  background: 'var(--ws-bg-1)', border: '1px solid var(--ws-border)', borderRadius: '8px',
+                  boxShadow: '0 8px 32px rgba(0,0,0,0.12)', maxHeight: '280px', overflowY: 'auto', zIndex: 30,
+                }}>
+                  {jumpSuggestions.map(s => (
+                    <div key={s.ticker}
+                      onMouseDown={() => goToTicker(s.ticker, s.isEtf)}
+                      style={{ padding: '7px 10px', cursor: 'pointer', display: 'flex', gap: '8px', alignItems: 'baseline', fontSize: '11px' }}
+                      onMouseEnter={e => e.currentTarget.style.background = 'var(--ws-bg-2)'}
+                      onMouseLeave={e => e.currentTarget.style.background = 'transparent'}>
+                      <span style={{ color: 'var(--ws-accent)', fontWeight: 700, fontFamily: "'Inter', sans-serif", minWidth: '44px' }}>{s.ticker}</span>
+                      <span style={{ color: 'var(--ws-text-2)', flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{s.name}</span>
+                      {s.isEtf && (
+                        <span style={{ fontFamily: "'Inter', sans-serif", fontWeight: 700, fontSize: '9px', letterSpacing: '0.5px', color: 'var(--ws-text-3)', border: '1px solid var(--ws-border)', borderRadius: '4px', padding: '1px 4px', flexShrink: 0 }}>
+                          ETF
+                        </span>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+            <button onClick={handleWatchlistClick} title={inWatchlist ? 'Remove from Watchlist' : 'Add to Watchlist'}
               style={{
-                width: '100%',
-                height: '24px',
-                padding: '0 8px',
-                fontSize: '10px',
-                fontFamily: "'Inter', sans-serif",
-                letterSpacing: '0.5px',
-                border: '1px solid var(--ws-border)',
-                borderRadius: 'var(--ws-radius)',
-                background: 'var(--ws-bg-1)',
-                color: 'var(--ws-text)',
-                outline: 'none',
-              }}
-            />
-            {showJumpSuggestions && jumpSuggestions.length > 0 && (
-              <div style={{
-                position: 'absolute',
-                top: '28px',
-                right: 0,
-                width: '260px',
-                background: 'var(--ws-bg-1)',
-                border: '1px solid var(--ws-border)',
-                borderRadius: 'var(--ws-radius)',
-                boxShadow: '0 8px 32px rgba(0,0,0,0.12)',
-                maxHeight: '280px',
-                overflowY: 'auto',
-                zIndex: 30,
+                width: '30px', height: '30px', borderRadius: '8px', flexShrink: 0, cursor: 'pointer',
+                border: `1px solid ${inWatchlist ? 'var(--ws-accent)' : 'var(--ws-border)'}`,
+                background: inWatchlist ? 'var(--ws-accent-dim)' : 'transparent',
+                color: inWatchlist ? 'var(--ws-accent)' : 'var(--ws-text-3)', fontSize: '14px',
               }}>
-                {jumpSuggestions.map(s => (
-                  <div key={s.ticker}
-                    onMouseDown={() => goToTicker(s.ticker, s.isEtf)}
-                    style={{ padding: '7px 10px', cursor: 'pointer', display: 'flex', gap: '8px', alignItems: 'baseline', fontSize: '11px' }}
-                    onMouseEnter={e => e.currentTarget.style.background = 'var(--ws-bg-2)'}
-                    onMouseLeave={e => e.currentTarget.style.background = 'transparent'}>
-                    <span style={{ color: 'var(--ws-accent)', fontWeight: 700, fontFamily: "'Inter', sans-serif", minWidth: '44px' }}>{s.ticker}</span>
-                    <span style={{ color: 'var(--ws-text-2)', flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{s.name}</span>
-                    {s.isEtf && (
-                      <span style={{ fontFamily: "'Inter', sans-serif", fontWeight: 700, fontSize: '9px', letterSpacing: '0.5px', color: 'var(--ws-text-3)', border: '1px solid var(--ws-border)', borderRadius: '4px', padding: '1px 4px', flexShrink: 0 }}>
-                        ETF
-                      </span>
-                    )}
-                  </div>
-                ))}
-              </div>
-            )}
+              ★
+            </button>
           </div>
         </div>
 
-        {/* Terminal output body */}
-        <div style={{ padding: '20px 24px' }}>
-          <div className="stock-hero" style={{ padding: 0 }}>
-            {/* Left: identity + price */}
-            <div className="stock-hero-left" style={{ gap: '16px' }}>
-              <div style={{ width: '72px', height: '72px', background: 'white', border: '1px solid var(--ws-border)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, overflow: 'hidden' }}>
-                <img
-                  src={`https://img.logo.dev/ticker/${ticker}?token=pk_B4aaLZF6S4G1YbCgqZq2Ug`}
-                  alt={data.name}
-                  style={{ width: '54px', height: '54px', objectFit: 'contain' }}
-                  onError={e => { e.target.style.display = 'none'; e.target.parentElement.innerHTML = `<span style="color:var(--ws-accent);font-weight:700;font-size:22px;font-family:'Inter',sans-serif">${ticker.slice(0,2)}</span>`; e.target.parentElement.style.background = 'var(--ws-bg-2)'; }}
-                />
-              </div>
-              <div style={{ minWidth: 0 }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '5px', flexWrap: 'wrap' }}>
-                  <span style={{ fontFamily: "'Inter', sans-serif", fontSize: '10px', color: 'var(--ws-text-3)', letterSpacing: '1.5px' }}>
-                    {ticker} · {data.exchange || 'NASDAQ'}{data.sector ? ` · ${data.sector.toUpperCase()}` : ''}
-                  </span>
-                  {marketCapTier(data.marketCap) && (
-                    <span style={{
-                      fontFamily: "'Inter', sans-serif",
-                      fontSize: '9px',
-                      fontWeight: 700,
-                      letterSpacing: '1px',
-                      color: marketCapTier(data.marketCap).color,
-                      border: `1px solid ${marketCapTier(data.marketCap).color}`,
-                      borderRadius: '4px',
-                      padding: '2px 6px',
-                    }}
-                      title={`Market cap: ${fmt(data.marketCap)}`}
-                    >
-                      {marketCapTier(data.marketCap).label} · {fmt(data.marketCap)}
-                    </span>
-                  )}
-                </div>
-                <h1 style={{ fontSize: '22px', fontWeight: 800, letterSpacing: '-0.5px', marginBottom: '10px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', lineHeight: 1.2, color: 'var(--ws-text)' }}>{data.name}</h1>
-                {price && (
-                  <div style={{ display: 'flex', alignItems: 'baseline', gap: '12px', flexWrap: 'wrap' }}>
-                    <span style={{ fontFamily: "'Inter', sans-serif", fontSize: '28px', fontWeight: 700, letterSpacing: '-1px', color: 'var(--ws-text)' }}>{curSym(data.currency)}{price.toFixed(2)}</span>
-                    <span style={{ fontFamily: "'Inter', sans-serif", fontSize: '13px', fontWeight: 700, color: change >= 0 ? 'var(--ws-accent)' : 'var(--ws-red)' }}>
-                      {change >= 0 ? '+' : ''}{changePct?.toFixed(2)}%
-                    </span>
-                    <MarketStatusDot ticker={ticker} showLabel />
-                  </div>
-                )}
-              </div>
-            </div>
+        {price && (
+          <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flexWrap: 'wrap', marginBottom: '14px' }}>
+            <span style={{ fontFamily: "'Inter', sans-serif", fontSize: '28px', fontWeight: 700, letterSpacing: '-1px', color: 'var(--ws-text)', fontVariantNumeric: 'tabular-nums' }}>{curSym(data.currency)}{price.toFixed(2)}</span>
+            <span style={{ fontFamily: "'Inter', sans-serif", fontSize: '13px', fontWeight: 700, color: change >= 0 ? 'var(--ws-accent)' : 'var(--ws-red)', fontVariantNumeric: 'tabular-nums' }}>
+              {change >= 0 ? '+' : ''}{changePct?.toFixed(2)}%
+            </span>
+            <MarketStatusDot ticker={ticker} showLabel />
+          </div>
+        )}
 
-            {/* Middle: price chart */}
-            <div className="stock-hero-chart">
-              <SparklineHeader ticker={ticker} currency={data?.currency} />
-            </div>
+        <SparklineHeader ticker={ticker} currency={data?.currency} />
 
-            {/* Right: terminal score block */}
-            <div className="stock-hero-score" style={{ alignItems: 'flex-start', gap: '10px' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap' }}>
-                <div style={{ fontFamily: "'Inter', sans-serif", fontSize: '9px', letterSpacing: '2px', color: 'var(--ws-text-3)', fontWeight: 700 }}>QUALITY SCORE</div>
-                {tierAdjusted && (
-                  <span title={`Margin/ROIC bars and the CBS/OPPO/GQS blend are calibrated for ${easyMode.capTier.label} — see the Quality tab for the exact weighting.`}
+        {/* KPI strip — same real fields already shown in Financials/Valuation
+            (fmt/fmtMultiple/fmtN, pctDelta vs prevQuarter, DeltaTag), surfaced here too for
+            a quick scan without switching tabs. Hidden entirely for tickers with no
+            fundamentals. */}
+        {hasFundamentals && (
+          <div style={{
+            display: 'flex', flexWrap: 'wrap', gap: '1px', background: 'var(--ws-border)',
+            border: '1px solid var(--ws-border)', marginTop: '18px', overflow: 'hidden',
+          }}>
+            {[
+              { label: 'Market Cap', val: fmt(data.marketCap), delta: pctDelta(data.marketCap, data.prevQuarter?.marketCap), tier: marketCapTier(data.marketCap) },
+              { label: 'Div. Yield', val: data.dividendYield ? `${(+data.dividendYield).toFixed(2)}%` : 'N/A' },
+              { label: 'FCF Yield', val: (easyMode?.trueFcfYield ?? data.fcfYield) != null ? `${(easyMode?.trueFcfYield ?? data.fcfYield).toFixed(2)}%` : 'N/A' },
+              { label: 'P/E', val: fmtMultiple(data.pe), delta: pctDelta(data.pe, data.prevQuarter?.pe) },
+              { label: 'P/FCF', val: fmtMultiple(easyMode?.truePfcf ?? data.pfcf) },
+              { label: 'EV/EBITDA', val: fmtN(data.evEbitda), delta: pctDelta(data.evEbitda, data.prevQuarter?.evEbitda) },
+            ].map(kpi => (
+              <div key={kpi.label} style={{ flex: '1 1 140px', background: 'var(--ws-bg-1)', padding: '12px 16px', position: 'relative', overflow: 'hidden' }}>
+                {/* Market-cap tier — used to be a "MEGA CAP · $4.5T" pill next to the name,
+                    duplicating the number this tile already shows. Now just a small stamped
+                    label (tier only) in the corner of the tile that already has the figure. */}
+                {kpi.tier && (
+                  <div title={`Market cap: ${kpi.val}`}
                     style={{
-                      fontFamily: "'Inter', sans-serif", fontSize: '8px', fontWeight: 700, letterSpacing: '0.5px',
-                      color: easyMode.capTier.color, border: `1px solid ${easyMode.capTier.color}`, borderRadius: '3px', padding: '1px 5px',
+                      position: 'absolute', top: '7px', right: '-17px', width: '80px', textAlign: 'center',
+                      transform: 'rotate(28deg)', background: kpi.tier.color, color: 'var(--ws-bg)',
+                      fontFamily: "'Inter', sans-serif", fontSize: '8px', fontWeight: 800, letterSpacing: '1px',
+                      padding: '1.5px 0', boxShadow: '0 1px 3px rgba(0,0,0,0.3)',
                     }}>
-                    {easyMode.capTier.label} CALIBRATED
-                  </span>
+                    {kpi.tier.label}
+                  </div>
                 )}
-              </div>
-              {!easyMode ? (
-                <div style={{ fontSize: '11px', color: 'var(--ws-text-3)', maxWidth: '200px', lineHeight: 1.6, borderLeft: '2px solid var(--ws-border)', paddingLeft: '10px', marginTop: '2px' }}>
-                  No fundamentals reported yet — likely a recent IPO or thin data coverage. Price and chart are still live.
+                <div style={{ fontFamily: "'Inter', sans-serif", fontSize: '9px', letterSpacing: '1.5px', color: 'var(--ws-text-3)', fontWeight: 700, marginBottom: '6px' }}>
+                  {kpi.label.toUpperCase()}
                 </div>
-              ) : (
-              <>
-              {easyMode.isBlueGem ? (
-                <GemRevealBar score100={easyMode.score100} />
-              ) : (
-                <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                  <QualityScoreBar score100={easyMode.score100} color={easyMode.verdictColor} />
-                  <span style={{ fontFamily: "'Inter', sans-serif", fontSize: '28px', fontWeight: 700, color: easyMode.verdictColor, lineHeight: 1 }}>
-                    {easyMode.score100}
-                  </span>
+                <div style={{ fontFamily: "'Inter', sans-serif", fontSize: '16px', fontWeight: 700, color: 'var(--ws-text)', fontVariantNumeric: 'tabular-nums', whiteSpace: 'nowrap' }}>
+                  {kpi.val}
+                  {kpi.delta != null && <DeltaTag value={kpi.delta} />}
                 </div>
-              )}
-              <div style={{ fontFamily: "'Inter', sans-serif", fontSize: '11px', fontWeight: 700, color: easyMode.verdictColor, letterSpacing: '1px' }}>
-                {easyMode.verdict.toUpperCase()}
               </div>
-              <div style={{ fontSize: '11px', color: 'var(--ws-text-3)', maxWidth: '200px', lineHeight: 1.6, borderLeft: '2px solid var(--ws-border)', paddingLeft: '10px', marginTop: '2px' }}>
-                {easyMode.summary}
-              </div>
-              </>
-              )}
-            </div>
+            ))}
           </div>
-
-          {/* Key stats strip — same real fields already shown in Financials/Valuation
-              (fmt/fmtMultiple/fmtN, pctDelta vs prevQuarter, DeltaTag), just surfaced here
-              too for a quick scan without switching tabs. Hidden entirely for tickers with
-              no fundamentals, same gate as the Quality Score block above. */}
-          {hasFundamentals && (
-            <div style={{
-              display: 'flex', flexWrap: 'wrap', gap: '1px', background: 'var(--ws-border)',
-              border: '1px solid var(--ws-border)', marginTop: '20px', overflow: 'hidden',
-            }}>
-              {[
-                { label: 'Market Cap', val: fmt(data.marketCap), delta: pctDelta(data.marketCap, data.prevQuarter?.marketCap) },
-                { label: 'P/E', val: fmtMultiple(data.pe), delta: pctDelta(data.pe, data.prevQuarter?.pe) },
-                { label: '52W High', val: data.high52 ? `${curSym(data.currency)}${data.high52}` : 'N/A' },
-                { label: '52W Low', val: data.low52 ? `${curSym(data.currency)}${data.low52}` : 'N/A' },
-                { label: 'Beta', val: fmtN(data.beta) },
-                { label: 'Shs Outstanding', val: data.sharesOutstanding ? `${(data.sharesOutstanding / 1e6).toFixed(0)}M` : 'N/A', delta: pctDelta(data.sharesOutstanding, data.prevQuarter?.sharesOutstanding) },
-              ].map(kpi => (
-                <div key={kpi.label} style={{ flex: '1 1 150px', background: 'var(--ws-bg-1)', padding: '12px 16px' }}>
-                  <div style={{ fontFamily: "'Inter', sans-serif", fontSize: '9px', letterSpacing: '1.5px', color: 'var(--ws-text-3)', fontWeight: 700, marginBottom: '6px' }}>
-                    {kpi.label.toUpperCase()}
-                  </div>
-                  <div style={{ fontFamily: "'Inter', sans-serif", fontSize: '16px', fontWeight: 700, color: 'var(--ws-text)', fontVariantNumeric: 'tabular-nums', whiteSpace: 'nowrap' }}>
-                    {kpi.val}
-                    {kpi.delta != null && <DeltaTag value={kpi.delta} />}
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
+        )}
       </div>{/* end terminal hero */}
 
       <div style={{ padding: '0 0 40px' }}>
@@ -1034,6 +1006,9 @@ function StockPageContent({ params }) {
           {NAV.map(n => (
             <button key={n.key} onClick={() => setTab(n.key)}
               style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '7px',
                 padding: '8px 20px',
                 border: 'none',
                 borderBottom: tab === n.key ? '2px solid var(--ws-accent)' : '2px solid transparent',
@@ -1049,6 +1024,7 @@ function StockPageContent({ params }) {
                 flexShrink: 0,
                 whiteSpace: 'nowrap',
               }}>
+              <span style={{ width: '14px', height: '14px', flexShrink: 0 }}>{NAV_ICONS[n.key]}</span>
               {n.label}{n.pro && !isPro && !checkingPro ? ' [PRO]' : ''}
             </button>
           ))}
@@ -1065,6 +1041,66 @@ function StockPageContent({ params }) {
 
             {/* Left column: vote + numbers + chart */}
             <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+
+              {/* Quality Score (its own card, full animated treatment restored — this used to
+                  live in the header) sits next to Analyst Consensus so both calls are visible
+                  together at a glance. */}
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: '16px' }}>
+                {easyMode && (
+                  <div style={{ background: 'var(--ws-bg-1)', border: '1px solid var(--ws-border)', padding: '20px' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap', marginBottom: '16px' }}>
+                      <div style={{ fontWeight: 700, fontSize: '14px', color: 'var(--ws-text)' }}>Quality Score</div>
+                      {tierAdjusted && (
+                        <span title={`Margin/ROIC bars and the CBS/OPPO/GQS blend are calibrated for ${easyMode.capTier.label} — see Financials → Quality Score for the exact weighting.`}
+                          style={{
+                            fontFamily: "'Inter', sans-serif", fontSize: '8px', fontWeight: 700, letterSpacing: '0.5px',
+                            color: easyMode.capTier.color, border: `1px solid ${easyMode.capTier.color}`, borderRadius: '3px', padding: '1px 5px',
+                          }}>
+                          {easyMode.capTier.label} CALIBRATED
+                        </span>
+                      )}
+                    </div>
+                    {easyMode.isBlueGem ? (
+                      <GemRevealBar score100={easyMode.score100} />
+                    ) : (
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                        <QualityScoreBar score100={easyMode.score100} color={easyMode.verdictColor} />
+                        <span style={{ fontFamily: "'Inter', sans-serif", fontSize: '28px', fontWeight: 700, color: easyMode.verdictColor, lineHeight: 1 }}>
+                          {easyMode.score100}
+                        </span>
+                      </div>
+                    )}
+                    <div style={{ fontFamily: "'Inter', sans-serif", fontSize: '11px', fontWeight: 700, color: easyMode.verdictColor, letterSpacing: '1px', marginTop: '12px' }}>
+                      {easyMode.verdict.toUpperCase()}
+                    </div>
+                    <div style={{ fontSize: '11px', color: 'var(--ws-text-3)', lineHeight: 1.6, marginTop: '8px' }}>
+                      {easyMode.summary}
+                    </div>
+
+                    {/* Compact CBS/OPPO/GQS/Moat/Final Note breakdown — same fields and
+                        0-5→0-100 display convention as the full version under Financials →
+                        Quality Score, just condensed to fit this narrower card. */}
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: '1px', background: 'var(--ws-border)', marginTop: '16px' }}>
+                      {[
+                        { label: 'CORE', score: easyMode.cbs },
+                        { label: 'OPPO', score: easyMode.oppo },
+                        { label: 'GROWTH', score: easyMode.gqs },
+                        { label: 'MOAT', text: easyMode.moat, color: easyMode.moatColor },
+                        { label: 'FINAL', score: easyMode.finalNote, highlight: true },
+                      ].map(s => {
+                        const scoreColor = (sc) => sc >= 4 ? 'var(--ws-accent)' : sc >= 3 ? 'var(--ws-text)' : 'var(--ws-red)';
+                        return (
+                          <div key={s.label} style={{ background: s.highlight ? 'var(--ws-bg-2)' : 'var(--ws-bg-1)', padding: '8px 4px', textAlign: 'center' }}>
+                            <div style={{ color: 'var(--ws-text-3)', fontSize: '7px', letterSpacing: '0.5px', marginBottom: '5px' }}>{s.label}</div>
+                            <div style={{ fontSize: s.text ? '13px' : '16px', fontWeight: 700, color: s.text ? s.color : scoreColor(s.score), letterSpacing: '-0.5px' }}>
+                              {s.text || Math.round(s.score * 20)}
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
 
               {/* Analyst rating */}
               <div style={{ background: 'var(--ws-bg-1)', border: '1px solid var(--ws-border)', padding: '20px' }}>
@@ -1165,6 +1201,19 @@ function StockPageContent({ params }) {
                   );
                 })()}
               </div>
+              </div>
+
+              {/* Revenue trend — reuses the same MiniBar component/data (revChart) already
+                  used for the Income tab under Financials, so Overview gives a quick visual
+                  read on growth direction without needing to switch tabs. */}
+              {hasFundamentals && revChart.length > 0 && (
+                <div>
+                  <div style={{ color: 'var(--ws-text-3)', fontSize: '10px', fontFamily: "'Inter', sans-serif", letterSpacing: '1.5px', marginBottom: '10px', fontWeight: 700 }}>REVENUE TREND</div>
+                  <div style={{ background: 'var(--ws-bg-1)', border: '1px solid var(--ws-border)', padding: '16px 18px 4px' }}>
+                    <MiniBar data={revChart} color="var(--ws-accent)" />
+                  </div>
+                </div>
+              )}
 
               {/* Numbers, Simplified */}
               {hasFundamentals && (
@@ -1289,22 +1338,63 @@ function StockPageContent({ params }) {
             {/* Right column: about + fair value + share + actions + continue */}
             <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
 
-              {/* About */}
-              {data.description && (() => {
+              {/* Profile — About's description + sector tag, plus a Growth/Profitability
+                  key-stat block below (real fields already used elsewhere: revGrowth,
+                  margins, ROE/ROA/ROIC — same values shown in the Quality/Financials tabs,
+                  just surfaced as quick-scan bars here too). */}
+              {(data.description || hasFundamentals) && (() => {
                 const LIMIT = 240;
-                const short = data.description.slice(0, LIMIT);
+                const short = data.description ? data.description.slice(0, LIMIT) : '';
+                const growthRows = [
+                  { label: 'Revenue YoY', val: data.revGrowth, fmt: v => `${v > 0 ? '+' : ''}${v.toFixed(1)}%`, pct: v => Math.max(4, Math.min(100, 50 + v * 2)) },
+                ].filter(r => r.val != null);
+                const profitRows = [
+                  { label: 'Gross Margin', val: data.grossMargin, fmt: v => `${v.toFixed(1)}%`, pct: v => Math.max(4, Math.min(100, v)) },
+                  { label: 'Op. Margin', val: data.opMargin, fmt: v => `${v.toFixed(1)}%`, pct: v => Math.max(4, Math.min(100, v * 2.5)) },
+                  { label: 'ROE', val: data.roe, fmt: v => `${v.toFixed(1)}%`, pct: v => Math.max(4, Math.min(100, v)) },
+                  { label: 'ROA', val: data.roa, fmt: v => `${v.toFixed(1)}%`, pct: v => Math.max(4, Math.min(100, v)) },
+                  { label: 'ROIC', val: data.roic, fmt: v => `${v.toFixed(1)}%`, pct: v => Math.max(4, Math.min(100, v)) },
+                ].filter(r => r.val != null);
+                const statRow = (r) => (
+                  <div key={r.label} style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '9px' }}>
+                    <span style={{ fontSize: '11.5px', color: 'var(--ws-text-2)', width: '90px', flexShrink: 0 }}>{r.label}</span>
+                    <div style={{ flex: 1, height: '4px', borderRadius: '2px', background: 'var(--ws-bg-2)', overflow: 'hidden' }}>
+                      <div style={{ height: '100%', width: `${r.pct(r.val)}%`, background: 'var(--ws-accent)', borderRadius: '2px' }} />
+                    </div>
+                    <span style={{ fontFamily: "'Inter', sans-serif", fontSize: '11.5px', fontWeight: 700, color: 'var(--ws-text)', width: '52px', textAlign: 'right', flexShrink: 0, fontVariantNumeric: 'tabular-nums' }}>{r.fmt(r.val)}</span>
+                  </div>
+                );
                 return (
                   <div className="bg-ws-bg-1 border border-ws-border px-[18px] py-4">
-                    <div style={{ fontSize: '10px', color: 'var(--ws-text-3)', fontFamily: "'Inter', sans-serif", letterSpacing: '1.5px', fontWeight: 700, marginBottom: '8px' }}>ABOUT</div>
-                    <div style={{ color: 'var(--ws-text-2)', fontSize: '12px', lineHeight: 1.75 }}>
-                      {expanded ? data.description : `${short}${data.description.length > LIMIT ? '…' : ''}`}
-                      {data.description.length > LIMIT && (
-                        <span onClick={() => setExpanded(!expanded)}
-                          style={{ color: 'var(--ws-accent)', cursor: 'pointer', marginLeft: '6px', fontWeight: 700, fontSize: '11px' }}>
-                          {expanded ? 'Show less' : 'Read more'}
-                        </span>
-                      )}
-                    </div>
+                    <div style={{ fontSize: '13px', fontWeight: 800, color: 'var(--ws-text)', marginBottom: '10px' }}>Profile</div>
+                    {data.description && (
+                      <div style={{ color: 'var(--ws-text-2)', fontSize: '12px', lineHeight: 1.75, marginBottom: '10px' }}>
+                        {expanded ? data.description : `${short}${data.description.length > LIMIT ? '…' : ''}`}
+                        {data.description.length > LIMIT && (
+                          <span onClick={() => setExpanded(!expanded)}
+                            style={{ color: 'var(--ws-accent)', cursor: 'pointer', marginLeft: '6px', fontWeight: 700, fontSize: '11px' }}>
+                            {expanded ? 'Show less' : 'Read more'}
+                          </span>
+                        )}
+                      </div>
+                    )}
+                    {data.sector && (
+                      <span style={{ display: 'inline-block', fontFamily: "'Inter', sans-serif", fontSize: '10px', color: 'var(--ws-text-2)', background: 'var(--ws-bg-2)', border: '1px solid var(--ws-border)', borderRadius: '20px', padding: '3px 10px', marginBottom: growthRows.length || profitRows.length ? '16px' : 0 }}>
+                        {data.sector}
+                      </span>
+                    )}
+                    {growthRows.length > 0 && (
+                      <>
+                        <div style={{ fontFamily: "'Inter', sans-serif", fontSize: '9.5px', letterSpacing: '1px', textTransform: 'uppercase', color: 'var(--ws-text-3)', fontWeight: 700, marginBottom: '10px' }}>Growth (FY)</div>
+                        {growthRows.map(statRow)}
+                      </>
+                    )}
+                    {profitRows.length > 0 && (
+                      <>
+                        <div style={{ fontFamily: "'Inter', sans-serif", fontSize: '9.5px', letterSpacing: '1px', textTransform: 'uppercase', color: 'var(--ws-text-3)', fontWeight: 700, margin: growthRows.length ? '14px 0 10px' : '0 0 10px' }}>Profitability (FY)</div>
+                        {profitRows.map(statRow)}
+                      </>
+                    )}
                   </div>
                 );
               })()}
