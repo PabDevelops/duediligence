@@ -91,7 +91,7 @@ export default function HomeView({ dict }) {
       <header style={{ position: 'sticky', top: 0, zIndex: 50, background: 'rgba(17,17,17,0.85)', backdropFilter: 'blur(10px)', borderBottom: '1px solid var(--border)' }}>
         <div style={{ ...CONTAINER, padding: '18px clamp(16px, 5vw, 24px)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '16px' }}>
           <a href="/" style={{ display: 'flex', alignItems: 'center', gap: '8px', textDecoration: 'none', flexShrink: 0 }}>
-            <img src="/logo-bulltrace-new-w.png" alt="Bulltrace" style={{ height: '18px', width: 'auto' }} />
+            <img src="/bulltrace-logos/lockup-cream.png" alt="Bulltrace" style={{ height: '18px', width: 'auto' }} />
           </a>
 
           <nav className="desktop-only" style={{ display: 'flex', gap: '32px', alignItems: 'center' }}>

@@ -132,13 +132,13 @@ export default function Sidebar({ collapsed = false, onToggleCollapse }) {
         <Link href="/home" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', textDecoration: 'none', padding: '4px 8px', marginBottom: '14px' }}>
           {collapsed ? (
             <img
-              src="/logo-icon-new-w.png"
+              src="/bulltrace-logos/bull-icon-lime.png"
               alt="Bulltrace"
-              style={{ height: '22px', width: 'auto' }}
+              style={{ height: '26px', width: 'auto' }}
             />
           ) : (
             <img
-              src="/logo-bulltrace-new-w.png"
+              src="/bulltrace-logos/lockup-cream.png"
               alt="Bulltrace"
               style={{ height: '16px', width: 'auto' }}
             />

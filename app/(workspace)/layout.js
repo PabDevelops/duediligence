@@ -132,7 +132,7 @@ export default function WorkspaceLayout({ children }) {
           ☰
         </button>
         <img
-          src="/logo-bulltrace-new-w.png"
+          src="/bulltrace-logos/lockup-cream.png"
           alt="Bulltrace"
           style={{ height: '14px', width: 'auto' }}
         />
