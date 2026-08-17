@@ -77,7 +77,7 @@ function DeltaTag({ value, unit = '%' }) {
 // render body, where the equivalent ScoreBar below lives) so its identity — and animation
 // state — survives StockPage re-renders; it only replays the fill when the score itself
 // changes (e.g. switching tickers), via the `score100` dependency.
-function QualityScoreBar({ score100, color }) {
+function QualityScoreBar({ score100, color, barWidth = 150, barHeight = 18 }) {
   const [width, setWidth] = useState(0);
   useEffect(() => {
     setWidth(0);
@@ -95,7 +95,7 @@ function QualityScoreBar({ score100, color }) {
   }, [score100]);
   return (
     <div style={{
-      position: 'relative', width: '150px', height: '18px', overflow: 'hidden', flexShrink: 0,
+      position: 'relative', width: `${barWidth}px`, height: `${barHeight}px`, overflow: 'hidden', flexShrink: 0,
       // The '░' look, recreated as a CSS dot grid instead of a font glyph — this is the base
       // layer the whole bar starts as, same color as the fill (not a muted gray) so it reads
       // as "the same bar, less dense" rather than a different track color, matching how '█'
@@ -315,26 +315,51 @@ const QUESTIONS = [
 ];
 const DIMS = ['Management', 'Concentration', 'Op. Trend', 'Earn. Quality', 'Transparency'];
 
-const MiniBar = ({ data, color = 'var(--ws-text-2)' }) => {
+const MiniBar = ({ data, color = 'var(--ws-text-2)', height = 80 }) => {
   const max = Math.max(...data.map(d => Math.abs(d.value)));
+  // height="100%" lets this fill a CSS-Grid-stretched parent of unknown height (e.g. the
+  // Overview triplet, where Revenue Trend's card matches whichever of its siblings is
+  // tallest) — but Recharts' own ResponsiveContainer resolves percentage heights by reading
+  // its parent's box at mount, before the grid has finished stretching it, and gets stuck at
+  // -1×-1 forever (nothing ever "resizes" again to trigger a re-measure). Measuring the
+  // wrapper ourselves via ResizeObserver — which reports the real post-layout box on its
+  // very first callback, not just on subsequent changes — and handing Recharts a concrete
+  // pixel number sidesteps that dead measurement entirely.
+  const isFill = height === '100%';
+  const wrapRef = useRef(null);
+  const [measured, setMeasured] = useState(typeof height === 'number' ? height : 80);
+  useEffect(() => {
+    if (!isFill) { setMeasured(height); return; }
+    const el = wrapRef.current;
+    if (!el) return;
+    const ro = new ResizeObserver(entries => {
+      const h = entries[0]?.contentRect?.height;
+      if (h) setMeasured(h);
+    });
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, [isFill, height]);
+
   return (
-    <ResponsiveContainer width="100%" height={80}>
-      <BarChart data={data} barSize={18} margin={{ top: 4, right: 0, bottom: 0, left: 0 }}>
-        <XAxis dataKey="year" tick={{ fill: 'var(--ws-text-3)', fontSize: 9 }} axisLine={false} tickLine={false} />
-        <YAxis hide domain={[0, max * 1.15]} />
-        <Tooltip
-          formatter={v => [`$${Math.abs(v).toFixed(1)}B`]}
-          contentStyle={{ background: 'var(--ws-bg-1)', border: '1px solid var(--ws-border)', fontSize: 10 }}
-        />
-        <Bar dataKey="value" radius={[2, 2, 0, 0]}>
-          {/* fillOpacity (not string-concatenating an alpha suffix onto `color`) so this
-              still works when `color` is a CSS custom property like 'var(--ws-accent)' —
-              'var(--ws-accent)55' is not a valid color and silently fails to paint,
-              leaving every bar but the last one invisible. */}
-          {data.map((_, i) => <Cell key={i} fill={color} fillOpacity={i === data.length - 1 ? 1 : 0.33} />)}
-        </Bar>
-      </BarChart>
-    </ResponsiveContainer>
+    <div ref={wrapRef} style={{ width: '100%', height: isFill ? '100%' : height }}>
+      <ResponsiveContainer width="100%" height={measured}>
+        <BarChart data={data} barSize={18} margin={{ top: 4, right: 0, bottom: 0, left: 0 }}>
+          <XAxis dataKey="year" tick={{ fill: 'var(--ws-text-3)', fontSize: 9 }} axisLine={false} tickLine={false} />
+          <YAxis hide domain={[0, max * 1.15]} />
+          <Tooltip
+            formatter={v => [`$${Math.abs(v).toFixed(1)}B`]}
+            contentStyle={{ background: 'var(--ws-bg-1)', border: '1px solid var(--ws-border)', fontSize: 10 }}
+          />
+          <Bar dataKey="value" radius={[2, 2, 0, 0]}>
+            {/* fillOpacity (not string-concatenating an alpha suffix onto `color`) so this
+                still works when `color` is a CSS custom property like 'var(--ws-accent)' —
+                'var(--ws-accent)55' is not a valid color and silently fails to paint,
+                leaving every bar but the last one invisible. */}
+            {data.map((_, i) => <Cell key={i} fill={color} fillOpacity={i === data.length - 1 ? 1 : 0.33} />)}
+          </Bar>
+        </BarChart>
+      </ResponsiveContainer>
+    </div>
   );
 };
 
@@ -965,6 +990,7 @@ function StockPageContent({ params }) {
           }}>
             {[
               { label: 'Market Cap', val: fmt(data.marketCap), delta: pctDelta(data.marketCap, data.prevQuarter?.marketCap), tier: marketCapTier(data.marketCap) },
+              ...(easyMode ? [{ label: 'Quality Score', quality: true }] : []),
               { label: 'Div. Yield', val: data.dividendYield ? `${(+data.dividendYield).toFixed(2)}%` : 'N/A' },
               { label: 'FCF Yield', val: (easyMode?.trueFcfYield ?? data.fcfYield) != null ? `${(easyMode?.trueFcfYield ?? data.fcfYield).toFixed(2)}%` : 'N/A' },
               { label: 'P/E', val: fmtMultiple(data.pe), delta: pctDelta(data.pe, data.prevQuarter?.pe) },
@@ -989,10 +1015,19 @@ function StockPageContent({ params }) {
                 <div style={{ fontFamily: "'Inter', sans-serif", fontSize: '9px', letterSpacing: '1.5px', color: 'var(--ws-text-3)', fontWeight: 700, marginBottom: '6px' }}>
                   {kpi.label.toUpperCase()}
                 </div>
-                <div style={{ fontFamily: "'Inter', sans-serif", fontSize: '16px', fontWeight: 700, color: 'var(--ws-text)', fontVariantNumeric: 'tabular-nums', whiteSpace: 'nowrap' }}>
-                  {kpi.val}
-                  {kpi.delta != null && <DeltaTag value={kpi.delta} />}
-                </div>
+                {kpi.quality ? (
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <QualityScoreBar score100={easyMode.score100} color={easyMode.verdictColor} barWidth={64} barHeight={14} />
+                    <span style={{ fontFamily: "'Inter', sans-serif", fontSize: '16px', fontWeight: 700, color: easyMode.verdictColor, fontVariantNumeric: 'tabular-nums' }}>
+                      {easyMode.score100}
+                    </span>
+                  </div>
+                ) : (
+                  <div style={{ fontFamily: "'Inter', sans-serif", fontSize: '16px', fontWeight: 700, color: 'var(--ws-text)', fontVariantNumeric: 'tabular-nums', whiteSpace: 'nowrap' }}>
+                    {kpi.val}
+                    {kpi.delta != null && <DeltaTag value={kpi.delta} />}
+                  </div>
+                )}
               </div>
             ))}
           </div>
@@ -1042,12 +1077,13 @@ function StockPageContent({ params }) {
             {/* Left column: vote + numbers + chart */}
             <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
 
-              {/* Quality Score (its own card, full animated treatment restored — this used to
-                  live in the header) sits next to Analyst Consensus so both calls are visible
-                  together at a glance. */}
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: '16px' }}>
+              {/* Quality Score, Analyst Consensus and Revenue Trend side by side instead of
+                  each stretched to the full container width — forced 3-up (not auto-fit) so
+                  they stay in one row rather than Revenue Trend wrapping to its own line
+                  whenever the left column isn't wide enough for 3×260px. */}
+              <div className="overview-triplet" style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '16px', alignItems: 'stretch' }}>
                 {easyMode && (
-                  <div style={{ background: 'var(--ws-bg-1)', border: '1px solid var(--ws-border)', padding: '20px' }}>
+                  <div style={{ background: 'var(--ws-bg-1)', border: '1px solid var(--ws-border)', padding: '20px', display: 'flex', flexDirection: 'column', height: '100%' }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap', marginBottom: '16px' }}>
                       <div style={{ fontWeight: 700, fontSize: '14px', color: 'var(--ws-text)' }}>Quality Score</div>
                       {tierAdjusted && (
@@ -1077,10 +1113,13 @@ function StockPageContent({ params }) {
                       {easyMode.summary}
                     </div>
 
-                    {/* Compact CBS/OPPO/GQS/Moat/Final Note breakdown — same fields and
-                        0-5→0-100 display convention as the full version under Financials →
-                        Quality Score, just condensed to fit this narrower card. */}
-                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: '1px', background: 'var(--ws-border)', marginTop: '16px' }}>
+                    {/* CBS/OPPO/GQS/Moat/Final Note breakdown — same fields and 0-5→0-100
+                        display convention as the full version under Financials → Quality
+                        Score. Stacked 3-wide (5 cells wrap to a 3+2 grid) instead of a single
+                        thin row, so each cell gets to be bigger and the block fills more of
+                        the card's height. marginTop: auto pins the whole block to the bottom
+                        once the card is stretched to match its taller siblings. */}
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '1px', background: 'var(--ws-border)', marginTop: 'auto', paddingTop: '16px' }}>
                       {[
                         { label: 'CORE', score: easyMode.cbs },
                         { label: 'OPPO', score: easyMode.oppo },
@@ -1090,9 +1129,9 @@ function StockPageContent({ params }) {
                       ].map(s => {
                         const scoreColor = (sc) => sc >= 4 ? 'var(--ws-accent)' : sc >= 3 ? 'var(--ws-text)' : 'var(--ws-red)';
                         return (
-                          <div key={s.label} style={{ background: s.highlight ? 'var(--ws-bg-2)' : 'var(--ws-bg-1)', padding: '8px 4px', textAlign: 'center' }}>
-                            <div style={{ color: 'var(--ws-text-3)', fontSize: '7px', letterSpacing: '0.5px', marginBottom: '5px' }}>{s.label}</div>
-                            <div style={{ fontSize: s.text ? '13px' : '16px', fontWeight: 700, color: s.text ? s.color : scoreColor(s.score), letterSpacing: '-0.5px' }}>
+                          <div key={s.label} style={{ background: s.highlight ? 'var(--ws-bg-2)' : 'var(--ws-bg-1)', padding: '20px 8px', textAlign: 'center' }}>
+                            <div style={{ color: 'var(--ws-text-3)', fontSize: '10px', letterSpacing: '0.5px', marginBottom: '10px' }}>{s.label}</div>
+                            <div style={{ fontSize: s.text ? '22px' : '28px', fontWeight: 700, color: s.text ? s.color : scoreColor(s.score), letterSpacing: '-0.5px' }}>
                               {s.text || Math.round(s.score * 20)}
                             </div>
                           </div>
@@ -1103,7 +1142,7 @@ function StockPageContent({ params }) {
                 )}
 
               {/* Analyst rating */}
-              <div style={{ background: 'var(--ws-bg-1)', border: '1px solid var(--ws-border)', padding: '20px' }}>
+              <div style={{ background: 'var(--ws-bg-1)', border: '1px solid var(--ws-border)', padding: '20px', height: '100%' }}>
                 <div style={{ fontWeight: 700, fontSize: '14px', marginBottom: '4px', color: 'var(--ws-text)' }}>
                   Analyst Consensus
                 </div>
@@ -1201,19 +1240,19 @@ function StockPageContent({ params }) {
                   );
                 })()}
               </div>
-              </div>
 
               {/* Revenue trend — reuses the same MiniBar component/data (revChart) already
                   used for the Income tab under Financials, so Overview gives a quick visual
                   read on growth direction without needing to switch tabs. */}
               {hasFundamentals && revChart.length > 0 && (
-                <div>
+                <div style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
                   <div style={{ color: 'var(--ws-text-3)', fontSize: '10px', fontFamily: "'Inter', sans-serif", letterSpacing: '1.5px', marginBottom: '10px', fontWeight: 700 }}>REVENUE TREND</div>
-                  <div style={{ background: 'var(--ws-bg-1)', border: '1px solid var(--ws-border)', padding: '16px 18px 4px' }}>
-                    <MiniBar data={revChart} color="var(--ws-accent)" />
+                  <div style={{ background: 'var(--ws-bg-1)', border: '1px solid var(--ws-border)', padding: '16px 18px 4px', flex: 1, minHeight: 0 }}>
+                    <MiniBar data={revChart} color="var(--ws-accent)" height="100%" />
                   </div>
                 </div>
               )}
+              </div>
 
               {/* Numbers, Simplified */}
               {hasFundamentals && (

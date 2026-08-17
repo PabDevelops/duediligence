@@ -500,6 +500,20 @@ html, body {
   align-items: start;
 }
 
+/* Quality Score / Analyst Consensus / Revenue Trend row on the Overview tab — forced 3-up
+   on desktop; drops to 2-up then 1-up as the left column (page width minus the fixed 360px
+   right column) runs out of room for three ~260px+ cards side by side. */
+@media (max-width: 1150px) {
+  .overview-triplet {
+    grid-template-columns: repeat(2, 1fr) !important;
+  }
+}
+@media (max-width: 768px) {
+  .overview-triplet {
+    grid-template-columns: 1fr !important;
+  }
+}
+
 @media (max-width: 768px) {
   .stock-hero {
     flex-direction: column;
