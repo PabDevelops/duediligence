@@ -500,16 +500,11 @@ html, body {
   align-items: start;
 }
 
-/* Quality Score / Analyst Consensus / Revenue Trend row on the Overview tab — forced 3-up
-   on desktop; drops to 2-up then 1-up as the left column (page width minus the fixed 360px
-   right column) runs out of room for three ~260px+ cards side by side. */
-@media (max-width: 1150px) {
-  .overview-triplet {
-    grid-template-columns: repeat(2, 1fr) !important;
-  }
-}
-@media (max-width: 768px) {
-  .overview-triplet {
+/* Quality Score / Analyst Consensus row on the Overview tab — side by side on desktop,
+   stacked once the left column (page width minus the fixed 360px right column) can't fit
+   both ~260px+ cards side by side. */
+@media (max-width: 900px) {
+  .overview-pair {
     grid-template-columns: 1fr !important;
   }
 }
@@ -532,6 +527,23 @@ html, body {
   .stock-tab-nav button {
     padding: 8px 12px !important;
     font-size: 10px !important;
+  }
+  .stock-page-root {
+    padding: 12px !important;
+  }
+  .stock-hero-card {
+    padding: 16px !important;
+  }
+  /* Jump-to-ticker search + watchlist star wraps below the logo/name on narrow screens
+     (the row above already does that via flex-wrap) — stretch it full width there instead
+     of leaving it pinned to its natural content width. */
+  .stock-hero-search-row {
+    width: 100%;
+  }
+  /* KPI strip — 140px basis only fits one tile per row on a phone-width screen; 2-up reads
+     much better and every value here (market cap, yields, multiples) is short enough to fit. */
+  .stock-kpi-strip > div {
+    flex-basis: calc(50% - 1px) !important;
   }
   .stock-hero-chart {
     border-left: none;

@@ -1,7 +1,7 @@
 'use client';
 import { useState, useEffect, useMemo, useRef, use, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { BarChart, Bar, LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell } from 'recharts';
+import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts';
 import StockChart from '../../../components/StockChart';
 import ProjectionChart from '../../../components/workspace/stock/ProjectionChart';
 import Sparkline from '../../../components/Sparkline';
@@ -314,54 +314,6 @@ const QUESTIONS = [
   { dim: 'Transparency', text: 'Do segments allow margin calculation by business unit?' },
 ];
 const DIMS = ['Management', 'Concentration', 'Op. Trend', 'Earn. Quality', 'Transparency'];
-
-const MiniBar = ({ data, color = 'var(--ws-text-2)', height = 80 }) => {
-  const max = Math.max(...data.map(d => Math.abs(d.value)));
-  // height="100%" lets this fill a CSS-Grid-stretched parent of unknown height (e.g. the
-  // Overview triplet, where Revenue Trend's card matches whichever of its siblings is
-  // tallest) — but Recharts' own ResponsiveContainer resolves percentage heights by reading
-  // its parent's box at mount, before the grid has finished stretching it, and gets stuck at
-  // -1×-1 forever (nothing ever "resizes" again to trigger a re-measure). Measuring the
-  // wrapper ourselves via ResizeObserver — which reports the real post-layout box on its
-  // very first callback, not just on subsequent changes — and handing Recharts a concrete
-  // pixel number sidesteps that dead measurement entirely.
-  const isFill = height === '100%';
-  const wrapRef = useRef(null);
-  const [measured, setMeasured] = useState(typeof height === 'number' ? height : 80);
-  useEffect(() => {
-    if (!isFill) { setMeasured(height); return; }
-    const el = wrapRef.current;
-    if (!el) return;
-    const ro = new ResizeObserver(entries => {
-      const h = entries[0]?.contentRect?.height;
-      if (h) setMeasured(h);
-    });
-    ro.observe(el);
-    return () => ro.disconnect();
-  }, [isFill, height]);
-
-  return (
-    <div ref={wrapRef} style={{ width: '100%', height: isFill ? '100%' : height }}>
-      <ResponsiveContainer width="100%" height={measured}>
-        <BarChart data={data} barSize={18} margin={{ top: 4, right: 0, bottom: 0, left: 0 }}>
-          <XAxis dataKey="year" tick={{ fill: 'var(--ws-text-3)', fontSize: 9 }} axisLine={false} tickLine={false} />
-          <YAxis hide domain={[0, max * 1.15]} />
-          <Tooltip
-            formatter={v => [`$${Math.abs(v).toFixed(1)}B`]}
-            contentStyle={{ background: 'var(--ws-bg-1)', border: '1px solid var(--ws-border)', fontSize: 10 }}
-          />
-          <Bar dataKey="value" radius={[2, 2, 0, 0]}>
-            {/* fillOpacity (not string-concatenating an alpha suffix onto `color`) so this
-                still works when `color` is a CSS custom property like 'var(--ws-accent)' —
-                'var(--ws-accent)55' is not a valid color and silently fails to paint,
-                leaving every bar but the last one invisible. */}
-            {data.map((_, i) => <Cell key={i} fill={color} fillOpacity={i === data.length - 1 ? 1 : 0.33} />)}
-          </Bar>
-        </BarChart>
-      </ResponsiveContainer>
-    </div>
-  );
-};
 
 // domain={['auto','auto']} on the (hidden) Y axis is what actually makes this readable —
 // without it, Recharts defaults toward including 0, so a metric that only moves within a
@@ -883,13 +835,13 @@ function StockPageContent({ params }) {
   }
 
   return (
-    <div className="p-6">
+    <div className="p-6 stock-page-root">
 
       {/* TERMINAL HERO — logo/name/ticker + watchlist star on top, price + compact quality
           badge below, then the range-tab chart and a KPI strip. Replaces the old
           terminal-title-bar + 3-column layout with the header treatment approved in the
           mockup (logo, name, ticker size/weight, KPI grid under the chart). */}
-      <div style={{ border: '1px solid var(--ws-border)', background: 'var(--ws-bg-1)', marginBottom: '20px', overflow: 'hidden', padding: '20px 24px' }}>
+      <div className="stock-hero-card" style={{ border: '1px solid var(--ws-border)', background: 'var(--ws-bg-1)', marginBottom: '20px', overflow: 'hidden', padding: '20px 24px' }}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '16px', flexWrap: 'wrap', marginBottom: '18px' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '14px', minWidth: 0 }}>
             <div style={{ width: '44px', height: '44px', borderRadius: '10px', background: 'white', border: '1px solid var(--ws-border)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, overflow: 'hidden' }}>
@@ -911,9 +863,12 @@ function StockPageContent({ params }) {
             </div>
           </div>
 
-          <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexShrink: 0 }}>
-            {/* Jump-to-ticker search, so you can move between stocks without leaving the page */}
-            <div style={{ position: 'relative', width: '180px' }}>
+          <div className="stock-hero-search-row" style={{ display: 'flex', alignItems: 'center', gap: '10px', flexShrink: 0 }}>
+            {/* Jump-to-ticker search, so you can move between stocks without leaving the page.
+                min-width (not a fixed width) so this can shrink gracefully next to the logo/
+                name on mid-width screens, and stretch full-width via the mobile CSS override
+                once it wraps to its own line below them. */}
+            <div style={{ position: 'relative', flex: '1 1 180px', minWidth: '120px' }}>
               <input
                 ref={jumpInputRef}
                 value={jumpQuery}
@@ -984,7 +939,7 @@ function StockPageContent({ params }) {
             a quick scan without switching tabs. Hidden entirely for tickers with no
             fundamentals. */}
         {hasFundamentals && (
-          <div style={{
+          <div className="stock-kpi-strip" style={{
             display: 'flex', flexWrap: 'wrap', gap: '1px', background: 'var(--ws-border)',
             border: '1px solid var(--ws-border)', marginTop: '18px', overflow: 'hidden',
           }}>
@@ -1077,11 +1032,9 @@ function StockPageContent({ params }) {
             {/* Left column: vote + numbers + chart */}
             <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
 
-              {/* Quality Score, Analyst Consensus and Revenue Trend side by side instead of
-                  each stretched to the full container width — forced 3-up (not auto-fit) so
-                  they stay in one row rather than Revenue Trend wrapping to its own line
-                  whenever the left column isn't wide enough for 3×260px. */}
-              <div className="overview-triplet" style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '16px', alignItems: 'stretch' }}>
+              {/* Quality Score and Analyst Consensus side by side instead of each stretched to
+                  the full container width. */}
+              <div className="overview-pair" style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '16px', alignItems: 'stretch' }}>
                 {easyMode && (
                   <div style={{ background: 'var(--ws-bg-1)', border: '1px solid var(--ws-border)', padding: '20px', display: 'flex', flexDirection: 'column', height: '100%' }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap', marginBottom: '16px' }}>
@@ -1241,17 +1194,6 @@ function StockPageContent({ params }) {
                 })()}
               </div>
 
-              {/* Revenue trend — reuses the same MiniBar component/data (revChart) already
-                  used for the Income tab under Financials, so Overview gives a quick visual
-                  read on growth direction without needing to switch tabs. */}
-              {hasFundamentals && revChart.length > 0 && (
-                <div style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
-                  <div style={{ color: 'var(--ws-text-3)', fontSize: '10px', fontFamily: "'Inter', sans-serif", letterSpacing: '1.5px', marginBottom: '10px', fontWeight: 700 }}>REVENUE TREND</div>
-                  <div style={{ background: 'var(--ws-bg-1)', border: '1px solid var(--ws-border)', padding: '16px 18px 4px', flex: 1, minHeight: 0 }}>
-                    <MiniBar data={revChart} color="var(--ws-accent)" height="100%" />
-                  </div>
-                </div>
-              )}
               </div>
 
               {/* Numbers, Simplified */}
