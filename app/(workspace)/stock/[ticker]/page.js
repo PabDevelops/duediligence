@@ -1129,7 +1129,6 @@ function StockPageContent({ params }) {
                 ) : (() => {
                   const r = analystRating.ratings;
                   const total = analystRating.total;
-                  const pct = (n) => Math.round((n / total) * 100);
                   // Bull/Bear wording (not Buy/Hold/Sell) to match the gauge above — same
                   // underlying Finnhub rating categories, just relabeled.
                   const CONSENSUS_LABELS = {
@@ -1140,18 +1139,60 @@ function StockPageContent({ params }) {
                     strong_sell: { label: 'Strong Bear', color: '#ef4444' },
                   };
                   const c = CONSENSUS_LABELS[analystRating.consensus];
-                  const rows = [
-                    { key: 'strongBuy', label: 'Strong Bull', color: '#0d9488' },
-                    { key: 'buy', label: 'Bull', color: '#84cc16' },
-                    { key: 'hold', label: 'Neutral', color: '#eab308' },
-                    { key: 'sell', label: 'Bear', color: '#f97316' },
-                    { key: 'strongSell', label: 'Strong Bear', color: '#ef4444' },
-                  ];
                   return (
                     <>
-                      <div style={{ fontSize: '11px', color: 'var(--ws-text-3)', marginBottom: '10px' }}>
+                      <div style={{ fontSize: '11px', color: 'var(--ws-text-3)', marginBottom: '14px' }}>
                         Based on {total} analyst{total === 1 ? '' : 's'} offering ratings for {data.name}.
                       </div>
+
+                      {/* Bear/Neutral/Bull — the same 5 Finnhub/Yahoo categories collapsed to 3,
+                          shown as big counts up front (mirrors how TipRanks-style consensus
+                          panels lead with SELL/HOLD/BUY) instead of a 5-way bar+legend. */}
+                      {(() => {
+                        const bearCount = r.strongSell + r.sell;
+                        const bullCount = r.strongBuy + r.buy;
+                        const groups = [
+                          { label: 'Bear', count: bearCount, color: '#ef4444' },
+                          { label: 'Neutral', count: r.hold, color: '#eab308' },
+                          { label: 'Bull', count: bullCount, color: '#84cc16' },
+                        ];
+                        return (
+                          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '1px', background: 'var(--ws-border)', marginBottom: '1px' }}>
+                            {groups.map(g => (
+                              <div key={g.label} style={{ background: 'var(--ws-bg-2)', borderTop: `2px solid ${g.color}`, padding: '12px 8px', textAlign: 'center' }}>
+                                <div style={{ fontSize: '22px', fontWeight: 700, color: g.color, letterSpacing: '-0.5px' }}>{g.count}</div>
+                                <div style={{ fontFamily: "'Inter', sans-serif", fontSize: '9px', letterSpacing: '1px', color: 'var(--ws-text-3)', fontWeight: 700, marginTop: '4px' }}>
+                                  {g.label.toUpperCase()}
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        );
+                      })()}
+
+                      {/* Target Price / Return Potential — data.analystTarget is the Yahoo
+                          consensus mean target, already fetched for ProjectionChart's drift
+                          calc but not previously surfaced here. */}
+                      {data.analystTarget != null && price != null && (
+                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '1px', background: 'var(--ws-border)', marginBottom: '16px' }}>
+                          <div style={{ background: 'var(--ws-bg-2)', padding: '12px 8px', textAlign: 'center' }}>
+                            <div style={{ fontFamily: "'Inter', sans-serif", fontSize: '9px', letterSpacing: '1px', color: 'var(--ws-text-3)', fontWeight: 700, marginBottom: '6px' }}>TARGET PRICE</div>
+                            <div style={{ fontSize: '16px', fontWeight: 700, color: 'var(--ws-text)' }}>{curSym(data.currency)}{data.analystTarget.toFixed(2)}</div>
+                          </div>
+                          <div style={{ background: 'var(--ws-bg-2)', padding: '12px 8px', textAlign: 'center' }}>
+                            <div style={{ fontFamily: "'Inter', sans-serif", fontSize: '9px', letterSpacing: '1px', color: 'var(--ws-text-3)', fontWeight: 700, marginBottom: '6px' }}>RETURN POTENTIAL</div>
+                            {(() => {
+                              const returnPct = (data.analystTarget / price - 1) * 100;
+                              return (
+                                <div style={{ fontSize: '16px', fontWeight: 700, color: returnPct >= 0 ? 'var(--ws-accent)' : 'var(--ws-red)' }}>
+                                  {returnPct >= 0 ? '+' : ''}{returnPct.toFixed(2)}%
+                                </div>
+                              );
+                            })()}
+                          </div>
+                        </div>
+                      )}
+
                       <AnalystGauge score={analystRating.score} qualityScore100={easyMode?.score100} />
                       {c && (
                         <div style={{ textAlign: 'center', fontSize: '20px', fontWeight: 800, color: c.color, margin: '4px 0 4px' }}>
@@ -1159,34 +1200,11 @@ function StockPageContent({ params }) {
                         </div>
                       )}
                       {easyMode && (
-                        <div style={{ textAlign: 'center', fontSize: '10px', color: 'var(--ws-text-3)', marginBottom: '16px' }}>
+                        <div style={{ textAlign: 'center', fontSize: '10px', color: 'var(--ws-text-3)', marginBottom: '10px' }}>
                           <span style={{ color: QUALITY_NEEDLE_COLOR }}>●</span> Bulltrace Quality Score ({easyMode.score100}/100)
                         </div>
                       )}
-                      {/* Distribution as a single stacked bar (segment width = share of analysts)
-                          instead of a grid of percentages — the bar already encodes proportion
-                          visually, so the legend below only needs raw counts. */}
-                      <div style={{ borderTop: '1px solid var(--ws-border)', paddingTop: '14px' }}>
-                        <div style={{ display: 'flex', width: '100%', height: '10px', borderRadius: '5px', overflow: 'hidden', background: 'var(--ws-bg-2)' }}>
-                          {rows.map(row => {
-                            const width = pct(r[row.key]);
-                            if (width === 0) return null;
-                            return (
-                              <div key={row.key} title={`${row.label}: ${r[row.key]} analyst${r[row.key] === 1 ? '' : 's'} (${width}%)`}
-                                style={{ width: `${width}%`, background: row.color }} />
-                            );
-                          })}
-                        </div>
-                        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px 16px', marginTop: '12px' }}>
-                          {rows.map(row => (
-                            <div key={row.key} style={{ fontSize: '11px', color: 'var(--ws-text-2)', display: 'flex', alignItems: 'center', gap: '5px' }}>
-                              <span style={{ width: '7px', height: '7px', borderRadius: '50%', background: row.color, flexShrink: 0 }} />
-                              {row.label} <span style={{ fontWeight: 700, color: 'var(--ws-text)' }}>{r[row.key]}</span>
-                            </div>
-                          ))}
-                        </div>
-                      </div>
-                      <div style={{ marginTop: '10px', fontSize: '10px', color: 'var(--ws-text-3)', textAlign: 'center' }}>
+                      <div style={{ fontSize: '10px', color: 'var(--ws-text-3)', textAlign: 'center' }}>
                         Source: {analystRating.source === 'finnhub' ? 'Finnhub' : 'Yahoo Finance'}
                       </div>
                       {easyMode && c && (() => {
