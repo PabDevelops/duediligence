@@ -501,9 +501,9 @@ html, body {
 }
 
 /* Quality Score / Analyst Consensus row on the Overview tab — side by side on desktop,
-   stacked once the left column (page width minus the fixed 360px right column) can't fit
-   both ~260px+ cards side by side. */
-@media (max-width: 900px) {
+   stacked below that. 1023px matches the same "not desktop" breakpoint the rest of the
+   workspace switches on (mobile header, collapsing sidebar, home dashboard grids). */
+@media (max-width: 1023px) {
   .overview-pair {
     grid-template-columns: 1fr !important;
   }
