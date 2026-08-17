@@ -1076,23 +1076,31 @@ function StockPageContent({ params }) {
 
                     {/* CBS/OPPO/GQS/Moat/Final Note breakdown — same fields and 0-5→0-100
                         display convention as the full version under Financials → Quality
-                        Score. Stacked 3-wide (5 cells wrap to a 3+2 grid) instead of a single
-                        thin row, so each cell gets to be bigger and the block fills more of
-                        the card's height. marginTop: auto pins the whole block to the bottom
-                        once the card is stretched to match its taller siblings. */}
-                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '1px', background: 'var(--ws-border)', marginTop: 'auto', paddingTop: '16px' }}>
+                        Score. FINAL spans both rows in the right column (the headline number,
+                        given more visual weight) instead of leaving a dead 6th cell; GROWTH
+                        and MOAT drop down to fill the row that opens up underneath it.
+                        marginTop: auto pins the whole block to the bottom once the card is
+                        stretched to match its taller siblings — no paddingTop alongside it,
+                        since padding on a background-colored grid container (the background
+                        here is only meant to paint the 1px gaps between cells) paints a solid
+                        bar across that padding too. */}
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gridAutoRows: '1fr', gap: '1px', background: 'var(--ws-border)', marginTop: 'auto' }}>
                       {[
                         { label: 'CORE', score: easyMode.cbs },
                         { label: 'OPPO', score: easyMode.oppo },
+                        { label: 'FINAL', score: easyMode.finalNote, highlight: true, span: true },
                         { label: 'GROWTH', score: easyMode.gqs },
                         { label: 'MOAT', text: easyMode.moat, color: easyMode.moatColor },
-                        { label: 'FINAL', score: easyMode.finalNote, highlight: true },
                       ].map(s => {
                         const scoreColor = (sc) => sc >= 4 ? 'var(--ws-accent)' : sc >= 3 ? 'var(--ws-text)' : 'var(--ws-red)';
                         return (
-                          <div key={s.label} style={{ background: s.highlight ? 'var(--ws-bg-2)' : 'var(--ws-bg-1)', padding: '20px 8px', textAlign: 'center' }}>
+                          <div key={s.label} style={{
+                            background: s.highlight ? 'var(--ws-bg-2)' : 'var(--ws-bg-1)', padding: '20px 8px', textAlign: 'center',
+                            gridRow: s.span ? 'span 2' : undefined,
+                            display: s.span ? 'flex' : undefined, flexDirection: s.span ? 'column' : undefined, justifyContent: s.span ? 'center' : undefined,
+                          }}>
                             <div style={{ color: 'var(--ws-text-3)', fontSize: '10px', letterSpacing: '0.5px', marginBottom: '10px' }}>{s.label}</div>
-                            <div style={{ fontSize: s.text ? '22px' : '28px', fontWeight: 700, color: s.text ? s.color : scoreColor(s.score), letterSpacing: '-0.5px' }}>
+                            <div style={{ fontSize: s.text ? '22px' : (s.span ? '34px' : '28px'), fontWeight: 700, color: s.text ? s.color : scoreColor(s.score), letterSpacing: '-0.5px' }}>
                               {s.text || Math.round(s.score * 20)}
                             </div>
                           </div>
