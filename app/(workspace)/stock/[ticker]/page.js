@@ -1125,20 +1125,22 @@ function StockPageContent({ params }) {
                   const r = analystRating.ratings;
                   const total = analystRating.total;
                   const pct = (n) => Math.round((n / total) * 100);
+                  // Bull/Bear wording (not Buy/Hold/Sell) to match the gauge above — same
+                  // underlying Finnhub rating categories, just relabeled.
                   const CONSENSUS_LABELS = {
-                    strong_buy: { label: 'Strong Buy', color: '#0d9488' },
-                    buy: { label: 'Buy', color: '#84cc16' },
-                    hold: { label: 'Hold', color: '#eab308' },
-                    sell: { label: 'Sell', color: '#f97316' },
-                    strong_sell: { label: 'Strong Sell', color: '#ef4444' },
+                    strong_buy: { label: 'Strong Bull', color: '#0d9488' },
+                    buy: { label: 'Bull', color: '#84cc16' },
+                    hold: { label: 'Neutral', color: '#eab308' },
+                    sell: { label: 'Bear', color: '#f97316' },
+                    strong_sell: { label: 'Strong Bear', color: '#ef4444' },
                   };
                   const c = CONSENSUS_LABELS[analystRating.consensus];
                   const rows = [
-                    { key: 'strongBuy', label: 'Strong Buy', color: '#0d9488' },
-                    { key: 'buy', label: 'Buy', color: '#84cc16' },
-                    { key: 'hold', label: 'Hold', color: '#eab308' },
-                    { key: 'sell', label: 'Sell', color: '#f97316' },
-                    { key: 'strongSell', label: 'Strong Sell', color: '#ef4444' },
+                    { key: 'strongBuy', label: 'Strong Bull', color: '#0d9488' },
+                    { key: 'buy', label: 'Bull', color: '#84cc16' },
+                    { key: 'hold', label: 'Neutral', color: '#eab308' },
+                    { key: 'sell', label: 'Bear', color: '#f97316' },
+                    { key: 'strongSell', label: 'Strong Bear', color: '#ef4444' },
                   ];
                   return (
                     <>
