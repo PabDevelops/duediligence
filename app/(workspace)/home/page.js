@@ -406,16 +406,27 @@ export default function WorkspaceHome() {
     const firstSp = lookupClose(spMap, realSnapshots[0].date);
     const firstNq = lookupClose(nqMap, realSnapshots[0].date);
 
-    // Portfolio line is return-on-cost-basis, not change-from-day-1-value — cost basis grows
-    // exactly when new capital goes in, so depositing/buying more doesn't fake a jump the way
-    // comparing raw value to a fixed starting point would. This is the same math as the KPI
-    // row's "Total Return", just plotted day by day instead of as a single current number.
-    return realSnapshots.map(s => {
+    // Portfolio line is time-weighted return, not return-on-cost-basis — with regular
+    // deposits (e.g. a monthly contribution), comparing value-vs-cost against the S&P/Nasdaq's
+    // simple price-return-since-day-1 isn't apples to apples: the benchmark lines implicitly
+    // assume a single lump sum invested on day 1, while cost-basis return keeps diluting
+    // toward 0% every time fresh, not-yet-grown capital lands. TWR instead measures how the
+    // money that was ALREADY invested performed, period by period, excluding each cash flow
+    // from that period's return before geometrically compounding them together — the same
+    // treatment index funds themselves use, so it's the correct like-for-like comparison here.
+    let twrCumulative = 1;
+    return realSnapshots.map((s, i) => {
       const spClose = lookupClose(spMap, s.date);
       const nqClose = lookupClose(nqMap, s.date);
+      if (i > 0) {
+        const prev = realSnapshots[i - 1];
+        const cashFlow = s.cost - prev.cost; // net new capital added since the prior snapshot
+        const periodReturn = (s.value - cashFlow) / prev.value - 1;
+        twrCumulative *= (1 + periodReturn);
+      }
       return {
         date: s.date,
-        portfolio: s.cost > 0 ? ((s.value - s.cost) / s.cost) * 100 : 0,
+        portfolio: (twrCumulative - 1) * 100,
         sp500: (firstSp && spClose) ? ((spClose - firstSp) / firstSp) * 100 : null,
         nasdaq: (firstNq && nqClose) ? ((nqClose - firstNq) / firstNq) * 100 : null,
       };
