@@ -4,21 +4,9 @@ import { getCookieDomain } from './lib/cookieDomain';
 import { detectAiBot } from './lib/aiBots';
 import { logBotVisit } from './lib/botLogger';
 
-// Marketing/informational pages that live on the apex domain (bulltrace.app).
-// Everything else is the app/workspace terminal, served from
-// terminal.bulltrace.app instead.
-const MARKETING_PREFIXES = [
-  '/', '/about', '/pricing', '/faq', '/privacy', '/terms',
-  '/sign-in', '/sign-up', '/auth', '/start-trial', '/success',
-];
-
-// Blog is hidden for now (not deleted) — redirect it to home on both hosts.
+// Blog is hidden for now (not deleted) — redirect it to home.
 function isHiddenPath(pathname) {
   return pathname === '/blog' || pathname.startsWith('/blog/');
-}
-
-function isMarketingPath(pathname) {
-  return MARKETING_PREFIXES.some(p => p === '/' ? pathname === '/' : (pathname === p || pathname.startsWith(p + '/')));
 }
 
 // The site used to be bilingual (en/es) via an /es path prefix — that's gone, English only
@@ -31,57 +19,33 @@ function stripSpanishPrefix(pathname) {
   return pathname === '/es' ? '/' : pathname.slice(3);
 }
 
-// Root-level static/metadata files Next.js serves identically regardless of host —
-// crawlers (Googlebot, AdSense's Mediapartners-Google, etc.) fetch these from whichever
-// domain they found the site on, so redirecting them cross-domain breaks robots.txt/ads.txt
-// discovery and, in turn, AdSense's "can the crawler access the site" verification check.
-const CRAWLER_STATIC_FILES = ['/ads.txt', '/robots.txt', '/sitemap.xml'];
-
 function domainRedirect(request, hasVisitedBefore) {
-  const host = request.headers.get('host') || '';
-  const { pathname, search } = request.nextUrl;
+  const { pathname } = request.nextUrl;
 
   if (pathname.startsWith('/api')) return null;
-  if (CRAWLER_STATIC_FILES.includes(pathname)) return null;
 
   if (isHiddenPath(pathname)) {
     const dest = request.nextUrl.clone();
     dest.pathname = '/';
     dest.search = '';
-    if (host === 'terminal.bulltrace.app') dest.host = 'bulltrace.app';
     return NextResponse.redirect(dest, 307);
   }
 
   if (isSpanishPath(pathname)) {
     const dest = request.nextUrl.clone();
     dest.pathname = stripSpanishPrefix(pathname);
-    if (host === 'terminal.bulltrace.app') dest.host = 'bulltrace.app';
     return NextResponse.redirect(dest, 308);
   }
 
-  // Only enforce the domain split on the real production hostnames — never in
-  // local dev or on Vercel preview deployments, where there's only one domain.
-  const isApex = host === 'bulltrace.app' || host === 'www.bulltrace.app';
-  const isTerminal = host === 'terminal.bulltrace.app';
-  if (!isApex && !isTerminal) return null;
-
   // Anyone who's already been to the site before (carries the tq_gid guest cookie,
-  // minted on their very first-ever request regardless of host — see below) skips the
-  // marketing landing entirely and goes straight into the terminal. Cookie-less visitors
-  // (first real touch, or stateless crawlers/SEO bots) still see the landing normally, so
-  // organic acquisition and indexing are unaffected. Checked before the marketing-path
-  // rules below so it also short-circuits the pointless terminal-root -> apex -> terminal
-  // bounce that isMarketingPath('/') would otherwise trigger.
+  // minted on their very first-ever request — see below) skips the marketing landing
+  // entirely and goes straight into the terminal. Cookie-less visitors (first real
+  // touch, or stateless crawlers/SEO bots) still see the landing normally, so organic
+  // acquisition and indexing are unaffected.
   if (pathname === '/' && hasVisitedBefore) {
-    return NextResponse.redirect(new URL('https://terminal.bulltrace.app/home', request.url), 307);
+    return NextResponse.redirect(new URL('/home', request.url), 307);
   }
 
-  if (isApex && !isMarketingPath(pathname)) {
-    return NextResponse.redirect(new URL(`https://terminal.bulltrace.app${pathname}${search}`, request.url), 307);
-  }
-  if (isTerminal && isMarketingPath(pathname)) {
-    return NextResponse.redirect(new URL(`https://bulltrace.app${pathname}${search}`, request.url), 307);
-  }
   return null;
 }
 

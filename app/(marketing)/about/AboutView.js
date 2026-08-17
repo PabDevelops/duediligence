@@ -172,10 +172,10 @@ function LiveFeedMockup() {
 }
 
 const BENTO_MOCKUPS = [
-  { Mockup: SecFilingMockup, title: 'terminal.bulltrace.app/stock/AAPL — Financials', span: 2 },
-  { Mockup: CurrencyTrackerMockup, title: 'terminal.bulltrace.app/portfolio', span: 1 },
-  { Mockup: ScreenerMockup, title: 'terminal.bulltrace.app/screener', span: 1 },
-  { Mockup: LiveFeedMockup, title: 'terminal.bulltrace.app/watchlist — Live feed', span: 2 },
+  { Mockup: SecFilingMockup, title: 'bulltrace.app/stock/AAPL — Financials', span: 2 },
+  { Mockup: CurrencyTrackerMockup, title: 'bulltrace.app/portfolio', span: 1 },
+  { Mockup: ScreenerMockup, title: 'bulltrace.app/screener', span: 1 },
+  { Mockup: LiveFeedMockup, title: 'bulltrace.app/watchlist — Live feed', span: 2 },
 ];
 
 export default function AboutView({ dict }) {
@@ -229,7 +229,7 @@ export default function AboutView({ dict }) {
         </div>
 
         <div style={{ maxWidth: '900px', margin: '56px auto 0', position: 'relative', zIndex: 1 }}>
-          <WindowChrome title="terminal.bulltrace.app/home — Market Overview Dashboard" maxWidth="900px">
+          <WindowChrome title="bulltrace.app/home — Market Overview Dashboard" maxWidth="900px">
             <HeroMockup />
           </WindowChrome>
         </div>

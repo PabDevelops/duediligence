@@ -102,10 +102,6 @@ export default function HomeView({ dict }) {
 
           <div className="desktop-only" style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
             <a href="/sign-in" style={navLink}>{t.signIn}</a>
-            {/* PrimaryButton renders a plain <a>, not <Link> — this crosses
-                from the apex marketing domain to terminal.bulltrace.app in
-                production, which needs a real navigation so middleware.js's
-                host redirect fires. */}
             <PrimaryButton href="/home" style={{ height: '38px', padding: '0 16px', borderRadius: '0', boxShadow: 'none' }}>{t.cta}</PrimaryButton>
           </div>
 

@@ -1,8 +1,7 @@
 const BASE_URL = 'https://bulltrace.app';
 
-// The terminal (screener, compare, watchlist, stock/[ticker], blog, etc.) now
-// lives behind sign-up + an active subscription on terminal.bulltrace.app, so
-// it has no business being crawled/indexed under the public marketing site.
+// The terminal (screener, compare, watchlist, stock/[ticker], blog, etc.) lives behind
+// sign-up + an active subscription, so it has no business being crawled/indexed.
 // Only the informational pages that are actually public belong here.
 const PAGES = [
   { path: '',          changeFrequency: 'weekly',  priority: 1.0 },
