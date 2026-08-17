@@ -1173,9 +1173,9 @@ function StockPageContent({ params }) {
                       {/* Target Price / Return Potential — Bulltrace's own base-case fair
                           value (relativeValue.fairValue via fairValue.estimate, same number
                           the "Fair value" card in the right column shows), not Wall Street's
-                          analyst consensus target. Gated behind sign-in like that card, since
-                          this is the same proprietary call, not just a different label on it. */}
-                      {fairValue != null && price != null && isSignedIn && (
+                          analyst consensus target. Visible to everyone here, unlike that card —
+                          explicit call, not just leaving the gate off by accident. */}
+                      {fairValue != null && price != null && (
                         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '1px', background: 'var(--ws-border)', marginBottom: '16px' }}>
                           <div style={{ background: 'var(--ws-bg-2)', padding: '12px 8px', textAlign: 'center' }}>
                             <div style={{ fontFamily: "'Inter', sans-serif", fontSize: '9px', letterSpacing: '1px', color: 'var(--ws-text-3)', fontWeight: 700, marginBottom: '6px' }}>BULLTRACE TARGET</div>
