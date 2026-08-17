@@ -1,7 +1,7 @@
 'use client';
 import { useState, useEffect, useMemo, useRef, use, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { BarChart, Bar, LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell } from 'recharts';
+import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts';
 import StockChart from '../../../components/StockChart';
 import ProjectionChart from '../../../components/workspace/stock/ProjectionChart';
 import Sparkline from '../../../components/Sparkline';
@@ -70,14 +70,14 @@ function DeltaTag({ value, unit = '%' }) {
 }
 
 // Animated fill bar for the main Quality Score. Was an ASCII '█'/'░' character string —
-// besides not being animatable, mixing two block-drawing glyphs at a font weight (400) that
-// isn't one of the loaded JetBrains Mono weights (500/700) meant the two characters could
+// besides not being animatable, mixing two block-drawing glyphs at a font weight that
+// isn't one of the loaded weights meant the two characters could
 // render via different font-matching paths and end up visually mismatched in size. A real
 // div-based bar sidesteps both problems. Defined at module scope (not inside StockPage's
 // render body, where the equivalent ScoreBar below lives) so its identity — and animation
 // state — survives StockPage re-renders; it only replays the fill when the score itself
 // changes (e.g. switching tickers), via the `score100` dependency.
-function QualityScoreBar({ score100, color }) {
+function QualityScoreBar({ score100, color, barWidth = 150, barHeight = 18 }) {
   const [width, setWidth] = useState(0);
   useEffect(() => {
     setWidth(0);
@@ -95,7 +95,7 @@ function QualityScoreBar({ score100, color }) {
   }, [score100]);
   return (
     <div style={{
-      position: 'relative', width: '150px', height: '18px', overflow: 'hidden', flexShrink: 0,
+      position: 'relative', width: `${barWidth}px`, height: `${barHeight}px`, overflow: 'hidden', flexShrink: 0,
       // The '░' look, recreated as a CSS dot grid instead of a font glyph — this is the base
       // layer the whole bar starts as, same color as the fill (not a muted gray) so it reads
       // as "the same bar, less dense" rather than a different track color, matching how '█'
@@ -221,7 +221,7 @@ function GemRevealBar({ score100 }) {
             }} />
           ))}
         </div>
-        <span style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: '28px', fontWeight: 700, color: '#1D9E75', lineHeight: 1 }}>{score100}</span>
+        <span style={{ fontFamily: "'Inter', sans-serif", fontSize: '28px', fontWeight: 700, color: '#1D9E75', lineHeight: 1 }}>{score100}</span>
       </div>
 
       <div style={{
@@ -237,8 +237,8 @@ function GemRevealBar({ score100 }) {
           <GemDiamondIcon size={46} />
         </div>
         <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
-          <span style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: '17px', fontWeight: 700, color: '#85B7EB', letterSpacing: '0.5px', lineHeight: 1.1 }}>HIDDEN GEM</span>
-          <span style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: '9px', color: '#5a7ba0', letterSpacing: '1px' }}>QUALITY OFF THE CHARTS</span>
+          <span style={{ fontFamily: "'Inter', sans-serif", fontSize: '17px', fontWeight: 700, color: '#85B7EB', letterSpacing: '0.5px', lineHeight: 1.1 }}>HIDDEN GEM</span>
+          <span style={{ fontFamily: "'Inter', sans-serif", fontSize: '9px', color: '#5a7ba0', letterSpacing: '1px' }}>QUALITY OFF THE CHARTS</span>
         </div>
       </div>
     </div>
@@ -262,12 +262,39 @@ const TXN_CODE_LABELS = {
 
 const NAV = [
     { key: 'overview', label: 'OVERVIEW' },
-    { key: 'quality', label: 'QUALITY' },
     { key: 'financials', label: 'FINANCIALS' },
-    { key: 'dcf', label: 'VALUATION' },
-    { key: 'projection', label: 'PROJECTION' },
+    { key: 'valuation', label: 'VALUATION' },
     { key: 'insiders', label: 'INSIDERS' },
   ];
+
+// Small line icons for the tab nav — plain inline SVG (stroke="currentColor" so each one
+// automatically follows the tab's own active/inactive text color) rather than an icon
+// package dependency, matching this file's existing hand-drawn-SVG convention (see
+// GemDiamondIcon above).
+const NAV_ICONS = {
+  overview: (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <rect x="3" y="3" width="8" height="8" rx="1.5" /><rect x="13" y="3" width="8" height="8" rx="1.5" />
+      <rect x="3" y="13" width="8" height="8" rx="1.5" /><rect x="13" y="13" width="8" height="8" rx="1.5" />
+    </svg>
+  ),
+  financials: (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <line x1="5" y1="21" x2="5" y2="10" /><line x1="12" y1="21" x2="12" y2="4" /><line x1="19" y1="21" x2="19" y2="14" />
+    </svg>
+  ),
+  valuation: (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <circle cx="12" cy="12" r="9" /><circle cx="12" cy="12" r="4" /><circle cx="12" cy="12" r="0.5" fill="currentColor" />
+    </svg>
+  ),
+  insiders: (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M17 21v-2a4 4 0 0 0-4-4H7a4 4 0 0 0-4 4v2" /><circle cx="10" cy="7" r="4" />
+      <path d="M22 21v-2a4 4 0 0 0-3-3.87" /><path d="M16 3.13a4 4 0 0 1 0 7.75" />
+    </svg>
+  ),
+};
 
 const QUESTIONS = [
   { dim: 'Management', text: 'Has management consistently met quarterly guidance?' },
@@ -287,25 +314,6 @@ const QUESTIONS = [
   { dim: 'Transparency', text: 'Do segments allow margin calculation by business unit?' },
 ];
 const DIMS = ['Management', 'Concentration', 'Op. Trend', 'Earn. Quality', 'Transparency'];
-
-const MiniBar = ({ data, color = 'var(--ws-text-2)' }) => {
-  const max = Math.max(...data.map(d => Math.abs(d.value)));
-  return (
-    <ResponsiveContainer width="100%" height={80}>
-      <BarChart data={data} barSize={18} margin={{ top: 4, right: 0, bottom: 0, left: 0 }}>
-        <XAxis dataKey="year" tick={{ fill: 'var(--ws-text-3)', fontSize: 9 }} axisLine={false} tickLine={false} />
-        <YAxis hide domain={[0, max * 1.15]} />
-        <Tooltip
-          formatter={v => [`$${Math.abs(v).toFixed(1)}B`]}
-          contentStyle={{ background: 'var(--ws-bg-1)', border: '1px solid var(--ws-border)', fontSize: 10 }}
-        />
-        <Bar dataKey="value" radius={[2, 2, 0, 0]}>
-          {data.map((_, i) => <Cell key={i} fill={i === data.length - 1 ? color : color + '55'} />)}
-        </Bar>
-      </BarChart>
-    </ResponsiveContainer>
-  );
-};
 
 // domain={['auto','auto']} on the (hidden) Y axis is what actually makes this readable —
 // without it, Recharts defaults toward including 0, so a metric that only moves within a
@@ -331,7 +339,7 @@ const ScoreBox = ({ score, size = 48 }) => {
   );
 };
 
-// Half-circle speedometer for the analyst consensus, with a second needle for Traqcker's
+// Half-circle speedometer for the analyst consensus, with a second needle for Bulltrace's
 // own Quality Score overlaid on the same dial. `score` is the 1 (strong sell) to 5 (strong
 // buy) weighted average from /api/analyst-rating; `qualityScore100` is easyMode.score100
 // (0-100), linearly rescaled to the same 1-5 axis so both needles share one angle formula.
@@ -347,47 +355,55 @@ const ANALYST_GAUGE_SEGMENTS = [
   { key: 'strongBuy', color: '#0d9488' },
 ];
 const QUALITY_NEEDLE_COLOR = '#6366f1';
+// Bear↔Bull spectrum, replacing the old speedometer dial. Position along the track is the
+// same 1-5 (analyst score) / 0-100 (Bulltrace quality score) inputs the dial used, just
+// mapped to a 0-100% horizontal position instead of a rotation angle. There's no bear asset
+// yet (only the bull mark shipped so far) — the dashed "BEAR" roundel is a deliberate
+// placeholder, styled to read as unfinished rather than final, until a matching bear icon
+// exists to drop in at BEAR_ICON_SRC below.
+const BEAR_ICON_SRC = '/bulltrace-logos/bear.png';
 function AnalystGauge({ score, qualityScore100 }) {
-  const cx = 120, cy = 108, r = 90, strokeWidth = 18;
-  const toPoint = (angleDeg) => {
-    const rad = (angleDeg * Math.PI) / 180;
-    return [cx + r * Math.cos(rad), cy - r * Math.sin(rad)];
-  };
-  const arcs = ANALYST_GAUGE_SEGMENTS.map((seg, i) => {
-    const startAngle = 180 - i * 36;
-    const endAngle = 180 - (i + 1) * 36;
-    const [x1, y1] = toPoint(startAngle);
-    const [x2, y2] = toPoint(endAngle);
-    return { ...seg, d: `M ${x1} ${y1} A ${r} ${r} 0 0 1 ${x2} ${y2}` };
-  });
-  const rotationFor = (s) => s == null ? null : 45 * (Math.max(1, Math.min(5, s)) - 1) - 90;
-  const analystRotation = rotationFor(score) ?? 0;
-  const qualityScore5 = qualityScore100 == null ? null : 1 + (qualityScore100 / 100) * 4;
-  const qualityRotation = rotationFor(qualityScore5);
+  const toPct = (s, min, max) => s == null ? null : Math.max(0, Math.min(100, ((Math.max(min, Math.min(max, s)) - min) / (max - min)) * 100));
+  const analystPos = toPct(score, 1, 5);
+  const qualityPos = toPct(qualityScore100, 0, 100);
   return (
-    <svg viewBox="0 0 240 122" width="100%" height="122" style={{ display: 'block', overflow: 'visible' }}>
-      {arcs.map(a => (
-        <path key={a.key} d={a.d} fill="none" stroke={a.color} strokeWidth={strokeWidth} strokeLinecap="butt" />
-      ))}
-      
-      {/* Traqcker Quality Score — a shorter, thinner tapered blade in brand teal */}
-      {qualityRotation != null && (
-        <g transform={`rotate(${qualityRotation} ${cx} ${cy})`} style={{ transition: 'transform 0.6s cubic-bezier(0.16, 1, 0.3, 1)' }}>
-          <polygon points={`${cx - 2.5},${cy} ${cx + 2.5},${cy} ${cx},${cy - 62}`} fill="var(--ws-accent)" />
-          <circle cx={cx} cy={cy - 62} r="3" fill="var(--ws-accent)" stroke="var(--ws-bg-1)" strokeWidth="1" />
-        </g>
+    <div style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '14px 0' }}>
+      {BEAR_ICON_SRC ? (
+        // Flipped — the source art faces left (walking away from the bar); mirroring it
+        // makes the bear face right, toward the center, matching the bull's own inward-
+        // facing orientation on the other end. height-only + width:auto (not a forced
+        // 32×32 square) since the source art is a wide walking pose (~2.3:1) — squaring it
+        // off squashed it vertically into a distorted blob.
+        <img src={BEAR_ICON_SRC} alt="Bear" style={{ height: '26px', width: 'auto', flexShrink: 0, transform: 'scaleX(-1)' }} />
+      ) : (
+        <div title="Bear icon coming soon" style={{
+          width: '32px', height: '32px', borderRadius: '50%', flexShrink: 0,
+          border: '1px dashed var(--ws-text-3)', display: 'flex', alignItems: 'center', justifyContent: 'center',
+        }}>
+          <span style={{ fontFamily: "'Inter', sans-serif", fontSize: '7px', fontWeight: 700, letterSpacing: '0.5px', color: 'var(--ws-text-3)' }}>BEAR</span>
+        </div>
       )}
 
-      {/* Analyst consensus — the primary pointer, a long tapered blade (only if coverage exists) */}
-      {score != null && (
-        <g transform={`rotate(${analystRotation} ${cx} ${cy})`} style={{ transition: 'transform 0.6s cubic-bezier(0.16, 1, 0.3, 1)' }}>
-          <polygon points={`${cx - 4},${cy} ${cx + 4},${cy} ${cx},${cy - 76}`} fill="var(--ws-text)" />
-        </g>
-      )}
+      <div style={{ position: 'relative', flex: 1, height: '6px', borderRadius: '3px', background: `linear-gradient(90deg, ${ANALYST_GAUGE_SEGMENTS.map(s => s.color).join(', ')})` }}>
+        {qualityPos != null && (
+          <div title={`Bulltrace Quality Score (${qualityScore100}/100)`} style={{
+            position: 'absolute', top: '50%', left: `${qualityPos}%`, transform: 'translate(-50%, -50%)',
+            width: '9px', height: '9px', borderRadius: '50%', background: QUALITY_NEEDLE_COLOR,
+            border: '1.5px solid var(--ws-bg-1)', transition: 'left 0.6s cubic-bezier(0.16, 1, 0.3, 1)',
+          }} />
+        )}
+        {analystPos != null && (
+          <div style={{
+            position: 'absolute', top: '50%', left: `${analystPos}%`, transform: 'translate(-50%, -50%)',
+            width: '14px', height: '14px', borderRadius: '50%', background: 'var(--ws-text)',
+            border: '2px solid var(--ws-bg-1)', boxShadow: '0 1px 4px rgba(0,0,0,0.3)',
+            transition: 'left 0.6s cubic-bezier(0.16, 1, 0.3, 1)',
+          }} />
+        )}
+      </div>
 
-      {/* Center cap pivot pin — layered on top to seal the base of both needles */}
-      <circle cx={cx} cy={cy} r="7" fill="var(--ws-text)" stroke="var(--ws-bg-1)" strokeWidth="1.5" />
-    </svg>
+      <img src="/bulltrace-logos/bull-icon-lime.png" alt="Bull" style={{ width: '32px', height: '32px', flexShrink: 0 }} />
+    </div>
   );
 }
 
@@ -433,7 +449,8 @@ function StockPageContent({ params }) {
   const [insiderRoleFilter, setInsiderRoleFilter] = useState('ALL');
   const [selectedInsiderName, setSelectedInsiderName] = useState(null);
   const [answers, setAnswers] = useState({});
-  const [finTab, setFinTab] = useState('snapshot');
+  const [finTab, setFinTab] = useState('quality');
+  const [valTab, setValTab] = useState('valuation');
   const [evidence, setEvidence] = useState({});
   const [sparklineData, setSparklineData] = useState(null);
   const [isPro, setIsPro] = useState(false);
@@ -483,8 +500,14 @@ function StockPageContent({ params }) {
     fetch(`/api/filings?tickers=${ticker}`).then(r => r.json()).then(d => setNews(d.holdingsNews || [])).catch(() => {});
   }, [ticker]);
 
+  // Used to gate on `tab === 'insiders'` (only fetch once that tab was clicked) — now that
+  // every section renders continuously in one scroll instead of one panel at a time, Insiders
+  // being the last/shortest section meant it could never scroll far enough into the
+  // IntersectionObserver's trigger band to ever become the active `tab` in the first place
+  // (verified: maxScroll < insiders' un-loaded top), so the fetch never fired at all. Fetches
+  // on mount like every other data effect on this page instead.
   useEffect(() => {
-    if (tab !== 'insiders' || insiderTrades !== null) return;
+    if (insiderTrades !== null) return;
     setInsiderLoading(true);
     fetch(`/api/insider-trades?ticker=${ticker}&limit=25`)
       .then(r => r.json())
@@ -496,7 +519,7 @@ function StockPageContent({ params }) {
       .then(r => r.json())
       .then(d => setInsiderChart(d.candles || []))
       .catch(() => setInsiderChart([]));
-  }, [tab, ticker, insiderTrades]);
+  }, [ticker, insiderTrades]);
 
   // Filters apply to both the table and the summary metrics so they stay consistent.
   const filteredInsiderTrades = useMemo(() => {
@@ -698,7 +721,7 @@ function StockPageContent({ params }) {
   };
 
   if (loading) return (
-    <div style={{ padding: '24px', fontFamily: "'JetBrains Mono', monospace" }}>
+    <div style={{ padding: '24px', fontFamily: "'Inter', sans-serif" }}>
       <div style={{ border: '1px solid var(--ws-border)', background: 'var(--ws-bg-1)', overflow: 'hidden', marginBottom: '16px' }}>
         <div style={{ background: 'var(--ws-bg-2)', borderBottom: '1px solid var(--ws-border)', padding: '7px 16px' }}>
           <span style={{ fontSize: '10px', color: 'var(--ws-accent)', letterSpacing: '1px' }}>$ traq {ticker}</span>
@@ -722,7 +745,7 @@ function StockPageContent({ params }) {
   );
 
   if (error) return (
-    <div style={{ padding: '24px', fontFamily: "'JetBrains Mono', monospace" }}>
+    <div style={{ padding: '24px', fontFamily: "'Inter', sans-serif" }}>
       <div style={{ border: '1px solid var(--ws-border)', background: 'var(--ws-bg-1)', overflow: 'hidden', maxWidth: '560px' }}>
         <div style={{ background: 'var(--ws-bg-2)', borderBottom: '1px solid var(--ws-border)', padding: '7px 16px' }}>
           <span style={{ fontSize: '10px', color: 'var(--ws-red)', letterSpacing: '1px' }}>$ traq {ticker} — ERROR</span>
@@ -807,7 +830,7 @@ function StockPageContent({ params }) {
   if (viewGate === 'blocked') {
     return (
       <PaywallModal
-        eyebrow="TRAQCKER TERMINAL"
+        eyebrow="BULLTRACE TERMINAL"
         title="You've hit today's free limit"
         description={isSignedIn
           ? "You've viewed 5 stocks today. Upgrade to Pro for unlimited access."
@@ -820,191 +843,176 @@ function StockPageContent({ params }) {
   }
 
   return (
-    <div className="p-6">
+    <div className="p-6 stock-page-root">
 
-      {/* TERMINAL HERO */}
-      <div style={{ border: '1px solid var(--ws-border)', background: 'var(--ws-bg-1)', marginBottom: '20px', overflow: 'hidden' }}>
-        {/* Terminal title bar */}
-        <div style={{ background: 'var(--ws-bg-2)', borderBottom: '1px solid var(--ws-border)', padding: '7px 16px', display: 'flex', alignItems: 'center', gap: '12px' }}>
-          <span style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: '11px', color: 'var(--ws-accent)', fontWeight: 700, letterSpacing: '1px' }}>
-            $ traq {ticker}
-          </span>
-          {data.finnhubFallback && (
-            <span style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: '9px', color: 'var(--ws-text-3)', letterSpacing: '1px' }}>
-              [LIMITED DATA]
-            </span>
-          )}
+      {/* TERMINAL HERO — logo/name/ticker + watchlist star on top, price + compact quality
+          badge below, then the range-tab chart and a KPI strip. Replaces the old
+          terminal-title-bar + 3-column layout with the header treatment approved in the
+          mockup (logo, name, ticker size/weight, KPI grid under the chart). */}
+      <div className="stock-hero-card" style={{ border: '1px solid var(--ws-border)', background: 'var(--ws-bg-1)', marginBottom: '20px', overflow: 'hidden', padding: '20px 24px' }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '16px', flexWrap: 'wrap', marginBottom: '18px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '14px', minWidth: 0 }}>
+            <div style={{ width: '44px', height: '44px', borderRadius: '10px', background: 'white', border: '1px solid var(--ws-border)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, overflow: 'hidden' }}>
+              <img
+                src={`https://img.logo.dev/ticker/${ticker}?token=pk_B4aaLZF6S4G1YbCgqZq2Ug`}
+                alt={data.name}
+                style={{ width: '30px', height: '30px', objectFit: 'contain' }}
+                onError={e => { e.target.style.display = 'none'; e.target.parentElement.innerHTML = `<span style="color:var(--ws-bg);font-weight:700;font-size:14px;font-family:'Inter',sans-serif">${ticker.slice(0,2)}</span>`; }}
+              />
+            </div>
+            <div style={{ minWidth: 0 }}>
+              <div style={{ display: 'flex', alignItems: 'baseline', gap: '10px', flexWrap: 'wrap' }}>
+                <h1 style={{ fontSize: '24px', fontWeight: 800, letterSpacing: '-0.5px', color: 'var(--ws-text)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{data.name}</h1>
+                <span style={{ fontFamily: "'Inter', sans-serif", fontSize: '17px', fontWeight: 500, color: 'var(--ws-text-3)' }}>{ticker}</span>
+              </div>
+              <div style={{ fontFamily: "'Inter', sans-serif", fontSize: '10px', color: 'var(--ws-text-3)', letterSpacing: '1.5px', marginTop: '3px' }}>
+                {data.exchange || 'NASDAQ'}{data.sector ? ` · ${data.sector.toUpperCase()}` : ''}{data.finnhubFallback ? ' · LIMITED DATA' : ''}
+              </div>
+            </div>
+          </div>
 
-          {/* Jump-to-ticker search, so you can move between stocks without leaving the page */}
-          <div style={{ marginLeft: 'auto', position: 'relative', width: '200px' }}>
-            <input
-              ref={jumpInputRef}
-              value={jumpQuery}
-              onChange={e => { setJumpQuery(e.target.value); setShowJumpSuggestions(true); }}
-              onKeyDown={e => {
-                if (e.key === 'Enter' && jumpQuery.trim()) goToTicker(jumpQuery);
-                if (e.key === 'Escape') { setShowJumpSuggestions(false); jumpInputRef.current?.blur(); }
-              }}
-              onFocus={() => { if (jumpQuery) setShowJumpSuggestions(true); }}
-              onBlur={() => setTimeout(() => setShowJumpSuggestions(false), 150)}
-              placeholder="jump to ticker..."
+          <div className="stock-hero-search-row" style={{ display: 'flex', alignItems: 'center', gap: '10px', flexShrink: 0 }}>
+            {/* Jump-to-ticker search, so you can move between stocks without leaving the page.
+                min-width (not a fixed width) so this can shrink gracefully next to the logo/
+                name on mid-width screens, and stretch full-width via the mobile CSS override
+                once it wraps to its own line below them. */}
+            <div style={{ position: 'relative', flex: '1 1 180px', minWidth: '120px' }}>
+              <input
+                ref={jumpInputRef}
+                value={jumpQuery}
+                onChange={e => { setJumpQuery(e.target.value); setShowJumpSuggestions(true); }}
+                onKeyDown={e => {
+                  if (e.key === 'Enter' && jumpQuery.trim()) goToTicker(jumpQuery);
+                  if (e.key === 'Escape') { setShowJumpSuggestions(false); jumpInputRef.current?.blur(); }
+                }}
+                onFocus={() => { if (jumpQuery) setShowJumpSuggestions(true); }}
+                onBlur={() => setTimeout(() => setShowJumpSuggestions(false), 150)}
+                placeholder="jump to ticker..."
+                style={{
+                  width: '100%', height: '30px', padding: '0 10px', fontSize: '11px',
+                  fontFamily: "'Inter', sans-serif", border: '1px solid var(--ws-border)', borderRadius: '8px',
+                  background: 'var(--ws-bg-2)', color: 'var(--ws-text)', outline: 'none',
+                }}
+              />
+              {showJumpSuggestions && jumpSuggestions.length > 0 && (
+                <div style={{
+                  position: 'absolute', top: '34px', right: 0, width: '260px',
+                  background: 'var(--ws-bg-1)', border: '1px solid var(--ws-border)', borderRadius: '8px',
+                  boxShadow: '0 8px 32px rgba(0,0,0,0.12)', maxHeight: '280px', overflowY: 'auto', zIndex: 30,
+                }}>
+                  {jumpSuggestions.map(s => (
+                    <div key={s.ticker}
+                      onMouseDown={() => goToTicker(s.ticker, s.isEtf)}
+                      style={{ padding: '7px 10px', cursor: 'pointer', display: 'flex', gap: '8px', alignItems: 'baseline', fontSize: '11px' }}
+                      onMouseEnter={e => e.currentTarget.style.background = 'var(--ws-bg-2)'}
+                      onMouseLeave={e => e.currentTarget.style.background = 'transparent'}>
+                      <span style={{ color: 'var(--ws-accent)', fontWeight: 700, fontFamily: "'Inter', sans-serif", minWidth: '44px' }}>{s.ticker}</span>
+                      <span style={{ color: 'var(--ws-text-2)', flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{s.name}</span>
+                      {s.isEtf && (
+                        <span style={{ fontFamily: "'Inter', sans-serif", fontWeight: 700, fontSize: '9px', letterSpacing: '0.5px', color: 'var(--ws-text-3)', border: '1px solid var(--ws-border)', borderRadius: '4px', padding: '1px 4px', flexShrink: 0 }}>
+                          ETF
+                        </span>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+            <button onClick={handleWatchlistClick} title={inWatchlist ? 'Remove from Watchlist' : 'Add to Watchlist'}
               style={{
-                width: '100%',
-                height: '24px',
-                padding: '0 8px',
-                fontSize: '10px',
-                fontFamily: "'JetBrains Mono', monospace",
-                letterSpacing: '0.5px',
-                border: '1px solid var(--ws-border)',
-                borderRadius: 'var(--ws-radius)',
-                background: 'var(--ws-bg-1)',
-                color: 'var(--ws-text)',
-                outline: 'none',
-              }}
-            />
-            {showJumpSuggestions && jumpSuggestions.length > 0 && (
-              <div style={{
-                position: 'absolute',
-                top: '28px',
-                right: 0,
-                width: '260px',
-                background: 'var(--ws-bg-1)',
-                border: '1px solid var(--ws-border)',
-                borderRadius: 'var(--ws-radius)',
-                boxShadow: '0 8px 32px rgba(0,0,0,0.12)',
-                maxHeight: '280px',
-                overflowY: 'auto',
-                zIndex: 30,
+                width: '30px', height: '30px', borderRadius: '8px', flexShrink: 0, cursor: 'pointer',
+                border: `1px solid ${inWatchlist ? 'var(--ws-accent)' : 'var(--ws-border)'}`,
+                background: inWatchlist ? 'var(--ws-accent-dim)' : 'transparent',
+                color: inWatchlist ? 'var(--ws-accent)' : 'var(--ws-text-3)', fontSize: '14px',
               }}>
-                {jumpSuggestions.map(s => (
-                  <div key={s.ticker}
-                    onMouseDown={() => goToTicker(s.ticker, s.isEtf)}
-                    style={{ padding: '7px 10px', cursor: 'pointer', display: 'flex', gap: '8px', alignItems: 'baseline', fontSize: '11px' }}
-                    onMouseEnter={e => e.currentTarget.style.background = 'var(--ws-bg-2)'}
-                    onMouseLeave={e => e.currentTarget.style.background = 'transparent'}>
-                    <span style={{ color: 'var(--ws-accent)', fontWeight: 700, fontFamily: "'JetBrains Mono', monospace", minWidth: '44px' }}>{s.ticker}</span>
-                    <span style={{ color: 'var(--ws-text-2)', flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{s.name}</span>
-                    {s.isEtf && (
-                      <span style={{ fontFamily: "'JetBrains Mono', monospace", fontWeight: 700, fontSize: '9px', letterSpacing: '0.5px', color: 'var(--ws-text-3)', border: '1px solid var(--ws-border)', borderRadius: '4px', padding: '1px 4px', flexShrink: 0 }}>
-                        ETF
-                      </span>
-                    )}
-                  </div>
-                ))}
-              </div>
-            )}
+              ★
+            </button>
           </div>
         </div>
 
-        {/* Terminal output body */}
-        <div style={{ padding: '20px 24px' }}>
-          <div className="stock-hero" style={{ padding: 0 }}>
-            {/* Left: identity + price */}
-            <div className="stock-hero-left" style={{ gap: '16px' }}>
-              <div style={{ width: '72px', height: '72px', background: 'white', border: '1px solid var(--ws-border)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, overflow: 'hidden' }}>
-                <img
-                  src={`https://img.logo.dev/ticker/${ticker}?token=pk_B4aaLZF6S4G1YbCgqZq2Ug`}
-                  alt={data.name}
-                  style={{ width: '54px', height: '54px', objectFit: 'contain' }}
-                  onError={e => { e.target.style.display = 'none'; e.target.parentElement.innerHTML = `<span style="color:var(--ws-accent);font-weight:700;font-size:22px;font-family:'JetBrains Mono',monospace">${ticker.slice(0,2)}</span>`; e.target.parentElement.style.background = 'var(--ws-bg-2)'; }}
-                />
-              </div>
-              <div style={{ minWidth: 0 }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '5px', flexWrap: 'wrap' }}>
-                  <span style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: '10px', color: 'var(--ws-text-3)', letterSpacing: '1.5px' }}>
-                    {ticker} · {data.exchange || 'NASDAQ'}{data.sector ? ` · ${data.sector.toUpperCase()}` : ''}
-                  </span>
-                  {marketCapTier(data.marketCap) && (
-                    <span style={{
-                      fontFamily: "'JetBrains Mono', monospace",
-                      fontSize: '9px',
-                      fontWeight: 700,
-                      letterSpacing: '1px',
-                      color: marketCapTier(data.marketCap).color,
-                      border: `1px solid ${marketCapTier(data.marketCap).color}`,
-                      borderRadius: '4px',
-                      padding: '2px 6px',
-                    }}
-                      title={`Market cap: ${fmt(data.marketCap)}`}
-                    >
-                      {marketCapTier(data.marketCap).label} · {fmt(data.marketCap)}
-                    </span>
-                  )}
-                </div>
-                <h1 style={{ fontSize: '22px', fontWeight: 800, letterSpacing: '-0.5px', marginBottom: '10px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', lineHeight: 1.2, color: 'var(--ws-text)' }}>{data.name}</h1>
-                {price && (
-                  <div style={{ display: 'flex', alignItems: 'baseline', gap: '12px', flexWrap: 'wrap' }}>
-                    <span style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: '28px', fontWeight: 700, letterSpacing: '-1px', color: 'var(--ws-text)' }}>{curSym(data.currency)}{price.toFixed(2)}</span>
-                    <span style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: '13px', fontWeight: 700, color: change >= 0 ? 'var(--ws-accent)' : 'var(--ws-red)' }}>
-                      {change >= 0 ? '+' : ''}{changePct?.toFixed(2)}%
-                    </span>
-                    <MarketStatusDot ticker={ticker} showLabel />
-                  </div>
-                )}
-              </div>
-            </div>
+        {price && (
+          <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flexWrap: 'wrap', marginBottom: '14px' }}>
+            <span style={{ fontFamily: "'Inter', sans-serif", fontSize: '28px', fontWeight: 700, letterSpacing: '-1px', color: 'var(--ws-text)', fontVariantNumeric: 'tabular-nums' }}>{curSym(data.currency)}{price.toFixed(2)}</span>
+            <span style={{ fontFamily: "'Inter', sans-serif", fontSize: '13px', fontWeight: 700, color: change >= 0 ? 'var(--ws-accent)' : 'var(--ws-red)', fontVariantNumeric: 'tabular-nums' }}>
+              {change >= 0 ? '+' : ''}{changePct?.toFixed(2)}%
+            </span>
+            <MarketStatusDot ticker={ticker} showLabel />
+          </div>
+        )}
 
-            {/* Middle: price chart */}
-            <div className="stock-hero-chart">
-              <SparklineHeader ticker={ticker} currency={data?.currency} />
-            </div>
+        <SparklineHeader ticker={ticker} currency={data?.currency} />
 
-            {/* Right: terminal score block */}
-            <div className="stock-hero-score" style={{ alignItems: 'flex-start', gap: '10px' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap' }}>
-                <div style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: '9px', letterSpacing: '2px', color: 'var(--ws-text-3)', fontWeight: 700 }}>QUALITY SCORE</div>
-                {tierAdjusted && (
-                  <span title={`Margin/ROIC bars and the CBS/OPPO/GQS blend are calibrated for ${easyMode.capTier.label} — see the Quality tab for the exact weighting.`}
+        {/* KPI strip — same real fields already shown in Financials/Valuation
+            (fmt/fmtMultiple/fmtN, pctDelta vs prevQuarter, DeltaTag), surfaced here too for
+            a quick scan without switching tabs. Hidden entirely for tickers with no
+            fundamentals. */}
+        {hasFundamentals && (
+          <div className="stock-kpi-strip" style={{
+            display: 'flex', flexWrap: 'wrap', gap: '1px', background: 'var(--ws-border)',
+            border: '1px solid var(--ws-border)', marginTop: '18px', overflow: 'hidden',
+          }}>
+            {[
+              { label: 'Market Cap', val: fmt(data.marketCap), delta: pctDelta(data.marketCap, data.prevQuarter?.marketCap), tier: marketCapTier(data.marketCap) },
+              ...(easyMode ? [{ label: 'Quality Score', quality: true }] : []),
+              { label: 'Div. Yield', val: data.dividendYield ? `${(+data.dividendYield).toFixed(2)}%` : 'N/A' },
+              { label: 'FCF Yield', val: (easyMode?.trueFcfYield ?? data.fcfYield) != null ? `${(easyMode?.trueFcfYield ?? data.fcfYield).toFixed(2)}%` : 'N/A' },
+              { label: 'P/E', val: fmtMultiple(data.pe), delta: pctDelta(data.pe, data.prevQuarter?.pe) },
+              { label: 'P/FCF', val: fmtMultiple(easyMode?.truePfcf ?? data.pfcf) },
+              { label: 'EV/EBITDA', val: fmtN(data.evEbitda), delta: pctDelta(data.evEbitda, data.prevQuarter?.evEbitda) },
+            ].map(kpi => (
+              <div key={kpi.label} style={{ flex: '1 1 140px', background: 'var(--ws-bg-1)', padding: '12px 16px', position: 'relative', overflow: 'hidden' }}>
+                {/* Market-cap tier — used to be a "MEGA CAP · $4.5T" pill next to the name,
+                    duplicating the number this tile already shows. Now just a small stamped
+                    label (tier only) in the corner of the tile that already has the figure. */}
+                {kpi.tier && (
+                  <div title={`Market cap: ${kpi.val}`}
                     style={{
-                      fontFamily: "'JetBrains Mono', monospace", fontSize: '8px', fontWeight: 700, letterSpacing: '0.5px',
-                      color: easyMode.capTier.color, border: `1px solid ${easyMode.capTier.color}`, borderRadius: '3px', padding: '1px 5px',
+                      position: 'absolute', top: '7px', right: '-17px', width: '80px', textAlign: 'center',
+                      transform: 'rotate(28deg)', background: kpi.tier.color, color: 'var(--ws-bg)',
+                      fontFamily: "'Inter', sans-serif", fontSize: '8px', fontWeight: 800, letterSpacing: '1px',
+                      padding: '1.5px 0', boxShadow: '0 1px 3px rgba(0,0,0,0.3)',
                     }}>
-                    {easyMode.capTier.label} CALIBRATED
-                  </span>
+                    {kpi.tier.label}
+                  </div>
+                )}
+                <div style={{ fontFamily: "'Inter', sans-serif", fontSize: '9px', letterSpacing: '1.5px', color: 'var(--ws-text-3)', fontWeight: 700, marginBottom: '6px' }}>
+                  {kpi.label.toUpperCase()}
+                </div>
+                {kpi.quality ? (
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <QualityScoreBar score100={easyMode.score100} color={easyMode.verdictColor} barWidth={64} barHeight={14} />
+                    <span style={{ fontFamily: "'Inter', sans-serif", fontSize: '16px', fontWeight: 700, color: easyMode.verdictColor, fontVariantNumeric: 'tabular-nums' }}>
+                      {easyMode.score100}
+                    </span>
+                  </div>
+                ) : (
+                  <div style={{ fontFamily: "'Inter', sans-serif", fontSize: '16px', fontWeight: 700, color: 'var(--ws-text)', fontVariantNumeric: 'tabular-nums', whiteSpace: 'nowrap' }}>
+                    {kpi.val}
+                    {kpi.delta != null && <DeltaTag value={kpi.delta} />}
+                  </div>
                 )}
               </div>
-              {!easyMode ? (
-                <div style={{ fontSize: '11px', color: 'var(--ws-text-3)', maxWidth: '200px', lineHeight: 1.6, borderLeft: '2px solid var(--ws-border)', paddingLeft: '10px', marginTop: '2px' }}>
-                  No fundamentals reported yet — likely a recent IPO or thin data coverage. Price and chart are still live.
-                </div>
-              ) : (
-              <>
-              {easyMode.isBlueGem ? (
-                <GemRevealBar score100={easyMode.score100} />
-              ) : (
-                <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                  <QualityScoreBar score100={easyMode.score100} color={easyMode.verdictColor} />
-                  <span style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: '28px', fontWeight: 700, color: easyMode.verdictColor, lineHeight: 1 }}>
-                    {easyMode.score100}
-                  </span>
-                </div>
-              )}
-              <div style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: '11px', fontWeight: 700, color: easyMode.verdictColor, letterSpacing: '1px' }}>
-                {easyMode.verdict.toUpperCase()}
-              </div>
-              <div style={{ fontSize: '11px', color: 'var(--ws-text-3)', maxWidth: '200px', lineHeight: 1.6, borderLeft: '2px solid var(--ws-border)', paddingLeft: '10px', marginTop: '2px' }}>
-                {easyMode.summary}
-              </div>
-              </>
-              )}
-            </div>
+            ))}
           </div>
-        </div>
+        )}
       </div>{/* end terminal hero */}
 
       <div style={{ padding: '0 0 40px' }}>
 
-        {/* TERMINAL TAB NAV */}
+        {/* TERMINAL TAB NAV — classic click-to-switch tabs, one panel visible at a time. */}
         <div className="stock-tab-nav" style={{ display: 'flex', borderBottom: '1px solid var(--ws-border)', marginBottom: '24px', overflowX: 'auto', WebkitOverflowScrolling: 'touch' }}>
           {NAV.map(n => (
-            <button key={n.key} onClick={() => { setTab(n.key); window.scrollTo({ top: 0, behavior: 'smooth' }); }}
+            <button key={n.key} onClick={() => setTab(n.key)}
               style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '7px',
                 padding: '8px 20px',
                 border: 'none',
                 borderBottom: tab === n.key ? '2px solid var(--ws-accent)' : '2px solid transparent',
                 background: 'transparent',
                 color: tab === n.key ? 'var(--ws-text)' : 'var(--ws-text-3)',
-                fontFamily: "'JetBrains Mono', monospace",
+                fontFamily: "'Inter', sans-serif",
                 fontWeight: tab === n.key ? 700 : 500,
                 fontSize: '11px',
                 letterSpacing: '1.5px',
@@ -1014,6 +1022,7 @@ function StockPageContent({ params }) {
                 flexShrink: 0,
                 whiteSpace: 'nowrap',
               }}>
+              <span style={{ width: '14px', height: '14px', flexShrink: 0 }}>{NAV_ICONS[n.key]}</span>
               {n.label}{n.pro && !isPro && !checkingPro ? ' [PRO]' : ''}
             </button>
           ))}
@@ -1031,8 +1040,70 @@ function StockPageContent({ params }) {
             {/* Left column: vote + numbers + chart */}
             <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
 
+              {/* Quality Score and Analyst Consensus side by side instead of each stretched to
+                  the full container width. */}
+              <div className="overview-pair" style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '16px', alignItems: 'stretch' }}>
+                {easyMode && (
+                  <div style={{ background: 'var(--ws-bg-1)', border: '1px solid var(--ws-border)', padding: '20px', display: 'flex', flexDirection: 'column', height: '100%' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap', marginBottom: '16px' }}>
+                      <div style={{ fontWeight: 700, fontSize: '14px', color: 'var(--ws-text)' }}>Quality Score</div>
+                      {tierAdjusted && (
+                        <span title={`Margin/ROIC bars and the CBS/OPPO/GQS blend are calibrated for ${easyMode.capTier.label} — see Financials → Quality Score for the exact weighting.`}
+                          style={{
+                            fontFamily: "'Inter', sans-serif", fontSize: '8px', fontWeight: 700, letterSpacing: '0.5px',
+                            color: easyMode.capTier.color, border: `1px solid ${easyMode.capTier.color}`, borderRadius: '3px', padding: '1px 5px',
+                          }}>
+                          {easyMode.capTier.label} CALIBRATED
+                        </span>
+                      )}
+                    </div>
+                    {easyMode.isBlueGem ? (
+                      <GemRevealBar score100={easyMode.score100} />
+                    ) : (
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                        <QualityScoreBar score100={easyMode.score100} color={easyMode.verdictColor} />
+                        <span style={{ fontFamily: "'Inter', sans-serif", fontSize: '28px', fontWeight: 700, color: easyMode.verdictColor, lineHeight: 1 }}>
+                          {easyMode.score100}
+                        </span>
+                      </div>
+                    )}
+                    <div style={{ fontFamily: "'Inter', sans-serif", fontSize: '11px', fontWeight: 700, color: easyMode.verdictColor, letterSpacing: '1px', marginTop: '12px' }}>
+                      {easyMode.verdict.toUpperCase()}
+                    </div>
+                    <div style={{ fontSize: '11px', color: 'var(--ws-text-3)', lineHeight: 1.6, marginTop: '8px' }}>
+                      {easyMode.summary}
+                    </div>
+
+                    {/* CBS/OPPO/GQS/Moat/Final Note breakdown — same fields and 0-5→0-100
+                        display convention as the full version under Financials → Quality
+                        Score. Stacked 3-wide (5 cells wrap to a 3+2 grid) instead of a single
+                        thin row, so each cell gets to be bigger and the block fills more of
+                        the card's height. marginTop: auto pins the whole block to the bottom
+                        once the card is stretched to match its taller siblings. */}
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '1px', background: 'var(--ws-border)', marginTop: 'auto', paddingTop: '16px' }}>
+                      {[
+                        { label: 'CORE', score: easyMode.cbs },
+                        { label: 'OPPO', score: easyMode.oppo },
+                        { label: 'GROWTH', score: easyMode.gqs },
+                        { label: 'MOAT', text: easyMode.moat, color: easyMode.moatColor },
+                        { label: 'FINAL', score: easyMode.finalNote, highlight: true },
+                      ].map(s => {
+                        const scoreColor = (sc) => sc >= 4 ? 'var(--ws-accent)' : sc >= 3 ? 'var(--ws-text)' : 'var(--ws-red)';
+                        return (
+                          <div key={s.label} style={{ background: s.highlight ? 'var(--ws-bg-2)' : 'var(--ws-bg-1)', padding: '20px 8px', textAlign: 'center' }}>
+                            <div style={{ color: 'var(--ws-text-3)', fontSize: '10px', letterSpacing: '0.5px', marginBottom: '10px' }}>{s.label}</div>
+                            <div style={{ fontSize: s.text ? '22px' : '28px', fontWeight: 700, color: s.text ? s.color : scoreColor(s.score), letterSpacing: '-0.5px' }}>
+                              {s.text || Math.round(s.score * 20)}
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
+
               {/* Analyst rating */}
-              <div style={{ background: 'var(--ws-bg-1)', border: '1px solid var(--ws-border)', padding: '20px' }}>
+              <div style={{ background: 'var(--ws-bg-1)', border: '1px solid var(--ws-border)', padding: '20px', height: '100%' }}>
                 <div style={{ fontWeight: 700, fontSize: '14px', marginBottom: '4px', color: 'var(--ws-text)' }}>
                   Analyst Consensus
                 </div>
@@ -1040,14 +1111,14 @@ function StockPageContent({ params }) {
                   easyMode ? (
                     <>
                       <div style={{ fontSize: '11px', color: 'var(--ws-text-3)', marginBottom: '10px' }}>
-                        No analyst coverage available. Showing Traqcker model consensus.
+                        No analyst coverage available. Showing Bulltrace model consensus.
                       </div>
                       <AnalystGauge score={easyMode.finalNote} qualityScore100={null} />
                       <div style={{ textAlign: 'center', fontSize: '20px', fontWeight: 800, color: easyMode.verdictColor, margin: '4px 0 16px' }}>
                         {easyMode.verdict}
                       </div>
                       <div style={{ borderTop: '1px solid var(--ws-border)', paddingTop: '14px', fontSize: '11px', color: 'var(--ws-text-2)', lineHeight: 1.6 }}>
-                        This automated consensus is calculated using Traqcker's quantitative quality score metrics (CBS, OPPO, GQS) and balance sheet health.
+                        This automated consensus is calculated using Bulltrace's quantitative quality score metrics (CBS, OPPO, GQS) and balance sheet health.
                       </div>
                     </>
                   ) : (
@@ -1058,27 +1129,72 @@ function StockPageContent({ params }) {
                 ) : (() => {
                   const r = analystRating.ratings;
                   const total = analystRating.total;
-                  const pct = (n) => Math.round((n / total) * 100);
+                  // Bull/Bear wording (not Buy/Hold/Sell) to match the gauge above — same
+                  // underlying Finnhub rating categories, just relabeled.
                   const CONSENSUS_LABELS = {
-                    strong_buy: { label: 'Strong Buy', color: '#0d9488' },
-                    buy: { label: 'Buy', color: '#84cc16' },
-                    hold: { label: 'Hold', color: '#eab308' },
-                    sell: { label: 'Sell', color: '#f97316' },
-                    strong_sell: { label: 'Strong Sell', color: '#ef4444' },
+                    strong_buy: { label: 'Strong Bull', color: '#0d9488' },
+                    buy: { label: 'Bull', color: '#84cc16' },
+                    hold: { label: 'Neutral', color: '#eab308' },
+                    sell: { label: 'Bear', color: '#f97316' },
+                    strong_sell: { label: 'Strong Bear', color: '#ef4444' },
                   };
                   const c = CONSENSUS_LABELS[analystRating.consensus];
-                  const rows = [
-                    { key: 'strongBuy', label: 'Strong Buy', color: '#0d9488' },
-                    { key: 'buy', label: 'Buy', color: '#84cc16' },
-                    { key: 'hold', label: 'Hold', color: '#eab308' },
-                    { key: 'sell', label: 'Sell', color: '#f97316' },
-                    { key: 'strongSell', label: 'Strong Sell', color: '#ef4444' },
-                  ];
                   return (
                     <>
-                      <div style={{ fontSize: '11px', color: 'var(--ws-text-3)', marginBottom: '10px' }}>
+                      <div style={{ fontSize: '11px', color: 'var(--ws-text-3)', marginBottom: '14px' }}>
                         Based on {total} analyst{total === 1 ? '' : 's'} offering ratings for {data.name}.
                       </div>
+
+                      {/* Bear/Neutral/Bull — the same 5 Finnhub/Yahoo categories collapsed to 3,
+                          shown as big counts up front (mirrors how TipRanks-style consensus
+                          panels lead with SELL/HOLD/BUY) instead of a 5-way bar+legend. */}
+                      {(() => {
+                        const bearCount = r.strongSell + r.sell;
+                        const bullCount = r.strongBuy + r.buy;
+                        const groups = [
+                          { label: 'Bear', count: bearCount, color: '#ef4444' },
+                          { label: 'Neutral', count: r.hold, color: '#eab308' },
+                          { label: 'Bull', count: bullCount, color: '#84cc16' },
+                        ];
+                        return (
+                          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '1px', background: 'var(--ws-border)', marginBottom: '1px' }}>
+                            {groups.map(g => (
+                              <div key={g.label} style={{ background: 'var(--ws-bg-2)', borderTop: `2px solid ${g.color}`, padding: '12px 8px', textAlign: 'center' }}>
+                                <div style={{ fontSize: '22px', fontWeight: 700, color: g.color, letterSpacing: '-0.5px' }}>{g.count}</div>
+                                <div style={{ fontFamily: "'Inter', sans-serif", fontSize: '9px', letterSpacing: '1px', color: 'var(--ws-text-3)', fontWeight: 700, marginTop: '4px' }}>
+                                  {g.label.toUpperCase()}
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        );
+                      })()}
+
+                      {/* Target Price / Return Potential — Bulltrace's own base-case fair
+                          value (relativeValue.fairValue via fairValue.estimate, same number
+                          the "Fair value" card in the right column shows), not Wall Street's
+                          analyst consensus target. Visible to everyone here, unlike that card —
+                          explicit call, not just leaving the gate off by accident. */}
+                      {fairValue != null && price != null && (
+                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '1px', background: 'var(--ws-border)', marginBottom: '16px' }}>
+                          <div style={{ background: 'var(--ws-bg-2)', padding: '12px 8px', textAlign: 'center' }}>
+                            <div style={{ fontFamily: "'Inter', sans-serif", fontSize: '9px', letterSpacing: '1px', color: 'var(--ws-text-3)', fontWeight: 700, marginBottom: '6px' }}>BULLTRACE TARGET</div>
+                            <div style={{ fontSize: '16px', fontWeight: 700, color: 'var(--ws-text)' }}>{curSym(data.currency)}{fairValue.estimate.toFixed(2)}</div>
+                          </div>
+                          <div style={{ background: 'var(--ws-bg-2)', padding: '12px 8px', textAlign: 'center' }}>
+                            <div style={{ fontFamily: "'Inter', sans-serif", fontSize: '9px', letterSpacing: '1px', color: 'var(--ws-text-3)', fontWeight: 700, marginBottom: '6px' }}>RETURN POTENTIAL</div>
+                            {(() => {
+                              const returnPct = (fairValue.estimate / price - 1) * 100;
+                              return (
+                                <div style={{ fontSize: '16px', fontWeight: 700, color: returnPct >= 0 ? 'var(--ws-accent)' : 'var(--ws-red)' }}>
+                                  {returnPct >= 0 ? '+' : ''}{returnPct.toFixed(2)}%
+                                </div>
+                              );
+                            })()}
+                          </div>
+                        </div>
+                      )}
+
                       <AnalystGauge score={analystRating.score} qualityScore100={easyMode?.score100} />
                       {c && (
                         <div style={{ textAlign: 'center', fontSize: '20px', fontWeight: 800, color: c.color, margin: '4px 0 4px' }}>
@@ -1086,24 +1202,11 @@ function StockPageContent({ params }) {
                         </div>
                       )}
                       {easyMode && (
-                        <div style={{ textAlign: 'center', fontSize: '10px', color: 'var(--ws-text-3)', marginBottom: '16px' }}>
-                          <span style={{ color: QUALITY_NEEDLE_COLOR }}>●</span> Traqcker Quality Score ({easyMode.score100}/100)
+                        <div style={{ textAlign: 'center', fontSize: '10px', color: 'var(--ws-text-3)', marginBottom: '10px' }}>
+                          <span style={{ color: QUALITY_NEEDLE_COLOR }}>●</span> Bulltrace Quality Score ({easyMode.score100}/100)
                         </div>
                       )}
-                      <div style={{ borderTop: '1px solid var(--ws-border)', paddingTop: '14px', display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', rowGap: '14px' }}>
-                        {rows.map(row => (
-                          <div key={row.key}>
-                            <div style={{ fontSize: '11px', color: 'var(--ws-text-2)', marginBottom: '3px' }}>
-                              <span style={{ color: row.color }}>●</span> {row.label}
-                            </div>
-                            <div style={{ fontSize: '12px', fontWeight: 700, color: 'var(--ws-text)' }}>
-                              {r[row.key]} <span style={{ fontWeight: 400, color: 'var(--ws-text-3)' }}>analyst{r[row.key] === 1 ? '' : 's'}</span>{' '}
-                              <span style={{ color: row.color }}>{pct(r[row.key])}%</span>
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                      <div style={{ marginTop: '10px', fontSize: '10px', color: 'var(--ws-text-3)', textAlign: 'center' }}>
+                      <div style={{ fontSize: '10px', color: 'var(--ws-text-3)', textAlign: 'center' }}>
                         Source: {analystRating.source === 'finnhub' ? 'Finnhub' : 'Yahoo Finance'}
                       </div>
                       {easyMode && c && (() => {
@@ -1131,10 +1234,12 @@ function StockPageContent({ params }) {
                 })()}
               </div>
 
+              </div>
+
               {/* Numbers, Simplified */}
               {hasFundamentals && (
               <div>
-                <div style={{ color: 'var(--ws-text-3)', fontSize: '10px', fontFamily: "'JetBrains Mono', monospace", letterSpacing: '1.5px', marginBottom: '10px', fontWeight: 700 }}>THE NUMBERS, SIMPLIFIED</div>
+                <div style={{ color: 'var(--ws-text-3)', fontSize: '10px', fontFamily: "'Inter', sans-serif", letterSpacing: '1.5px', marginBottom: '10px', fontWeight: 700 }}>THE NUMBERS, SIMPLIFIED</div>
                 <div style={{ background: 'var(--ws-bg-1)', border: '1px solid var(--ws-border)', padding: '18px 20px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
                   {(() => {
                     // Same 3-tier (accent/neutral/red) + "unavailable" shape for every row, with the
@@ -1206,7 +1311,7 @@ function StockPageContent({ params }) {
               {/* NEWS */}
               {news.length > 0 && (
                 <div>
-                  <div style={{ color: 'var(--ws-text-3)', fontSize: '10px', fontFamily: "'JetBrains Mono', monospace", letterSpacing: '1.5px', marginBottom: '10px', fontWeight: 700 }}>NEWS</div>
+                  <div style={{ color: 'var(--ws-text-3)', fontSize: '10px', fontFamily: "'Inter', sans-serif", letterSpacing: '1.5px', marginBottom: '10px', fontWeight: 700 }}>NEWS</div>
                   <div style={{ display: 'flex', gap: '14px', overflowX: 'auto', paddingBottom: '6px' }}>
                     {news.slice(0, 5).map((n, i) => (
                       <a key={n.id || i} href={n.url} target="_blank" rel="noopener noreferrer"
@@ -1233,7 +1338,7 @@ function StockPageContent({ params }) {
               {/* Related reading */}
               {relatedPosts.length > 0 && (
                 <div>
-                  <div style={{ color: 'var(--ws-text-3)', fontSize: '10px', fontFamily: "'JetBrains Mono', monospace", letterSpacing: '1.5px', marginBottom: '10px', fontWeight: 700 }}>RELATED READING</div>
+                  <div style={{ color: 'var(--ws-text-3)', fontSize: '10px', fontFamily: "'Inter', sans-serif", letterSpacing: '1.5px', marginBottom: '10px', fontWeight: 700 }}>RELATED READING</div>
                   <div style={{ background: 'var(--ws-bg-1)', border: '1px solid var(--ws-border)', padding: '16px 18px', display: 'flex', flexDirection: 'column', gap: '10px' }}>
                     {relatedPosts.map(post => {
                       const dotColor = post.sentiment === 'positive' ? 'var(--ws-accent)' : post.sentiment === 'negative' ? 'var(--ws-red)' : 'var(--ws-text-2)';
@@ -1254,27 +1359,68 @@ function StockPageContent({ params }) {
             {/* Right column: about + fair value + share + actions + continue */}
             <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
 
-              {/* About */}
-              {data.description && (() => {
+              {/* Profile — About's description + sector tag, plus a Growth/Profitability
+                  key-stat block below (real fields already used elsewhere: revGrowth,
+                  margins, ROE/ROA/ROIC — same values shown in the Quality/Financials tabs,
+                  just surfaced as quick-scan bars here too). */}
+              {(data.description || hasFundamentals) && (() => {
                 const LIMIT = 240;
-                const short = data.description.slice(0, LIMIT);
+                const short = data.description ? data.description.slice(0, LIMIT) : '';
+                const growthRows = [
+                  { label: 'Revenue YoY', val: data.revGrowth, fmt: v => `${v > 0 ? '+' : ''}${v.toFixed(1)}%`, pct: v => Math.max(4, Math.min(100, 50 + v * 2)) },
+                ].filter(r => r.val != null);
+                const profitRows = [
+                  { label: 'Gross Margin', val: data.grossMargin, fmt: v => `${v.toFixed(1)}%`, pct: v => Math.max(4, Math.min(100, v)) },
+                  { label: 'Op. Margin', val: data.opMargin, fmt: v => `${v.toFixed(1)}%`, pct: v => Math.max(4, Math.min(100, v * 2.5)) },
+                  { label: 'ROE', val: data.roe, fmt: v => `${v.toFixed(1)}%`, pct: v => Math.max(4, Math.min(100, v)) },
+                  { label: 'ROA', val: data.roa, fmt: v => `${v.toFixed(1)}%`, pct: v => Math.max(4, Math.min(100, v)) },
+                  { label: 'ROIC', val: data.roic, fmt: v => `${v.toFixed(1)}%`, pct: v => Math.max(4, Math.min(100, v)) },
+                ].filter(r => r.val != null);
+                const statRow = (r) => (
+                  <div key={r.label} style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '9px' }}>
+                    <span style={{ fontSize: '11.5px', color: 'var(--ws-text-2)', width: '90px', flexShrink: 0 }}>{r.label}</span>
+                    <div style={{ flex: 1, height: '4px', borderRadius: '2px', background: 'var(--ws-bg-2)', overflow: 'hidden' }}>
+                      <div style={{ height: '100%', width: `${r.pct(r.val)}%`, background: 'var(--ws-accent)', borderRadius: '2px' }} />
+                    </div>
+                    <span style={{ fontFamily: "'Inter', sans-serif", fontSize: '11.5px', fontWeight: 700, color: 'var(--ws-text)', width: '52px', textAlign: 'right', flexShrink: 0, fontVariantNumeric: 'tabular-nums' }}>{r.fmt(r.val)}</span>
+                  </div>
+                );
                 return (
                   <div className="bg-ws-bg-1 border border-ws-border px-[18px] py-4">
-                    <div style={{ fontSize: '10px', color: 'var(--ws-text-3)', fontFamily: "'JetBrains Mono', monospace", letterSpacing: '1.5px', fontWeight: 700, marginBottom: '8px' }}>ABOUT</div>
-                    <div style={{ color: 'var(--ws-text-2)', fontSize: '12px', lineHeight: 1.75 }}>
-                      {expanded ? data.description : `${short}${data.description.length > LIMIT ? '…' : ''}`}
-                      {data.description.length > LIMIT && (
-                        <span onClick={() => setExpanded(!expanded)}
-                          style={{ color: 'var(--ws-accent)', cursor: 'pointer', marginLeft: '6px', fontWeight: 700, fontSize: '11px' }}>
-                          {expanded ? 'Show less' : 'Read more'}
-                        </span>
-                      )}
-                    </div>
+                    <div style={{ fontSize: '13px', fontWeight: 800, color: 'var(--ws-text)', marginBottom: '10px' }}>Profile</div>
+                    {data.description && (
+                      <div style={{ color: 'var(--ws-text-2)', fontSize: '12px', lineHeight: 1.75, marginBottom: '10px' }}>
+                        {expanded ? data.description : `${short}${data.description.length > LIMIT ? '…' : ''}`}
+                        {data.description.length > LIMIT && (
+                          <span onClick={() => setExpanded(!expanded)}
+                            style={{ color: 'var(--ws-accent)', cursor: 'pointer', marginLeft: '6px', fontWeight: 700, fontSize: '11px' }}>
+                            {expanded ? 'Show less' : 'Read more'}
+                          </span>
+                        )}
+                      </div>
+                    )}
+                    {data.sector && (
+                      <span style={{ display: 'inline-block', fontFamily: "'Inter', sans-serif", fontSize: '10px', color: 'var(--ws-text-2)', background: 'var(--ws-bg-2)', border: '1px solid var(--ws-border)', borderRadius: '20px', padding: '3px 10px', marginBottom: growthRows.length || profitRows.length ? '16px' : 0 }}>
+                        {data.sector}
+                      </span>
+                    )}
+                    {growthRows.length > 0 && (
+                      <>
+                        <div style={{ fontFamily: "'Inter', sans-serif", fontSize: '9.5px', letterSpacing: '1px', textTransform: 'uppercase', color: 'var(--ws-text-3)', fontWeight: 700, marginBottom: '10px' }}>Growth (FY)</div>
+                        {growthRows.map(statRow)}
+                      </>
+                    )}
+                    {profitRows.length > 0 && (
+                      <>
+                        <div style={{ fontFamily: "'Inter', sans-serif", fontSize: '9.5px', letterSpacing: '1px', textTransform: 'uppercase', color: 'var(--ws-text-3)', fontWeight: 700, margin: growthRows.length ? '14px 0 10px' : '0 0 10px' }}>Profitability (FY)</div>
+                        {profitRows.map(statRow)}
+                      </>
+                    )}
                   </div>
                 );
               })()}
 
-              {/* Fair value — Traqcker's DCF estimate. Hidden entirely when the DCF can't
+              {/* Fair value — Bulltrace's DCF estimate. Hidden entirely when the DCF can't
                   run (negative/missing FCF); the Valuation tab explains why. Signed-out
                   visitors get a locked card instead of the real cheap/fair/expensive call —
                   that call is the product, not something to leak for free. */}
@@ -1302,7 +1448,7 @@ function StockPageContent({ params }) {
               {(!loadingEvent || upcomingEvent) && (
                 <div className="bg-ws-bg-1 border border-ws-border px-[18px] py-4">
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
-                    <div style={{ fontSize: '10px', color: 'var(--ws-text-3)', fontFamily: "'JetBrains Mono', monospace", letterSpacing: '1.5px', fontWeight: 700 }}>UPCOMING EVENT</div>
+                    <div style={{ fontSize: '10px', color: 'var(--ws-text-3)', fontFamily: "'Inter', sans-serif", letterSpacing: '1.5px', fontWeight: 700 }}>UPCOMING EVENT</div>
                     {upcomingEvent && (() => {
                       const daysDiff = Math.ceil((new Date(upcomingEvent.date + 'T00:00:00') - new Date().setHours(0,0,0,0)) / (1000 * 60 * 60 * 24));
                       let badgeText = '';
@@ -1399,7 +1545,7 @@ function StockPageContent({ params }) {
 
               {/* Share */}
               <div className="bg-ws-bg-1 border border-ws-border px-[18px] py-4">
-                <div style={{ fontSize: '10px', color: 'var(--ws-text-3)', fontFamily: "'JetBrains Mono', monospace", letterSpacing: '1.5px', fontWeight: 700, marginBottom: '12px' }}>SHARE</div>
+                <div style={{ fontSize: '10px', color: 'var(--ws-text-3)', fontFamily: "'Inter', sans-serif", letterSpacing: '1.5px', fontWeight: 700, marginBottom: '12px' }}>SHARE</div>
                  <ShareCardComponent
                   ticker={ticker}
                   name={data?.name || 'N/A'}
@@ -1456,7 +1602,7 @@ function StockPageContent({ params }) {
                               style={{
                                 width: '100%', fontSize: '10px', padding: '5px 6px',
                                 background: 'var(--ws-bg-2)', border: '1px solid var(--ws-border)',
-                                color: 'var(--ws-text)', outline: 'none', fontFamily: "'JetBrains Mono', monospace"
+                                color: 'var(--ws-text)', outline: 'none', fontFamily: "'Inter', sans-serif"
                               }}
                             />
                           </form>
@@ -1466,7 +1612,7 @@ function StockPageContent({ params }) {
                   )}
                 </div>
                 <button onClick={() => { if (!isSignedIn) { window.location.href = '/sign-in'; return; } setShowAddHolding(true); }}
-                  style={{ fontSize: '12px', padding: '10px 8px', width: '100%', background: 'var(--ws-accent)', color: '#fff', border: 'none', fontWeight: 600, cursor: 'pointer' }}>
+                  style={{ fontSize: '12px', padding: '10px 8px', width: '100%', background: 'var(--ws-accent)', color: 'var(--ws-accent-text)', border: 'none', fontWeight: 600, cursor: 'pointer' }}>
                   + Add to Portfolio
                 </button>
                 <button onClick={refetch} disabled={refreshing}
@@ -1489,8 +1635,24 @@ function StockPageContent({ params }) {
           </div>
         ))}
 
-        {/* QUALITY TAB */}
-        {tab === 'quality' && easyMode && (!isSignedIn ? (
+        {/* FINANCIALS TAB */}
+        {tab === 'financials' && (tabsLocked ? (
+          <LockedPanel
+            title="Financials"
+            description="Full financial statements unlock with a free account."
+          />
+        ) : (
+  <div>
+    <div style={{ display: 'flex', gap: '3px', marginBottom: '16px', background: 'var(--ws-bg-2)', border: '1px solid var(--ws-border)', borderRadius: '8px', padding: '3px' }}>
+      {[['quality', 'QUALITY SCORE'], ['snapshot', 'SNAPSHOT'], ['income', 'INCOME'], ['balance', 'BALANCE'], ['cashflow', 'CASH FLOW']].map(([key, label]) => (
+        <button key={key} onClick={() => setFinTab(key)}
+          style={{ flex: 1, padding: '10px 8px', fontSize: '13px', letterSpacing: '0.3px', borderRadius: '6px', background: finTab === key ? 'var(--ws-accent)' : 'transparent', color: finTab === key ? 'var(--ws-bg-1)' : 'var(--ws-text-2)', border: 'none', cursor: 'pointer', fontWeight: 600 }}>
+          {label}
+        </button>
+      ))}
+    </div>
+
+    {finTab === 'quality' && (easyMode && (!isSignedIn ? (
           <LockedPanel
             title="Quality Score"
             description="The full Quality Score breakdown unlocks with a free account."
@@ -1691,24 +1853,7 @@ function StockPageContent({ params }) {
       );
     })()}
   </div>
-))}
-
-        {/* FINANCIALS TAB */}
-        {tab === 'financials' && (tabsLocked ? (
-          <LockedPanel
-            title="Financials"
-            description="Full financial statements unlock with a free account."
-          />
-        ) : (
-  <div>
-    <div style={{ display: 'flex', gap: '8px', marginBottom: '16px' }}>
-      {[['snapshot', 'SNAPSHOT'], ['income', 'INCOME'], ['balance', 'BALANCE'], ['cashflow', 'CASH FLOW']].map(([key, label]) => (
-        <button key={key} onClick={() => setFinTab(key)}
-          style={{ flex: 1, padding: '10px 8px', fontSize: '13px', letterSpacing: '0.3px', background: finTab === key ? 'var(--ws-text)' : 'var(--ws-bg-1)', color: finTab === key ? 'var(--ws-bg)' : 'var(--ws-text-2)', border: finTab === key ? 'none' : '1px solid var(--ws-border)', cursor: 'pointer', fontWeight: 600 }}>
-          {label}
-        </button>
-      ))}
-    </div>
+)))}
 
     {finTab === 'snapshot' && <div>
               <div style={{ marginBottom: '16px' }}>
@@ -2050,9 +2195,22 @@ function StockPageContent({ params }) {
   </div>
 ))}
 
-        {/* VALUATION TAB — locked entirely for guests, not just blurred: the valuation
-            call itself is the product. */}
-        {tab === 'dcf' && (!isSignedIn ? (
+        {/* VALUATION TAB — merges the old Relative Valuation and Price Projection tabs behind
+            a sub-nav (valTab), same segmented-control style as FINANCIALS' finTab above.
+            Locked entirely for guests, not just blurred: the valuation call itself is the
+            product. */}
+        {tab === 'valuation' && (
+          <div>
+            <div style={{ display: 'flex', gap: '3px', marginBottom: '16px', background: 'var(--ws-bg-2)', border: '1px solid var(--ws-border)', borderRadius: '8px', padding: '3px' }}>
+              {[['valuation', 'RELATIVE VALUATION'], ['projection', 'PRICE PROJECTION']].map(([key, label]) => (
+                <button key={key} onClick={() => setValTab(key)}
+                  style={{ flex: 1, padding: '10px 8px', fontSize: '13px', letterSpacing: '0.3px', borderRadius: '6px', background: valTab === key ? 'var(--ws-accent)' : 'transparent', color: valTab === key ? 'var(--ws-bg-1)' : 'var(--ws-text-2)', border: 'none', cursor: 'pointer', fontWeight: 600 }}>
+                  {label}
+                </button>
+              ))}
+            </div>
+
+        {valTab === 'valuation' && (!isSignedIn ? (
           <LockedPanel
             title="Relative Valuation"
             description="The full valuation range, bull/bear scenarios and quality-weighted target multiple unlock with a free account."
@@ -2179,9 +2337,9 @@ function StockPageContent({ params }) {
           </div>
         ))}
 
-        {/* PROJECTION TAB — GBM random-walk price path + analytic confidence band.
-            Locked entirely for guests, same reasoning as the DCF tab above. */}
-        {tab === 'projection' && (!isSignedIn ? (
+        {/* PRICE PROJECTION sub-tab — GBM random-walk price path + analytic confidence band.
+            Locked entirely for guests, same reasoning as Relative Valuation above. */}
+        {valTab === 'projection' && (!isSignedIn ? (
           <LockedPanel
             title="Projections"
             description="Future price projections (Monte Carlo + confidence band) unlock with a free account."
@@ -2189,6 +2347,8 @@ function StockPageContent({ params }) {
         ) : (
           <ProjectionChart ticker={ticker} data={data} fundamentalGrowth={fundamentalGrowth} price={price} currency={data.currency} />
         ))}
+          </div>
+        )}
 
         {/* INSIDERS TAB — Form 3/4/5 buy/sell activity, SEC EDGAR primary / Finnhub fallback */}
         {tab === 'insiders' && (!isSignedIn ? (
@@ -2279,37 +2439,43 @@ function StockPageContent({ params }) {
 
                 {/* Filters */}
                 <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', marginBottom: '14px', alignItems: 'center' }}>
-                  {[
-                    { key: 'ALL', label: 'All time', state: insiderDateFilter, set: setInsiderDateFilter, val: 'ALL' },
-                    { key: '30D', label: 'Last 30 days', state: insiderDateFilter, set: setInsiderDateFilter, val: '30D' },
-                  ].map(f => (
-                    <button key={f.label} onClick={() => f.set(f.val)}
-                      style={{ padding: '6px 12px', fontSize: '10px', fontWeight: 700, letterSpacing: '0.5px', border: '1px solid var(--ws-border)', background: f.state === f.val ? 'var(--ws-text)' : 'var(--ws-bg-1)', color: f.state === f.val ? 'var(--ws-bg)' : 'var(--ws-text-2)', cursor: 'pointer' }}>
-                      {f.label}
-                    </button>
-                  ))}
+                  <div style={{ display: 'flex', gap: '3px', background: 'var(--ws-bg-2)', border: '1px solid var(--ws-border)', borderRadius: '8px', padding: '3px' }}>
+                    {[
+                      { key: 'ALL', label: 'All time', state: insiderDateFilter, set: setInsiderDateFilter, val: 'ALL' },
+                      { key: '30D', label: 'Last 30 days', state: insiderDateFilter, set: setInsiderDateFilter, val: '30D' },
+                    ].map(f => (
+                      <button key={f.label} onClick={() => f.set(f.val)}
+                        style={{ padding: '6px 12px', fontSize: '10px', fontWeight: 700, letterSpacing: '0.5px', borderRadius: '6px', border: 'none', background: f.state === f.val ? 'var(--ws-accent)' : 'transparent', color: f.state === f.val ? 'var(--ws-bg-1)' : 'var(--ws-text-2)', cursor: 'pointer' }}>
+                        {f.label}
+                      </button>
+                    ))}
+                  </div>
                   <span style={{ width: '1px', height: '16px', background: 'var(--ws-border)' }} />
-                  {[
-                    { label: 'All types', val: 'ALL' },
-                    { label: 'Buys', val: 'BUY' },
-                    { label: 'Sells', val: 'SELL' },
-                  ].map(f => (
-                    <button key={f.label} onClick={() => setInsiderTypeFilter(f.val)}
-                      style={{ padding: '6px 12px', fontSize: '10px', fontWeight: 700, letterSpacing: '0.5px', border: '1px solid var(--ws-border)', background: insiderTypeFilter === f.val ? 'var(--ws-text)' : 'var(--ws-bg-1)', color: insiderTypeFilter === f.val ? 'var(--ws-bg)' : 'var(--ws-text-2)', cursor: 'pointer' }}>
-                      {f.label}
-                    </button>
-                  ))}
+                  <div style={{ display: 'flex', gap: '3px', background: 'var(--ws-bg-2)', border: '1px solid var(--ws-border)', borderRadius: '8px', padding: '3px' }}>
+                    {[
+                      { label: 'All types', val: 'ALL' },
+                      { label: 'Buys', val: 'BUY' },
+                      { label: 'Sells', val: 'SELL' },
+                    ].map(f => (
+                      <button key={f.label} onClick={() => setInsiderTypeFilter(f.val)}
+                        style={{ padding: '6px 12px', fontSize: '10px', fontWeight: 700, letterSpacing: '0.5px', borderRadius: '6px', border: 'none', background: insiderTypeFilter === f.val ? 'var(--ws-accent)' : 'transparent', color: insiderTypeFilter === f.val ? 'var(--ws-bg-1)' : 'var(--ws-text-2)', cursor: 'pointer' }}>
+                        {f.label}
+                      </button>
+                    ))}
+                  </div>
                   <span style={{ width: '1px', height: '16px', background: 'var(--ws-border)' }} />
-                  {[
-                    { label: 'All roles', val: 'ALL' },
-                    { label: 'Only executives', val: 'EXEC' },
-                    { label: 'Owners >10%', val: 'OWNER10' },
-                  ].map(f => (
-                    <button key={f.label} onClick={() => setInsiderRoleFilter(f.val)}
-                      style={{ padding: '6px 12px', fontSize: '10px', fontWeight: 700, letterSpacing: '0.5px', border: '1px solid var(--ws-border)', background: insiderRoleFilter === f.val ? 'var(--ws-text)' : 'var(--ws-bg-1)', color: insiderRoleFilter === f.val ? 'var(--ws-bg)' : 'var(--ws-text-2)', cursor: 'pointer' }}>
-                      {f.label}
-                    </button>
-                  ))}
+                  <div style={{ display: 'flex', gap: '3px', background: 'var(--ws-bg-2)', border: '1px solid var(--ws-border)', borderRadius: '8px', padding: '3px' }}>
+                    {[
+                      { label: 'All roles', val: 'ALL' },
+                      { label: 'Only executives', val: 'EXEC' },
+                      { label: 'Owners >10%', val: 'OWNER10' },
+                    ].map(f => (
+                      <button key={f.label} onClick={() => setInsiderRoleFilter(f.val)}
+                        style={{ padding: '6px 12px', fontSize: '10px', fontWeight: 700, letterSpacing: '0.5px', borderRadius: '6px', border: 'none', background: insiderRoleFilter === f.val ? 'var(--ws-accent)' : 'transparent', color: insiderRoleFilter === f.val ? 'var(--ws-bg-1)' : 'var(--ws-text-2)', cursor: 'pointer' }}>
+                        {f.label}
+                      </button>
+                    ))}
+                  </div>
                   {selectedInsiderName && (
                     <button onClick={() => setSelectedInsiderName(null)}
                       style={{ padding: '6px 12px', fontSize: '10px', fontWeight: 700, border: '1px solid var(--ws-accent)', background: 'var(--ws-bg-1)', color: 'var(--ws-accent)', cursor: 'pointer' }}>

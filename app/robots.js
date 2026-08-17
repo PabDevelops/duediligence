@@ -19,6 +19,6 @@ export default function robots() {
         disallow: DISALLOW,
       })),
     ],
-    sitemap: 'https://traqcker.com/sitemap.xml',
+    sitemap: 'https://bulltrace.app/sitemap.xml',
   };
 }

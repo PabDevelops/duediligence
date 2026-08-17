@@ -1,7 +1,7 @@
-const BASE_URL = 'https://traqcker.com';
+const BASE_URL = 'https://bulltrace.app';
 
 // The terminal (screener, compare, watchlist, stock/[ticker], blog, etc.) now
-// lives behind sign-up + an active subscription on terminal.traqcker.com, so
+// lives behind sign-up + an active subscription on terminal.bulltrace.app, so
 // it has no business being crawled/indexed under the public marketing site.
 // Only the informational pages that are actually public belong here.
 const PAGES = [

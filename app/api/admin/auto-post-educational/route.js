@@ -122,7 +122,7 @@ async function handler(req) {
         tag: topic.tag,
         tickers: [],
         sentiment: 'neutral',
-        author: 'Traqcker Team',
+        author: 'Bulltrace Team',
         content: JSON.stringify(postContent.content),
         published: true,
       });

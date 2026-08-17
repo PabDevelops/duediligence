@@ -1,21 +1,21 @@
 export const metadata = {
-  title: 'Portfolio | Traqcker',
+  title: 'Portfolio | Bulltrace',
   description: 'Track your holdings, cost basis, and performance across your portfolio.',
   openGraph: {
-    title: 'Portfolio | Traqcker',
+    title: 'Portfolio | Bulltrace',
     description: 'Track your holdings, cost basis, and performance across your portfolio.',
-    url: 'https://traqcker.com/portfolio',
-    siteName: 'Traqcker',
+    url: 'https://bulltrace.app/portfolio',
+    siteName: 'Bulltrace',
     images: [{ url: '/og-screenshot.png', width: 1200, height: 630 }],
     type: 'website',
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'Portfolio | Traqcker',
+    title: 'Portfolio | Bulltrace',
     description: 'Track your holdings, cost basis, and performance across your portfolio.',
     images: ['/og-screenshot.png'],
   },
-  alternates: { canonical: 'https://traqcker.com/portfolio' },
+  alternates: { canonical: 'https://bulltrace.app/portfolio' },
 };
 
 export default function PortfolioLayout({ children }) {

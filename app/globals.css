@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@500;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap');
 @import "tailwindcss";
 
 /* Maps the --ws-* custom properties below to utility classes (bg-ws-bg-1,
@@ -25,21 +25,22 @@
 .border-ws-red { border-color: var(--ws-red); }
 
 :root {
-  /* Marketing theme — matches the app's own --ws-* light palette below, so
-     the landing and other public pages (about, blog, pricing, privacy, terms)
-     look like the same product as the workspace, not a separate dark site. */
-  --bg: #f8f9fa;
-  --bg-1: #ffffff;
-  --bg-2: #f1f3f5;
-  --bg-3: #e9ecef;
-  --border: #e5e7eb;
-  --border-2: #d1d5db;
-  --text: #1f2937;
-  --text-2: #4b5563;
-  --text-3: #9ca3af;
-  --accent: #0f766e;
-  --accent-2: #2563eb;
-  --accent-dim: rgba(15, 118, 110, 0.08);
+  /* Marketing theme — dark by default (Graphite/Acid Lime/Cloud White), matching
+     the workspace app so the landing and other public pages (about, blog, pricing,
+     privacy, terms) look like the same product, not a separate light site. */
+  --bg: #111111;
+  --bg-1: #1a1a1a;
+  --bg-2: #222222;
+  --bg-3: #2a2a2a;
+  --border: #2a2a2a;
+  --border-2: #383838;
+  --text: #F5F7F2;
+  --text-2: #b0b0a8;
+  --text-3: #75776d;
+  --accent: #C7FF38;
+  --accent-2: #C7FF38;
+  --accent-dim: rgba(199, 255, 56, 0.15);
+  --accent-text: #171717;
   --green: #059669;
   --green-dim: rgba(5, 150, 105, 0.12);
   --amber: #d97706;
@@ -47,29 +48,30 @@
   --red: #dc2626;
   --red-dim: rgba(220, 38, 38, 0.10);
   --blue: #2563eb;
-  --glow: 0 0 80px rgba(15, 118, 110, 0.15);
-  --glow-sm: 0 0 24px rgba(15, 118, 110, 0.12);
+  --glow: 0 0 80px rgba(199, 255, 56, 0.15);
+  --glow-sm: 0 0 24px rgba(199, 255, 56, 0.12);
   --radius: 16px;
   --radius-sm: 10px;
   --radius-lg: 24px;
   --font-display: 'Inter', sans-serif;
   --font-body: 'Inter', sans-serif;
-  --font-mono: 'JetBrains Mono', monospace;
 
-  /* Workspace (light) theme — scoped to .workspace, does not affect the tokens above */
-  --ws-bg: #f8f9fa;
-  --ws-bg-1: #ffffff;
-  --ws-bg-2: #f1f3f5;
-  --ws-text: #1f2937;
-  --ws-text-2: #4b5563;
-  --ws-text-3: #9ca3af;
-  --ws-border: #e5e7eb;
-  --ws-accent: #0f766e;
-  --ws-accent-dim: rgba(15, 118, 110, 0.08);
-  --ws-red: #ef4444;
-  --ws-red-dim: rgba(239, 68, 68, 0.08);
+  /* Workspace theme — scoped to .workspace, does not affect the tokens above.
+     Dark is the only workspace theme (no light variant, no toggle). */
+  --ws-bg: #171717;
+  --ws-bg-1: #1f1f1f;
+  --ws-bg-2: #262626;
+  --ws-text: #F5F7F2;
+  --ws-text-2: #b5b5b5;
+  --ws-text-3: #7a7a7a;
+  --ws-border: #2e2e2e;
+  --ws-accent: #C7FF38;
+  --ws-accent-dim: rgba(199, 255, 56, 0.15);
+  --ws-accent-text: #171717;
+  --ws-red: #f87171;
+  --ws-red-dim: rgba(248, 113, 113, 0.15);
   --ws-amber: #f59e0b;
-  --ws-amber-dim: rgba(245, 158, 11, 0.08);
+  --ws-amber-dim: rgba(245, 158, 11, 0.15);
   --ws-radius: 12px;
   --ws-sidebar-width: 240px;
 }
@@ -86,22 +88,6 @@
      that side effect. */
   max-width: 100%;
   overflow-x: clip;
-}
-.workspace.dark,
-html[data-ws-theme="dark"] .workspace {
-  --ws-bg: #0b0d13;
-  --ws-bg-1: #111420;
-  --ws-bg-2: #191c2b;
-  --ws-text: #f3f4f6;
-  --ws-text-2: #a3aed0;
-  --ws-text-3: #5f6b8b;
-  --ws-border: #1f2538;
-  --ws-accent: #14b8a6;
-  --ws-accent-dim: rgba(20, 184, 166, 0.15);
-  --ws-red: #f87171;
-  --ws-red-dim: rgba(248, 113, 113, 0.15);
-  --ws-amber: #f59e0b;
-  --ws-amber-dim: rgba(245, 158, 11, 0.15);
 }
 .workspace * {
   font-family: inherit;
@@ -138,8 +124,8 @@ html, body {
 
 /* Unified button style */
 .btn-primary {
-  background: linear-gradient(135deg, #0f766e, #2563eb);
-  color: #fff;
+  background: linear-gradient(135deg, var(--accent), var(--accent-2));
+  color: var(--accent-text);
   border: none;
   padding: 12px 28px;
   border-radius: 12px;
@@ -154,12 +140,12 @@ html, body {
 }
 .btn-primary:hover {
   opacity: 0.9;
-  box-shadow: 0 0 24px rgba(15, 118, 110, 0.35);
+  box-shadow: 0 0 24px rgba(199, 255, 56, 0.35);
 }
 .btn-secondary {
-  background: rgba(15, 23, 42, 0.04);
+  background: rgba(245, 247, 242, 0.05);
   color: var(--text-2);
-  border: 1px solid rgba(15, 23, 42, 0.1);
+  border: 1px solid rgba(245, 247, 242, 0.12);
   padding: 12px 28px;
   border-radius: 12px;
   font-family: 'Inter', sans-serif;
@@ -172,7 +158,7 @@ html, body {
   display: inline-block;
 }
 .btn-secondary:hover {
-  border-color: rgba(15, 118, 110, 0.4);
+  border-color: rgba(199, 255, 56, 0.4);
   color: var(--accent);
 }
 
@@ -212,29 +198,29 @@ html, body {
 
 /* Glass card — landing only */
 .glass {
-  background: rgba(15, 23, 42, 0.03);
+  background: rgba(245, 247, 242, 0.04);
   backdrop-filter: blur(24px);
   -webkit-backdrop-filter: blur(24px);
-  border: 1px solid rgba(15, 23, 42, 0.08);
+  border: 1px solid rgba(245, 247, 242, 0.08);
   border-radius: 20px;
   transition: border-color 0.25s, box-shadow 0.25s;
 }
 .glass:hover {
-  border-color: rgba(15, 118, 110, 0.3);
-  box-shadow: 0 0 40px rgba(15, 118, 110, 0.1), inset 0 1px 0 rgba(255,255,255,0.5);
+  border-color: rgba(199, 255, 56, 0.3);
+  box-shadow: 0 0 40px rgba(199, 255, 56, 0.1), inset 0 1px 0 rgba(245,247,242,0.06);
 }
 .glass-strong {
-  background: rgba(15, 23, 42, 0.045);
+  background: rgba(245, 247, 242, 0.06);
   backdrop-filter: blur(40px);
   -webkit-backdrop-filter: blur(40px);
-  border: 1px solid rgba(15, 23, 42, 0.1);
+  border: 1px solid rgba(245, 247, 242, 0.1);
   border-radius: 20px;
-  box-shadow: inset 0 1px 0 rgba(255,255,255,0.5);
+  box-shadow: inset 0 1px 0 rgba(245,247,242,0.06);
 }
 
 /* Gradient text utility */
 .gradient-text {
-  background: linear-gradient(135deg, #0f766e, #2563eb);
+  background: linear-gradient(135deg, var(--accent), var(--accent-2));
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
@@ -252,7 +238,7 @@ html, body {
   transform: translate(-50%, -50%);
   width: 600px;
   height: 300px;
-  background: radial-gradient(ellipse, rgba(15, 118, 110, 0.1) 0%, transparent 70%);
+  background: radial-gradient(ellipse, rgba(199, 255, 56, 0.1) 0%, transparent 70%);
   pointer-events: none;
   z-index: 0;
 }
@@ -271,7 +257,7 @@ html, body {
   justify-content: space-between;
   position: sticky;
   top: 0;
-  background: rgba(255,255,255,0.85);
+  background: rgba(17,17,17,0.85);
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
   z-index: 10;
@@ -292,7 +278,7 @@ html, body {
 }
 
 .topbar-search {
-  background: rgba(15, 23, 42, 0.04);
+  background: rgba(245, 247, 242, 0.06);
   border: 1px solid var(--border);
   border-radius: 10px;
   color: var(--text);
@@ -308,8 +294,8 @@ html, body {
 .topbar-search-mobile { width: 100%; font-size: 14px; padding: 7px 12px; }
 
 .topbar-discover {
-  background: rgba(15, 118, 110, 0.08);
-  border: 1px solid rgba(15, 118, 110, 0.25);
+  background: rgba(199, 255, 56, 0.08);
+  border: 1px solid rgba(199, 255, 56, 0.25);
   border-radius: 10px;
   color: var(--accent);
   font-family: 'Inter', sans-serif;
@@ -319,7 +305,7 @@ html, body {
   cursor: pointer;
   transition: background 0.2s;
 }
-.topbar-discover:hover { background: rgba(15, 118, 110, 0.16); }
+.topbar-discover:hover { background: rgba(199, 255, 56, 0.16); }
 
 .topbar-nav-link {
   color: var(--text-3);
@@ -366,8 +352,8 @@ html, body {
 
 /* Pro badge */
 .pro-badge {
-  background: linear-gradient(135deg, #0f766e, #2563eb);
-  color: #fff;
+  background: linear-gradient(135deg, var(--accent), var(--accent-2));
+  color: var(--accent-text);
   font-size: 10px;
   font-weight: 700;
   padding: 2px 8px;
@@ -379,7 +365,7 @@ html, body {
 .topbar-mobile-menu {
   display: flex;
   flex-direction: column;
-  background: rgba(255,255,255,0.95);
+  background: rgba(17,17,17,0.95);
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
   border-bottom: 1px solid var(--border);
@@ -514,6 +500,15 @@ html, body {
   align-items: start;
 }
 
+/* Quality Score / Analyst Consensus row on the Overview tab — side by side on desktop,
+   stacked below that. 1023px matches the same "not desktop" breakpoint the rest of the
+   workspace switches on (mobile header, collapsing sidebar, home dashboard grids). */
+@media (max-width: 1023px) {
+  .overview-pair {
+    grid-template-columns: 1fr !important;
+  }
+}
+
 @media (max-width: 768px) {
   .stock-hero {
     flex-direction: column;
@@ -532,6 +527,23 @@ html, body {
   .stock-tab-nav button {
     padding: 8px 12px !important;
     font-size: 10px !important;
+  }
+  .stock-page-root {
+    padding: 12px !important;
+  }
+  .stock-hero-card {
+    padding: 16px !important;
+  }
+  /* Jump-to-ticker search + watchlist star wraps below the logo/name on narrow screens
+     (the row above already does that via flex-wrap) — stretch it full width there instead
+     of leaving it pinned to its natural content width. */
+  .stock-hero-search-row {
+    width: 100%;
+  }
+  /* KPI strip — 140px basis only fits one tile per row on a phone-width screen; 2-up reads
+     much better and every value here (market cap, yields, multiples) is short enough to fit. */
+  .stock-kpi-strip > div {
+    flex-basis: calc(50% - 1px) !important;
   }
   .stock-hero-chart {
     border-left: none;
@@ -734,6 +746,27 @@ html, body {
     gap: 16px !important;
     flex-wrap: wrap !important;
     justify-content: center !important;
+  }
+  /* Home page redesign — stats/features/methodology teaser/pricing grids */
+  .home-stats-grid {
+    grid-template-columns: 1fr !important;
+  }
+  .home-stats-grid > div {
+    border-left: none !important;
+    border-top: 1px solid var(--border);
+  }
+  .home-stats-grid > div:first-child {
+    border-top: none !important;
+  }
+  .home-features-grid {
+    grid-template-columns: 1fr !important;
+  }
+  .method-teaser-grid {
+    grid-template-columns: 1fr 1fr !important;
+    gap: 28px !important;
+  }
+  .home-pricing-grid {
+    grid-template-columns: 1fr !important;
   }
 }
 
@@ -989,7 +1022,7 @@ tr:hover td.sticky-col {
   font-weight: 700;
   background: var(--ws-accent);
   border: none;
-  color: #fff;
+  color: var(--accent-text);
   cursor: pointer;
   text-align: center;
   transition: opacity 0.20s;

@@ -1,6 +1,10 @@
+const ALLOWED_RANGES = ['5d', '1mo', '3mo', '6mo', '1y'];
+
 export async function GET(request) {
   const { searchParams } = new URL(request.url);
   const extended = searchParams.get('extended') === 'true';
+  const rangeParam = searchParams.get('range');
+  const range = ALLOWED_RANGES.includes(rangeParam) ? rangeParam : '1mo';
 
   const symbols = [
     { symbol: '^GSPC', label: 'S&P 500' },
@@ -23,7 +27,7 @@ export async function GET(request) {
     const results = await Promise.all(
       symbols.map(async ({ symbol, label }) => {
         const res = await fetch(
-          `https://query1.finance.yahoo.com/v8/finance/chart/${symbol}?interval=1d&range=1mo`,
+          `https://query1.finance.yahoo.com/v8/finance/chart/${symbol}?interval=1d&range=${range}`,
           { headers: { 'User-Agent': 'Mozilla/5.0' } }
         );
         const data = await res.json();

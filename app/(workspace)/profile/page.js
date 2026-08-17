@@ -5,6 +5,7 @@ import { useUser } from '../../components/AuthProvider';
 import { createClient } from '../../../lib/supabase/client';
 
 const ACCENT_COLORS = [
+  { name: 'Acid Lime', hex: '#C7FF38' },
   { name: 'Classic Mint', hex: '#0f766e' },
   { name: 'Cyber Teal', hex: '#14b8a6' },
   { name: 'Emerald Green', hex: '#10b981' },
@@ -30,7 +31,7 @@ export default function WorkspaceProfile() {
   const [securityMsg, setSecurityMsg] = useState({ type: '', text: '' });
 
   // Customization state
-  const [accentColor, setAccentColor] = useState('#0f766e');
+  const [accentColor, setAccentColor] = useState('#C7FF38');
   const [fontSize, setFontSize] = useState('normal');
   const [scanlines, setScanlines] = useState(false);
 
@@ -53,7 +54,7 @@ export default function WorkspaceProfile() {
     setDisplayName(user.user_metadata?.full_name || localStorage.getItem('traq_user_fullname') || '');
     
     // Load saved preferences
-    setAccentColor(localStorage.getItem('ws_accent_color') || '#0f766e');
+    setAccentColor(localStorage.getItem('ws_accent_color') || '#C7FF38');
     setFontSize(localStorage.getItem('ws_font_size') || 'normal');
     setScanlines(localStorage.getItem('ws_scanlines') === 'true');
 
@@ -207,7 +208,7 @@ export default function WorkspaceProfile() {
   };
 
   if (!isLoaded || loading) return (
-    <div style={{ padding: '24px', fontFamily: "'JetBrains Mono', monospace" }}>
+    <div style={{ padding: '24px', fontFamily: "'Inter', sans-serif" }}>
       <div style={{ border: '1px solid var(--ws-border)', background: 'var(--ws-bg-1)', overflow: 'hidden' }}>
         <div style={{ background: 'var(--ws-bg-2)', borderBottom: '1px solid var(--ws-border)', padding: '7px 16px' }}>
           <span style={{ fontSize: '11px', color: 'var(--ws-accent)', fontWeight: 700, letterSpacing: '1px' }}>$ loading profile...</span>
@@ -309,7 +310,7 @@ export default function WorkspaceProfile() {
               <div style={{ fontSize: '8px', fontWeight: 700, color: 'var(--ws-text-3)', letterSpacing: '1px', textTransform: 'uppercase', marginBottom: '4px' }}>
                 {stat.label}
               </div>
-              <div style={{ fontSize: '20px', fontWeight: 800, color: stat.color, fontFamily: "'JetBrains Mono', monospace" }}>
+              <div style={{ fontSize: '20px', fontWeight: 800, color: stat.color, fontFamily: "'Inter', sans-serif" }}>
                 {stat.count}
               </div>
             </div>
@@ -338,7 +339,7 @@ export default function WorkspaceProfile() {
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '12px' }}>
               <div>
                 <div style={{ fontSize: '15px', fontWeight: 800, color: 'var(--ws-text)' }}>
-                  {isPro ? 'Traqcker Pro Plan' : 'Traqcker Free Tier'}
+                  {isPro ? 'Bulltrace Pro Plan' : 'Bulltrace Free Tier'}
                 </div>
                 <div style={{ fontSize: '11px', color: 'var(--ws-text-3)', marginTop: '2px' }}>
                   {isPro ? 'You have full institutional terminal access.' : 'Upgrade to unlock global screening, financials, DCF models, and backtesting.'}
@@ -476,7 +477,7 @@ export default function WorkspaceProfile() {
                       fontWeight: 700,
                       cursor: 'pointer',
                       background: fontSize === opt.id ? 'var(--ws-accent)' : 'var(--ws-bg-2)',
-                      color: fontSize === opt.id ? '#fff' : 'var(--ws-text-2)',
+                      color: fontSize === opt.id ? 'var(--ws-accent-text)' : 'var(--ws-text-2)',
                       transition: 'all 0.15s ease'
                     }}
                   >
@@ -500,7 +501,7 @@ export default function WorkspaceProfile() {
                   fontWeight: 700,
                   border: '1px solid var(--ws-border)',
                   background: scanlines ? 'var(--ws-accent)' : 'var(--ws-bg-1)',
-                  color: scanlines ? '#fff' : 'var(--ws-text-2)',
+                  color: scanlines ? 'var(--ws-accent-text)' : 'var(--ws-text-2)',
                   cursor: 'pointer',
                   transition: 'all 0.15s ease'
                 }}
@@ -522,7 +523,7 @@ export default function WorkspaceProfile() {
 
             <div style={{ display: 'flex', gap: '8px' }}>
               <input type="text" readOnly value={apiToken}
-                className="ws-input" style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: '11px', background: 'var(--ws-bg-2)' }} />
+                className="ws-input" style={{ fontFamily: "'Inter', sans-serif", fontSize: '11px', background: 'var(--ws-bg-2)' }} />
               
               <button onClick={copyTokenToClipboard} className="ws-btn" style={{ padding: '8px 12px', flexShrink: 0 }}>
                 {copiedToken ? 'Copied' : 'Copy'}

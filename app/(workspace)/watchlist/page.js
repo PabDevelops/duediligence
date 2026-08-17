@@ -263,7 +263,7 @@ export default function WatchlistPage() {
               { h: 'CBS', title: 'Core Business Score · ROIC · Margins · Liquidity' },
               { h: 'OPPO', title: 'Opportunity Score · P/FCF · FCF Yield' },
               { h: 'GQS', title: 'Growth Quality Score · Revenue · R&D · SBC' },
-              { h: 'Quality', title: 'Final Note · Traqcker Score · Weighted composite (CBS 45% · OPPO 30% · GQS 25% · Moat ±20%)' },
+              { h: 'Quality', title: 'Final Note · Bulltrace Score · Weighted composite (CBS 45% · OPPO 30% · GQS 25% · Moat ±20%)' },
               { h: '' },
             ].map(({ h, title }) => (
               <th key={h} title={title} className={h === 'Stock' ? 'sticky-col' : ''} style={{ padding: '9px 12px', textAlign: h === 'Stock' ? 'left' : h === '1M' ? 'center' : 'right', fontWeight: 600, fontSize: '10px', color: 'var(--ws-text-3)' }}>{h}</th>
@@ -313,7 +313,7 @@ export default function WatchlistPage() {
                 <td style={{ padding: '10px 12px', textAlign: 'right', fontWeight: 600, color: easyMode ? scoreColor(easyMode.gqs) : 'var(--ws-text-3)' }}>
                   {easyMode ? Math.round(easyMode.gqs * 20) : '—'}
                 </td>
-                <td style={{ padding: '10px 12px', textAlign: 'right' }} title={easyMode ? `Traqcker Score · ${easyMode.verdict}` : 'Not enough fundamentals yet'}>
+                <td style={{ padding: '10px 12px', textAlign: 'right' }} title={easyMode ? `Bulltrace Score · ${easyMode.verdict}` : 'Not enough fundamentals yet'}>
                   {easyMode ? (
                     <div style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', justifyContent: 'flex-end', whiteSpace: 'nowrap' }}>
                       <span style={{ fontWeight: 700, color: easyMode.verdictColor }}>{easyMode.score100}</span>
@@ -337,7 +337,7 @@ export default function WatchlistPage() {
                           if (e.key === 'Escape') { setEditingPieTicker(null); setShowPieSuggestions(false); }
                         }}
                         onBlur={() => setTimeout(() => moveToPie(t.ticker, pieDraft), 150)}
-                        style={{ width: '110px', fontSize: '10px', padding: '4px 6px', background: 'var(--ws-bg-1)', border: '1px solid var(--ws-accent)', color: 'var(--ws-text)', fontFamily: 'JetBrains Mono, monospace' }}
+                        style={{ width: '110px', fontSize: '10px', padding: '4px 6px', background: 'var(--ws-bg-1)', border: '1px solid var(--ws-accent)', color: 'var(--ws-text)', fontFamily: 'Inter, sans-serif' }}
                       />
                       {showPieSuggestions && pieSuggestions.length > 0 && (
                         <div style={{ position: 'absolute', top: '26px', right: 0, minWidth: '120px', background: 'var(--ws-bg-1)', border: '1px solid var(--ws-border)', zIndex: 20, textAlign: 'left', boxShadow: '0 8px 24px rgba(0,0,0,0.15)' }}>
@@ -356,7 +356,7 @@ export default function WatchlistPage() {
                     <button
                       onClick={() => { setEditingPieTicker(t.ticker); setPieDraft(t.pie || ''); }}
                       title="Move to a different list"
-                      style={{ background: 'var(--ws-bg-2)', border: '1px solid var(--ws-border)', color: 'var(--ws-text-3)', fontSize: '9px', fontWeight: 700, padding: '4px 8px', cursor: 'pointer', fontFamily: 'JetBrains Mono, monospace', whiteSpace: 'nowrap', marginRight: '8px' }}
+                      style={{ background: 'var(--ws-bg-2)', border: '1px solid var(--ws-border)', color: 'var(--ws-text-3)', fontSize: '9px', fontWeight: 700, padding: '4px 8px', cursor: 'pointer', fontFamily: 'Inter, sans-serif', whiteSpace: 'nowrap', marginRight: '8px' }}
                       onMouseEnter={e => { e.currentTarget.style.color = 'var(--ws-accent)'; e.currentTarget.style.borderColor = 'var(--ws-accent)'; }}
                       onMouseLeave={e => { e.currentTarget.style.color = 'var(--ws-text-3)'; e.currentTarget.style.borderColor = 'var(--ws-border)'; }}>
                       {t.pie || 'General'}
@@ -381,7 +381,7 @@ export default function WatchlistPage() {
     <div style={{ padding: '24px' }}>
       <div style={{ border: '1px solid var(--ws-border)', background: 'var(--ws-bg-1)', marginBottom: '20px', overflow: 'hidden' }}>
         <div className="bg-ws-bg-2 border-b border-ws-border px-4 py-[7px]">
-          <span style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: '11px', color: 'var(--ws-accent)', fontWeight: 700, letterSpacing: '1px' }}>
+          <span style={{ fontFamily: "'Inter', sans-serif", fontSize: '11px', color: 'var(--ws-accent)', fontWeight: 700, letterSpacing: '1px' }}>
             $ traq watchlist
           </span>
         </div>
@@ -400,11 +400,11 @@ export default function WatchlistPage() {
                 onChange={(e) => { setSearchQuery(e.target.value); setSearchError(''); }}
                 onKeyDown={handleAddStock}
                 disabled={isAdding}
-                style={{ background: 'transparent', border: 'none', color: 'var(--ws-text)', fontSize: '12px', outline: 'none', width: '170px', fontFamily: 'JetBrains Mono, monospace' }}
+                style={{ background: 'transparent', border: 'none', color: 'var(--ws-text)', fontSize: '12px', outline: 'none', width: '170px', fontFamily: 'Inter, sans-serif' }}
               />
             </div>
             {searchError && (
-              <div style={{ fontSize: '10px', color: 'var(--ws-red)', marginTop: '4px', fontFamily: 'JetBrains Mono, monospace' }}>
+              <div style={{ fontSize: '10px', color: 'var(--ws-red)', marginTop: '4px', fontFamily: 'Inter, sans-serif' }}>
                 {searchError}
               </div>
             )}

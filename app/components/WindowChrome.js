@@ -1,19 +1,19 @@
-const MONO = "'JetBrains Mono', monospace";
+const MONO = "'Inter', sans-serif";
 
 export function WindowChrome({ title, children, maxWidth = '980px' }) {
   return (
     <div style={{
-      background: '#ffffff',
+      background: 'var(--bg-1)',
       border: '1px solid var(--border)',
       borderRadius: '12px',
-      boxShadow: '0 20px 50px rgba(0,0,0,0.06)',
+      boxShadow: '0 20px 50px rgba(0,0,0,0.35)',
       maxWidth,
       margin: '0 auto',
       textAlign: 'left',
       overflow: 'hidden',
     }}>
       <div style={{
-        background: '#f1f3f5',
+        background: 'var(--bg-2)',
         padding: '10px 16px',
         borderBottom: '1px solid var(--border)',
         display: 'flex',
@@ -32,8 +32,4 @@ export function WindowChrome({ title, children, maxWidth = '980px' }) {
       {children}
     </div>
   );
-}
-
-export function Shot({ src, alt }) {
-  return <img src={src} alt={alt} style={{ display: 'block', width: '100%', height: 'auto' }} />;
 }

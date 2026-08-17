@@ -37,7 +37,7 @@ ctx.fill();
 ctx.fillStyle = '#e0e7ff';
 ctx.font = 'bold 72px "Space Grotesk", sans-serif';
 ctx.textAlign = 'left';
-ctx.fillText('Traqcker', 350, 280);
+ctx.fillText('Bulltrace', 350, 280);
 
 // Subtitle
 ctx.fillStyle = '#a78bfa';

@@ -24,24 +24,24 @@ export default function PaywallModal({ eyebrow, title, description, ctaLabel, ct
     >
       <div
         onClick={e => e.stopPropagation()}
-        style={{ position: 'relative', maxWidth: '420px', width: '100%', textAlign: 'center', background: '#fff', border: '1px solid #e5e7eb', borderRadius: '16px', padding: '40px 32px', boxSizing: 'border-box', boxShadow: '0 20px 60px rgba(0,0,0,0.3)' }}
+        style={{ position: 'relative', maxWidth: '420px', width: '100%', textAlign: 'center', background: 'var(--bg-1)', border: '1px solid var(--border)', borderRadius: '16px', padding: '40px 32px', boxSizing: 'border-box', boxShadow: '0 20px 60px rgba(0,0,0,0.3)' }}
       >
         <button onClick={onClose} aria-label="Close" style={{
           position: 'absolute', top: '14px', right: '14px',
-          background: 'none', border: 'none', color: '#9ca3af',
+          background: 'none', border: 'none', color: 'var(--text-3)',
           cursor: 'pointer', fontSize: '18px', padding: '4px', lineHeight: 1,
         }}>
           ✕
         </button>
 
-        <div style={{ fontSize: '11px', fontWeight: 700, letterSpacing: '1.5px', color: '#0f766e', marginBottom: '10px' }}>{eyebrow}</div>
-        <h1 style={{ fontSize: '22px', fontWeight: 800, color: '#1f2937', marginBottom: '10px' }}>{title}</h1>
-        <p style={{ fontSize: '14px', color: '#4b5563', lineHeight: 1.6, marginBottom: '24px' }}>
+        <div style={{ fontSize: '11px', fontWeight: 700, letterSpacing: '1.5px', color: 'var(--accent)', marginBottom: '10px' }}>{eyebrow}</div>
+        <h1 style={{ fontSize: '22px', fontWeight: 800, color: 'var(--text)', marginBottom: '10px' }}>{title}</h1>
+        <p style={{ fontSize: '14px', color: 'var(--text-2)', lineHeight: 1.6, marginBottom: '24px' }}>
           {description}
         </p>
         <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-          <a href={ctaHref} style={{ ...card, background: '#0f766e', color: '#fff' }}>{ctaLabel}</a>
-          <button onClick={onClose} style={{ ...card, background: 'none', border: '1px solid #e5e7eb', color: '#4b5563', fontWeight: 600, fontSize: '13px', cursor: 'pointer' }}>Maybe later</button>
+          <a href={ctaHref} style={{ ...card, background: 'var(--accent)', color: '#fff' }}>{ctaLabel}</a>
+          <button onClick={onClose} style={{ ...card, background: 'none', border: '1px solid var(--border)', color: 'var(--text-2)', fontWeight: 600, fontSize: '13px', cursor: 'pointer' }}>Maybe later</button>
         </div>
       </div>
     </div>

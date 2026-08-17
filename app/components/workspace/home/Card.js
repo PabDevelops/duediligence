@@ -8,6 +8,7 @@ export default function Card({ title, subtitle, rightElement, dragProps, childre
       className="widget-card"
       style={{
         border: '1px solid var(--ws-border)',
+        borderRadius: 'var(--radius)',
         background: 'var(--ws-bg-1)',
         boxShadow: '0 1px 3px rgba(0,0,0,0.02), 0 1px 2px rgba(0,0,0,0.01)',
         overflow: 'hidden',
@@ -45,7 +46,7 @@ export default function Card({ title, subtitle, rightElement, dragProps, childre
         </div>
         {rightElement}
       </div>
-      <div className="widget-card-body" style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
+      <div className="widget-card-body" style={{ flex: 1, display: 'flex', flexDirection: 'column', minHeight: 0 }}>
         {children}
       </div>
     </div>

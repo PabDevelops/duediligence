@@ -141,7 +141,7 @@ export default function StockChart({
         layout: {
           background: { type: ColorType.Solid, color: 'transparent' },
           textColor,
-          fontFamily: 'JetBrains Mono, monospace',
+          fontFamily: 'Inter, sans-serif',
           fontSize: 10,
           // lightweight-charts renders a "Charting by TradingView" attribution link by
           // default — this is our own chart, on our own data, so it comes off.
@@ -234,7 +234,7 @@ export default function StockChart({
           <div style={{ display: 'flex', gap: '1px', background: 'var(--ws-border, var(--border))' }}>
             {RANGES.map(r => (
               <button key={r.value} onClick={() => setRange(r.value)}
-                style={{ padding: '4px 8px', fontSize: '10px', letterSpacing: '1px', background: range === r.value ? 'var(--ws-accent, var(--accent))' : 'var(--ws-bg-2, var(--bg-2))', color: range === r.value ? '#000' : 'var(--ws-text-3, var(--text-3))', border: 'none', cursor: 'pointer', fontFamily: 'JetBrains Mono, monospace', fontWeight: range === r.value ? 600 : 400 }}>
+                style={{ padding: '4px 8px', fontSize: '10px', letterSpacing: '1px', background: range === r.value ? 'var(--ws-accent, var(--accent))' : 'var(--ws-bg-2, var(--bg-2))', color: range === r.value ? '#000' : 'var(--ws-text-3, var(--text-3))', border: 'none', cursor: 'pointer', fontFamily: 'Inter, sans-serif', fontWeight: range === r.value ? 600 : 400 }}>
                 {r.label}
               </button>
             ))}
@@ -242,7 +242,7 @@ export default function StockChart({
           <div style={{ display: 'flex', gap: '1px', background: 'var(--ws-border, var(--border))' }}>
             {['line', 'candles'].map(m => (
               <button key={m} onClick={() => setMode(m)}
-                style={{ padding: '4px 10px', fontSize: '10px', letterSpacing: '1px', background: mode === m ? 'var(--ws-accent, var(--accent))' : 'var(--ws-bg-2, var(--bg-2))', color: mode === m ? '#000' : 'var(--ws-text-3, var(--text-3))', border: 'none', cursor: 'pointer', fontFamily: 'JetBrains Mono, monospace', fontWeight: mode === m ? 600 : 400 }}>
+                style={{ padding: '4px 10px', fontSize: '10px', letterSpacing: '1px', background: mode === m ? 'var(--ws-accent, var(--accent))' : 'var(--ws-bg-2, var(--bg-2))', color: mode === m ? '#000' : 'var(--ws-text-3, var(--text-3))', border: 'none', cursor: 'pointer', fontFamily: 'Inter, sans-serif', fontWeight: mode === m ? 600 : 400 }}>
                 {m.toUpperCase()}
               </button>
             ))}

@@ -15,7 +15,7 @@ export default function SentimentBreadth({ vixMarket, sp500Change, advanceDeclin
 
   return (
     <div style={{ background: 'var(--ws-bg-1)', border: '1px solid var(--ws-border)', padding: '14px', display: 'flex', flexDirection: 'column', gap: '12px', height: '100%', boxSizing: 'border-box' }}>
-      <div style={{ fontSize: '10px', fontFamily: "'JetBrains Mono', monospace", fontWeight: 700, color: 'var(--ws-accent)', letterSpacing: '1.5px', borderBottom: '1px solid var(--ws-border)', paddingBottom: '8px' }}>
+      <div style={{ fontSize: '10px', fontFamily: "'Inter', sans-serif", fontWeight: 700, color: 'var(--ws-accent)', letterSpacing: '1.5px', borderBottom: '1px solid var(--ws-border)', paddingBottom: '8px' }}>
         SENTIMENT & BREADTH
       </div>
 

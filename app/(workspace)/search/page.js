@@ -37,16 +37,16 @@ function StockCard({ s, onClick }) {
               onError={() => setImgError(true)}
             />
           ) : (
-            <span style={{ color: 'var(--ws-accent)', fontWeight: 700, fontSize: '13px', fontFamily: "'JetBrains Mono', monospace" }}>{s.ticker.slice(0, 2)}</span>
+            <span style={{ color: 'var(--ws-accent)', fontWeight: 700, fontSize: '13px', fontFamily: "'Inter', sans-serif" }}>{s.ticker.slice(0, 2)}</span>
           )}
         </div>
         <div style={{ minWidth: 0, flex: 1 }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-            <span style={{ fontFamily: "'JetBrains Mono', monospace", fontWeight: 700, fontSize: '13px', color: 'var(--ws-accent)', letterSpacing: '0.5px' }}>
+            <span style={{ fontFamily: "'Inter', sans-serif", fontWeight: 700, fontSize: '13px', color: 'var(--ws-accent)', letterSpacing: '0.5px' }}>
               {s.ticker}
             </span>
             {s.isEtf && (
-              <span style={{ fontFamily: "'JetBrains Mono', monospace", fontWeight: 700, fontSize: '9px', letterSpacing: '0.5px', color: 'var(--ws-text-3)', border: '1px solid var(--ws-border)', borderRadius: '4px', padding: '1px 4px' }}>
+              <span style={{ fontFamily: "'Inter', sans-serif", fontWeight: 700, fontSize: '9px', letterSpacing: '0.5px', color: 'var(--ws-text-3)', border: '1px solid var(--ws-border)', borderRadius: '4px', padding: '1px 4px' }}>
                 ETF
               </span>
             )}
@@ -63,11 +63,11 @@ function StockCard({ s, onClick }) {
         </span>
         {s.currentPrice != null && (
           <div style={{ display: 'flex', alignItems: 'baseline', gap: '6px', flexShrink: 0 }}>
-            <span style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: '13px', fontWeight: 700, color: 'var(--ws-text)' }}>
+            <span style={{ fontFamily: "'Inter', sans-serif", fontSize: '13px', fontWeight: 700, color: 'var(--ws-text)' }}>
               ${s.currentPrice.toFixed(2)}
             </span>
             {change != null && (
-              <span style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: '11px', fontWeight: 700, color: positive ? 'var(--ws-accent)' : 'var(--ws-red)' }}>
+              <span style={{ fontFamily: "'Inter', sans-serif", fontSize: '11px', fontWeight: 700, color: positive ? 'var(--ws-accent)' : 'var(--ws-red)' }}>
                 {positive ? '+' : ''}{change.toFixed(2)}%
               </span>
             )}
@@ -120,7 +120,7 @@ function SearchPageContent() {
       <div style={{ marginBottom: '32px', marginTop: '24px', maxWidth: '720px' }}>
         <div style={{ display: 'flex', alignItems: 'center', border: '1px solid var(--ws-border)', borderRadius: 'var(--ws-radius)', background: 'var(--ws-bg-1)', overflow: 'hidden' }}>
           <span style={{
-            fontFamily: "'JetBrains Mono', monospace",
+            fontFamily: "'Inter', sans-serif",
             fontSize: '22px',
             color: 'var(--ws-accent)',
             fontWeight: 700,
@@ -140,7 +140,7 @@ function SearchPageContent() {
               height: '68px',
               padding: '0 20px',
               fontSize: '20px',
-              fontFamily: "'JetBrains Mono', monospace",
+              fontFamily: "'Inter', sans-serif",
               letterSpacing: '0.5px',
               fontWeight: 600,
               border: 'none',
@@ -151,7 +151,7 @@ function SearchPageContent() {
           />
         </div>
         {q.trim().length > 0 && (
-          <div style={{ marginTop: '10px', fontSize: '11px', color: 'var(--ws-text-3)', fontFamily: "'JetBrains Mono', monospace", letterSpacing: '0.5px', paddingLeft: '4px' }}>
+          <div style={{ marginTop: '10px', fontSize: '11px', color: 'var(--ws-text-3)', fontFamily: "'Inter', sans-serif", letterSpacing: '0.5px', paddingLeft: '4px' }}>
             {loading ? 'SEARCHING...' : `${stockResults.length} STOCK${stockResults.length !== 1 ? 'S' : ''} · ${etfResults.length} ETF${etfResults.length !== 1 ? 'S' : ''} FOR "${q.trim().toUpperCase()}"`}
           </div>
         )}
@@ -167,7 +167,7 @@ function SearchPageContent() {
           `}} />
 
           <div>
-            <div style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: '11px', fontWeight: 700, color: 'var(--ws-text-3)', letterSpacing: '1.5px', marginBottom: '12px', paddingBottom: '8px', borderBottom: '1px solid var(--ws-border)' }}>
+            <div style={{ fontFamily: "'Inter', sans-serif", fontSize: '11px', fontWeight: 700, color: 'var(--ws-text-3)', letterSpacing: '1.5px', marginBottom: '12px', paddingBottom: '8px', borderBottom: '1px solid var(--ws-border)' }}>
               STOCKS
             </div>
             {stockResults.length > 0 ? (
@@ -182,7 +182,7 @@ function SearchPageContent() {
           </div>
 
           <div>
-            <div style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: '11px', fontWeight: 700, color: 'var(--ws-text-3)', letterSpacing: '1.5px', marginBottom: '12px', paddingBottom: '8px', borderBottom: '1px solid var(--ws-border)' }}>
+            <div style={{ fontFamily: "'Inter', sans-serif", fontSize: '11px', fontWeight: 700, color: 'var(--ws-text-3)', letterSpacing: '1.5px', marginBottom: '12px', paddingBottom: '8px', borderBottom: '1px solid var(--ws-border)' }}>
               ETFS
             </div>
             {etfResults.length > 0 ? (
@@ -201,12 +201,12 @@ function SearchPageContent() {
       {/* Empty / no results states */}
       {!loading && searched && results.length === 0 && (
         <div style={{ textAlign: 'center', padding: '60px 24px' }}>
-          <div style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: '12px', color: 'var(--ws-text-3)', letterSpacing: '1px', marginBottom: '16px' }}>
+          <div style={{ fontFamily: "'Inter', sans-serif", fontSize: '12px', color: 'var(--ws-text-3)', letterSpacing: '1px', marginBottom: '16px' }}>
             NO RESULTS FOR "{q.trim().toUpperCase()}"
           </div>
           <button
             onClick={() => goToTicker(q.trim().toUpperCase())}
-            style={{ fontSize: '12px', fontFamily: "'JetBrains Mono', monospace", letterSpacing: '1px', background: 'var(--ws-text)', color: 'var(--ws-bg)', border: 'none', borderRadius: 'var(--ws-radius)', fontWeight: 700, padding: '10px 20px', cursor: 'pointer' }}>
+            style={{ fontSize: '12px', fontFamily: "'Inter', sans-serif", letterSpacing: '1px', background: 'var(--ws-text)', color: 'var(--ws-bg)', border: 'none', borderRadius: 'var(--ws-radius)', fontWeight: 700, padding: '10px 20px', cursor: 'pointer' }}>
             TRY "{q.trim().toUpperCase()}" AS TICKER →
           </button>
         </div>
@@ -214,7 +214,7 @@ function SearchPageContent() {
 
       {q.trim().length === 0 && (
         <div style={{ textAlign: 'center', padding: '60px 24px' }}>
-          <div style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: '12px', color: 'var(--ws-text-3)', letterSpacing: '1px' }}>
+          <div style={{ fontFamily: "'Inter', sans-serif", fontSize: '12px', color: 'var(--ws-text-3)', letterSpacing: '1px' }}>
             START TYPING TO SEARCH THOUSANDS OF STOCKS
           </div>
         </div>

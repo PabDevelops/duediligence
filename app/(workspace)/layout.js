@@ -17,7 +17,7 @@ function isPublicPath(path) {
 
 function LoadingScreen() {
   return (
-    <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#f8f9fa', color: '#9ca3af', fontFamily: 'Inter, sans-serif', fontSize: '13px' }}>
+    <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'var(--ws-bg)', color: 'var(--ws-text-3)', fontFamily: 'Inter, sans-serif', fontSize: '13px' }}>
       Loading terminal…
     </div>
   );
@@ -34,21 +34,20 @@ export default function WorkspaceLayout({ children }) {
   // to render the loading screen or the paywall while waiting on auth/subscription state
   // that a public route was never supposed to need.
   const isPublic = isPublicPath(path);
-  const [theme, setTheme] = useState('light');
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [scanlines, setScanlines] = useState(false);
 
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
 
   useEffect(() => {
-    const saved = localStorage.getItem('traqcker_sidebar_collapsed') === 'true';
+    const saved = localStorage.getItem('bulltrace_sidebar_collapsed') === 'true';
     setSidebarCollapsed(saved);
   }, []);
 
   const toggleSidebarCollapse = () => {
     setSidebarCollapsed(prev => {
       const next = !prev;
-      localStorage.setItem('traqcker_sidebar_collapsed', String(next));
+      localStorage.setItem('bulltrace_sidebar_collapsed', String(next));
       return next;
     });
   };
@@ -68,10 +67,6 @@ export default function WorkspaceLayout({ children }) {
 
   useEffect(() => {
     const handleSettingsChanged = () => {
-      const savedTheme = localStorage.getItem('ws_theme') || 'light';
-      setTheme(savedTheme);
-      document.documentElement.setAttribute('data-ws-theme', savedTheme);
-
       const savedAccent = localStorage.getItem('ws_accent_color');
       if (savedAccent) {
         document.documentElement.style.setProperty('--ws-accent', savedAccent);
@@ -99,20 +94,12 @@ export default function WorkspaceLayout({ children }) {
     setSidebarOpen(false);
   }, [path]);
 
-  const toggleTheme = () => {
-    const nextTheme = theme === 'dark' ? 'light' : 'dark';
-    setTheme(nextTheme);
-    localStorage.setItem('ws_theme', nextTheme);
-    document.documentElement.setAttribute('data-ws-theme', nextTheme);
-  };
-
   if (access === 'checking' && !isPublic) return <LoadingScreen />;
 
-  const isDark = theme === 'dark';
   const closePaywall = () => router.push('/home');
 
   return (
-    <div className={`workspace ${theme}`} style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh', position: 'relative', '--ws-sidebar-width': sidebarCollapsed ? '68px' : '240px' }}>
+    <div className="workspace" style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh', position: 'relative', '--ws-sidebar-width': sidebarCollapsed ? '68px' : '240px' }}>
       {scanlines && (
         <div style={{
           position: 'fixed',
@@ -145,8 +132,8 @@ export default function WorkspaceLayout({ children }) {
           ☰
         </button>
         <img
-          src={isDark ? '/logo-traqcker-new-w.png' : '/logo-traqcker-new.png'}
-          alt="Traqcker"
+          src="/bulltrace-logos/lockup-cream.png"
+          alt="Bulltrace"
           style={{ height: '14px', width: 'auto' }}
         />
         <div style={{ width: '28px' }} /> {/* spacer to balance layout */}
@@ -155,7 +142,7 @@ export default function WorkspaceLayout({ children }) {
       <div style={{ display: 'flex', flex: 1, minHeight: 0 }}>
         {/* SIDEBAR SLOT */}
         <div className={`ws-sidebar-slot ${sidebarOpen ? 'open' : ''}`}>
-          <Sidebar theme={theme} onToggleTheme={toggleTheme} collapsed={sidebarCollapsed} onToggleCollapse={toggleSidebarCollapse} />
+          <Sidebar collapsed={sidebarCollapsed} onToggleCollapse={toggleSidebarCollapse} />
         </div>
 
         {/* SIDEBAR BACKDROP */}
@@ -169,16 +156,21 @@ export default function WorkspaceLayout({ children }) {
           }} />
         )}
 
-        <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', maxWidth: '100%', overflowX: 'hidden' }}>
-          <main style={{ flex: 1, maxWidth: '100%', overflowX: 'hidden' }}>{(access === 'granted' || isPublic) ? children : null}</main>
+        {/* overflow-x: clip, not hidden — hidden establishes a scroll container (per the CSS
+            overflow spec, setting only overflow-x forces the other axis to auto), which becomes
+            the nearest scrolling ancestor for any descendant's position: sticky instead of the
+            real viewport, silently breaking it. Same reasoning as .workspace's own overflow-x in
+            globals.css. clip still clamps horizontal overflow without that side effect. */}
+        <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', maxWidth: '100%', overflowX: 'clip' }}>
+          <main style={{ flex: 1, maxWidth: '100%', overflowX: 'clip' }}>{(access === 'granted' || isPublic) ? children : null}</main>
         </div>
       </div>
 
       {access === 'denied' && !isPublic && (
         <PaywallModal
-          eyebrow="TRAQCKER TERMINAL"
+          eyebrow="BULLTRACE TERMINAL"
           title="Subscribe to unlock the terminal"
-          description="The screener, portfolio tracker, full financials and the rest of the terminal are available with Traqcker Pro — 14 days free to start."
+          description="The screener, portfolio tracker, full financials and the rest of the terminal are available with Bulltrace Pro — 14 days free to start."
           ctaLabel="Start 14-day free trial"
           ctaHref="/pricing"
           onClose={closePaywall}

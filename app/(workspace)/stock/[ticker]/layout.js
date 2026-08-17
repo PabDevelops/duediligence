@@ -8,7 +8,7 @@ export async function generateMetadata({ params }) {
 
     if (data.error) {
       return {
-        title: `${t} Stock Analysis — Traqcker`,
+        title: `${t} Stock Analysis — Bulltrace`,
         description: `Professional investment analysis for ${t}, powered by direct company filings. SEC EDGAR source verification, intrinsic valuation, and financial metrics.`,
       };
     }
@@ -22,29 +22,29 @@ export async function generateMetadata({ params }) {
     ].filter(Boolean).join(' · ');
 
     return {
-      title: `${data.name} (${t}) Stock Analysis & SEC Filings — Traqcker`,
+      title: `${data.name} (${t}) Stock Analysis & SEC Filings — Bulltrace`,
       description: descSnippet,
       openGraph: {
-        title: `${data.name} (${t}) — Stock Analysis & SEC Filings | Traqcker`,
+        title: `${data.name} (${t}) — Stock Analysis & SEC Filings | Bulltrace`,
         description: ogDesc ? `${ogDesc} · ${descSnippet}` : descSnippet,
-        url: `https://traqcker.com/stock/${t}`,
-        siteName: 'Traqcker',
-        images: [{ url: 'https://traqcker.com/og-image.png', width: 1200, height: 630, alt: `${data.name} stock analysis` }],
+        url: `https://bulltrace.app/stock/${t}`,
+        siteName: 'Bulltrace',
+        images: [{ url: 'https://bulltrace.app/og-image.png', width: 1200, height: 630, alt: `${data.name} stock analysis` }],
         type: 'website',
       },
       twitter: {
         card: 'summary_large_image',
-        title: `${data.name} (${t}) — Stock Analysis & SEC Filings | Traqcker`,
+        title: `${data.name} (${t}) — Stock Analysis & SEC Filings | Bulltrace`,
         description: ogDesc ? `${ogDesc} · ${descSnippet}` : descSnippet,
-        images: ['https://traqcker.com/og-image.png'],
+        images: ['https://bulltrace.app/og-image.png'],
       },
       alternates: {
-        canonical: `https://traqcker.com/stock/${t}`,
+        canonical: `https://bulltrace.app/stock/${t}`,
       },
     };
   } catch {
     return {
-      title: `${t} Stock Analysis — Traqcker`,
+      title: `${t} Stock Analysis — Bulltrace`,
       description: `Professional investment analysis for ${t}, powered by direct company filings. SEC EDGAR source verification, intrinsic valuation, and financial metrics.`,
     };
   }

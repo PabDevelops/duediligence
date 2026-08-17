@@ -18,7 +18,7 @@ const curSym = (code) => !code || code === 'USD' ? '$' : (CURRENCY_SYMBOLS[code]
 const CustomTooltip = ({ active, payload, currency }) => {
   if (!active || !payload?.length) return null;
   return (
-    <div style={{ background: 'var(--bg-2)', border: '1px solid var(--border)', padding: '4px 8px', fontSize: '10px', fontFamily: 'JetBrains Mono, monospace', color: 'var(--text)' }}>
+    <div style={{ background: 'var(--bg-2)', border: '1px solid var(--border)', padding: '4px 8px', fontSize: '10px', fontFamily: 'Inter, sans-serif', color: 'var(--text)' }}>
       {curSym(currency)}{payload[0].value?.toFixed(2)}
     </div>
   );
@@ -56,7 +56,7 @@ export default function SparklineHeader({ ticker, currency }) {
       <div style={{ display: 'flex', gap: '1px', marginBottom: '6px' }}>
         {RANGES.map(r => (
           <button key={r.label} onClick={() => setRange(r.range)}
-            style={{ padding: '2px 8px', fontSize: '9px', letterSpacing: '1px', background: range === r.range ? 'var(--accent)' : 'transparent', color: range === r.range ? '#000' : 'var(--text-3)', border: 'none', cursor: 'pointer', fontFamily: 'JetBrains Mono, monospace', fontWeight: range === r.range ? 700 : 400 }}>
+            style={{ padding: '2px 8px', fontSize: '9px', letterSpacing: '1px', background: range === r.range ? 'var(--accent)' : 'transparent', color: range === r.range ? '#000' : 'var(--text-3)', border: 'none', cursor: 'pointer', fontFamily: 'Inter, sans-serif', fontWeight: range === r.range ? 700 : 400 }}>
             {r.label}
           </button>
         ))}

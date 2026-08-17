@@ -15,11 +15,11 @@ export default function WelcomeModal() {
   const [visible, setVisible] = useState(false);
 
   useEffect(() => {
-    if (!localStorage.getItem('traqcker_onboarded')) setVisible(true);
+    if (!localStorage.getItem('bulltrace_onboarded')) setVisible(true);
   }, []);
 
   const dismiss = () => {
-    localStorage.setItem('traqcker_onboarded', '1');
+    localStorage.setItem('bulltrace_onboarded', '1');
     setVisible(false);
   };
 

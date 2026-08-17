@@ -1,5 +1,5 @@
 import { supabase } from '../../../lib/supabase.js';
-import { getYahooAuth } from '../../../lib/yahooFinance.js';
+import { getYahooAuth, fetchYahooAnalystTarget } from '../../../lib/yahooFinance.js';
 import { fetchForm4Transactions, computeInsiderOwnershipPct } from '../../../lib/secInsiders.js';
 import { cleanCompanyName } from '../../../lib/secTickers.js';
 import { flagDataAnomaly } from '../../../lib/dataAnomalies.js';
@@ -2370,7 +2370,15 @@ export async function GET(request) {
         if (result.eps == null) result.eps = yh.eps;
         if (result.pfcf == null) result.pfcf = yh.pfcf;
         if (result.fcfYield == null) result.fcfYield = yh.fcfYield;
+        if (result.analystTarget == null) result.analystTarget = yh.analystTarget;
       }
+    }
+
+    // Independent of the SEC-data-quality branch above — target price has no SEC EDGAR
+    // equivalent at all, so even a well-covered ticker (which skips the Yahoo backfill
+    // above entirely) still needs this fetched separately rather than staying null forever.
+    if (result.analystTarget == null) {
+      result.analystTarget = await fetchYahooAnalystTarget(ticker).catch(() => null);
     }
 
     result.isEtf = cachedIsEtf;

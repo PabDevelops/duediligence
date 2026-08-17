@@ -1,21 +1,21 @@
 export const metadata = {
-  title: 'Stock Screener — Filter by P/E, ROIC, Growth | Traqcker',
+  title: 'Stock Screener — Filter by P/E, ROIC, Growth | Bulltrace',
   description: 'Screen thousands of global equities by fundamental quality scores, P/E ratio, ROIC, revenue growth, and custom financial indicators.',
   openGraph: {
-    title: 'Stock Screener | Traqcker',
+    title: 'Stock Screener | Bulltrace',
     description: 'Filter thousands of global equities by institutional-grade fundamentals: quality scores, P/E, ROIC, free cash flow yield, and more.',
-    url: 'https://traqcker.com/screener',
-    siteName: 'Traqcker',
+    url: 'https://bulltrace.app/screener',
+    siteName: 'Bulltrace',
     images: [{ url: '/og-screenshot.png', width: 1200, height: 630 }],
     type: 'website',
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'Stock Screener | Traqcker',
+    title: 'Stock Screener | Bulltrace',
     description: 'Filter thousands of global equities by quality scores, valuation multiples, and key financial metrics.',
     images: ['/og-screenshot.png'],
   },
-  alternates: { canonical: 'https://traqcker.com/screener' },
+  alternates: { canonical: 'https://bulltrace.app/screener' },
 };
 
 export default function ScreenerLayout({ children }) {

@@ -76,7 +76,7 @@ export default function MobileHeader() {
             border: '1px solid var(--border)',
             background: 'var(--bg-2)',
             color: 'var(--accent)',
-            fontFamily: 'JetBrains Mono, monospace',
+            fontFamily: 'Inter, sans-serif',
             fontSize: '13px',
             outline: 'none',
             minWidth: 0

@@ -27,7 +27,7 @@ export default function MarketStatusDot({ ticker, showLabel = false, size = 8 })
         <span style={{ position: 'absolute', inset: 0, borderRadius: '50%', background: meta.color }} />
       </span>
       {showLabel && (
-        <span style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: '9px', fontWeight: 700, letterSpacing: '1px', color: meta.color }}>
+        <span style={{ fontFamily: "'Inter', sans-serif", fontSize: '9px', fontWeight: 700, letterSpacing: '1px', color: meta.color }}>
           {meta.label}
         </span>
       )}

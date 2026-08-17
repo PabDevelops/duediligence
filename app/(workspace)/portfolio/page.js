@@ -55,7 +55,7 @@ export default function WorkspacePortfolio() {
   const [newPieName, setNewPieName] = useState('');
   const [draggedTicker, setDraggedTicker] = useState(null);
   const [dragOverPie, setDragOverPie] = useState(null);
-  const { rates, toUSD } = useCurrencyRates();
+  const { rates, toUSD, toUSDStable } = useCurrencyRates();
 
   const loadPortfolios = async () => {
     if (!isSignedIn) return;
@@ -163,7 +163,7 @@ export default function WorkspacePortfolio() {
     holdingsArray.forEach(h => {
       const p = byTicker[h.ticker] ||= { ticker: h.ticker, shares: 0, cost: 0, costNative: 0, lots: [] };
       p.shares += Number(h.shares);
-      p.cost += Number(h.shares) * toUSD(Number(h.cost_basis), h.cost_basis_currency);
+      p.cost += Number(h.shares) * toUSDStable(Number(h.cost_basis), h.cost_basis_currency);
       p.costNative += Number(h.shares) * Number(h.cost_basis); // only valid when all lots share one currency
       p.lots.push(h);
     });
@@ -347,7 +347,7 @@ export default function WorkspacePortfolio() {
     <div style={{ padding: '24px' }}>
       <div style={{ border: '1px solid var(--ws-border)', background: 'var(--ws-bg-1)', marginBottom: '20px', overflow: 'hidden' }}>
         <div className="bg-ws-bg-2 border-b border-ws-border px-4 py-[7px]">
-          <span style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: '11px', color: 'var(--ws-accent)', fontWeight: 700, letterSpacing: '1px' }}>
+          <span style={{ fontFamily: "'Inter', sans-serif", fontSize: '11px', color: 'var(--ws-accent)', fontWeight: 700, letterSpacing: '1px' }}>
             $ traq portfolio
           </span>
         </div>
@@ -357,9 +357,9 @@ export default function WorkspacePortfolio() {
               <div style={{ fontSize: '20px', fontWeight: 700, color: 'var(--ws-text)' }}>Portfolio</div>
               {isSignedIn && portfolios.length > 0 && (
                 <div style={{ display: 'flex', gap: '4px', marginLeft: '8px' }}>
-                  <button onClick={() => setSelectedPortfolioId('all')} style={{ padding: '4px 10px', borderRadius: '14px', border: 'none', cursor: 'pointer', fontSize: '12px', fontWeight: 600, background: selectedPortfolioId === 'all' ? 'var(--ws-text)' : 'var(--ws-bg-2)', color: selectedPortfolioId === 'all' ? 'var(--ws-bg-1)' : 'var(--ws-text-2)' }}>All Portfolios</button>
+                  <button onClick={() => setSelectedPortfolioId('all')} style={{ padding: '4px 10px', borderRadius: '14px', border: 'none', cursor: 'pointer', fontSize: '12px', fontWeight: 600, background: selectedPortfolioId === 'all' ? 'var(--ws-accent)' : 'var(--ws-bg-2)', color: selectedPortfolioId === 'all' ? 'var(--ws-accent-text)' : 'var(--ws-text-2)' }}>All Portfolios</button>
                   {portfolios.map(p => (
-                    <button key={p.id} onClick={() => setSelectedPortfolioId(p.id)} style={{ padding: '4px 10px', borderRadius: '14px', border: 'none', cursor: 'pointer', fontSize: '12px', fontWeight: 600, background: selectedPortfolioId === p.id ? 'var(--ws-text)' : 'var(--ws-bg-2)', color: selectedPortfolioId === p.id ? 'var(--ws-bg-1)' : 'var(--ws-text-2)' }}>{p.name}</button>
+                    <button key={p.id} onClick={() => setSelectedPortfolioId(p.id)} style={{ padding: '4px 10px', borderRadius: '14px', border: 'none', cursor: 'pointer', fontSize: '12px', fontWeight: 600, background: selectedPortfolioId === p.id ? 'var(--ws-accent)' : 'var(--ws-bg-2)', color: selectedPortfolioId === p.id ? 'var(--ws-accent-text)' : 'var(--ws-text-2)' }}>{p.name}</button>
                   ))}
                   {portfolios.length < 3 && <button onClick={() => setCreatingPortfolio(true)} style={{ padding: '4px 10px', borderRadius: '14px', border: '1px dashed var(--ws-border)', cursor: 'pointer', fontSize: '12px', fontWeight: 600, background: 'transparent', color: 'var(--ws-text-3)' }}>+ Create</button>}
                 </div>

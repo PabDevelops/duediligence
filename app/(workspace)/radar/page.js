@@ -216,7 +216,7 @@ export default function MarketRadar() {
       .sort((a, b) => b.avgChange - a.avgChange);
   }, [movers]);
 
-  // Compute local Traqcker Score 100 for Spotlight details
+  // Compute local Bulltrace Score 100 for Spotlight details
   const spotlightQuality = useMemo(() => {
     if (!spotlightData) return null;
     const hasFundamentals = spotlightData.revVal != null || spotlightData.niVal != null || spotlightData.marketCap != null
@@ -248,7 +248,7 @@ export default function MarketRadar() {
 
   if (loading) {
     return (
-      <div style={{ padding: '24px', fontFamily: "'JetBrains Mono', monospace" }}>
+      <div style={{ padding: '24px', fontFamily: "'Inter', sans-serif" }}>
         <div style={{ border: '1px solid var(--ws-border)', background: 'var(--ws-bg-1)', overflow: 'hidden' }}>
           <div style={{ background: 'var(--ws-bg-2)', borderBottom: '1px solid var(--ws-border)', padding: '7px 16px' }}>
             <span style={{ fontSize: '11px', color: 'var(--ws-accent)', fontWeight: 700, letterSpacing: '1px' }}>$ traq radar</span>
@@ -281,7 +281,7 @@ export default function MarketRadar() {
         {/* Terminal title bar */}
         <div style={{ border: '1px solid var(--ws-border)', background: 'var(--ws-bg-1)', overflow: 'hidden' }}>
           <div style={{ background: 'var(--ws-bg-2)', borderBottom: '1px solid var(--ws-border)', padding: '7px 16px' }}>
-            <span style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: '11px', color: 'var(--ws-accent)', fontWeight: 700, letterSpacing: '1px' }}>
+            <span style={{ fontFamily: "'Inter', sans-serif", fontSize: '11px', color: 'var(--ws-accent)', fontWeight: 700, letterSpacing: '1px' }}>
               $ traq radar
             </span>
           </div>
@@ -324,7 +324,7 @@ export default function MarketRadar() {
 
         {/* Sectors performance matrix */}
         <div>
-          <div style={{ fontSize: '10px', fontFamily: "'JetBrains Mono', monospace", fontWeight: 700, color: 'var(--ws-text-3)', letterSpacing: '1.5px', marginBottom: '10px' }}>SECTOR MOMENTUM INDEX</div>
+          <div style={{ fontSize: '10px', fontFamily: "'Inter', sans-serif", fontWeight: 700, color: 'var(--ws-text-3)', letterSpacing: '1.5px', marginBottom: '10px' }}>SECTOR MOMENTUM INDEX</div>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '10px' }}>
               {sectorPulse.map(sec => {
                 const isUp = sec.avgChange >= 0;
@@ -491,8 +491,8 @@ export default function MarketRadar() {
                               title={inWatchlist ? 'Remove from Watchlist' : 'Add to Watchlist'}
                               style={{
                                 width: '22px', height: '22px', borderRadius: '4px', border: '1px solid var(--ws-border)',
-                                background: inWatchlist ? 'var(--ws-text)' : 'var(--ws-bg-2)',
-                                color: inWatchlist ? 'var(--ws-bg)' : 'var(--ws-text)',
+                                background: inWatchlist ? 'var(--ws-accent)' : 'var(--ws-bg-2)',
+                                color: inWatchlist ? 'var(--ws-accent-text)' : 'var(--ws-text)',
                                 fontSize: '12px', fontWeight: 700, cursor: 'pointer', lineHeight: 1,
                               }}>
                               {inWatchlist ? '✓' : '+'}
@@ -581,7 +581,7 @@ export default function MarketRadar() {
           <div>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '14px', flexWrap: 'wrap', gap: '10px' }}>
               <div style={{ fontSize: '11px', color: 'var(--ws-text-3)', fontWeight: 500, letterSpacing: '0.3px' }}>
-                Ranked by unified Traqcker algorithms. Click any ticker to open analyzer sidebar.
+                Ranked by unified Bulltrace algorithms. Click any ticker to open analyzer sidebar.
               </div>
               <Link href="/radar/leaders" style={{ fontSize: '11px', fontWeight: 800, color: 'var(--ws-accent)', textDecoration: 'none', display: 'flex', alignItems: 'center', gap: '4px', letterSpacing: '1.2px', transition: 'opacity 0.15s' }} onMouseEnter={e => e.currentTarget.style.opacity = 0.85} onMouseLeave={e => e.currentTarget.style.opacity = 1}>
                 <span>VIEW TOP 100 LEADERBOARD →</span>
@@ -591,7 +591,7 @@ export default function MarketRadar() {
             {/* Top Score */}
             <div className="bg-ws-bg-1 border border-ws-border p-4 flex flex-col gap-2.5">
               <div className="border-b border-ws-border pb-2">
-                <span className="text-[11px] font-extrabold text-ws-accent tracking-[1px]">TRAQCKER SCORE</span>
+                <span className="text-[11px] font-extrabold text-ws-accent tracking-[1px]">BULLTRACE SCORE</span>
               </div>
               <div className="flex flex-col gap-0.5">
                 {(movers?.topScore || []).slice(0, 5).map(s => (
@@ -808,14 +808,14 @@ export default function MarketRadar() {
                 ) : (
                   <>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                      <span style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: '13px', color: spotlightQuality.verdictColor, letterSpacing: '1.5px', lineHeight: 1 }}>
+                      <span style={{ fontFamily: "'Inter', sans-serif", fontSize: '13px', color: spotlightQuality.verdictColor, letterSpacing: '1.5px', lineHeight: 1 }}>
                         {'█'.repeat(Math.round(spotlightQuality.score100 / 10))}{'░'.repeat(10 - Math.round(spotlightQuality.score100 / 10))}
                       </span>
-                      <span style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: '22px', fontWeight: 700, color: spotlightQuality.verdictColor, lineHeight: 1 }}>
+                      <span style={{ fontFamily: "'Inter', sans-serif", fontSize: '22px', fontWeight: 700, color: spotlightQuality.verdictColor, lineHeight: 1 }}>
                         {spotlightQuality.score100}
                       </span>
                     </div>
-                    <div style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: '10px', fontWeight: 700, color: spotlightQuality.verdictColor, letterSpacing: '1px', marginTop: '4px' }}>
+                    <div style={{ fontFamily: "'Inter', sans-serif", fontSize: '10px', fontWeight: 700, color: spotlightQuality.verdictColor, letterSpacing: '1px', marginTop: '4px' }}>
                       {spotlightQuality.verdict.toUpperCase()}
                     </div>
                   </>

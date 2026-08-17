@@ -1,6 +1,6 @@
 import fetch from 'node-fetch';
 
-const BASE_URL = 'https://traqcker.com';
+const BASE_URL = 'https://bulltrace.app';
 
 const tickers = [
   'AAPL','MSFT','NVDA','GOOGL','AMZN','META','TSLA','AVGO','WMT','JPM',

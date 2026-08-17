@@ -53,34 +53,14 @@ const NAV_ITEMS = [
 ];
 
 const DEFAULT_NAV_ORDER = NAV_ITEMS.map(item => item.id);
-const NAV_ORDER_KEY = 'traqcker_sidebar_order';
+const NAV_ORDER_KEY = 'bulltrace_sidebar_order';
 
-export default function Sidebar({ theme, onToggleTheme, collapsed = false, onToggleCollapse }) {
+export default function Sidebar({ collapsed = false, onToggleCollapse }) {
   const path = usePathname();
   const router = useRouter();
   const [plan, setPlan] = useState(null);
   const [navOrder, setNavOrder] = useState(DEFAULT_NAV_ORDER);
   const [draggedId, setDraggedId] = useState(null);
-
-  // Advanced Mode (Home's multi-chart terminal) lives here rather than on the Home page
-  // itself, since the toggle needs to sit in the sidebar footer — home/page.js reads the
-  // same localStorage key and listens for this event to stay in sync live.
-  const [advancedMode, setAdvancedMode] = useState(false);
-  useEffect(() => {
-    try {
-      setAdvancedMode(localStorage.getItem('traqcker_advanced_mode') === 'true');
-    } catch (e) {}
-  }, []);
-  const toggleAdvancedMode = () => {
-    setAdvancedMode(prev => {
-      const next = !prev;
-      try {
-        localStorage.setItem('traqcker_advanced_mode', String(next));
-        window.dispatchEvent(new CustomEvent('traqcker-advanced-mode-changed', { detail: next }));
-      } catch (e) {}
-      return next;
-    });
-  };
 
   useEffect(() => {
     fetch('/api/subscription').then(r => r.json()).then(setPlan).catch(() => {});
@@ -152,14 +132,14 @@ export default function Sidebar({ theme, onToggleTheme, collapsed = false, onTog
         <Link href="/home" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', textDecoration: 'none', padding: '4px 8px', marginBottom: '14px' }}>
           {collapsed ? (
             <img
-              src={theme === 'dark' ? '/logo-icon-new-w.png' : '/logo-icon-new.png'}
-              alt="Traqcker"
-              style={{ height: '22px', width: 'auto' }}
+              src="/bulltrace-logos/bull-icon-lime.png"
+              alt="Bulltrace"
+              style={{ height: '26px', width: 'auto' }}
             />
           ) : (
             <img
-              src={theme === 'dark' ? '/logo-traqcker-new-w.png' : '/logo-traqcker-new.png'}
-              alt="Traqcker"
+              src="/bulltrace-logos/lockup-cream.png"
+              alt="Bulltrace"
               style={{ height: '16px', width: 'auto' }}
             />
           )}
@@ -173,7 +153,7 @@ export default function Sidebar({ theme, onToggleTheme, collapsed = false, onTog
             width: collapsed ? '34px' : '100%',
             height: collapsed ? '34px' : '26px',
             fontSize: '10px',
-            fontFamily: "'JetBrains Mono', monospace",
+            fontFamily: "'Inter', sans-serif",
             fontWeight: 700,
             letterSpacing: collapsed ? '0' : '1.5px',
             color: 'var(--ws-text-3)',
@@ -242,7 +222,7 @@ export default function Sidebar({ theme, onToggleTheme, collapsed = false, onTog
                 <kbd style={{
                   fontSize: '9px', color: 'var(--ws-text-3)', background: 'var(--ws-bg-2)',
                   border: '1px solid var(--ws-border)', borderRadius: '3px', padding: '1px 5px',
-                  fontFamily: "'JetBrains Mono', monospace", flexShrink: 0,
+                  fontFamily: "'Inter', sans-serif", flexShrink: 0,
                 }}>/</kbd>
               )}
             </Link>
@@ -302,38 +282,10 @@ export default function Sidebar({ theme, onToggleTheme, collapsed = false, onTog
             <Link href="/privacy" style={{ fontSize: '10px', color: 'var(--ws-text-3)', textDecoration: 'none' }}
               onMouseEnter={e => e.currentTarget.style.color = 'var(--ws-text-2)'}
               onMouseLeave={e => e.currentTarget.style.color = 'var(--ws-text-3)'}>Privacy</Link>
-            <a href="mailto:support@traqcker.com" style={{ fontSize: '10px', color: 'var(--ws-text-3)', textDecoration: 'none' }}
+            <a href="mailto:support@bulltrace.app" style={{ fontSize: '10px', color: 'var(--ws-text-3)', textDecoration: 'none' }}
               onMouseEnter={e => e.currentTarget.style.color = 'var(--ws-text-2)'}
               onMouseLeave={e => e.currentTarget.style.color = 'var(--ws-text-3)'}>Support</a>
           </div>
-        )}
-
-        {/* Advanced Mode (Home's multi-chart terminal) — only meaningful on /home, so only
-            shown there rather than sitting as a dead toggle on every other page. */}
-        {path === '/home' && (
-          <button
-            onClick={toggleAdvancedMode}
-            title={collapsed ? (advancedMode ? 'Advanced Mode: on' : 'Advanced Mode: off') : undefined}
-            style={{
-              padding: collapsed ? '8px' : '8px 12px', borderRadius: 'var(--ws-radius)', border: 'none',
-              fontSize: '13px', color: advancedMode ? 'var(--ws-accent)' : 'var(--ws-text-2)',
-              background: advancedMode ? 'var(--ws-accent-dim)' : 'transparent',
-              fontWeight: advancedMode ? 600 : 400,
-              display: 'flex', alignItems: 'center', justifyContent: collapsed ? 'center' : 'flex-start', gap: collapsed ? '0' : '10px',
-              cursor: 'pointer', transition: 'all 0.15s ease', width: '100%',
-            }}
-            onMouseEnter={(e) => { if (!advancedMode) { e.currentTarget.style.background = 'var(--ws-bg-2)'; e.currentTarget.style.color = 'var(--ws-text)'; } }}
-            onMouseLeave={(e) => { if (!advancedMode) { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = 'var(--ws-text-2)'; } }}
-          >
-            <span style={{ display: 'flex', alignItems: 'center', flexShrink: 0, opacity: advancedMode ? 1 : 0.75 }}>
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke={advancedMode ? 'var(--ws-accent)' : 'currentColor'} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <rect x="3" y="12" width="4" height="8" />
-                <rect x="10" y="7" width="4" height="13" />
-                <rect x="17" y="3" width="4" height="17" />
-              </svg>
-            </span>
-            {!collapsed && <span style={{ flex: 1, minWidth: 0, textAlign: 'left' }}>Advanced</span>}
-          </button>
         )}
 
         {/* Settings */}
@@ -358,35 +310,9 @@ export default function Sidebar({ theme, onToggleTheme, collapsed = false, onTog
           {!collapsed && <span style={{ flex: 1, minWidth: 0 }}>Profile & Settings</span>}
         </Link>
 
-        {/* User + Theme row */}
-        <div style={{ display: 'flex', flexDirection: collapsed ? 'column' : 'row', alignItems: 'center', justifyContent: collapsed ? 'center' : 'space-between', borderTop: '1px solid var(--ws-border)', paddingTop: '12px', gap: '8px' }}>
+        {/* User row */}
+        <div style={{ display: 'flex', flexDirection: collapsed ? 'column' : 'row', alignItems: 'center', justifyContent: collapsed ? 'center' : 'flex-start', borderTop: '1px solid var(--ws-border)', paddingTop: '12px', gap: '8px' }}>
           <UserMenu variant="light" dropUp collapsed={collapsed} />
-          <button
-            onClick={onToggleTheme}
-            id="theme-toggle-btn"
-            title={collapsed ? (theme === 'dark' ? 'Switch to Light' : 'Switch to Dark') : undefined}
-            style={{
-              background: 'var(--ws-bg-2)', border: '1px solid var(--ws-border)', borderRadius: '20px',
-              padding: collapsed ? '0' : '4px 10px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px',
-              color: 'var(--ws-text)', transition: 'all 0.15s ease', outline: 'none',
-              width: collapsed ? '32px' : 'auto',
-              height: collapsed ? '32px' : 'auto',
-            }}
-            onMouseEnter={e => { e.currentTarget.style.borderColor = 'var(--ws-accent)'; e.currentTarget.style.background = 'var(--ws-bg-1)'; }}
-            onMouseLeave={e => { e.currentTarget.style.borderColor = 'var(--ws-border)'; e.currentTarget.style.background = 'var(--ws-bg-2)'; }}
-          >
-            {theme === 'dark' ? (
-              <>
-                <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/></svg>
-                {!collapsed && <span style={{ fontSize: '10px', fontWeight: 700 }}>Dark</span>}
-              </>
-            ) : (
-              <>
-                <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2"/><path d="M12 20v2"/><path d="m4.93 4.93 1.41 1.41"/><path d="m17.66 17.66 1.41 1.41"/><path d="M2 12h2"/><path d="M20 12h2"/><path d="m6.34 17.66-1.41 1.41"/><path d="m19.07 4.93-1.41 1.41"/></svg>
-                {!collapsed && <span style={{ fontSize: '10px', fontWeight: 700 }}>Light</span>}
-              </>
-            )}
-          </button>
         </div>
 
         {/* Collapse Sidebar Button */}
@@ -400,7 +326,7 @@ export default function Sidebar({ theme, onToggleTheme, collapsed = false, onTog
             cursor: 'pointer',
             padding: '8px',
             fontSize: '11px',
-            fontFamily: "'JetBrains Mono', monospace",
+            fontFamily: "'Inter', sans-serif",
             fontWeight: 700,
             display: 'flex',
             alignItems: 'center',
