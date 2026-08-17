@@ -355,47 +355,50 @@ const ANALYST_GAUGE_SEGMENTS = [
   { key: 'strongBuy', color: '#0d9488' },
 ];
 const QUALITY_NEEDLE_COLOR = '#6366f1';
+// Bear↔Bull spectrum, replacing the old speedometer dial. Position along the track is the
+// same 1-5 (analyst score) / 0-100 (Bulltrace quality score) inputs the dial used, just
+// mapped to a 0-100% horizontal position instead of a rotation angle. There's no bear asset
+// yet (only the bull mark shipped so far) — the dashed "BEAR" roundel is a deliberate
+// placeholder, styled to read as unfinished rather than final, until a matching bear icon
+// exists to drop in at BEAR_ICON_SRC below.
+const BEAR_ICON_SRC = null;
 function AnalystGauge({ score, qualityScore100 }) {
-  const cx = 120, cy = 108, r = 90, strokeWidth = 18;
-  const toPoint = (angleDeg) => {
-    const rad = (angleDeg * Math.PI) / 180;
-    return [cx + r * Math.cos(rad), cy - r * Math.sin(rad)];
-  };
-  const arcs = ANALYST_GAUGE_SEGMENTS.map((seg, i) => {
-    const startAngle = 180 - i * 36;
-    const endAngle = 180 - (i + 1) * 36;
-    const [x1, y1] = toPoint(startAngle);
-    const [x2, y2] = toPoint(endAngle);
-    return { ...seg, d: `M ${x1} ${y1} A ${r} ${r} 0 0 1 ${x2} ${y2}` };
-  });
-  const rotationFor = (s) => s == null ? null : 45 * (Math.max(1, Math.min(5, s)) - 1) - 90;
-  const analystRotation = rotationFor(score) ?? 0;
-  const qualityScore5 = qualityScore100 == null ? null : 1 + (qualityScore100 / 100) * 4;
-  const qualityRotation = rotationFor(qualityScore5);
+  const toPct = (s, min, max) => s == null ? null : Math.max(0, Math.min(100, ((Math.max(min, Math.min(max, s)) - min) / (max - min)) * 100));
+  const analystPos = toPct(score, 1, 5);
+  const qualityPos = toPct(qualityScore100, 0, 100);
   return (
-    <svg viewBox="0 0 240 122" width="100%" height="122" style={{ display: 'block', overflow: 'visible' }}>
-      {arcs.map(a => (
-        <path key={a.key} d={a.d} fill="none" stroke={a.color} strokeWidth={strokeWidth} strokeLinecap="butt" />
-      ))}
-      
-      {/* Bulltrace Quality Score — a shorter, thinner tapered blade in brand teal */}
-      {qualityRotation != null && (
-        <g transform={`rotate(${qualityRotation} ${cx} ${cy})`} style={{ transition: 'transform 0.6s cubic-bezier(0.16, 1, 0.3, 1)' }}>
-          <polygon points={`${cx - 2.5},${cy} ${cx + 2.5},${cy} ${cx},${cy - 62}`} fill="var(--ws-accent)" />
-          <circle cx={cx} cy={cy - 62} r="3" fill="var(--ws-accent)" stroke="var(--ws-bg-1)" strokeWidth="1" />
-        </g>
+    <div style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '14px 0' }}>
+      {BEAR_ICON_SRC ? (
+        <img src={BEAR_ICON_SRC} alt="Bear" style={{ width: '32px', height: '32px', flexShrink: 0 }} />
+      ) : (
+        <div title="Bear icon coming soon" style={{
+          width: '32px', height: '32px', borderRadius: '50%', flexShrink: 0,
+          border: '1px dashed var(--ws-text-3)', display: 'flex', alignItems: 'center', justifyContent: 'center',
+        }}>
+          <span style={{ fontFamily: "'Inter', sans-serif", fontSize: '7px', fontWeight: 700, letterSpacing: '0.5px', color: 'var(--ws-text-3)' }}>BEAR</span>
+        </div>
       )}
 
-      {/* Analyst consensus — the primary pointer, a long tapered blade (only if coverage exists) */}
-      {score != null && (
-        <g transform={`rotate(${analystRotation} ${cx} ${cy})`} style={{ transition: 'transform 0.6s cubic-bezier(0.16, 1, 0.3, 1)' }}>
-          <polygon points={`${cx - 4},${cy} ${cx + 4},${cy} ${cx},${cy - 76}`} fill="var(--ws-text)" />
-        </g>
-      )}
+      <div style={{ position: 'relative', flex: 1, height: '6px', borderRadius: '3px', background: `linear-gradient(90deg, ${ANALYST_GAUGE_SEGMENTS.map(s => s.color).join(', ')})` }}>
+        {qualityPos != null && (
+          <div title={`Bulltrace Quality Score (${qualityScore100}/100)`} style={{
+            position: 'absolute', top: '50%', left: `${qualityPos}%`, transform: 'translate(-50%, -50%)',
+            width: '9px', height: '9px', borderRadius: '50%', background: QUALITY_NEEDLE_COLOR,
+            border: '1.5px solid var(--ws-bg-1)', transition: 'left 0.6s cubic-bezier(0.16, 1, 0.3, 1)',
+          }} />
+        )}
+        {analystPos != null && (
+          <div style={{
+            position: 'absolute', top: '50%', left: `${analystPos}%`, transform: 'translate(-50%, -50%)',
+            width: '14px', height: '14px', borderRadius: '50%', background: 'var(--ws-text)',
+            border: '2px solid var(--ws-bg-1)', boxShadow: '0 1px 4px rgba(0,0,0,0.3)',
+            transition: 'left 0.6s cubic-bezier(0.16, 1, 0.3, 1)',
+          }} />
+        )}
+      </div>
 
-      {/* Center cap pivot pin — layered on top to seal the base of both needles */}
-      <circle cx={cx} cy={cy} r="7" fill="var(--ws-text)" stroke="var(--ws-bg-1)" strokeWidth="1.5" />
-    </svg>
+      <img src="/bulltrace-logos/bull-icon-lime.png" alt="Bull" style={{ width: '32px', height: '32px', flexShrink: 0 }} />
+    </div>
   );
 }
 
