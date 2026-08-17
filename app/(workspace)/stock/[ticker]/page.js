@@ -371,8 +371,10 @@ function AnalystGauge({ score, qualityScore100 }) {
       {BEAR_ICON_SRC ? (
         // Flipped — the source art faces left (walking away from the bar); mirroring it
         // makes the bear face right, toward the center, matching the bull's own inward-
-        // facing orientation on the other end.
-        <img src={BEAR_ICON_SRC} alt="Bear" style={{ width: '32px', height: '32px', flexShrink: 0, transform: 'scaleX(-1)' }} />
+        // facing orientation on the other end. height-only + width:auto (not a forced
+        // 32×32 square) since the source art is a wide walking pose (~2.3:1) — squaring it
+        // off squashed it vertically into a distorted blob.
+        <img src={BEAR_ICON_SRC} alt="Bear" style={{ height: '26px', width: 'auto', flexShrink: 0, transform: 'scaleX(-1)' }} />
       ) : (
         <div title="Bear icon coming soon" style={{
           width: '32px', height: '32px', borderRadius: '50%', flexShrink: 0,
