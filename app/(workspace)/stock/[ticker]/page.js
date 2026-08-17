@@ -1158,18 +1158,28 @@ function StockPageContent({ params }) {
                           <span style={{ color: QUALITY_NEEDLE_COLOR }}>●</span> Bulltrace Quality Score ({easyMode.score100}/100)
                         </div>
                       )}
-                      <div style={{ borderTop: '1px solid var(--ws-border)', paddingTop: '14px', display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', rowGap: '14px' }}>
-                        {rows.map(row => (
-                          <div key={row.key}>
-                            <div style={{ fontSize: '11px', color: 'var(--ws-text-2)', marginBottom: '3px' }}>
-                              <span style={{ color: row.color }}>●</span> {row.label}
+                      {/* Distribution as a single stacked bar (segment width = share of analysts)
+                          instead of a grid of percentages — the bar already encodes proportion
+                          visually, so the legend below only needs raw counts. */}
+                      <div style={{ borderTop: '1px solid var(--ws-border)', paddingTop: '14px' }}>
+                        <div style={{ display: 'flex', width: '100%', height: '10px', borderRadius: '5px', overflow: 'hidden', background: 'var(--ws-bg-2)' }}>
+                          {rows.map(row => {
+                            const width = pct(r[row.key]);
+                            if (width === 0) return null;
+                            return (
+                              <div key={row.key} title={`${row.label}: ${r[row.key]} analyst${r[row.key] === 1 ? '' : 's'} (${width}%)`}
+                                style={{ width: `${width}%`, background: row.color }} />
+                            );
+                          })}
+                        </div>
+                        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px 16px', marginTop: '12px' }}>
+                          {rows.map(row => (
+                            <div key={row.key} style={{ fontSize: '11px', color: 'var(--ws-text-2)', display: 'flex', alignItems: 'center', gap: '5px' }}>
+                              <span style={{ width: '7px', height: '7px', borderRadius: '50%', background: row.color, flexShrink: 0 }} />
+                              {row.label} <span style={{ fontWeight: 700, color: 'var(--ws-text)' }}>{r[row.key]}</span>
                             </div>
-                            <div style={{ fontSize: '12px', fontWeight: 700, color: 'var(--ws-text)' }}>
-                              {r[row.key]} <span style={{ fontWeight: 400, color: 'var(--ws-text-3)' }}>analyst{r[row.key] === 1 ? '' : 's'}</span>{' '}
-                              <span style={{ color: row.color }}>{pct(r[row.key])}%</span>
-                            </div>
-                          </div>
-                        ))}
+                          ))}
+                        </div>
                       </div>
                       <div style={{ marginTop: '10px', fontSize: '10px', color: 'var(--ws-text-3)', textAlign: 'center' }}>
                         Source: {analystRating.source === 'finnhub' ? 'Finnhub' : 'Yahoo Finance'}
