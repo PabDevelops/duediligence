@@ -361,7 +361,7 @@ const QUALITY_NEEDLE_COLOR = '#6366f1';
 // yet (only the bull mark shipped so far) — the dashed "BEAR" roundel is a deliberate
 // placeholder, styled to read as unfinished rather than final, until a matching bear icon
 // exists to drop in at BEAR_ICON_SRC below.
-const BEAR_ICON_SRC = null;
+const BEAR_ICON_SRC = '/bulltrace-logos/bear.png';
 function AnalystGauge({ score, qualityScore100 }) {
   const toPct = (s, min, max) => s == null ? null : Math.max(0, Math.min(100, ((Math.max(min, Math.min(max, s)) - min) / (max - min)) * 100));
   const analystPos = toPct(score, 1, 5);
@@ -369,7 +369,10 @@ function AnalystGauge({ score, qualityScore100 }) {
   return (
     <div style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '14px 0' }}>
       {BEAR_ICON_SRC ? (
-        <img src={BEAR_ICON_SRC} alt="Bear" style={{ width: '32px', height: '32px', flexShrink: 0 }} />
+        // Flipped — the source art faces left (walking away from the bar); mirroring it
+        // makes the bear face right, toward the center, matching the bull's own inward-
+        // facing orientation on the other end.
+        <img src={BEAR_ICON_SRC} alt="Bear" style={{ width: '32px', height: '32px', flexShrink: 0, transform: 'scaleX(-1)' }} />
       ) : (
         <div title="Bear icon coming soon" style={{
           width: '32px', height: '32px', borderRadius: '50%', flexShrink: 0,
