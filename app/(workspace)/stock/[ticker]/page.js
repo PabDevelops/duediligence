@@ -1057,17 +1057,14 @@ function StockPageContent({ params }) {
                         </span>
                       )}
                     </div>
-                    {easyMode.isBlueGem ? (
-                      <GemRevealBar score100={easyMode.score100} />
-                    ) : (
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                        <QualityScoreBar score100={easyMode.score100} color={easyMode.verdictColor} />
-                        <span style={{ fontFamily: "'Inter', sans-serif", fontSize: '28px', fontWeight: 700, color: easyMode.verdictColor, lineHeight: 1 }}>
-                          {easyMode.score100}
-                        </span>
-                      </div>
-                    )}
-                    <div style={{ fontFamily: "'Inter', sans-serif", fontSize: '11px', fontWeight: 700, color: easyMode.verdictColor, letterSpacing: '1px', marginTop: '12px' }}>
+                    {/* The full-size bar+number moved into the FINAL grid cell below (score
+                        was showing up here AND there AND in Analyst Consensus's caption AND
+                        in the closing notice — one screen, four times). Hidden Gems keep their
+                        full-width reveal animation here unchanged, though — GemRevealBar's
+                        shake/explode sequence is pixel-positioned, not proportional, so
+                        shrinking it to fit the grid cell would just break it. */}
+                    {easyMode.isBlueGem && <GemRevealBar score100={easyMode.score100} />}
+                    <div style={{ fontFamily: "'Inter', sans-serif", fontSize: '11px', fontWeight: 700, color: easyMode.verdictColor, letterSpacing: '1px', marginTop: easyMode.isBlueGem ? '12px' : 0 }}>
                       {easyMode.verdict.toUpperCase()}
                     </div>
                     <div style={{ fontSize: '11px', color: 'var(--ws-text-3)', lineHeight: 1.6, marginTop: '8px' }}>
@@ -1088,7 +1085,7 @@ function StockPageContent({ params }) {
                       {[
                         { label: 'CORE', score: easyMode.cbs },
                         { label: 'OPPO', score: easyMode.oppo },
-                        { label: 'FINAL', score: easyMode.finalNote, highlight: true, span: true },
+                        { label: 'FINAL', score: easyMode.finalNote, highlight: true, span: true, isFinal: true },
                         { label: 'GROWTH', score: easyMode.gqs },
                         { label: 'MOAT', text: easyMode.moat, color: easyMode.moatColor },
                       ].map(s => {
@@ -1097,12 +1094,21 @@ function StockPageContent({ params }) {
                           <div key={s.label} style={{
                             background: s.highlight ? 'var(--ws-bg-2)' : 'var(--ws-bg-1)', padding: '20px 8px', textAlign: 'center',
                             gridRow: s.span ? 'span 2' : undefined,
-                            display: s.span ? 'flex' : undefined, flexDirection: s.span ? 'column' : undefined, justifyContent: s.span ? 'center' : undefined,
+                            display: s.span ? 'flex' : undefined, flexDirection: s.span ? 'column' : undefined,
+                            justifyContent: s.span ? 'center' : undefined, alignItems: s.span ? 'center' : undefined,
                           }}>
                             <div style={{ color: 'var(--ws-text-3)', fontSize: '10px', letterSpacing: '0.5px', marginBottom: '10px' }}>{s.label}</div>
                             <div style={{ fontSize: s.text ? '22px' : (s.span ? '34px' : '28px'), fontWeight: 700, color: s.text ? s.color : scoreColor(s.score), letterSpacing: '-0.5px' }}>
                               {s.text || Math.round(s.score * 20)}
                             </div>
+                            {/* The bar lives here now, under the number, instead of duplicated
+                                up at the top of the card — same score, one place. Skipped for
+                                Hidden Gems, which already got their own full reveal up top. */}
+                            {s.isFinal && !easyMode.isBlueGem && (
+                              <div style={{ marginTop: '10px' }}>
+                                <QualityScoreBar score100={easyMode.score100} color={easyMode.verdictColor} barWidth={72} barHeight={10} />
+                              </div>
+                            )}
                           </div>
                         );
                       })}
