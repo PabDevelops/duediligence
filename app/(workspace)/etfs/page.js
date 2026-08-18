@@ -172,9 +172,6 @@ export default function ETFsPage() {
     return (
       <div style={{ padding: '24px', fontFamily: "'Inter', sans-serif" }}>
         <div style={{ border: '1px solid var(--ws-border)', background: 'var(--ws-bg-1)', overflow: 'hidden' }}>
-          <div style={{ background: 'var(--ws-bg-2)', borderBottom: '1px solid var(--ws-border)', padding: '7px 16px' }}>
-            <span style={{ fontSize: '11px', color: 'var(--ws-accent)', fontWeight: 700, letterSpacing: '1px' }}>$ traq etfs</span>
-          </div>
           <div style={{ padding: '24px' }}>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
               {['CONNECTING TO ETF DATABASE...', 'FETCHING REAL-TIME QUOTES...'].map((line, i) => (
@@ -196,15 +193,6 @@ export default function ETFsPage() {
 
   return (
     <div style={{ padding: '24px', display: 'flex', flexDirection: 'column', gap: '20px', minHeight: 'calc(100vh - var(--topbar-height))', boxSizing: 'border-box' }}>
-
-      {/* Terminal title bar */}
-      <div style={{ border: '1px solid var(--ws-border)', background: 'var(--ws-bg-1)', overflow: 'hidden' }}>
-        <div style={{ background: 'var(--ws-bg-2)', borderBottom: '1px solid var(--ws-border)', padding: '7px 16px' }}>
-          <span style={{ fontFamily: "'Inter', sans-serif", fontSize: '11px', color: 'var(--ws-accent)', fontWeight: 700, letterSpacing: '1px' }}>
-            $ traq etfs
-          </span>
-        </div>
-      </div>
 
       {/* HEADER SECTION */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '16px' }}>

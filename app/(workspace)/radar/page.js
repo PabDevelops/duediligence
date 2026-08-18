@@ -250,9 +250,6 @@ export default function MarketRadar() {
     return (
       <div style={{ padding: '24px', fontFamily: "'Inter', sans-serif" }}>
         <div style={{ border: '1px solid var(--ws-border)', background: 'var(--ws-bg-1)', overflow: 'hidden' }}>
-          <div style={{ background: 'var(--ws-bg-2)', borderBottom: '1px solid var(--ws-border)', padding: '7px 16px' }}>
-            <span style={{ fontSize: '11px', color: 'var(--ws-accent)', fontWeight: 700, letterSpacing: '1px' }}>$ traq radar</span>
-          </div>
           <div style={{ padding: '24px' }}>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
               {['CONNECTING TO MARKET FEED...', 'FETCHING MOVERS & SECTORS...', 'COMPUTING SENTIMENT INDEX...'].map((line, i) => (
@@ -277,15 +274,6 @@ export default function MarketRadar() {
 
       {/* Left / Main radar display */}
       <div style={{ flex: 1, padding: '24px', display: 'flex', flexDirection: 'column', gap: '20px', minWidth: 0 }}>
-
-        {/* Terminal title bar */}
-        <div style={{ border: '1px solid var(--ws-border)', background: 'var(--ws-bg-1)', overflow: 'hidden' }}>
-          <div style={{ background: 'var(--ws-bg-2)', borderBottom: '1px solid var(--ws-border)', padding: '7px 16px' }}>
-            <span style={{ fontFamily: "'Inter', sans-serif", fontSize: '11px', color: 'var(--ws-accent)', fontWeight: 700, letterSpacing: '1px' }}>
-              $ traq radar
-            </span>
-          </div>
-        </div>
 
         {/* Dense 3-Column Macro & Technical Dashboards */}
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '14px' }}>

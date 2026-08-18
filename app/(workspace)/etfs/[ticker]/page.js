@@ -127,9 +127,6 @@ export default function ETFTickerPage({ params }) {
     return (
       <div style={{ padding: '24px', fontFamily: "'Inter', sans-serif" }}>
         <div style={{ border: '1px solid var(--ws-border)', background: 'var(--ws-bg-1)', overflow: 'hidden' }}>
-          <div style={{ background: 'var(--ws-bg-2)', borderBottom: '1px solid var(--ws-border)', padding: '7px 16px' }}>
-            <span style={{ fontSize: '11px', color: 'var(--ws-accent)', fontWeight: 700, letterSpacing: '1px' }}>$ traq etfs {ticker}</span>
-          </div>
           <div style={{ padding: '24px' }}>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
               {['CONNECTING TO ETF DATABASE...', 'FETCHING FUND DATA...'].map((line, i) => (
@@ -153,9 +150,6 @@ export default function ETFTickerPage({ params }) {
     return (
       <div style={{ padding: '24px', fontFamily: "'Inter', sans-serif" }}>
         <div style={{ border: '1px solid var(--ws-border)', background: 'var(--ws-bg-1)', overflow: 'hidden', maxWidth: '560px' }}>
-          <div style={{ background: 'var(--ws-bg-2)', borderBottom: '1px solid var(--ws-border)', padding: '7px 16px' }}>
-            <span style={{ fontSize: '10px', color: 'var(--ws-red)', letterSpacing: '1px' }}>$ traq etfs {ticker} — ERROR</span>
-          </div>
           <div style={{ padding: '24px', display: 'flex', flexDirection: 'column', gap: '12px' }}>
             <div style={{ display: 'flex', gap: '8px', alignItems: 'flex-start' }}>
               <span style={{ color: 'var(--ws-red)', fontSize: '11px', marginTop: '1px' }}>✗</span>
@@ -180,12 +174,6 @@ export default function ETFTickerPage({ params }) {
 
       {/* TERMINAL HERO */}
       <div style={{ border: '1px solid var(--ws-border)', background: 'var(--ws-bg-1)', marginBottom: '20px', overflow: 'hidden' }}>
-        <div style={{ background: 'var(--ws-bg-2)', borderBottom: '1px solid var(--ws-border)', padding: '7px 16px' }}>
-          <span style={{ fontFamily: "'Inter', sans-serif", fontSize: '11px', color: 'var(--ws-accent)', fontWeight: 700, letterSpacing: '1px' }}>
-            $ traq etfs {ticker}
-          </span>
-        </div>
-
         <div style={{ padding: '20px 24px' }}>
           <div className="stock-hero" style={{ padding: 0 }}>
             {/* Left: identity + price */}

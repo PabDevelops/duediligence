@@ -45,18 +45,6 @@ export default function ResetPasswordPage() {
   return (
     <div className="workspace" style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '100vh', padding: '20px', boxSizing: 'border-box' }}>
       <div style={{ border: '1px solid var(--ws-border)', background: 'var(--ws-bg-1)', width: '100%', maxWidth: '400px', borderRadius: '4px', overflow: 'hidden', boxShadow: '0 8px 30px rgba(0,0,0,0.12)' }}>
-        
-        {/* Terminal Header */}
-        <div style={{ background: 'var(--ws-bg-2)', borderBottom: '1px solid var(--ws-border)', padding: '10px 16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          <span style={{ fontFamily: "'Inter', sans-serif", fontSize: '11px', color: 'var(--ws-accent)', fontWeight: 700, letterSpacing: '1px' }}>
-            $ traq set-password
-          </span>
-          <div style={{ display: 'flex', gap: '6px' }}>
-            <div style={{ width: '8px', height: '8px', borderRadius: '50%', background: 'var(--ws-border)' }} />
-            <div style={{ width: '8px', height: '8px', borderRadius: '50%', background: 'var(--ws-border)' }} />
-          </div>
-        </div>
-
         <div style={{ padding: '32px 24px' }}>
           {/* Header */}
           <div style={{ textAlign: 'center', marginBottom: '24px' }}>

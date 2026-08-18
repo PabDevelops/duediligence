@@ -346,11 +346,6 @@ export default function WorkspacePortfolio() {
   return (
     <div style={{ padding: '24px' }}>
       <div style={{ border: '1px solid var(--ws-border)', background: 'var(--ws-bg-1)', marginBottom: '20px', overflow: 'hidden' }}>
-        <div className="bg-ws-bg-2 border-b border-ws-border px-4 py-[7px]">
-          <span style={{ fontFamily: "'Inter', sans-serif", fontSize: '11px', color: 'var(--ws-accent)', fontWeight: 700, letterSpacing: '1px' }}>
-            $ traq portfolio
-          </span>
-        </div>
         <div style={{ padding: '18px 20px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '12px' }}>
           <div>
             <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>

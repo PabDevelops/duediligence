@@ -287,13 +287,6 @@ export default function WorkspaceScreener() {
   return (
     <div style={{ display: 'flex', flexDirection: 'column', height: 'calc(100vh - var(--topbar-height))', overflow: 'hidden' }}>
 
-      {/* Terminal title bar */}
-      <div style={{ background: 'var(--ws-bg-2)', borderBottom: '1px solid var(--ws-border)', padding: '7px 16px', flexShrink: 0 }}>
-        <span style={{ fontFamily: "'Inter', sans-serif", fontSize: '11px', color: 'var(--ws-accent)', fontWeight: 700, letterSpacing: '1px' }}>
-          $ traq screener
-        </span>
-      </div>
-
       <div style={{ display: 'flex', flex: 1, overflow: 'hidden' }}>
 
       {/* Filters Sidebar Backdrop on Mobile */}

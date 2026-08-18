@@ -723,9 +723,6 @@ function StockPageContent({ params }) {
   if (loading) return (
     <div style={{ padding: '24px', fontFamily: "'Inter', sans-serif" }}>
       <div style={{ border: '1px solid var(--ws-border)', background: 'var(--ws-bg-1)', overflow: 'hidden', marginBottom: '16px' }}>
-        <div style={{ background: 'var(--ws-bg-2)', borderBottom: '1px solid var(--ws-border)', padding: '7px 16px' }}>
-          <span style={{ fontSize: '10px', color: 'var(--ws-accent)', letterSpacing: '1px' }}>$ traq {ticker}</span>
-        </div>
         <div className="p-6">
           <div className="flex flex-col gap-2">
             {['CONNECTING TO SEC EDGAR...', 'FETCHING FINANCIALS...', 'COMPUTING QUALITY SCORE...'].map((line, i) => (
@@ -747,9 +744,6 @@ function StockPageContent({ params }) {
   if (error) return (
     <div style={{ padding: '24px', fontFamily: "'Inter', sans-serif" }}>
       <div style={{ border: '1px solid var(--ws-border)', background: 'var(--ws-bg-1)', overflow: 'hidden', maxWidth: '560px' }}>
-        <div style={{ background: 'var(--ws-bg-2)', borderBottom: '1px solid var(--ws-border)', padding: '7px 16px' }}>
-          <span style={{ fontSize: '10px', color: 'var(--ws-red)', letterSpacing: '1px' }}>$ traq {ticker} — ERROR</span>
-        </div>
         <div style={{ padding: '24px', display: 'flex', flexDirection: 'column', gap: '12px' }}>
           <div style={{ display: 'flex', gap: '8px', alignItems: 'flex-start' }}>
             <span style={{ color: 'var(--ws-red)', fontSize: '11px', marginTop: '1px' }}>✗</span>

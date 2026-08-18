@@ -285,13 +285,7 @@ export default function WorkspaceCalendar() {
   return (
     <div className="calendar-page" style={{ padding: '24px' }}>
 
-      {/* 1. Terminal style Header */}
       <div style={{ border: '1px solid var(--ws-border)', background: 'var(--ws-bg-1)', marginBottom: '20px', overflow: 'hidden' }}>
-        <div style={{ background: 'var(--ws-bg-2)', borderBottom: '1px solid var(--ws-border)', padding: '7px 16px' }}>
-          <span style={{ fontFamily: "'Inter', sans-serif", fontSize: '11px', color: 'var(--ws-accent)', fontWeight: 700, letterSpacing: '1px' }}>
-            $ traq calendar --interactive
-          </span>
-        </div>
         <div className="calendar-header-row" style={{ padding: '20px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '16px' }}>
           <div>
             <div style={{ fontSize: '22px', fontWeight: 800, color: 'var(--ws-text)', display: 'flex', alignItems: 'center', gap: '8px' }}>
