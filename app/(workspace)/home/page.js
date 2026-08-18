@@ -58,7 +58,7 @@ export default function WorkspaceHome() {
   const [stockDetails, setStockDetails] = useState({}); // ticker -> full stock api data
   const [txCurrency, setTxCurrency] = useState('USD');
   const [currency, setCurrency] = useState('USD');
-  const { rates: fxRates, toUSD, toUSDStable } = useCurrencyRates();
+  const { rates: fxRates, toUSD, toUSDStable, fxReady } = useCurrencyRates();
 
   useEffect(() => {
     const saved = localStorage.getItem('portfolio_currency');
@@ -315,12 +315,19 @@ export default function WorkspaceHome() {
   const homePricesReady = displayHoldings.length > 0 && displayHoldings.every(item => prices[item.ticker] != null);
 
   useEffect(() => {
-    if (!isSignedIn || !homePricesReady || homeTotals.value === 0) return;
+    // fxReady gates this alongside homePricesReady — without it, this could fire while
+    // fxRates was still sitting at the hardcoded FALLBACK_RATES guess (useCurrencyRates
+    // hasn't resolved the live rate yet), computing GBP/EUR holdings' USD value off an
+    // approximation and posting that as today's snapshot. The write-time guard in
+    // /api/portfolio/snapshot/route.js only rejects >40pp implausible swings, so a smaller
+    // but still-wrong value from this race could slip through and show up as a one-off spike
+    // in the Performance chart until the next successful post overwrote it.
+    if (!isSignedIn || !homePricesReady || !fxReady || homeTotals.value === 0) return;
     fetch('/api/portfolio/snapshot', {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ value: homeTotals.value, cost: homeTotals.cost }),
     }).catch(() => {});
-  }, [isSignedIn, homePricesReady, homeTotals.value, homeTotals.cost]);
+  }, [isSignedIn, homePricesReady, fxReady, homeTotals.value, homeTotals.cost]);
 
   // Every position with its live USD value/cost/return/today's move and normalized sector —
   // the shared shape the portfolio summary, sectors, and hero chart widgets all read from,

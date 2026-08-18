@@ -55,7 +55,7 @@ export default function WorkspacePortfolio() {
   const [newPieName, setNewPieName] = useState('');
   const [draggedTicker, setDraggedTicker] = useState(null);
   const [dragOverPie, setDragOverPie] = useState(null);
-  const { rates, toUSD, toUSDStable } = useCurrencyRates();
+  const { rates, toUSD, toUSDStable, fxReady } = useCurrencyRates();
 
   const loadPortfolios = async () => {
     if (!isSignedIn) return;
@@ -228,13 +228,16 @@ export default function WorkspacePortfolio() {
   }, [allPositions, allCashTotal]);
 
   useEffect(() => {
-    if (positions.length === 0 || totals.value === 0) return;
+    // fxReady — same reasoning as home/page.js's identical snapshot-posting effect: without
+    // it, this can fire while fxRates is still the hardcoded FALLBACK_RATES guess, posting a
+    // GBP/EUR holding's USD value computed off an approximation instead of the live rate.
+    if (positions.length === 0 || totals.value === 0 || !fxReady) return;
     if (!positions.every(p => p.marketValue != null)) return;
     fetch('/api/portfolio/snapshot', {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ value: netWorthTotals.value, cost: netWorthTotals.cost }),
     }).catch(() => {});
-  }, [positions, netWorthTotals.value, netWorthTotals.cost]);
+  }, [positions, netWorthTotals.value, netWorthTotals.cost, fxReady]);
 
   const byTickerChart = useMemo(() => {
     if (totals.investedValue === 0) return [];
