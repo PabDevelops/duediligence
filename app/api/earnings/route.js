@@ -1,5 +1,6 @@
 import { fetchNasdaqEarningsRange } from '../../../lib/nasdaqEarnings';
 import { supabase } from '../../../lib/supabase';
+import { computeEasyMode } from '../../../lib/stockScoring';
 
 const FH_KEY = process.env.FINNHUB_API_KEY;
 
@@ -247,29 +248,47 @@ export async function GET(req) {
     const chunks = [];
     for (let i = 0; i < tickerArray.length; i += CHUNK_SIZE) chunks.push(tickerArray.slice(i, i + CHUNK_SIZE));
 
+    // Full cached `data` blob (not just marketCap/sector sub-fields) so computeEasyMode below
+    // has what it needs to score each ticker — same JSON shape /api/stock returns, since this
+    // is exactly what that route caches.
     const chunkResults = await Promise.all(chunks.map(chunk =>
-      supabase.from('stock_cache').select('ticker, marketCap:data->marketCap, sector:data->sector').in('ticker', chunk)
+      supabase.from('stock_cache').select('ticker, data').in('ticker', chunk)
     ));
     chunkResults.forEach(({ data }) => {
       if (!data) return;
       data.forEach(row => {
+        const d = row.data || {};
+        // Same hasFundamentals check the stock page itself uses (page.js's own
+        // computeEasyMode call), so a ticker with too little data to score gets a null
+        // qualityScore100 here exactly like it would show "N/A" there.
+        const hasFundamentals = d.revVal != null || d.niVal != null || d.marketCap != null
+          || d.roic != null || d.grossMargin != null || (d.revHistory?.length ?? 0) > 0;
+        const easy = computeEasyMode(d, hasFundamentals);
         enrichmentMap[row.ticker] = {
-          marketCap: row.marketCap,
-          sector: row.sector
+          name: d.name ?? null,
+          marketCap: d.marketCap ?? null,
+          sector: d.sector ?? null,
+          qualityScore100: easy?.score100 ?? null,
         };
       });
     });
 
     const enrichedEarnings = earnings.map(e => ({
       ...e,
+      // Finnhub/Nasdaq's earnings feed doesn't always carry a company name — stock_cache's
+      // own cached name (same source /api/stock uses) fills the gap.
+      name: e.name || enrichmentMap[e.ticker]?.name || null,
       marketCap: enrichmentMap[e.ticker]?.marketCap || null,
       sector: enrichmentMap[e.ticker]?.sector || null,
+      qualityScore100: enrichmentMap[e.ticker]?.qualityScore100 ?? null,
     }));
 
     const enrichedIpos = ipos.map(i => ({
       ...i,
+      name: i.name || enrichmentMap[i.ticker]?.name || null,
       marketCap: enrichmentMap[i.ticker]?.marketCap || null,
       sector: enrichmentMap[i.ticker]?.sector || null,
+      qualityScore100: enrichmentMap[i.ticker]?.qualityScore100 ?? null,
     }));
 
     const result = { earnings: enrichedEarnings, ipos: enrichedIpos };

@@ -12,10 +12,12 @@ import { CAP_TIERS, getCapTier } from '../../../lib/marketCap';
 const MONTH_NAMES = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
 const DAY_NAMES = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 
-// Native title tooltip for the compact weekly-view tiles (logo + ticker only) — name, sector
-// and market cap are already on the event object (see the marketCap/sector filters above),
-// just not otherwise visible until the tile is clicked through to the stock page.
-const tileTitle = (e) => [e.ticker, e.name, e.sector, e.marketCap ? fmt(e.marketCap) : null].filter(Boolean).join(' · ');
+// Native title tooltip for the compact weekly-view tiles (logo + ticker only) — name, sector,
+// market cap and quality score are already on the event object (see the marketCap/sector
+// filters above, and the qualityScore100 enrichment in /api/earnings), just not otherwise
+// visible until the tile is clicked through to the stock page. Name instead of ticker here —
+// the ticker's already the tile's own visible label, so repeating it added nothing.
+const tileTitle = (e) => [e.name, e.sector, e.marketCap ? fmt(e.marketCap) : null, e.qualityScore100 != null ? `Quality ${e.qualityScore100}` : null].filter(Boolean).join(' · ');
 
 export default function WorkspaceCalendar() {
   const router = useRouter();
