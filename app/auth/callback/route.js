@@ -2,6 +2,11 @@ import { createServerClient } from '@supabase/ssr';
 import { NextResponse } from 'next/server';
 import { getCookieDomain } from '../../../lib/cookieDomain';
 
+// Every hit here carries a single-use OAuth code and mints a real session —
+// letting Next.js cache a GET response would replay someone else's redirect
+// (and silently drop the Set-Cookie) for every subsequent visitor.
+export const dynamic = 'force-dynamic';
+
 export async function GET(request) {
   const { searchParams, origin } = new URL(request.url);
   const code = searchParams.get('code');
