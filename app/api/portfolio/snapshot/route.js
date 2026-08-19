@@ -46,13 +46,23 @@ export async function POST(request) {
 
   // Guard against writing a snapshot wildly inconsistent with the last recorded one. The
   // dashboard posts a fresh snapshot every few minutes and this upserts (overwrites) today's
-  // row each time, so a single transient bad computation (prices/FX not fully loaded yet,
-  // a stale render) could otherwise get locked into a whole day's data point — showing up as
-  // a spike-then-revert in the Performance chart that never self-corrects, since past days
-  // aren't touched again. Compares return-on-cost-basis (not raw value/cost) against the
-  // most recent prior day so a legitimate capital injection — cost and value moving together
-  // — doesn't trip it; only an implausible single-day swing in actual return does.
-  const MAX_DAILY_RETURN_SWING_PP = 40;
+  // row each time, so a single transient bad computation (a bad per-ticker price read, prices/
+  // FX not fully loaded yet, a stale render) could otherwise get locked into a whole day's data
+  // point — showing up as a spike-then-revert in the Performance chart that never self-
+  // corrects, since past days aren't touched again. Compares return-on-cost-basis (not raw
+  // value/cost) against the most recent prior day so a legitimate capital injection — cost and
+  // value moving together — doesn't trip it; only an implausible single-day swing in actual
+  // return does.
+  //
+  // Two different thresholds, not one: when cost hasn't moved (no deposit/withdrawal that
+  // day), the swing is pure price movement, and a diversified portfolio swinging >20pp in a
+  // single day with no cash flow behind it is itself implausible enough to be the signal —
+  // verified against a real incident where a single bad price read inflated value by ~34pp
+  // with cost unchanged, comfortably under the old flat 40pp cutoff. Once real capital moves
+  // (cost changed), a bigger swing is legitimate — a $350 deposit against a ~$2,000 portfolio
+  // is already ~17% of it — so that path keeps the more permissive bound.
+  const MAX_DAILY_RETURN_SWING_PP_WITH_CASH_FLOW = 40;
+  const MAX_DAILY_RETURN_SWING_PP_NO_CASH_FLOW = 20;
   const { data: lastSnap } = await supabase
     .from('portfolio_snapshots')
     .select('date, value, cost')
@@ -65,8 +75,10 @@ export async function POST(request) {
   if (lastSnap && lastSnap.cost > 0 && numCost > 0) {
     const oldReturnPct = ((lastSnap.value - lastSnap.cost) / lastSnap.cost) * 100;
     const newReturnPct = ((numValue - numCost) / numCost) * 100;
-    if (Math.abs(newReturnPct - oldReturnPct) > MAX_DAILY_RETURN_SWING_PP) {
-      console.warn(`[snapshot] Rejected implausible snapshot for user ${userId}: return moved from ${oldReturnPct.toFixed(1)}% to ${newReturnPct.toFixed(1)}% since ${lastSnap.date}`);
+    const costChangedPct = Math.abs(numCost - lastSnap.cost) / lastSnap.cost * 100;
+    const maxSwing = costChangedPct > 1 ? MAX_DAILY_RETURN_SWING_PP_WITH_CASH_FLOW : MAX_DAILY_RETURN_SWING_PP_NO_CASH_FLOW;
+    if (Math.abs(newReturnPct - oldReturnPct) > maxSwing) {
+      console.warn(`[snapshot] Rejected implausible snapshot for user ${userId}: return moved from ${oldReturnPct.toFixed(1)}% to ${newReturnPct.toFixed(1)}% since ${lastSnap.date} (cost changed ${costChangedPct.toFixed(1)}%, max allowed swing ${maxSwing}pp)`);
       return Response.json({ error: 'Snapshot rejected: implausible day-over-day change' }, { status: 422 });
     }
   }
