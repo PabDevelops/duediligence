@@ -1,5 +1,5 @@
 'use client';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { createClient } from '../../../lib/supabase/client';
 import Link from 'next/link';
@@ -20,6 +20,13 @@ export default function SignInView({ dict }) {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const t = dict.signIn;
+
+  // Surfaces failures from the /auth/callback OAuth exchange (e.g. Google sign-in),
+  // which redirects back here with ?error=... instead of failing silently.
+  useEffect(() => {
+    const oauthError = new URLSearchParams(window.location.search).get('error');
+    if (oauthError) setError(oauthError);
+  }, []);
 
   const signIn = async (e) => {
     e.preventDefault();
