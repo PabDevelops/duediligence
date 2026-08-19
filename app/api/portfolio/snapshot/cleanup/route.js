@@ -1,12 +1,15 @@
 import { getUserId } from '../../../../../lib/auth';
 import { supabase } from '../../../../../lib/supabase';
 
-// One-time cleanup for a second occurrence of the same implausible-snapshot bug the write-time
-// guard in route.js now catches more tightly (see MAX_DAILY_RETURN_SWING_PP_NO_CASH_FLOW there)
-// — a stray bad price read inflated one day's value with cost unchanged, and that day's swing
-// slipped under the old flat 40pp cutoff before the tighter guard was deployed. Scoped to the
-// calling user only, same as every other handler here; deletes rows whose return-on-cost
-// deviates from the account's own median return by more than 25pp.
+// Permanent (not one-off) cleanup for historical snapshot rows that slipped past the write-
+// time guard in ../route.js — a transient bad price read or FX misvaluation can still land a
+// single implausible day, and past days are never touched again once written, so nothing
+// self-corrects. Triggered on demand from the "Fix anomalies" control on the Performance vs
+// Benchmarks card. Scoped to getUserId() like every other handler in this file — only ever
+// touches the calling user's own rows. Deletes rows whose return-on-cost deviates from the
+// account's own median return by more than 25pp, which comfortably separates real day-to-day
+// movement from the kind of spike this guards against (seen in practice landing at 30-65%
+// against an otherwise-flat baseline).
 export async function POST() {
   const userId = await getUserId();
   if (!userId) return Response.json({ error: 'Not authenticated' }, { status: 401 });

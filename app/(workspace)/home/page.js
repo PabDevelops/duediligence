@@ -79,6 +79,28 @@ export default function WorkspaceHome() {
   const [snapshots, setSnapshots] = useState([]);
   const [benchmarks, setBenchmarks] = useState([]);
   const [benchmarksLoading, setBenchmarksLoading] = useState(true);
+  // "Fix anomalies" on the Performance card — see /api/portfolio/snapshot/cleanup. A manual
+  // trigger, not automatic: past snapshot rows are never touched again once written (by
+  // design, so the chart doesn't silently rewrite history), so a bad one from a transient
+  // price/FX glitch needs an explicit action to clear instead of self-correcting.
+  const [fixingAnomalies, setFixingAnomalies] = useState(false);
+  const [anomalyResult, setAnomalyResult] = useState(null);
+  const handleFixAnomalies = async () => {
+    setFixingAnomalies(true);
+    setAnomalyResult(null);
+    try {
+      const res = await fetch('/api/portfolio/snapshot/cleanup', { method: 'POST' });
+      const d = await res.json();
+      setAnomalyResult(d.deleted?.length ? `Removed ${d.deleted.length} anomal${d.deleted.length === 1 ? 'y' : 'ies'}` : 'No anomalies found');
+      if (d.deleted?.length) {
+        fetch('/api/portfolio/snapshot').then(r => r.json()).then(d2 => setSnapshots(d2.snapshots || []));
+      }
+    } catch {
+      setAnomalyResult('Failed — try again');
+    } finally {
+      setFixingAnomalies(false);
+    }
+  };
 
   // Market-wide movers (Top Movers card) and filings/news (Market Intelligence card) —
   // not personalized to the portfolio, same sources the old widgets used.
@@ -1068,10 +1090,27 @@ export default function WorkspaceHome() {
         title="Performance vs Benchmarks"
         subtitle={`Since ${new Date(first.date).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}`}
         rightElement={
-          <div style={{ display: 'flex', gap: '14px', fontSize: '11px', fontWeight: 700, flexWrap: 'wrap', justifyContent: 'flex-end' }}>
-            <span style={{ color: 'var(--ws-accent)' }}>● Portfolio {last.portfolio >= 0 ? '+' : ''}{last.portfolio.toFixed(1)}%</span>
-            {last.sp500 != null && <span style={{ color: 'var(--ws-text-2)' }}>● S&P 500 {last.sp500 >= 0 ? '+' : ''}{last.sp500.toFixed(1)}%</span>}
-            {last.nasdaq != null && <span style={{ color: 'var(--ws-text-3)' }}>● Nasdaq {last.nasdaq >= 0 ? '+' : ''}{last.nasdaq.toFixed(1)}%</span>}
+          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '6px' }}>
+            <div style={{ display: 'flex', gap: '14px', fontSize: '11px', fontWeight: 700, flexWrap: 'wrap', justifyContent: 'flex-end' }}>
+              <span style={{ color: 'var(--ws-accent)' }}>● Portfolio {last.portfolio >= 0 ? '+' : ''}{last.portfolio.toFixed(1)}%</span>
+              {last.sp500 != null && <span style={{ color: 'var(--ws-text-2)' }}>● S&P 500 {last.sp500 >= 0 ? '+' : ''}{last.sp500.toFixed(1)}%</span>}
+              {last.nasdaq != null && <span style={{ color: 'var(--ws-text-3)' }}>● Nasdaq {last.nasdaq >= 0 ? '+' : ''}{last.nasdaq.toFixed(1)}%</span>}
+            </div>
+            {/* A spike from a bad price/FX read on some past day doesn't self-correct — past
+                snapshot rows are never rewritten once written, by design, so this is the way
+                to clear one out instead of waiting on me to do it by hand each time. */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+              {anomalyResult && <span style={{ fontSize: '10px', color: 'var(--ws-text-3)' }}>{anomalyResult}</span>}
+              <button onClick={handleFixAnomalies} disabled={fixingAnomalies}
+                title="Remove any day whose return looks like a data glitch instead of a real move"
+                style={{
+                  fontSize: '10px', fontWeight: 700, color: 'var(--ws-text-3)', background: 'none',
+                  border: '1px solid var(--ws-border)', borderRadius: '4px', padding: '3px 8px',
+                  cursor: fixingAnomalies ? 'default' : 'pointer', opacity: fixingAnomalies ? 0.6 : 1,
+                }}>
+                {fixingAnomalies ? 'Checking…' : '⟳ Fix anomalies'}
+              </button>
+            </div>
           </div>
         }
       >
