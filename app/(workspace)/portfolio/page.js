@@ -203,8 +203,18 @@ export default function WorkspacePortfolio() {
     return map;
   }, [portfolios]);
 
-  // "Cash" here means everything not invested — the plain cash ledger plus the ISA pot's
-  // grown value (principal + accrued interest), since both are money the portfolio holds.
+  // Cash actually available to spend/invest — main bucket only. The ISA pot is money that's
+  // moved out of this and is shown in its own card (see isaSummary), so it's deliberately
+  // excluded here even though it's still technically "not invested".
+  const mainCashTotal = useMemo(() => {
+    let total = 0;
+    const transactions = selectedPortfolioId === 'all' ? allCashTransactions : allCashTransactions.filter(t => t.portfolio_id === selectedPortfolioId);
+    transactions.filter(t => (t.bucket || 'main') === 'main').forEach(t => total += toUSD(Number(t.amount), t.currency));
+    return total;
+  }, [allCashTransactions, selectedPortfolioId, rates]);
+
+  // Total non-invested money (main cash + the ISA pot's grown value) — used for net worth /
+  // portfolio total, where both count as part of what you hold.
   const cashTotal = useMemo(() => {
     let total = 0;
     const transactions = selectedPortfolioId === 'all' ? allCashTransactions : allCashTransactions.filter(t => t.portfolio_id === selectedPortfolioId);
@@ -468,7 +478,7 @@ export default function WorkspacePortfolio() {
             </div>
             <div className="border border-ws-border p-3.5">
               <div style={{ fontSize: '10px', color: 'var(--ws-text-3)', letterSpacing: '0.5px', marginBottom: '4px' }}>CASH BALANCE</div>
-              <div style={{ fontSize: '20px', fontWeight: 700, color: 'var(--ws-text)' }}>{fmtC(cashTotal)}</div>
+              <div style={{ fontSize: '20px', fontWeight: 700, color: 'var(--ws-text)' }}>{fmtC(mainCashTotal)}</div>
             </div>
             {isaSummary.hasEntries && (
               <div className="border border-ws-border p-3.5">
