@@ -17,6 +17,8 @@ export default function CashModal({ portfolioId, portfolios, transactions = [], 
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState(null);
   const [savingRate, setSavingRate] = useState(false);
+  const [transferAmount, setTransferAmount] = useState('');
+  const [transferCurrency, setTransferCurrency] = useState('USD');
 
   const switchBucket = (b) => {
     setBucket(b);
@@ -93,6 +95,46 @@ export default function CashModal({ portfolioId, portfolios, transactions = [], 
     }
   };
 
+  const handleTransfer = async (e) => {
+    e.preventDefault();
+    setError(null);
+    if (!transferAmount || Number(transferAmount) <= 0) {
+      setError('Please enter a valid amount');
+      return;
+    }
+    if (!selectedPortfolio) {
+      setError('Please select a portfolio');
+      return;
+    }
+
+    setSaving(true);
+    try {
+      const res = await fetch('/api/portfolio/cash/transfer', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          portfolio_id: selectedPortfolio,
+          amount: Number(transferAmount),
+          currency: transferCurrency,
+          direction: bucket === 'main' ? 'to_isa' : 'to_main',
+        }),
+      });
+
+      if (!res.ok) {
+        const d = await res.json();
+        throw new Error(d.error || 'Failed to move cash');
+      }
+
+      setTransferAmount('');
+      setSaving(false);
+      onAdded();
+      setMode('list');
+    } catch (err) {
+      setError(err.message);
+      setSaving(false);
+    }
+  };
+
   return (
     <div onClick={onClose} className="fixed inset-0 bg-black/35 flex items-center justify-center z-[200]">
       <div onClick={e => e.stopPropagation()} style={{ width: '500px', maxWidth: '92vw', background: 'var(--ws-bg-1)', border: '1px solid var(--ws-border)', borderRadius: '12px', boxShadow: '0 12px 40px rgba(0,0,0,0.18)' }}>
@@ -100,7 +142,12 @@ export default function CashModal({ portfolioId, portfolios, transactions = [], 
           <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
             <div style={{ fontSize: '14px', fontWeight: 700, color: 'var(--ws-text)' }}>Cash Ledger</div>
             {mode === 'list' && (
-              <button onClick={() => setMode('add')} className="ws-btn" style={{ padding: '4px 10px', fontSize: '11px', height: 'auto' }}>+ Add Transaction</button>
+              <>
+                <button onClick={() => setMode('add')} className="ws-btn" style={{ padding: '4px 10px', fontSize: '11px', height: 'auto' }}>+ Add Transaction</button>
+                <button onClick={() => setMode('transfer')} className="ws-btn-secondary" style={{ padding: '4px 10px', fontSize: '11px', height: 'auto' }}>
+                  {bucket === 'main' ? '⇄ Move to ISA' : '⇄ Move to Cash'}
+                </button>
+              </>
             )}
           </div>
           <button onClick={onClose} style={{ background: 'none', border: 'none', color: 'var(--ws-text-3)', cursor: 'pointer', fontSize: '16px' }}>✕</button>
@@ -138,7 +185,45 @@ export default function CashModal({ portfolioId, portfolios, transactions = [], 
           </div>
         )}
 
-        {mode === 'list' ? (
+        {mode === 'transfer' ? (
+          <form onSubmit={handleTransfer} style={{ padding: '20px' }}>
+            <div style={{ fontSize: '13px', color: 'var(--ws-text-2)', marginBottom: '16px' }}>
+              Move cash from <strong style={{ color: 'var(--ws-text)' }}>{bucket === 'main' ? 'Cash' : 'ISA'}</strong> to <strong style={{ color: 'var(--ws-text)' }}>{bucket === 'main' ? 'ISA' : 'Cash'}</strong>.
+              {bucket === 'main' && ' It starts earning interest from today.'}
+            </div>
+
+            <div style={{ marginBottom: '16px' }}>
+              <label style={{ display: 'block', fontSize: '12px', color: 'var(--ws-text-2)', marginBottom: '6px' }}>Portfolio</label>
+              <select value={selectedPortfolio} onChange={e => setSelectedPortfolio(e.target.value)} className="ws-input" style={{ width: '100%' }} required>
+                {portfolios.map(p => (
+                  <option key={p.id} value={p.id}>{p.name}</option>
+                ))}
+              </select>
+            </div>
+
+            <div style={{ display: 'flex', gap: '12px', marginBottom: '20px' }}>
+              <div style={{ flex: 2 }}>
+                <label style={{ display: 'block', fontSize: '12px', color: 'var(--ws-text-2)', marginBottom: '6px' }}>Amount</label>
+                <input type="number" step="any" min="0" value={transferAmount} onChange={e => setTransferAmount(e.target.value)} className="ws-input" style={{ width: '100%' }} placeholder="0.00" required autoFocus />
+              </div>
+              <div style={{ flex: 1 }}>
+                <label style={{ display: 'block', fontSize: '12px', color: 'var(--ws-text-2)', marginBottom: '6px' }}>Currency</label>
+                <select value={transferCurrency} onChange={e => setTransferCurrency(e.target.value)} className="ws-input" style={{ width: '100%' }}>
+                  {CURRENCIES.map(c => <option key={c} value={c}>{c}</option>)}
+                </select>
+              </div>
+            </div>
+
+            {error && <div style={{ color: 'var(--ws-red)', fontSize: '12px', marginBottom: '16px', padding: '8px', border: '1px solid var(--ws-red)', borderRadius: '4px' }}>{error}</div>}
+
+            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '8px' }}>
+              <button type="button" onClick={() => setMode('list')} className="ws-btn-secondary" style={{ padding: '8px 16px' }}>Cancel</button>
+              <button type="submit" className="ws-btn" style={{ padding: '8px 16px' }} disabled={saving}>
+                {saving ? 'Moving...' : `Move to ${bucket === 'main' ? 'ISA' : 'Cash'}`}
+              </button>
+            </div>
+          </form>
+        ) : mode === 'list' ? (
           <div style={{ padding: '0', maxHeight: '400px', overflowY: 'auto' }}>
             {bucketTransactions.length === 0 ? (
               <div style={{ padding: '40px 20px', textAlign: 'center', color: 'var(--ws-text-3)', fontSize: '13px' }}>
