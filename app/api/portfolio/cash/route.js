@@ -36,10 +36,14 @@ export async function POST(request) {
   const userId = await getUserId();
   if (!userId) return Response.json({ error: 'Not authenticated' }, { status: 401 });
 
-  const { portfolio_id, amount, currency, notes, type } = await request.json();
+  const { portfolio_id, amount, currency, notes, type, bucket } = await request.json();
 
   if (!portfolio_id || !amount || !currency) {
     return Response.json({ error: 'Missing required fields' }, { status: 400 });
+  }
+
+  if (bucket && !['main', 'isa'].includes(bucket)) {
+    return Response.json({ error: 'Invalid bucket' }, { status: 400 });
   }
 
   // Ensure portfolio exists and belongs to user
@@ -62,7 +66,8 @@ export async function POST(request) {
       amount: Number(amount),
       currency: currency.toUpperCase(),
       type: type || 'DEPOSIT',
-      notes: notes || null
+      notes: notes || null,
+      bucket: bucket || 'main'
     })
     .select()
     .single();

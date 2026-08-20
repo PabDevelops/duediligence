@@ -17,6 +17,7 @@ import CashModal from '../../components/workspace/portfolio/CashModal';
 import GrowthChart from '../../components/workspace/portfolio/GrowthChart';
 import AllocationChart from '../../components/workspace/portfolio/AllocationChart';
 import { openInNewTab } from '../../../lib/openInNewTab';
+import { sumIsaValue } from '../../../lib/isaInterest';
 
 const fmt = (val) => formatCurrency(val, '$');
 
@@ -196,18 +197,40 @@ export default function WorkspacePortfolio() {
   const positions = useMemo(() => buildPositions(holdings), [holdings, stocks, rates]);
   const allPositions = useMemo(() => buildPositions(allHoldings), [allHoldings, stocks, rates]);
 
+  const isaRatesByPortfolioId = useMemo(() => {
+    const map = {};
+    portfolios.forEach(p => { map[p.id] = p.isa_interest_rate; });
+    return map;
+  }, [portfolios]);
+
+  // "Cash" here means everything not invested — the plain cash ledger plus the ISA pot's
+  // grown value (principal + accrued interest), since both are money the portfolio holds.
   const cashTotal = useMemo(() => {
     let total = 0;
     const transactions = selectedPortfolioId === 'all' ? allCashTransactions : allCashTransactions.filter(t => t.portfolio_id === selectedPortfolioId);
-    transactions.forEach(t => total += toUSD(Number(t.amount), t.currency));
+    const mainTx = transactions.filter(t => (t.bucket || 'main') === 'main');
+    const isaTxUSD = transactions.filter(t => t.bucket === 'isa').map(t => ({ ...t, amount: toUSD(Number(t.amount), t.currency) }));
+    mainTx.forEach(t => total += toUSD(Number(t.amount), t.currency));
+    total += sumIsaValue(isaTxUSD, isaRatesByPortfolioId);
     return total;
-  }, [allCashTransactions, selectedPortfolioId, rates]);
+  }, [allCashTransactions, selectedPortfolioId, rates, isaRatesByPortfolioId]);
+
+  const isaSummary = useMemo(() => {
+    const transactions = selectedPortfolioId === 'all' ? allCashTransactions : allCashTransactions.filter(t => t.portfolio_id === selectedPortfolioId);
+    const isaTxUSD = transactions.filter(t => t.bucket === 'isa').map(t => ({ ...t, amount: toUSD(Number(t.amount), t.currency) }));
+    const principal = isaTxUSD.reduce((sum, t) => sum + Number(t.amount), 0);
+    const value = sumIsaValue(isaTxUSD, isaRatesByPortfolioId);
+    return { principal, value, growth: value - principal, hasEntries: isaTxUSD.length > 0 };
+  }, [allCashTransactions, selectedPortfolioId, rates, isaRatesByPortfolioId]);
 
   const allCashTotal = useMemo(() => {
     let total = 0;
-    allCashTransactions.forEach(t => total += toUSD(Number(t.amount), t.currency));
+    const mainTx = allCashTransactions.filter(t => (t.bucket || 'main') === 'main');
+    const isaTxUSD = allCashTransactions.filter(t => t.bucket === 'isa').map(t => ({ ...t, amount: toUSD(Number(t.amount), t.currency) }));
+    mainTx.forEach(t => total += toUSD(Number(t.amount), t.currency));
+    total += sumIsaValue(isaTxUSD, isaRatesByPortfolioId);
     return total;
-  }, [allCashTransactions, rates]);
+  }, [allCashTransactions, rates, isaRatesByPortfolioId]);
 
   const totals = useMemo(() => {
     const cost = positions.reduce((a, p) => a + p.cost, 0);
@@ -430,7 +453,7 @@ export default function WorkspacePortfolio() {
         </div>
       ) : (
         <>
-          <div className="portfolio-overview-grid" style={{ gridTemplateColumns: 'repeat(6, 1fr)' }}>
+          <div className="portfolio-overview-grid" style={{ gridTemplateColumns: `repeat(${isaSummary.hasEntries ? 7 : 6}, 1fr)` }}>
             <div className="border border-ws-border p-3.5" style={{ background: 'var(--ws-bg-2)' }}>
               <div style={{ fontSize: '10px', color: 'var(--ws-text-3)', letterSpacing: '0.5px', marginBottom: '4px' }}>NET WORTH (ALL)</div>
               <div style={{ fontSize: '20px', fontWeight: 700, color: 'var(--ws-text)' }}>{fmtC(netWorthTotals.value)}</div>
@@ -447,6 +470,12 @@ export default function WorkspacePortfolio() {
               <div style={{ fontSize: '10px', color: 'var(--ws-text-3)', letterSpacing: '0.5px', marginBottom: '4px' }}>CASH BALANCE</div>
               <div style={{ fontSize: '20px', fontWeight: 700, color: 'var(--ws-text)' }}>{fmtC(cashTotal)}</div>
             </div>
+            {isaSummary.hasEntries && (
+              <div className="border border-ws-border p-3.5">
+                <div style={{ fontSize: '10px', color: 'var(--ws-text-3)', letterSpacing: '0.5px', marginBottom: '4px' }}>ISA (+{fmtC(isaSummary.growth)})</div>
+                <div style={{ fontSize: '20px', fontWeight: 700, color: 'var(--ws-accent)' }}>{fmtC(isaSummary.value)}</div>
+              </div>
+            )}
             <div className="border border-ws-border p-3.5">
               <div style={{ fontSize: '10px', color: 'var(--ws-text-3)', letterSpacing: '0.5px', marginBottom: '4px' }}>COST BASIS</div>
               <div style={{ fontSize: '20px', fontWeight: 700, color: 'var(--ws-text)' }}>{fmtC(totals.cost)}</div>

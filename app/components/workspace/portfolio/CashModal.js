@@ -1,11 +1,14 @@
 'use client';
 import { useState } from 'react';
 import { formatCurrency } from '../../../../lib/formatters';
+import { isaEntryValue } from '../../../../lib/isaInterest';
 
 const CURRENCIES = ['USD', 'EUR', 'GBP'];
 
 export default function CashModal({ portfolioId, portfolios, transactions = [], onClose, onAdded }) {
-  const [mode, setMode] = useState(transactions.length === 0 ? 'add' : 'list');
+  const [bucket, setBucket] = useState('main');
+  const bucketTransactions = transactions.filter(t => (t.bucket || 'main') === bucket);
+  const [mode, setMode] = useState(bucketTransactions.length === 0 ? 'add' : 'list');
   const [type, setType] = useState('deposit');
   const [amount, setAmount] = useState('');
   const [currency, setCurrency] = useState('USD');
@@ -13,6 +16,37 @@ export default function CashModal({ portfolioId, portfolios, transactions = [], 
   const [selectedPortfolio, setSelectedPortfolio] = useState(portfolioId === 'all' ? (portfolios[0]?.id || '') : (portfolioId || ''));
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState(null);
+  const [savingRate, setSavingRate] = useState(false);
+
+  const switchBucket = (b) => {
+    setBucket(b);
+    const bt = transactions.filter(t => (t.bucket || 'main') === b);
+    setMode(bt.length === 0 ? 'add' : 'list');
+  };
+
+  const activePortfolio = portfolios.find(p => p.id === selectedPortfolio) || portfolios.find(p => p.id === portfolioId);
+  const isaRate = activePortfolio?.isa_interest_rate ?? '';
+
+  const saveIsaRate = async (value) => {
+    if (!activePortfolio) return;
+    setSavingRate(true);
+    try {
+      const res = await fetch('/api/portfolios', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id: activePortfolio.id, isa_interest_rate: value === '' ? null : Number(value) }),
+      });
+      if (res.ok) onAdded();
+    } finally {
+      setSavingRate(false);
+    }
+  };
+
+  const isaPrincipal = bucketTransactions.reduce((sum, t) => sum + Number(t.amount), 0);
+  const isaValueToday = bucket === 'isa'
+    ? bucketTransactions.reduce((sum, t) => sum + isaEntryValue(t, activePortfolio?.isa_interest_rate), 0)
+    : isaPrincipal;
+  const isaGrowth = isaValueToday - isaPrincipal;
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -38,7 +72,8 @@ export default function CashModal({ portfolioId, portfolios, transactions = [], 
           amount: finalAmount,
           currency,
           type: type.toUpperCase(),
-          notes
+          notes,
+          bucket
         }),
       });
 
@@ -70,12 +105,44 @@ export default function CashModal({ portfolioId, portfolios, transactions = [], 
           </div>
           <button onClick={onClose} style={{ background: 'none', border: 'none', color: 'var(--ws-text-3)', cursor: 'pointer', fontSize: '16px' }}>✕</button>
         </div>
-        
+
+        <div style={{ display: 'flex', borderBottom: '1px solid var(--ws-border)' }}>
+          <button type="button" onClick={() => switchBucket('main')}
+            style={{ flex: 1, padding: '10px', border: 'none', borderBottom: bucket === 'main' ? '2px solid var(--ws-accent)' : '2px solid transparent', background: 'none', color: bucket === 'main' ? 'var(--ws-text)' : 'var(--ws-text-3)', cursor: 'pointer', fontWeight: 600, fontSize: '12px' }}>
+            💵 Cash
+          </button>
+          <button type="button" onClick={() => switchBucket('isa')}
+            style={{ flex: 1, padding: '10px', border: 'none', borderBottom: bucket === 'isa' ? '2px solid var(--ws-accent)' : '2px solid transparent', background: 'none', color: bucket === 'isa' ? 'var(--ws-text)' : 'var(--ws-text-3)', cursor: 'pointer', fontWeight: 600, fontSize: '12px' }}>
+            🏦 ISA{activePortfolio?.isa_interest_rate ? ` · ${activePortfolio.isa_interest_rate}%` : ''}
+          </button>
+        </div>
+
+        {bucket === 'isa' && (
+          <div style={{ padding: '14px 20px', borderBottom: '1px solid var(--ws-border)', background: 'var(--ws-bg-2)' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: isaPrincipal !== 0 ? '10px' : 0 }}>
+              <label style={{ fontSize: '12px', color: 'var(--ws-text-2)' }}>Interest rate (annual, compounds daily)</label>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                <input type="number" step="0.01" min="0" defaultValue={isaRate} key={`${activePortfolio?.id}-${isaRate}`}
+                  onBlur={e => saveIsaRate(e.target.value)}
+                  className="ws-input" style={{ width: '70px', padding: '4px 6px' }} placeholder="3.6" />
+                <span style={{ fontSize: '12px', color: 'var(--ws-text-3)' }}>%{savingRate ? ' saving…' : ''}</span>
+              </div>
+            </div>
+            {isaPrincipal !== 0 && (
+              <div style={{ display: 'flex', gap: '20px', fontSize: '12px' }}>
+                <div><span style={{ color: 'var(--ws-text-3)' }}>Deposited: </span><span style={{ fontWeight: 600, color: 'var(--ws-text)' }}>{formatCurrency(isaPrincipal, '$')}</span></div>
+                <div><span style={{ color: 'var(--ws-text-3)' }}>Value today: </span><span style={{ fontWeight: 600, color: 'var(--ws-text)' }}>{formatCurrency(isaValueToday, '$')}</span></div>
+                <div><span style={{ color: 'var(--ws-text-3)' }}>Growth: </span><span style={{ fontWeight: 600, color: 'var(--ws-accent)' }}>+{formatCurrency(isaGrowth, '$')}</span></div>
+              </div>
+            )}
+          </div>
+        )}
+
         {mode === 'list' ? (
           <div style={{ padding: '0', maxHeight: '400px', overflowY: 'auto' }}>
-            {transactions.length === 0 ? (
+            {bucketTransactions.length === 0 ? (
               <div style={{ padding: '40px 20px', textAlign: 'center', color: 'var(--ws-text-3)', fontSize: '13px' }}>
-                No cash transactions yet.<br/><br/>
+                No {bucket === 'isa' ? 'ISA' : 'cash'} transactions yet.<br/><br/>
                 <button onClick={() => setMode('add')} className="ws-btn" style={{ padding: '6px 16px' }}>+ Add Transaction</button>
               </div>
             ) : (
@@ -88,7 +155,7 @@ export default function CashModal({ portfolioId, portfolios, transactions = [], 
                   </tr>
                 </thead>
                 <tbody>
-                  {transactions.map(t => (
+                  {bucketTransactions.map(t => (
                     <tr key={t.id} style={{ borderBottom: '1px solid var(--ws-border)' }}>
                       <td style={{ padding: '10px 20px', color: 'var(--ws-text-2)' }}>{new Date(t.date).toISOString().slice(0, 10)}</td>
                       <td style={{ padding: '10px 20px' }}>
@@ -145,7 +212,7 @@ export default function CashModal({ portfolioId, portfolios, transactions = [], 
             {error && <div style={{ color: 'var(--ws-red)', fontSize: '12px', marginBottom: '16px', padding: '8px', border: '1px solid var(--ws-red)', borderRadius: '4px' }}>{error}</div>}
 
             <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '8px' }}>
-              <button type="button" onClick={transactions.length > 0 ? () => setMode('list') : onClose} className="ws-btn-secondary" style={{ padding: '8px 16px' }}>Cancel</button>
+              <button type="button" onClick={bucketTransactions.length > 0 ? () => setMode('list') : onClose} className="ws-btn-secondary" style={{ padding: '8px 16px' }}>Cancel</button>
               <button type="submit" className="ws-btn" style={{ padding: '8px 16px' }} disabled={saving}>
                 {saving ? 'Saving...' : 'Save Transaction'}
               </button>

@@ -65,6 +65,34 @@ export async function POST(request) {
   return Response.json({ success: true, portfolio: data });
 }
 
+export async function PATCH(request) {
+  const userId = await getUserId();
+  if (!userId) return Response.json({ error: 'Not authenticated' }, { status: 401 });
+
+  const { id, isa_interest_rate } = await request.json();
+  if (!id) return Response.json({ error: 'Portfolio ID required' }, { status: 400 });
+
+  const rate = isa_interest_rate === null || isa_interest_rate === '' ? null : Number(isa_interest_rate);
+  if (rate !== null && (Number.isNaN(rate) || rate < 0)) {
+    return Response.json({ error: 'Invalid interest rate' }, { status: 400 });
+  }
+
+  const { data, error } = await supabase
+    .from('portfolios')
+    .update({ isa_interest_rate: rate })
+    .eq('id', id)
+    .eq('user_id', userId)
+    .select()
+    .single();
+
+  if (error) {
+    console.error('portfolios PATCH error:', error);
+    return Response.json({ error: error.message || 'Failed to update portfolio' }, { status: 500 });
+  }
+
+  return Response.json({ success: true, portfolio: data });
+}
+
 export async function DELETE(request) {
   const userId = await getUserId();
   if (!userId) return Response.json({ error: 'Not authenticated' }, { status: 401 });
