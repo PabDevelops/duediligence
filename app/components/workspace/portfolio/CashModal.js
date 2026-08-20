@@ -5,8 +5,8 @@ import { isaEntryValue } from '../../../../lib/isaInterest';
 
 const CURRENCIES = ['USD', 'EUR', 'GBP'];
 
-export default function CashModal({ portfolioId, portfolios, transactions = [], onClose, onAdded }) {
-  const [bucket, setBucket] = useState('main');
+export default function CashModal({ portfolioId, portfolios, transactions = [], onClose, onAdded, initialBucket = 'main' }) {
+  const [bucket, setBucket] = useState(initialBucket);
   const bucketTransactions = transactions.filter(t => (t.bucket || 'main') === bucket);
   const [mode, setMode] = useState(bucketTransactions.length === 0 ? 'add' : 'list');
   const [type, setType] = useState('deposit');

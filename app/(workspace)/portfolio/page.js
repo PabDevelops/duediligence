@@ -45,6 +45,7 @@ export default function WorkspacePortfolio() {
   const [loadError, setLoadError] = useState(null);
   const [showModal, setShowModal] = useState(false);
   const [showCashModal, setShowCashModal] = useState(false);
+  const [cashModalBucket, setCashModalBucket] = useState('main');
   const [buyTicker, setBuyTicker] = useState(null);
   const [showImport, setShowImport] = useState(false);
   const [editLot, setEditLot] = useState(null);
@@ -203,18 +204,9 @@ export default function WorkspacePortfolio() {
     return map;
   }, [portfolios]);
 
-  // Cash actually available to spend/invest — main bucket only. The ISA pot is money that's
-  // moved out of this and is shown in its own card (see isaSummary), so it's deliberately
-  // excluded here even though it's still technically "not invested".
-  const mainCashTotal = useMemo(() => {
-    let total = 0;
-    const transactions = selectedPortfolioId === 'all' ? allCashTransactions : allCashTransactions.filter(t => t.portfolio_id === selectedPortfolioId);
-    transactions.filter(t => (t.bucket || 'main') === 'main').forEach(t => total += toUSD(Number(t.amount), t.currency));
-    return total;
-  }, [allCashTransactions, selectedPortfolioId, rates]);
-
   // Total non-invested money (main cash + the ISA pot's grown value) — used for net worth /
-  // portfolio total, where both count as part of what you hold.
+  // portfolio total, where both count as part of what you hold. The account cards break this
+  // back out into main cash vs. ISA so it doesn't read as one lump sum.
   const cashTotal = useMemo(() => {
     let total = 0;
     const transactions = selectedPortfolioId === 'all' ? allCashTransactions : allCashTransactions.filter(t => t.portfolio_id === selectedPortfolioId);
@@ -223,14 +215,6 @@ export default function WorkspacePortfolio() {
     mainTx.forEach(t => total += toUSD(Number(t.amount), t.currency));
     total += sumIsaValue(isaTxUSD, isaRatesByPortfolioId);
     return total;
-  }, [allCashTransactions, selectedPortfolioId, rates, isaRatesByPortfolioId]);
-
-  const isaSummary = useMemo(() => {
-    const transactions = selectedPortfolioId === 'all' ? allCashTransactions : allCashTransactions.filter(t => t.portfolio_id === selectedPortfolioId);
-    const isaTxUSD = transactions.filter(t => t.bucket === 'isa').map(t => ({ ...t, amount: toUSD(Number(t.amount), t.currency) }));
-    const principal = isaTxUSD.reduce((sum, t) => sum + Number(t.amount), 0);
-    const value = sumIsaValue(isaTxUSD, isaRatesByPortfolioId);
-    return { principal, value, growth: value - principal, hasEntries: isaTxUSD.length > 0 };
   }, [allCashTransactions, selectedPortfolioId, rates, isaRatesByPortfolioId]);
 
   const allCashTotal = useMemo(() => {
@@ -259,6 +243,40 @@ export default function WorkspacePortfolio() {
     const gainPct = cost > 0 ? (gain / cost) * 100 : 0;
     return { cost, value, gain, gainPct, investedValue };
   }, [allPositions, allCashTotal]);
+
+  // One card per real-world "account" — a portfolio's invested + spendable cash, and a
+  // separate card for its ISA pot if it has one, so they read as distinct accounts instead
+  // of one number that silently includes money you've moved into the ISA.
+  const portfoliosWithIsa = useMemo(() =>
+    portfolios.filter(p => allCashTransactions.some(t => t.portfolio_id === p.id && t.bucket === 'isa')),
+    [portfolios, allCashTransactions]);
+
+  const accountCards = useMemo(() => {
+    const cards = [];
+    portfolios.forEach(p => {
+      const pPositions = buildPositions(allHoldings.filter(h => h.portfolio_id === p.id));
+      const investedValue = pPositions.reduce((a, x) => a + (x.marketValue ?? x.cost), 0);
+      const pTx = allCashTransactions.filter(t => t.portfolio_id === p.id);
+      const mainCash = pTx.filter(t => (t.bucket || 'main') === 'main').reduce((sum, t) => sum + toUSD(Number(t.amount), t.currency), 0);
+      cards.push({ id: p.id, kind: 'portfolio', name: p.name, icon: /sipp/i.test(p.name) ? '🏦' : '📈', value: investedValue + mainCash });
+
+      const isaTxUSD = pTx.filter(t => t.bucket === 'isa').map(t => ({ ...t, amount: toUSD(Number(t.amount), t.currency) }));
+      if (isaTxUSD.length > 0) {
+        cards.push({
+          id: p.id, kind: 'isa', icon: '🪙',
+          name: portfoliosWithIsa.length > 1 ? `${p.name} · Cash ISA` : 'Cash ISA',
+          value: sumIsaValue(isaTxUSD, isaRatesByPortfolioId),
+        });
+      }
+    });
+    return cards;
+  }, [portfolios, allHoldings, allCashTransactions, stocks, rates, isaRatesByPortfolioId, portfoliosWithIsa]);
+
+  const openIsaCard = (portfolioId) => {
+    setSelectedPortfolioId(portfolioId);
+    setCashModalBucket('isa');
+    setShowCashModal(true);
+  };
 
   useEffect(() => {
     // fxReady — same reasoning as home/page.js's identical snapshot-posting effect: without
@@ -420,7 +438,7 @@ export default function WorkspacePortfolio() {
                   </button>
                 ))}
               </div>
-              <button onClick={() => setShowCashModal(true)}
+              <button onClick={() => { setCashModalBucket('main'); setShowCashModal(true); }}
                 className="ws-btn-secondary"
                 style={{ height: '34px', padding: '0 14px' }}>
                 ⇄ Manage Cash
@@ -463,29 +481,36 @@ export default function WorkspacePortfolio() {
         </div>
       ) : (
         <>
-          <div className="portfolio-overview-grid" style={{ gridTemplateColumns: `repeat(${isaSummary.hasEntries ? 7 : 6}, 1fr)` }}>
-            <div className="border border-ws-border p-3.5" style={{ background: 'var(--ws-bg-2)' }}>
-              <div style={{ fontSize: '10px', color: 'var(--ws-text-3)', letterSpacing: '0.5px', marginBottom: '4px' }}>NET WORTH (ALL)</div>
-              <div style={{ fontSize: '20px', fontWeight: 700, color: 'var(--ws-text)' }}>{fmtC(netWorthTotals.value)}</div>
-            </div>
-            <div className="border border-ws-border p-3.5">
-              <div style={{ fontSize: '10px', color: 'var(--ws-text-3)', letterSpacing: '0.5px', marginBottom: '4px' }}>PORTFOLIO TOTAL</div>
-              <div style={{ fontSize: '20px', fontWeight: 700, color: 'var(--ws-text)' }}>{fmtC(totals.investedValue + cashTotal)}</div>
-            </div>
+          <div onClick={() => setSelectedPortfolioId('all')} style={{ textAlign: 'center', marginBottom: '16px', cursor: 'pointer' }}>
+            <div style={{ fontSize: '10px', color: 'var(--ws-text-3)', letterSpacing: '1px', marginBottom: '4px' }}>NET WORTH</div>
+            <div style={{ fontSize: '32px', fontWeight: 700, color: selectedPortfolioId === 'all' ? 'var(--ws-accent)' : 'var(--ws-text)' }}>{fmtC(netWorthTotals.value)}</div>
+          </div>
+
+          <div className="portfolio-overview-grid" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(150px, 1fr))', marginBottom: '18px' }}>
+            {accountCards.map(card => {
+              const selected = card.kind === 'portfolio' && selectedPortfolioId === card.id;
+              return (
+                <div key={`${card.kind}-${card.id}`}
+                  onClick={() => card.kind === 'portfolio' ? setSelectedPortfolioId(card.id) : openIsaCard(card.id)}
+                  className="border p-3.5"
+                  style={{
+                    cursor: 'pointer', borderRadius: '10px',
+                    borderColor: selected ? 'var(--ws-accent)' : 'var(--ws-border)',
+                    background: selected ? 'var(--ws-accent-10)' : 'var(--ws-bg-2)',
+                  }}>
+                  <div style={{ fontSize: '20px', marginBottom: '8px' }}>{card.icon}</div>
+                  <div style={{ fontSize: '11px', fontWeight: 700, color: 'var(--ws-text)', marginBottom: '4px', textTransform: 'uppercase', letterSpacing: '0.3px' }}>{card.name}</div>
+                  <div style={{ fontSize: '16px', fontWeight: 700, color: 'var(--ws-text-2)' }}>{fmtC(card.value)}</div>
+                </div>
+              );
+            })}
+          </div>
+
+          <div className="portfolio-overview-grid" style={{ gridTemplateColumns: 'repeat(3, 1fr)' }}>
             <div className="border border-ws-border p-3.5">
               <div style={{ fontSize: '10px', color: 'var(--ws-text-3)', letterSpacing: '0.5px', marginBottom: '4px' }}>MARKET VALUE</div>
               <div style={{ fontSize: '20px', fontWeight: 700, color: 'var(--ws-text)' }}>{fmtC(totals.investedValue)}</div>
             </div>
-            <div className="border border-ws-border p-3.5">
-              <div style={{ fontSize: '10px', color: 'var(--ws-text-3)', letterSpacing: '0.5px', marginBottom: '4px' }}>CASH BALANCE</div>
-              <div style={{ fontSize: '20px', fontWeight: 700, color: 'var(--ws-text)' }}>{fmtC(mainCashTotal)}</div>
-            </div>
-            {isaSummary.hasEntries && (
-              <div className="border border-ws-border p-3.5">
-                <div style={{ fontSize: '10px', color: 'var(--ws-text-3)', letterSpacing: '0.5px', marginBottom: '4px' }}>ISA (+{fmtC(isaSummary.growth)})</div>
-                <div style={{ fontSize: '20px', fontWeight: 700, color: 'var(--ws-accent)' }}>{fmtC(isaSummary.value)}</div>
-              </div>
-            )}
             <div className="border border-ws-border p-3.5">
               <div style={{ fontSize: '10px', color: 'var(--ws-text-3)', letterSpacing: '0.5px', marginBottom: '4px' }}>COST BASIS</div>
               <div style={{ fontSize: '20px', fontWeight: 700, color: 'var(--ws-text)' }}>{fmtC(totals.cost)}</div>
@@ -689,7 +714,7 @@ export default function WorkspacePortfolio() {
 
       {(showModal || buyTicker) && <AddHoldingModal presetTicker={buyTicker} onClose={() => { setShowModal(false); setBuyTicker(null); }} onAdded={() => { setShowModal(false); setBuyTicker(null); load(); }} existingPies={existingPies} defaultCurrency={currency} portfolioId={selectedPortfolioId} portfolios={portfolios} />}
       {showImport && <ImportCsvModal onClose={() => setShowImport(false)} onImported={() => { setShowImport(false); load(); }} defaultCurrency={currency} portfolioId={selectedPortfolioId} portfolios={portfolios} />}
-      {showCashModal && <CashModal portfolioId={selectedPortfolioId} portfolios={portfolios} transactions={selectedPortfolioId === 'all' ? allCashTransactions : allCashTransactions.filter(t => t.portfolio_id === selectedPortfolioId)} onClose={() => setShowCashModal(false)} onAdded={() => { load(); }} />}
+      {showCashModal && <CashModal portfolioId={selectedPortfolioId} portfolios={portfolios} initialBucket={cashModalBucket} transactions={selectedPortfolioId === 'all' ? allCashTransactions : allCashTransactions.filter(t => t.portfolio_id === selectedPortfolioId)} onClose={() => setShowCashModal(false)} onAdded={() => { load(); }} />}
       {editLot && <AddHoldingModal onClose={() => setEditLot(null)} onAdded={() => { setEditLot(null); load(); }} existingPies={existingPies} defaultCurrency={currency} editLot={editLot} portfolioId={selectedPortfolioId} portfolios={portfolios} />}
       {sellPosition && <SellModal position={sellPosition} onClose={() => setSellPosition(null)} onSold={() => { setSellPosition(null); load(); }} portfolioId={selectedPortfolioId} />}
       {transferPie && <TransferPieModal pie={transferPie} sourcePortfolioId={selectedPortfolioId} portfolios={portfolios} onClose={() => setTransferPie(null)} onTransferred={() => { setTransferPie(null); loadPortfolios(); load(); }} />}
