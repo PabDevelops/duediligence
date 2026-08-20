@@ -402,56 +402,36 @@ export default function WorkspacePortfolio() {
       <div style={{ border: '1px solid var(--ws-border)', background: 'var(--ws-bg-1)', marginBottom: '20px', overflow: 'hidden' }}>
         <div style={{ padding: '18px 20px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '12px' }}>
           <div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-              <div style={{ fontSize: '20px', fontWeight: 700, color: 'var(--ws-text)' }}>Portfolio</div>
-              {isSignedIn && portfolios.length > 0 && (
-                <div style={{ display: 'flex', gap: '4px', marginLeft: '8px' }}>
-                  <button onClick={() => setSelectedPortfolioId('all')} style={{ padding: '4px 10px', borderRadius: '14px', border: 'none', cursor: 'pointer', fontSize: '12px', fontWeight: 600, background: selectedPortfolioId === 'all' ? 'var(--ws-accent)' : 'var(--ws-bg-2)', color: selectedPortfolioId === 'all' ? 'var(--ws-accent-text)' : 'var(--ws-text-2)' }}>All Portfolios</button>
-                  {portfolios.map(p => (
-                    <button key={p.id} onClick={() => setSelectedPortfolioId(p.id)} style={{ padding: '4px 10px', borderRadius: '14px', border: 'none', cursor: 'pointer', fontSize: '12px', fontWeight: 600, background: selectedPortfolioId === p.id ? 'var(--ws-accent)' : 'var(--ws-bg-2)', color: selectedPortfolioId === p.id ? 'var(--ws-accent-text)' : 'var(--ws-text-2)' }}>{p.name}</button>
-                  ))}
-                  {portfolios.length < 3 && <button onClick={() => setCreatingPortfolio(true)} style={{ padding: '4px 10px', borderRadius: '14px', border: '1px dashed var(--ws-border)', cursor: 'pointer', fontSize: '12px', fontWeight: 600, background: 'transparent', color: 'var(--ws-text-3)' }}>+ Create</button>}
-                </div>
-              )}
-            </div>
+            <div style={{ fontSize: '20px', fontWeight: 700, color: 'var(--ws-text)' }}>Portfolio</div>
             <div style={{ fontSize: '13px', color: 'var(--ws-text-2)' }}>Track your holdings and performance.</div>
-            {creatingPortfolio && (
-              <div style={{ display: 'flex', gap: '6px', marginTop: '8px' }}>
-                <input autoFocus value={newPortfolioName} onChange={e => setNewPortfolioName(e.target.value)} placeholder="Portfolio Name" className="ws-input" style={{ height: '28px', fontSize: '12px' }} />
-                <button onClick={createPortfolio} disabled={!newPortfolioName.trim()} className="ws-btn" style={{ height: '28px', padding: '0 10px', fontSize: '11px' }}>Save</button>
-                <button onClick={() => setCreatingPortfolio(false)} className="ws-btn-secondary" style={{ height: '28px', padding: '0 10px', fontSize: '11px' }}>Cancel</button>
-              </div>
-            )}
           </div>
           {isSignedIn && (
-            <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
-              <div className="flex border border-ws-border overflow-hidden shrink-0">
-                {Object.keys(CURRENCIES).map(c => (
-                  <button key={c} onClick={() => changeCurrency(c)}
-                    style={{
-                      height: '32px', padding: '0 10px', fontSize: '11px', fontWeight: 700, border: 'none', cursor: 'pointer',
-                      background: currency === c ? 'var(--ws-accent)' : 'var(--ws-bg-1)',
-                      color: currency === c ? 'var(--ws-bg-1)' : 'var(--ws-text-2)',
-                      flexShrink: 0,
-                    }}>
-                    {c}
-                  </button>
-                ))}
+            <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                <span style={{ fontSize: '11px', color: 'var(--ws-text-3)', fontWeight: 600 }}>Currency</span>
+                <div style={{ display: 'flex', borderRadius: '8px', overflow: 'hidden', border: '1px solid var(--ws-border)' }}>
+                  {Object.keys(CURRENCIES).map(c => (
+                    <button key={c} onClick={() => changeCurrency(c)}
+                      style={{
+                        height: '32px', padding: '0 12px', fontSize: '11px', fontWeight: 700, border: 'none', cursor: 'pointer',
+                        background: currency === c ? 'var(--ws-accent)' : 'var(--ws-bg-2)',
+                        color: currency === c ? 'var(--ws-accent-text)' : 'var(--ws-text-2)',
+                        flexShrink: 0,
+                      }}>
+                      {c}
+                    </button>
+                  ))}
+                </div>
               </div>
-              <button onClick={() => { setCashModalBucket('main'); setShowCashModal(true); }}
-                className="ws-btn-secondary"
-                style={{ height: '34px', padding: '0 14px' }}>
-                ⇄ Manage Cash
-              </button>
               <button onClick={() => setShowImport(true)}
                 className="ws-btn-secondary"
                 style={{ height: '34px', padding: '0 14px' }}>
                 Import CSV
               </button>
-              <button onClick={() => setShowModal(true)}
+              <button onClick={() => { setCashModalBucket('main'); setShowCashModal(true); }}
                 className="ws-btn"
-                style={{ height: '34px', padding: '0 16px' }}>
-                + Add holding
+                style={{ height: '38px', padding: '0 18px', fontSize: '13px' }}>
+                ⇄ Manage Cash
               </button>
             </div>
           )}
@@ -504,7 +484,38 @@ export default function WorkspacePortfolio() {
                 </div>
               );
             })}
+
+            {portfolios.length < 3 && (creatingPortfolio ? (
+              <div className="border border-ws-border p-3.5" style={{ borderRadius: '10px', borderStyle: 'dashed' }}>
+                <input autoFocus value={newPortfolioName} onChange={e => setNewPortfolioName(e.target.value)}
+                  onKeyDown={e => e.key === 'Enter' && createPortfolio()}
+                  placeholder="Account name" className="ws-input" style={{ width: '100%', height: '28px', fontSize: '12px', marginBottom: '8px' }} />
+                <div style={{ display: 'flex', gap: '6px' }}>
+                  <button onClick={createPortfolio} disabled={!newPortfolioName.trim()} className="ws-btn" style={{ height: '26px', padding: '0 8px', fontSize: '11px', flex: 1 }}>Save</button>
+                  <button onClick={() => { setCreatingPortfolio(false); setNewPortfolioName(''); }} className="ws-btn-secondary" style={{ height: '26px', padding: '0 8px', fontSize: '11px' }}>✕</button>
+                </div>
+              </div>
+            ) : (
+              <button onClick={() => setCreatingPortfolio(true)}
+                className="border p-3.5"
+                style={{
+                  cursor: 'pointer', borderRadius: '10px', borderStyle: 'dashed', borderColor: 'var(--ws-border)',
+                  background: 'transparent', color: 'var(--ws-text-3)',
+                  display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '4px',
+                }}>
+                <div style={{ fontSize: '22px', lineHeight: 1 }}>+</div>
+                <div style={{ fontSize: '11px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.3px' }}>New account</div>
+              </button>
+            ))}
           </div>
+
+          {selectedPortfolioId !== 'all' && (
+            <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: '10px' }}>
+              <button onClick={() => setShowModal(true)} className="ws-btn" style={{ height: '32px', padding: '0 14px', fontSize: '12px' }}>
+                + Add holding to {portfolios.find(p => p.id === selectedPortfolioId)?.name}
+              </button>
+            </div>
+          )}
 
           <div className="portfolio-overview-grid" style={{ gridTemplateColumns: 'repeat(3, 1fr)' }}>
             <div className="border border-ws-border p-3.5">
