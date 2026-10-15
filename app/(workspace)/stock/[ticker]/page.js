@@ -1032,7 +1032,7 @@ function StockPageContent({ params }) {
           <div className="stock-overview-grid">
 
             {/* Left column: vote + numbers + chart */}
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '16px', minWidth: 0 }}>
 
               {/* Quality Score and Analyst Consensus side by side instead of each stretched to
                   the full container width. */}
