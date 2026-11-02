@@ -104,15 +104,15 @@ export default function NewDashboardPage() {
   const [showSuggestions, setShowSuggestions] = useState(false);
   const { suggestions } = useTickerSearch(query, { limit: 8 });
 
-  const goToTicker = (ticker) => {
+  const goToTicker = (ticker, isEtf = false) => {
     setQuery('');
     setShowSuggestions(false);
-    router.push(`/stock/${ticker.trim().toUpperCase()}`);
+    router.push(`${isEtf ? '/etfs' : '/stock'}/${ticker.trim().toUpperCase()}`);
   };
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    if (suggestions.length > 0) { goToTicker(suggestions[0].ticker); return; }
+    if (suggestions.length > 0) { goToTicker(suggestions[0].ticker, suggestions[0].isEtf); return; }
     if (query.trim()) goToTicker(query);
   };
 
@@ -232,7 +232,7 @@ export default function NewDashboardPage() {
               boxShadow: '0 12px 30px rgba(28,27,24,0.12)',
             }}>
               {suggestions.map(s => (
-                <button key={s.ticker} onClick={() => goToTicker(s.ticker)} type="button" style={{
+                <button key={s.ticker} onClick={() => goToTicker(s.ticker, s.isEtf)} type="button" style={{
                   display: 'flex', alignItems: 'center', gap: '10px', width: '100%', padding: '10px 14px',
                   border: 'none', borderBottom: `1px solid ${C.borderSoft}`, background: 'transparent',
                   cursor: 'pointer', textAlign: 'left', fontFamily: 'inherit',

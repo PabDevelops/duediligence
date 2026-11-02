@@ -11,6 +11,7 @@ import { NEW_COLORS as C } from './theme';
 const NAV_ITEMS = [
   { key: 'inicio', label: 'Inicio', href: '/home' },
   { key: 'seguidos', label: 'Seguidos', href: '/watchlist' },
+  { key: 'etfs', label: 'ETFs', href: '/etfs' },
   { key: 'calendario', label: 'Calendario', href: '/calendar' },
   { key: 'aprende', label: 'Aprende', href: '/aprende' },
 ];
