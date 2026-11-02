@@ -191,7 +191,7 @@ export default function NewDashboardPage() {
         <div>
           <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', marginBottom: '14px' }}>
             <h2 style={{ margin: 0, fontSize: '18px', fontWeight: 800 }}>Lo que sigues</h2>
-            <Link href="/watchlist" style={{ fontSize: '13px', color: C.text2, textDecoration: 'none', fontWeight: 700 }}>Ver todo →</Link>
+            <Link href="/new/watchlist" style={{ fontSize: '13px', color: C.text2, textDecoration: 'none', fontWeight: 700 }}>Ver todo →</Link>
           </div>
           {watchlist === null ? (
             <div style={{ fontSize: '13px', color: C.text3 }}>Cargando…</div>

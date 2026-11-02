@@ -4,11 +4,11 @@ import { useUser } from '../AuthProvider';
 import { NEW_COLORS as C } from './theme';
 
 // Shared top nav for the /new redesign — ported from the Design canvas mockup's repeated
-// header block. "Seguidos" and "Calendario" point at the existing real (dark-theme) pages
-// for now since their /new equivalents don't exist yet; repoint once they're built.
+// header block. "Calendario" still points at the existing real (dark-theme) page for now
+// since its /new equivalent doesn't exist yet; repoint once it's built.
 const NAV_ITEMS = [
   { key: 'inicio', label: 'Inicio', href: '/new' },
-  { key: 'seguidos', label: 'Seguidos', href: '/watchlist' },
+  { key: 'seguidos', label: 'Seguidos', href: '/new/watchlist' },
   { key: 'calendario', label: 'Calendario', href: '/calendar' },
   { key: 'aprende', label: 'Aprende', href: '/blog' },
 ];
