@@ -6,8 +6,9 @@ import StockLogo from '../../../components/workspace/StockLogo';
 import StockChart from '../../../components/StockChart';
 import { useUser } from '../../../components/AuthProvider';
 import { useStockData } from '../../../../lib/hooks/useStockData';
+import { useEntryPriceProjection } from '../../../../lib/hooks/useEntryPriceProjection';
 import { isInGuestWatchlist, addToGuestWatchlist, removeFromGuestWatchlist } from '../../../../lib/guestWatchlist';
-import { computeEasyMode } from '../../../../lib/stockScoring';
+import { computeEasyMode, computeFundamentalGrowth } from '../../../../lib/stockScoring';
 import { stockVerdict } from '../../../../lib/verdict';
 import { formatCurrency } from '../../../../lib/formatters';
 import { NEW_COLORS as C, VERDICT_BADGE } from '../../../components/new/theme';
@@ -76,6 +77,16 @@ function NewStockPageContent({ params }) {
       await fetch('/api/watchlist', { method: 'DELETE', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ ticker }) });
     }
   };
+
+  // Phil Town-style sticker price — reuses the same Monte Carlo projector /start and the
+  // dark-theme stock page already use, fixed to a 5-year horizon. Called here, ahead of the
+  // loading/error early returns below, since it's a hook — guarded with `data?.` since `data`
+  // is still null on the first render(s).
+  const entryProjection = useEntryPriceProjection({
+    ticker, price: data?.currentPrice ?? null, beta: data?.beta ?? null,
+    riskFreeRate: data?.riskFreeRate, analystTarget: data?.analystTarget,
+    fundamentalGrowth: data ? computeFundamentalGrowth(data) : null,
+  });
 
   if (loading) {
     return <Shell><div style={{ fontSize: '13px', color: C.text3 }}>Cargando…</div></Shell>;
@@ -158,9 +169,54 @@ function NewStockPageContent({ params }) {
         </div>
       )}
 
+      {entryProjection.maxEntryPrice != null && price != null && (
+        <div style={{ background: C.surface, border: `1px solid ${C.border}`, borderRadius: '20px', padding: '22px 26px', boxSizing: 'border-box' }}>
+          <div style={{ fontSize: '11px', fontWeight: 700, color: C.text3, letterSpacing: '0.02em', marginBottom: '14px' }}>
+            A 5 AÑOS VISTA (proyección, no una promesa)
+          </div>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: '18px' }}>
+            <div>
+              <div style={{ fontSize: '12px', color: C.text2, marginBottom: '4px' }}>Precio máximo de entrada</div>
+              <div style={{ fontSize: '22px', fontWeight: 800 }}>{formatCurrency(entryProjection.maxEntryPrice, sym)}</div>
+              <div style={{ fontSize: '11px', color: C.text3, marginTop: '2px' }}>para exigir un 15%/año</div>
+            </div>
+            <div>
+              <div style={{ fontSize: '12px', color: C.text2, marginBottom: '4px' }}>CAGR esperado</div>
+              <div style={{ fontSize: '22px', fontWeight: 800, color: entryProjection.cagr5y >= 0 ? C.green : C.red }}>
+                {entryProjection.cagr5y >= 0 ? '+' : ''}{(entryProjection.cagr5y * 100).toFixed(1)}%
+              </div>
+              <div style={{ fontSize: '11px', color: C.text3, marginTop: '2px' }}>al precio actual</div>
+            </div>
+          </div>
+        </div>
+      )}
+
       <div style={{ background: C.surface, border: `1px solid ${C.border}`, borderRadius: '20px', boxSizing: 'border-box', overflow: 'hidden', ...CHART_THEME_VARS }}>
         <StockChart ticker={ticker} currency={data.currency} height={280} />
       </div>
+
+      {(() => {
+        const keyStats = [
+          { label: 'P/E', value: data.pe != null ? data.pe.toFixed(1) : null },
+          { label: 'Capitalización', value: data.marketCap != null ? formatCurrency(data.marketCap, sym) : null },
+          { label: 'Ingresos (interanual)', value: data.revGrowth != null ? `${data.revGrowth > 0 ? '+' : ''}${data.revGrowth.toFixed(1)}%` : null },
+          { label: 'ROIC', value: data.roic != null ? `${data.roic.toFixed(1)}%` : null },
+        ].filter(s => s.value != null);
+        if (keyStats.length === 0) return null;
+        return (
+          <div style={{ background: C.surface, border: `1px solid ${C.border}`, borderRadius: '20px', padding: '22px 26px', boxSizing: 'border-box' }}>
+            <div style={{ fontSize: '11px', fontWeight: 700, color: C.text3, letterSpacing: '0.02em', marginBottom: '14px' }}>LO ESENCIAL</div>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(120px, 1fr))', gap: '18px' }}>
+              {keyStats.map(s => (
+                <div key={s.label}>
+                  <div style={{ fontSize: '12px', color: C.text2, marginBottom: '4px' }}>{s.label}</div>
+                  <div style={{ fontSize: '18px', fontWeight: 800 }}>{s.value}</div>
+                </div>
+              ))}
+            </div>
+          </div>
+        );
+      })()}
 
       <Link href={`/new/stock/${ticker}/numbers`} style={{
         background: C.surface, border: `1px solid ${C.border}`, borderRadius: '20px', padding: '22px 26px', boxSizing: 'border-box',
