@@ -15,6 +15,8 @@ const CHART_RANGES = [
   { value: '1d', label: '1D' },
   { value: '1w', label: '1S' },
   { value: '1m', label: '1M' },
+  { value: '3m', label: '3M' },
+  { value: '1y', label: '1A' },
   { value: 'max', label: 'Todo' },
 ];
 const CHART_THEME_VARS = {
