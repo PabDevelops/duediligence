@@ -2,6 +2,7 @@
 import { useState, useEffect, useMemo, useCallback } from 'react';
 import Link from 'next/link';
 import NewNav from '../../components/new/NewNav';
+import StockLogo from '../../components/workspace/StockLogo';
 import { useUser } from '../../components/AuthProvider';
 import { getGuestWatchlist, addToGuestWatchlist, removeFromGuestWatchlist } from '../../../lib/guestWatchlist';
 import { NEW_COLORS as C } from '../../components/new/theme';
@@ -10,9 +11,6 @@ const WEEKDAYS = ['DOM', 'LUN', 'MAR', 'MIÉ', 'JUE', 'VIE', 'SÁB'];
 const MONTHS = ['ENE', 'FEB', 'MAR', 'ABR', 'MAY', 'JUN', 'JUL', 'AGO', 'SEP', 'OCT', 'NOV', 'DIC'];
 const RANGE_DAYS = 13;
 const ITEMS_PER_DAY = 5;
-
-const LOGO_BG = ['#DCE7D8', '#F2E6D6', '#F1DAD3', '#DCE3EE', '#E6DCEE', '#E6E2D3'];
-const logoBgFor = (ticker) => LOGO_BG[[...ticker].reduce((a, c) => a + c.charCodeAt(0), 0) % LOGO_BG.length];
 
 const timingLabel = (hour) => hour === 'bmo' ? 'Antes de abrir' : hour === 'amc' ? 'Después del cierre' : 'Hora sin confirmar';
 
@@ -148,9 +146,7 @@ export default function NewCalendarPage() {
                     return (
                       <div key={item.ticker} style={{ display: 'flex', alignItems: 'center', gap: '14px', padding: '16px 22px', borderBottom: `1px solid ${C.borderSoft}` }}>
                         <Link href={`/new/stock/${item.ticker}`} style={{ display: 'flex', alignItems: 'center', gap: '14px', flex: 1, minWidth: 0, textDecoration: 'none', color: 'inherit' }}>
-                          <div aria-hidden="true" style={{ width: '36px', height: '36px', borderRadius: '10px', background: logoBgFor(item.ticker), display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '13px', fontWeight: 800, flexShrink: 0 }}>
-                            {item.ticker.slice(0, 1)}
-                          </div>
+                          <StockLogo ticker={item.ticker} name={item.name} size={36} />
                           <div style={{ minWidth: 0 }}>
                             <div style={{ fontSize: '14px', fontWeight: 700, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{item.name || item.ticker}</div>
                             <div style={{ fontSize: '12px', color: C.text2 }}>{item.ticker}</div>
