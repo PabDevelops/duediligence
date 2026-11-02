@@ -19,6 +19,13 @@ const hasFundamentals = (d) => d.revVal != null || d.niVal != null || d.marketCa
 // StockChart reads its colors from --ws-* CSS custom properties (so it can follow whichever
 // theme it's rendered inside) instead of hardcoding a palette — this wrapper feeds it the
 // cream/lime palette so the real chart (with real data) drops in without forking it.
+const CHART_RANGES = [
+  { value: '1m', label: '1M' },
+  { value: '3m', label: '3M' },
+  { value: '1y', label: '1A' },
+  { value: 'max', label: 'Todo' },
+];
+
 const CHART_THEME_VARS = {
   '--ws-bg-1': C.surface,
   '--ws-bg-2': C.bg,
@@ -54,6 +61,7 @@ function NewStockPageContent({ params }) {
   const { data, error, loading } = useStockData(ticker);
 
   const [following, setFollowing] = useState(false);
+  const [chartRange, setChartRange] = useState('1y');
   useEffect(() => {
     if (!isLoaded) return;
     if (!isSignedIn) { setFollowing(isInGuestWatchlist(ticker)); return; }
@@ -192,7 +200,23 @@ function NewStockPageContent({ params }) {
       )}
 
       <div style={{ background: C.surface, border: `1px solid ${C.border}`, borderRadius: '20px', boxSizing: 'border-box', overflow: 'hidden', ...CHART_THEME_VARS }}>
-        <StockChart ticker={ticker} currency={data.currency} height={280} />
+        {/* The chart's own built-in range/mode selector (1D-MAX + LINE/CANDLES, 9 buttons in
+            one unwrapped row) overflows on a phone-width screen — verified: the CANDLES
+            button gets squeezed off entirely below ~400px. isMultichart suppresses that
+            internal row; this one is a handful of options that always fit on one line. */}
+        <div style={{ display: 'flex', gap: '6px', padding: '16px 16px 0' }}>
+          {CHART_RANGES.map(r => (
+            <button key={r.value} type="button" onClick={() => setChartRange(r.value)} style={{
+              height: '28px', padding: '0 12px', borderRadius: '20px', border: 'none', cursor: 'pointer',
+              fontSize: '11px', fontWeight: 700, fontFamily: 'inherit',
+              background: chartRange === r.value ? C.ink : C.bg,
+              color: chartRange === r.value ? '#FFFFFF' : C.text2,
+            }}>
+              {r.label}
+            </button>
+          ))}
+        </div>
+        <StockChart ticker={ticker} currency={data.currency} height={280} range={chartRange} isMultichart />
       </div>
 
       {(() => {
