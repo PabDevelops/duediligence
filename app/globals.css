@@ -1094,3 +1094,36 @@ tr:hover td.sticky-col {
   100% { transform: translateX(180px) rotate(20deg); }
 }
 
+/* --- /new redesign (beginner-friendly, cream/lime theme) — responsive overrides --- */
+
+/* NewNav (app/components/new/NewNav.js): logo / nav pills / avatar in one row on desktop.
+   Nested flex-wrap (the row wrapping AND the pill list wrapping at once) produced an
+   unpredictable layout on narrow screens — the avatar ended up orphaned on its own line
+   below a half-wrapped pill list. nowrap keeps it a single row above the breakpoint; below
+   it, the pill list drops to its own full-width row instead and scrolls horizontally rather
+   than wrapping into a second stack of pills. */
+.new-nav-row { flex-wrap: nowrap; }
+.new-nav-links { flex-wrap: nowrap; }
+@media (max-width: 680px) {
+  .new-nav-row { flex-wrap: wrap; }
+  .new-nav-links {
+    order: 3;
+    width: 100%;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+    padding-bottom: 2px;
+  }
+  .new-nav-links::-webkit-scrollbar { display: none; }
+}
+
+/* Dashboard's watchlist-preview and "Aprende algo nuevo" card grids — 3 columns is too
+   cramped for card content (logo, name, price, verdict badge) once each column drops much
+   below ~220px. */
+@media (max-width: 900px) {
+  .new-card-grid-3 { grid-template-columns: repeat(2, minmax(0, 1fr)) !important; }
+}
+@media (max-width: 580px) {
+  .new-card-grid-3 { grid-template-columns: 1fr !important; }
+}
+

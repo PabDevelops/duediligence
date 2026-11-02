@@ -200,7 +200,7 @@ export default function NewDashboardPage() {
               Aún no sigues ninguna empresa — prueba a comprobar un consejo arriba.
             </div>
           ) : (
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, minmax(0, 1fr))', gap: '14px' }}>
+            <div className="new-card-grid-3" style={{ display: 'grid', gridTemplateColumns: 'repeat(3, minmax(0, 1fr))', gap: '14px' }}>
               {watchlist.map(item => <WatchlistCard key={item.ticker} item={item} />)}
             </div>
           )}
@@ -238,7 +238,7 @@ export default function NewDashboardPage() {
         {learnPosts && learnPosts.length > 0 && (
           <div>
             <h2 style={{ margin: '0 0 14px', fontSize: '18px', fontWeight: 800 }}>Aprende algo nuevo</h2>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, minmax(0, 1fr))', gap: '14px' }}>
+            <div className="new-card-grid-3" style={{ display: 'grid', gridTemplateColumns: 'repeat(3, minmax(0, 1fr))', gap: '14px' }}>
               {learnPosts.map(post => (
                 <Link key={post.slug} href={`/blog/${post.slug}`} style={{
                   textDecoration: 'none', color: 'inherit', background: C.surface, border: `1px solid ${C.border}`,

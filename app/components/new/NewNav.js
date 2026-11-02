@@ -16,20 +16,21 @@ export default function NewNav({ active }) {
   const { isSignedIn } = useUser();
 
   return (
-    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '16px' }}>
-      <Link href="/new" style={{ display: 'flex', alignItems: 'center', gap: '10px', textDecoration: 'none' }}>
+    <div className="new-nav-row" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '16px' }}>
+      <Link href="/new" style={{ display: 'flex', alignItems: 'center', gap: '10px', textDecoration: 'none', flexShrink: 0 }}>
         <div aria-hidden="true" style={{ width: '32px', height: '32px', borderRadius: '9px', background: C.lime, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, padding: '5px', boxSizing: 'border-box' }}>
           <img src="/bulltrace-logos/bull-icon-black.png" alt="" style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
         </div>
         <span style={{ fontSize: '18px', fontWeight: 800, letterSpacing: '-0.02em', color: C.ink }}>Bulltrace</span>
       </Link>
 
-      <nav aria-label="Principal" style={{ display: 'flex', alignItems: 'center', gap: '4px', flexWrap: 'wrap' }}>
+      <nav aria-label="Principal" className="new-nav-links" style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
         {NAV_ITEMS.map(item => (
           <Link key={item.key} href={item.href} style={{
             padding: '7px 14px', borderRadius: '20px', fontSize: '13px', fontWeight: 700, textDecoration: 'none',
             background: active === item.key ? C.lime : 'transparent',
             color: active === item.key ? C.ink : C.text2,
+            whiteSpace: 'nowrap', flexShrink: 0,
           }}>
             {item.label}
           </Link>
