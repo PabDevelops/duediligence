@@ -42,10 +42,8 @@ function domainRedirect(request, hasVisitedBefore) {
   // entirely and goes straight into the app. Cookie-less visitors (first real
   // touch, or stateless crawlers/SEO bots) still see the landing normally, so organic
   // acquisition and indexing are unaffected.
-  // /new (the beginner-friendly redesign) is the default app experience now; the old
-  // dense terminal is untouched and still fully reachable at /home for anyone who wants it.
   if (pathname === '/' && hasVisitedBefore) {
-    return NextResponse.redirect(new URL('/new', request.url), 307);
+    return NextResponse.redirect(new URL('/home', request.url), 307);
   }
 
   return null;

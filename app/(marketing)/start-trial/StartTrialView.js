@@ -78,7 +78,7 @@ export default function StartTrialView({ dict }) {
           <button
             onClick={() => {
               if (isPro) {
-                router.push('/new');
+                router.push('/home');
               } else {
                 checkout(annual ? ANNUAL_ID : MONTHLY_ID);
               }

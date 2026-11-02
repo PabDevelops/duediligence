@@ -8,7 +8,7 @@ import { NEW_COLORS as C } from '../../../components/new/theme';
 const dateLabel = (d) => new Date(d).toLocaleDateString('es-ES', { day: 'numeric', month: 'long', year: 'numeric' });
 
 // StockChart reads its colors from --ws-* CSS custom properties — same wrapper used on
-// /new/stock/[ticker] to drop the real chart into the cream/lime palette without forking it.
+// /stock/[ticker] to drop the real chart into the cream/lime palette without forking it.
 const CHART_THEME_VARS = {
   '--ws-bg-1': C.surface, '--ws-bg-2': C.bg, '--ws-accent': C.lime,
   '--ws-text-3': C.text3, '--ws-border': C.border, '--ws-red': C.red,
@@ -88,7 +88,7 @@ function NewAprendePostContent({ params }) {
 
   return (
     <Shell>
-      <Link href="/new/aprende" style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', fontSize: '13px', fontWeight: 700, color: C.text2, textDecoration: 'none', width: 'fit-content' }}>
+      <Link href="/aprende" style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', fontSize: '13px', fontWeight: 700, color: C.text2, textDecoration: 'none', width: 'fit-content' }}>
         <svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg>
         Volver a Aprende
       </Link>
@@ -117,7 +117,7 @@ function NewAprendePostContent({ params }) {
       {post.tickers?.length > 0 && (
         <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
           {post.tickers.map(t => (
-            <Link key={t} href={`/new/stock/${t}`} style={{
+            <Link key={t} href={`/stock/${t}`} style={{
               fontSize: '12px', fontWeight: 700, color: C.ink, textDecoration: 'none',
               background: C.surface, border: `1px solid ${C.border}`, borderRadius: '20px', padding: '6px 14px',
             }}>

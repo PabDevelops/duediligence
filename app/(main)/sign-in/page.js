@@ -41,7 +41,7 @@ export default function NewSignInPage() {
     const { error } = await supabase.auth.signInWithPassword({ email, password });
     setLoading(false);
     if (error) { setError(error.message); return; }
-    router.push('/new');
+    router.push('/home');
     router.refresh();
   };
 
@@ -49,13 +49,13 @@ export default function NewSignInPage() {
     const supabase = createClient();
     await supabase.auth.signInWithOAuth({
       provider: 'google',
-      options: { redirectTo: `${window.location.origin}/auth/callback?next=/new` },
+      options: { redirectTo: `${window.location.origin}/auth/callback?next=/home` },
     });
   };
 
   return (
     <div style={{ width: '100%', minHeight: '100vh', boxSizing: 'border-box', background: C.bg, color: C.ink, fontFamily: "'Plus Jakarta Sans', system-ui, sans-serif", display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '24px' }}>
-      <Link href="/new" style={{ display: 'flex', alignItems: 'center', gap: '10px', textDecoration: 'none', marginBottom: '28px' }}>
+      <Link href="/home" style={{ display: 'flex', alignItems: 'center', gap: '10px', textDecoration: 'none', marginBottom: '28px' }}>
         <div aria-hidden="true" style={{ width: '32px', height: '32px', borderRadius: '9px', background: C.lime, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '5px', boxSizing: 'border-box' }}>
           <img src="/bulltrace-logos/bull-icon-black.png" alt="" style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
         </div>
@@ -114,7 +114,7 @@ export default function NewSignInPage() {
         </form>
 
         <div style={{ textAlign: 'center', marginTop: '22px', fontSize: '13px', color: C.text2 }}>
-          ¿No tienes cuenta? <Link href="/new/sign-up" style={{ color: C.ink, fontWeight: 700, textDecoration: 'none' }}>Regístrate</Link>
+          ¿No tienes cuenta? <Link href="/sign-up" style={{ color: C.ink, fontWeight: 700, textDecoration: 'none' }}>Regístrate</Link>
         </div>
       </div>
     </div>

@@ -9,10 +9,10 @@ import { NEW_COLORS as C } from './theme';
 // animated burger drives a slide-down menu instead — see the .new-nav-burger/.new-nav-mobile-menu
 // rules in app/globals.css.
 const NAV_ITEMS = [
-  { key: 'inicio', label: 'Inicio', href: '/new' },
-  { key: 'seguidos', label: 'Seguidos', href: '/new/watchlist' },
-  { key: 'calendario', label: 'Calendario', href: '/new/calendar' },
-  { key: 'aprende', label: 'Aprende', href: '/new/aprende' },
+  { key: 'inicio', label: 'Inicio', href: '/home' },
+  { key: 'seguidos', label: 'Seguidos', href: '/watchlist' },
+  { key: 'calendario', label: 'Calendario', href: '/calendar' },
+  { key: 'aprende', label: 'Aprende', href: '/aprende' },
 ];
 
 export default function NewNav({ active }) {
@@ -22,7 +22,7 @@ export default function NewNav({ active }) {
   return (
     <div className="new-nav-wrap">
       <div className="new-nav-row" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '16px' }}>
-        <Link href="/new" style={{ display: 'flex', alignItems: 'center', gap: '10px', textDecoration: 'none', flexShrink: 0 }}>
+        <Link href="/home" style={{ display: 'flex', alignItems: 'center', gap: '10px', textDecoration: 'none', flexShrink: 0 }}>
           <div aria-hidden="true" style={{ width: '32px', height: '32px', borderRadius: '9px', background: C.lime, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, padding: '5px', boxSizing: 'border-box' }}>
             <img src="/bulltrace-logos/bull-icon-black.png" alt="" style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
           </div>
@@ -43,7 +43,7 @@ export default function NewNav({ active }) {
         </nav>
 
         <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexShrink: 0 }}>
-          <Link href={isSignedIn ? '/new/profile' : '/new/sign-in'} aria-label={isSignedIn ? 'Tu perfil' : 'Iniciar sesión'}
+          <Link href={isSignedIn ? '/profile' : '/sign-in'} aria-label={isSignedIn ? 'Tu perfil' : 'Iniciar sesión'}
             style={{ width: '36px', height: '36px', borderRadius: '50%', background: C.avatarBg, border: `1px solid ${C.border}`, flexShrink: 0 }} />
 
           <button

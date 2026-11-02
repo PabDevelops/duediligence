@@ -75,7 +75,7 @@ export default function HomeView({ dict }) {
   const pricing = dict.pricing;
 
   useEffect(() => {
-    if (isLoaded && isSignedIn) router.replace('/new');
+    if (isLoaded && isSignedIn) router.replace('/home');
   }, [isLoaded, isSignedIn, router]);
 
   const closeMenu = () => setMenuOpen(false);
@@ -102,7 +102,7 @@ export default function HomeView({ dict }) {
 
           <div className="desktop-only" style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
             <a href="/sign-in" style={navLink}>{t.signIn}</a>
-            <PrimaryButton href="/new" style={{ height: '38px', padding: '0 16px', borderRadius: '0', boxShadow: 'none' }}>{t.cta}</PrimaryButton>
+            <PrimaryButton href="/home" style={{ height: '38px', padding: '0 16px', borderRadius: '0', boxShadow: 'none' }}>{t.cta}</PrimaryButton>
           </div>
 
           <button
@@ -142,7 +142,7 @@ export default function HomeView({ dict }) {
             <a href="/faq" onClick={closeMenu} style={mobileNavLink}>{t.nav.faq}</a>
             <a href="/sign-in" onClick={closeMenu} style={mobileNavLink}>{t.signIn}</a>
             <div style={{ height: '1px', background: 'var(--border)', margin: '8px 0 16px' }} />
-            <PrimaryButton href="/new" onClick={closeMenu} style={{ width: '100%' }}>{t.cta}</PrimaryButton>
+            <PrimaryButton href="/home" onClick={closeMenu} style={{ width: '100%' }}>{t.cta}</PrimaryButton>
           </div>
         </div>
       </header>
@@ -170,7 +170,7 @@ export default function HomeView({ dict }) {
               {t.hero.subtitle}
             </p>
             <div style={{ display: 'flex', alignItems: 'center', gap: '18px', marginTop: '30px', flexWrap: 'wrap' }}>
-              <PrimaryButton href="/new" style={{ height: '50px', padding: '0 28px', fontSize: '15px' }}>{t.cta}</PrimaryButton>
+              <PrimaryButton href="/home" style={{ height: '50px', padding: '0 28px', fontSize: '15px' }}>{t.cta}</PrimaryButton>
               <a href="/pricing" style={{ fontSize: '14px', fontWeight: 600, color: 'var(--text-2)', borderBottom: '1px solid var(--border-2)', paddingBottom: '2px' }}>{t.pricingLink}</a>
             </div>
           </div>
@@ -271,7 +271,7 @@ export default function HomeView({ dict }) {
         <h2 style={{ fontSize: 'clamp(26px, 3.4vw, 40px)', fontWeight: 800, letterSpacing: '-0.02em', color: 'var(--text)', maxWidth: '26ch', margin: '0 auto' }}>{t.finalCta.title}</h2>
         <p style={{ fontSize: '15px', color: 'var(--text-2)', marginTop: '14px' }}>{t.finalCta.subtitle}</p>
         <div style={{ marginTop: '28px' }}>
-          <PrimaryButton href="/new" style={{ height: '50px', padding: '0 28px', fontSize: '15px' }}>{t.cta}</PrimaryButton>
+          <PrimaryButton href="/home" style={{ height: '50px', padding: '0 28px', fontSize: '15px' }}>{t.cta}</PrimaryButton>
         </div>
       </section>
 

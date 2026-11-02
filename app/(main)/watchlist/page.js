@@ -23,7 +23,7 @@ function WatchlistRow({ item, onRemove }) {
 
   return (
     <div style={{ display: 'flex', alignItems: 'center', gap: '14px', padding: '18px 24px', borderBottom: `1px solid ${C.borderSoft}` }}>
-      <Link href={`/new/stock/${item.ticker}`} style={{ display: 'flex', alignItems: 'center', gap: '14px', flex: 1, minWidth: 0, textDecoration: 'none', color: 'inherit' }}>
+      <Link href={`/stock/${item.ticker}`} style={{ display: 'flex', alignItems: 'center', gap: '14px', flex: 1, minWidth: 0, textDecoration: 'none', color: 'inherit' }}>
         <StockLogo ticker={item.ticker} name={item.name} size={38} />
         <div style={{ minWidth: 0, flex: '1 1 auto' }}>
           <div style={{ fontSize: '14px', fontWeight: 700, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{item.name || item.ticker}</div>
@@ -142,7 +142,7 @@ export default function NewWatchlistPage() {
 
         <NewNav active="seguidos" />
 
-        <Link href="/new" style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', fontSize: '13px', fontWeight: 700, color: C.text2, textDecoration: 'none', width: 'fit-content' }}>
+        <Link href="/home" style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', fontSize: '13px', fontWeight: 700, color: C.text2, textDecoration: 'none', width: 'fit-content' }}>
           <svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg>
           Volver
         </Link>

@@ -63,7 +63,7 @@ export default function NewAprendePage() {
         ) : (
           <div className="new-card-grid-3" style={{ display: 'grid', gridTemplateColumns: 'repeat(3, minmax(0, 1fr))', gap: '16px' }}>
             {visible.map(post => (
-              <Link key={post.slug} href={`/new/aprende/${post.slug}`} style={{
+              <Link key={post.slug} href={`/aprende/${post.slug}`} style={{
                 textDecoration: 'none', color: 'inherit', background: C.surface, border: `1px solid ${C.border}`,
                 borderRadius: '16px', padding: '22px', display: 'flex', flexDirection: 'column', gap: '10px', boxSizing: 'border-box',
               }}>

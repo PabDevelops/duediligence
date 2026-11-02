@@ -35,7 +35,7 @@ export default function NewProfilePage() {
 
   useEffect(() => {
     if (!isLoaded) return;
-    if (!isSignedIn) { router.push('/new/sign-in'); return; }
+    if (!isSignedIn) { router.push('/sign-in'); return; }
 
     setDisplayName(user.user_metadata?.full_name || localStorage.getItem('traq_user_fullname') || '');
 
@@ -73,7 +73,7 @@ export default function NewProfilePage() {
 
   const signOut = async () => {
     await supabase.auth.signOut();
-    router.push('/new');
+    router.push('/home');
     router.refresh();
   };
 

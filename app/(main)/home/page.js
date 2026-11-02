@@ -2,15 +2,15 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import NewNav from '../components/new/NewNav';
-import StockLogo from '../components/workspace/StockLogo';
-import { useUser } from '../components/AuthProvider';
-import { useTickerSearch } from '../../lib/hooks/useTickerSearch';
-import { getGuestWatchlist } from '../../lib/guestWatchlist';
-import { computeEasyMode } from '../../lib/stockScoring';
-import { stockVerdict } from '../../lib/verdict';
-import { formatCurrency } from '../../lib/formatters';
-import { NEW_COLORS as C, VERDICT_BADGE } from '../components/new/theme';
+import NewNav from '../../components/new/NewNav';
+import StockLogo from '../../components/workspace/StockLogo';
+import { useUser } from '../../components/AuthProvider';
+import { useTickerSearch } from '../../../lib/hooks/useTickerSearch';
+import { getGuestWatchlist } from '../../../lib/guestWatchlist';
+import { computeEasyMode } from '../../../lib/stockScoring';
+import { stockVerdict } from '../../../lib/verdict';
+import { formatCurrency } from '../../../lib/formatters';
+import { NEW_COLORS as C, VERDICT_BADGE } from '../../components/new/theme';
 
 const LEARN_FALLBACK_ICON = (
   <svg aria-hidden="true" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke={C.ink} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
@@ -33,7 +33,7 @@ const hasFundamentals = (d) => d.revVal != null || d.niVal != null || d.marketCa
 const MONTHS_SHORT = ['ene', 'feb', 'mar', 'abr', 'may', 'jun', 'jul', 'ago', 'sep', 'oct', 'nov', 'dic'];
 const toDateStr = (d) => d.toISOString().slice(0, 10);
 
-// Same short labels used on /new/calendar — "Antes de abrir"/"Después del cierre" is too
+// Same short labels used on /calendar — "Antes de abrir"/"Después del cierre" is too
 // long for a one-line preview row at this width.
 const timingLabelShort = (hour) => hour === 'bmo' ? 'Apertura' : hour === 'amc' ? 'Cierre' : 'Sin confirmar';
 
@@ -64,7 +64,7 @@ function WatchlistCard({ item }) {
   const changeColor = item.priceChangePct == null ? C.text2 : item.priceChangePct >= 0 ? C.green : C.red;
 
   return (
-    <Link href={`/new/stock/${item.ticker}`} style={{
+    <Link href={`/stock/${item.ticker}`} style={{
       background: C.surface, border: `1px solid ${C.border}`, borderRadius: '16px', padding: '18px',
       display: 'flex', flexDirection: 'column', gap: '12px', boxSizing: 'border-box', minWidth: 0,
       textDecoration: 'none', color: 'inherit',
@@ -107,7 +107,7 @@ export default function NewDashboardPage() {
   const goToTicker = (ticker) => {
     setQuery('');
     setShowSuggestions(false);
-    router.push(`/new/stock/${ticker.trim().toUpperCase()}`);
+    router.push(`/stock/${ticker.trim().toUpperCase()}`);
   };
 
   const handleSubmit = (e) => {
@@ -253,7 +253,7 @@ export default function NewDashboardPage() {
         <div>
           <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', marginBottom: '14px' }}>
             <h2 style={{ margin: 0, fontSize: '18px', fontWeight: 800 }}>Lo que sigues</h2>
-            <Link href="/new/watchlist" style={{ fontSize: '13px', color: C.text2, textDecoration: 'none', fontWeight: 700 }}>Ver todo →</Link>
+            <Link href="/watchlist" style={{ fontSize: '13px', color: C.text2, textDecoration: 'none', fontWeight: 700 }}>Ver todo →</Link>
           </div>
           {watchlist === null ? (
             <div style={{ fontSize: '13px', color: C.text3 }}>Cargando…</div>
@@ -272,7 +272,7 @@ export default function NewDashboardPage() {
           <div style={{ background: C.surface, border: `1px solid ${C.border}`, borderRadius: '20px', padding: '22px 24px', boxSizing: 'border-box', minWidth: 0 }}>
             <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', marginBottom: '6px' }}>
               <h2 style={{ margin: 0, fontSize: '16px', fontWeight: 800 }}>Próximos resultados</h2>
-              <Link href="/new/calendar" style={{ fontSize: '13px', color: C.text2, textDecoration: 'none', fontWeight: 700 }}>Ver todo →</Link>
+              <Link href="/calendar" style={{ fontSize: '13px', color: C.text2, textDecoration: 'none', fontWeight: 700 }}>Ver todo →</Link>
             </div>
             {earnings === null ? (
               <div style={{ fontSize: '13px', color: C.text3 }}>Cargando…</div>
@@ -281,7 +281,7 @@ export default function NewDashboardPage() {
             ) : (
               <div>
                 {earnings.map(e => (
-                  <Link key={`${e.ticker}-${e.date}`} href={`/new/stock/${e.ticker}`} style={{
+                  <Link key={`${e.ticker}-${e.date}`} href={`/stock/${e.ticker}`} style={{
                     display: 'flex', alignItems: 'center', gap: '12px', padding: '10px 0',
                     textDecoration: 'none', color: 'inherit', borderBottom: `1px solid ${C.borderSoft}`,
                   }}>
@@ -312,7 +312,7 @@ export default function NewDashboardPage() {
                   const up = m.priceChangePct >= 0;
                   const color = up ? C.green : C.red;
                   return (
-                    <Link key={m.ticker} href={`/new/stock/${m.ticker}`} style={{
+                    <Link key={m.ticker} href={`/stock/${m.ticker}`} style={{
                       display: 'flex', alignItems: 'center', gap: '12px', padding: '10px 0',
                       textDecoration: 'none', color: 'inherit', borderBottom: `1px solid ${C.borderSoft}`,
                     }}>
@@ -391,7 +391,7 @@ export default function NewDashboardPage() {
             <h2 style={{ margin: '0 0 14px', fontSize: '18px', fontWeight: 800 }}>Aprende algo nuevo</h2>
             <div className="new-card-grid-3" style={{ display: 'grid', gridTemplateColumns: 'repeat(3, minmax(0, 1fr))', gap: '14px' }}>
               {learnPosts.map(post => (
-                <Link key={post.slug} href={`/new/aprende/${post.slug}`} style={{
+                <Link key={post.slug} href={`/aprende/${post.slug}`} style={{
                   textDecoration: 'none', color: 'inherit', background: C.surface, border: `1px solid ${C.border}`,
                   borderRadius: '16px', padding: '20px', display: 'flex', flexDirection: 'column', gap: '10px', boxSizing: 'border-box',
                 }}>

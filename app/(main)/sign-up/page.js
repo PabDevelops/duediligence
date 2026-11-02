@@ -34,11 +34,11 @@ export default function NewSignUpPage() {
     const supabase = createClient();
     const { data, error } = await supabase.auth.signUp({
       email, password,
-      options: { emailRedirectTo: `${window.location.origin}/auth/callback?next=/new` },
+      options: { emailRedirectTo: `${window.location.origin}/auth/callback?next=/home` },
     });
     setLoading(false);
     if (error) { setError(error.message); return; }
-    if (data.session) { router.push('/new'); router.refresh(); return; }
+    if (data.session) { router.push('/home'); router.refresh(); return; }
     setSent(true);
   };
 
@@ -46,13 +46,13 @@ export default function NewSignUpPage() {
     const supabase = createClient();
     await supabase.auth.signInWithOAuth({
       provider: 'google',
-      options: { redirectTo: `${window.location.origin}/auth/callback?next=/new` },
+      options: { redirectTo: `${window.location.origin}/auth/callback?next=/home` },
     });
   };
 
   return (
     <div style={{ width: '100%', minHeight: '100vh', boxSizing: 'border-box', background: C.bg, color: C.ink, fontFamily: "'Plus Jakarta Sans', system-ui, sans-serif", display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '24px' }}>
-      <Link href="/new" style={{ display: 'flex', alignItems: 'center', gap: '10px', textDecoration: 'none', marginBottom: '28px' }}>
+      <Link href="/home" style={{ display: 'flex', alignItems: 'center', gap: '10px', textDecoration: 'none', marginBottom: '28px' }}>
         <div aria-hidden="true" style={{ width: '32px', height: '32px', borderRadius: '9px', background: C.lime, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '5px', boxSizing: 'border-box' }}>
           <img src="/bulltrace-logos/bull-icon-black.png" alt="" style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
         </div>
@@ -71,7 +71,7 @@ export default function NewSignUpPage() {
             <p style={{ color: C.text2, fontSize: '13px', lineHeight: 1.6, marginBottom: '20px' }}>
               Te hemos enviado un enlace de confirmación a <strong>{email}</strong>. Revisa tu bandeja de entrada para activar la cuenta.
             </p>
-            <Link href="/new/sign-in" style={{
+            <Link href="/sign-in" style={{
               display: 'block', width: '100%', padding: '11px', borderRadius: '10px', fontSize: '14px', fontWeight: 700,
               textDecoration: 'none', textAlign: 'center', boxSizing: 'border-box', background: C.lime, color: C.ink,
             }}>
@@ -123,7 +123,7 @@ export default function NewSignUpPage() {
             </form>
 
             <div style={{ textAlign: 'center', marginTop: '22px', fontSize: '13px', color: C.text2 }}>
-              ¿Ya tienes cuenta? <Link href="/new/sign-in" style={{ color: C.ink, fontWeight: 700, textDecoration: 'none' }}>Inicia sesión</Link>
+              ¿Ya tienes cuenta? <Link href="/sign-in" style={{ color: C.ink, fontWeight: 700, textDecoration: 'none' }}>Inicia sesión</Link>
             </div>
           </>
         )}
