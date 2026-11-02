@@ -34,7 +34,7 @@ function WatchlistCard({ item }) {
   const changeColor = item.priceChangePct == null ? C.text2 : item.priceChangePct >= 0 ? C.green : C.red;
 
   return (
-    <Link href={`/stock/${item.ticker}`} style={{
+    <Link href={`/new/stock/${item.ticker}`} style={{
       background: C.surface, border: `1px solid ${C.border}`, borderRadius: '16px', padding: '18px',
       display: 'flex', flexDirection: 'column', gap: '12px', boxSizing: 'border-box', minWidth: 0,
       textDecoration: 'none', color: 'inherit',
@@ -77,7 +77,7 @@ export default function NewDashboardPage() {
   const goToTicker = (ticker) => {
     setQuery('');
     setShowSuggestions(false);
-    router.push(`/stock/${ticker.trim().toUpperCase()}`);
+    router.push(`/new/stock/${ticker.trim().toUpperCase()}`);
   };
 
   const handleSubmit = (e) => {

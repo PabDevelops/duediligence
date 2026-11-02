@@ -23,7 +23,7 @@ function WatchlistRow({ item, onRemove }) {
 
   return (
     <div style={{ display: 'flex', alignItems: 'center', gap: '14px', padding: '18px 24px', borderBottom: `1px solid ${C.borderSoft}` }}>
-      <Link href={`/stock/${item.ticker}`} style={{ display: 'flex', alignItems: 'center', gap: '14px', flex: 1, minWidth: 0, textDecoration: 'none', color: 'inherit' }}>
+      <Link href={`/new/stock/${item.ticker}`} style={{ display: 'flex', alignItems: 'center', gap: '14px', flex: 1, minWidth: 0, textDecoration: 'none', color: 'inherit' }}>
         <StockLogo ticker={item.ticker} name={item.name} size={38} />
         <div style={{ minWidth: 0, flexShrink: 1 }}>
           <div style={{ fontSize: '14px', fontWeight: 700, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{item.name || item.ticker}</div>

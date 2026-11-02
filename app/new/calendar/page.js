@@ -147,7 +147,7 @@ export default function NewCalendarPage() {
                     const isWatched = watched.has(item.ticker);
                     return (
                       <div key={item.ticker} style={{ display: 'flex', alignItems: 'center', gap: '14px', padding: '16px 22px', borderBottom: `1px solid ${C.borderSoft}` }}>
-                        <Link href={`/stock/${item.ticker}`} style={{ display: 'flex', alignItems: 'center', gap: '14px', flex: 1, minWidth: 0, textDecoration: 'none', color: 'inherit' }}>
+                        <Link href={`/new/stock/${item.ticker}`} style={{ display: 'flex', alignItems: 'center', gap: '14px', flex: 1, minWidth: 0, textDecoration: 'none', color: 'inherit' }}>
                           <div aria-hidden="true" style={{ width: '36px', height: '36px', borderRadius: '10px', background: logoBgFor(item.ticker), display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '13px', fontWeight: 800, flexShrink: 0 }}>
                             {item.ticker.slice(0, 1)}
                           </div>
