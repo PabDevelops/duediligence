@@ -199,27 +199,60 @@ function NewStockPageContent({ params }) {
         </div>
       )}
 
-      {entryProjection.maxEntryPrice != null && price != null && (
-        <div style={{ background: C.surface, border: `1px solid ${C.border}`, borderRadius: '20px', padding: '22px 26px', boxSizing: 'border-box' }}>
-          <div style={{ fontSize: '11px', fontWeight: 700, color: C.text3, letterSpacing: '0.02em', marginBottom: '14px' }}>
-            A 5 AÑOS VISTA (proyección, no una promesa)
-          </div>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: '18px' }}>
-            <div>
-              <div style={{ fontSize: '12px', color: C.text2, marginBottom: '4px' }}>Precio máximo de entrada</div>
-              <div style={{ fontSize: '22px', fontWeight: 800 }}>{formatCurrency(entryProjection.maxEntryPrice, sym)}</div>
-              <div style={{ fontSize: '11px', color: C.text3, marginTop: '2px' }}>para exigir un 15%/año</div>
+      {entryProjection.maxEntryPrice != null && price != null && (() => {
+        // Margin of safety: how far today's price sits from the max you'd pay to still
+        // demand a 15%/yr return — positive means price is below that ceiling (cheap),
+        // negative means you're paying more than the model justifies (expensive). This is
+        // the one number that actually answers "is it cheap or expensive right now", which
+        // maxEntryPrice/cagr5y alone made a reader work out for themselves.
+        const marginPct = ((entryProjection.maxEntryPrice - price) / price) * 100;
+        const priceTier = marginPct >= 10 ? 'good' : marginPct >= -10 ? 'caution' : 'bad';
+        const priceBadge = VERDICT_BADGE[priceTier];
+        const priceLabel = priceTier === 'good' ? 'Con margen de seguridad' : priceTier === 'caution' ? 'En su precio justo' : 'Por encima de lo recomendado';
+        return (
+          <div style={{ background: C.surface, border: `1px solid ${C.border}`, borderRadius: '20px', padding: '22px 26px', boxSizing: 'border-box', display: 'flex', flexDirection: 'column', gap: '14px' }}>
+            <div style={{ fontSize: '11px', fontWeight: 700, color: C.text3, letterSpacing: '0.02em' }}>
+              A 5 AÑOS VISTA (proyección, no una promesa)
             </div>
-            <div>
-              <div style={{ fontSize: '12px', color: C.text2, marginBottom: '4px' }}>CAGR esperado</div>
-              <div style={{ fontSize: '22px', fontWeight: 800, color: entryProjection.cagr5y >= 0 ? C.green : C.red }}>
-                {entryProjection.cagr5y >= 0 ? '+' : ''}{(entryProjection.cagr5y * 100).toFixed(1)}%
+
+            <div style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', padding: '7px 16px', borderRadius: '20px', background: priceBadge.bg, width: 'fit-content' }}>
+              <span aria-hidden="true" style={{ width: '8px', height: '8px', borderRadius: '50%', background: priceBadge.dot }} />
+              <span style={{ fontSize: '13px', fontWeight: 800, color: priceBadge.text }}>{priceLabel}</span>
+            </div>
+
+            <div style={{ fontSize: '13px', color: '#45413A', lineHeight: 1.6 }}>
+              {marginPct >= 0
+                ? `El precio de hoy está un ${marginPct.toFixed(0)}% por debajo de lo máximo que pagarías para exigir un 15%/año — hay margen de seguridad.`
+                : `El precio de hoy está un ${Math.abs(marginPct).toFixed(0)}% por encima de lo máximo que pagarías para exigir un 15%/año — según este modelo, estarías pagando de más.`}
+            </div>
+
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))', gap: '18px', paddingTop: '4px', borderTop: `1px solid ${C.borderSoft}` }}>
+              <div>
+                <div style={{ fontSize: '12px', color: C.text2, marginBottom: '4px' }}>Precio actual</div>
+                <div style={{ fontSize: '20px', fontWeight: 800 }}>{formatCurrency(price, sym)}</div>
               </div>
-              <div style={{ fontSize: '11px', color: C.text3, marginTop: '2px' }}>al precio actual</div>
+              <div>
+                <div style={{ fontSize: '12px', color: C.text2, marginBottom: '4px' }}>Precio máximo de entrada</div>
+                <div style={{ fontSize: '20px', fontWeight: 800 }}>{formatCurrency(entryProjection.maxEntryPrice, sym)}</div>
+                <div style={{ fontSize: '11px', color: C.text3, marginTop: '2px' }}>para exigir un 15%/año</div>
+              </div>
+              <div>
+                <div style={{ fontSize: '12px', color: C.text2, marginBottom: '4px' }}>Margen de seguridad</div>
+                <div style={{ fontSize: '20px', fontWeight: 800, color: marginPct >= 0 ? C.green : C.red }}>
+                  {marginPct >= 0 ? '+' : ''}{marginPct.toFixed(1)}%
+                </div>
+              </div>
+              <div>
+                <div style={{ fontSize: '12px', color: C.text2, marginBottom: '4px' }}>CAGR esperado</div>
+                <div style={{ fontSize: '20px', fontWeight: 800, color: entryProjection.cagr5y >= 0 ? C.green : C.red }}>
+                  {entryProjection.cagr5y >= 0 ? '+' : ''}{(entryProjection.cagr5y * 100).toFixed(1)}%
+                </div>
+                <div style={{ fontSize: '11px', color: C.text3, marginTop: '2px' }}>al precio actual</div>
+              </div>
             </div>
           </div>
-        </div>
-      )}
+        );
+      })()}
 
       <div style={{ background: C.surface, border: `1px solid ${C.border}`, borderRadius: '20px', boxSizing: 'border-box', overflow: 'hidden', ...CHART_THEME_VARS }}>
         {/* The chart's own built-in range/mode selector (1D-MAX + LINE/CANDLES, 9 buttons in
