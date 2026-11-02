@@ -17,6 +17,11 @@ import { NEW_COLORS as C, VERDICT_BADGE } from '../../../components/new/theme';
 const hasFundamentals = (d) => d.revVal != null || d.niVal != null || d.marketCap != null
   || d.roic != null || d.grossMargin != null || (d.revHistory?.length ?? 0) > 0;
 
+// Same 0-5 scale and >=4/>=3 breakpoints the Numbers page's stats and the quality-note
+// pillars already color with — kept in sync so a stat means the same thing everywhere it
+// shows up, not a second invented scale.
+const scoreColor = (s) => s == null ? C.ink : s >= 4 ? C.green : s >= 3 ? C.ink : C.red;
+
 // StockChart reads its colors from --ws-* CSS custom properties (so it can follow whichever
 // theme it's rendered inside) instead of hardcoding a palette — this wrapper feeds it the
 // cream/lime palette so the real chart (with real data) drops in without forking it.
@@ -245,11 +250,11 @@ function NewStockPageContent({ params }) {
                 </div>
               </div>
               <div>
-                <div style={{ fontSize: '12px', color: C.text2, marginBottom: '4px' }}>CAGR esperado</div>
+                <div style={{ fontSize: '12px', color: C.text2, marginBottom: '4px' }}>Rentabilidad media anual esperada (CAGR)</div>
                 <div style={{ fontSize: '20px', fontWeight: 800, color: entryProjection.cagr5y >= 0 ? C.green : C.red }}>
                   {entryProjection.cagr5y >= 0 ? '+' : ''}{(entryProjection.cagr5y * 100).toFixed(1)}%
                 </div>
-                <div style={{ fontSize: '11px', color: C.text3, marginTop: '2px' }}>al precio actual</div>
+                <div style={{ fontSize: '11px', color: C.text3, marginTop: '2px' }}>al año, de media, en los próximos 5 años, al precio de hoy</div>
               </div>
             </div>
           </div>
@@ -280,8 +285,8 @@ function NewStockPageContent({ params }) {
         const keyStats = [
           { label: 'P/E', value: data.pe != null ? data.pe.toFixed(1) : null },
           { label: 'Capitalización', value: data.marketCap != null ? formatCurrency(data.marketCap, sym) : null },
-          { label: 'Ingresos (interanual)', value: data.revGrowth != null ? `${data.revGrowth > 0 ? '+' : ''}${data.revGrowth.toFixed(1)}%` : null },
-          { label: 'ROIC', value: data.roic != null ? `${data.roic.toFixed(1)}%` : null },
+          { label: 'Ingresos (interanual)', value: data.revGrowth != null ? `${data.revGrowth > 0 ? '+' : ''}${data.revGrowth.toFixed(1)}%` : null, color: scoreColor(easyMode?.revGrowthScore) },
+          { label: 'ROIC', value: data.roic != null ? `${data.roic.toFixed(1)}%` : null, color: scoreColor(easyMode?.roicScore) },
         ].filter(s => s.value != null);
         if (keyStats.length === 0) return null;
         return (
@@ -291,9 +296,12 @@ function NewStockPageContent({ params }) {
               {keyStats.map(s => (
                 <div key={s.label}>
                   <div style={{ fontSize: '12px', color: C.text2, marginBottom: '4px' }}>{s.label}</div>
-                  <div style={{ fontSize: '18px', fontWeight: 800 }}>{s.value}</div>
+                  <div style={{ fontSize: '18px', fontWeight: 800, color: s.color ?? C.ink }}>{s.value}</div>
                 </div>
               ))}
+            </div>
+            <div style={{ fontSize: '11px', color: C.text3, marginTop: '14px', paddingTop: '12px', borderTop: `1px solid ${C.borderSoft}` }}>
+              En <span style={{ color: C.green, fontWeight: 700 }}>verde</span> lo que va bien, en <span style={{ color: C.red, fontWeight: 700 }}>rojo</span> lo que conviene vigilar.
             </div>
           </div>
         );

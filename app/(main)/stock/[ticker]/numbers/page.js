@@ -21,6 +21,14 @@ const mult = (v) => v == null ? null : v > NM_MULTIPLE ? 'N/M' : v.toFixed(2);
 const money = (v, sym) => v == null ? null : formatCurrency(v, sym);
 const days = (v) => v == null ? null : `${v} días`;
 
+// Same 0-5 scale and the same >=4/>=3 breakpoints QualityBreakdown below already colors the
+// CBS/OPPO/GQS pillars with — reused here so a stat's color always means the same thing it
+// means in the headline quality note, instead of a second, invented "good/bad" scale. Only
+// wired to stats that genuinely have one of computeEasyMode's existing sector-aware
+// sub-scores behind them (see the `color:` entries in `sections` below) — a stat with no
+// score stays plain black rather than getting a color backed by nothing.
+const scoreColor = (s) => s == null ? C.ink : s >= 4 ? C.green : s >= 3 ? C.ink : C.red;
+
 function Shell({ children }) {
   return (
     <div style={{ width: '100%', minHeight: '100vh', boxSizing: 'border-box', background: C.bg, color: C.ink, fontFamily: "'Plus Jakarta Sans', system-ui, sans-serif" }}>
@@ -50,7 +58,7 @@ function StatSection({ title, intro, stats }) {
               <div style={{ fontSize: '13px', fontWeight: 700, marginBottom: '3px' }}>{s.label}</div>
               <div style={{ fontSize: '12px', color: C.text2, lineHeight: 1.5 }}>{s.explain}</div>
             </div>
-            <div style={{ fontSize: '17px', fontWeight: 800, whiteSpace: 'nowrap', flexShrink: 0 }}>{s.value}</div>
+            <div style={{ fontSize: '17px', fontWeight: 800, whiteSpace: 'nowrap', flexShrink: 0, color: s.color ?? C.ink }}>{s.value}</div>
           </div>
         ))}
       </div>
@@ -156,9 +164,13 @@ function NewStockNumbersContent({ params }) {
   const currentRatio = data.currentAssetsVal && data.currentLiabilitiesVal ? data.currentAssetsVal / data.currentLiabilitiesVal : null;
   const capitalDiscipline = isTierAdjusted(easyMode?.capTier?.id);
   const cashRunway = data.fcfVal != null && data.fcfVal >= 0 ? 'No quema caja' : easyMode?.cashRunwayYears != null ? `${easyMode.cashRunwayYears.toFixed(1)} años` : null;
-  const netDebtExplain = data.netDebt == null ? null
-    : data.netDebt < 0 ? `${formatCurrency(Math.abs(data.netDebt), sym)} · tiene más caja que deuda`
-    : formatCurrency(data.netDebt, sym);
+  // Just the signed money value — it used to carry a trailing "· tiene más caja que deuda"
+  // clause baked into the bold, nowrap stat value itself, which on a negative (net-cash)
+  // company overflowed its column and visually collided with the label next to it. That
+  // distinction now lives in the explain line below (always shown) and the green/red color
+  // (via deScore), not crammed into the number.
+  const netDebtValue = data.netDebt == null ? null
+    : (data.netDebt < 0 ? '-' : '') + formatCurrency(Math.abs(data.netDebt), sym);
 
   const sections = [
     {
@@ -167,10 +179,10 @@ function NewStockNumbersContent({ params }) {
       stats: [
         { label: 'Capitalización bursátil', value: money(data.marketCap, sym), explain: 'Lo que vale la empresa entera en bolsa: precio de la acción × número de acciones.' },
         { label: 'P/E — precio / beneficio', value: mult(data.pe), explain: 'Cuántos años de beneficio actual tardarías en "recuperar" el precio que pagas. Más bajo suele ser más barato.' },
-        { label: 'P/FCF — precio / caja libre', value: mult(truePfcf), explain: 'Como el P/E, pero con el dinero que realmente genera el negocio (caja libre) en vez del beneficio contable.' },
+        { label: 'P/FCF — precio / caja libre', value: mult(truePfcf), explain: 'Como el P/E, pero con el dinero que realmente genera el negocio (caja libre) en vez del beneficio contable.', color: scoreColor(easyMode?.pfcfScore) },
         { label: 'EV/EBITDA', value: data.evEbitda != null ? data.evEbitda.toFixed(2) : null, explain: 'El valor de la empresa, incluida su deuda, comparado con su beneficio operativo bruto. Útil para comparar empresas con distinta deuda.' },
         { label: 'P/B — precio / valor contable', value: data.priceToBook != null ? data.priceToBook.toFixed(2) : null, explain: 'Cuánto pagas por cada euro de patrimonio neto que tiene la empresa en el balance.' },
-        { label: 'Rentabilidad por FCF', value: pct(trueFcfYield), explain: 'El reverso del P/FCF: cuánta caja libre genera la empresa cada año por cada euro que vale en bolsa.' },
+        { label: 'Rentabilidad por FCF', value: pct(trueFcfYield), explain: 'El reverso del P/FCF: cuánta caja libre genera la empresa cada año por cada euro que vale en bolsa.', color: scoreColor(easyMode?.fcfYieldScore) },
         { label: 'Rentabilidad por dividendo', value: data.dividendYield ? pct(+data.dividendYield) : null, explain: 'Cuánto te paga en dividendos al año por cada euro invertido, al precio de hoy.' },
       ],
     },
@@ -178,7 +190,7 @@ function NewStockNumbersContent({ params }) {
       title: 'Crecimiento — ¿va a más o a menos?',
       intro: 'Cómo ha evolucionado el negocio, y cuánto reinvierte para seguir creciendo.',
       stats: [
-        { label: 'Ingresos (interanual)', value: pct(data.revGrowth, true), explain: 'Cuánto han crecido — o caído — las ventas respecto al año pasado.' },
+        { label: 'Ingresos (interanual)', value: pct(data.revGrowth, true), explain: 'Cuánto han crecido — o caído — las ventas respecto al año pasado.', color: scoreColor(easyMode?.revGrowthScore) },
         { label: 'Beneficio por acción, crecimiento medio', value: pct(data.epsCagr, true), explain: 'El ritmo medio al que ha crecido el beneficio por acción en los últimos años.' },
         { label: 'I+D sobre ingresos', value: easyMode?.rdToRevenue != null ? pct(easyMode.rdToRevenue * 100) : null, explain: 'Qué parte de cada euro de ventas se reinvierte en investigación y desarrollo — más alto puede significar más innovación futura, pero menos beneficio hoy.' },
         { label: 'Pago en acciones sobre ingresos', value: easyMode?.sbcToRevenue != null ? pct(easyMode.sbcToRevenue * 100) : null, explain: 'Qué parte de los ingresos se destina a pagar a empleados con acciones en vez de dinero — demasiado alto diluye a los accionistas actuales.' },
@@ -188,12 +200,12 @@ function NewStockNumbersContent({ params }) {
       title: 'Rentabilidad — ¿gana dinero de verdad?',
       intro: 'De cada euro que entra, cuánto se queda la empresa en cada etapa — y qué devuelve por lo invertido.',
       stats: [
-        { label: 'Margen bruto', value: pct(data.grossMargin), explain: 'De cada euro vendido, lo que queda tras pagar solo el coste directo de producir o comprar lo que vende.' },
-        { label: 'Margen operativo', value: pct(data.opMargin), explain: 'De cada euro vendido, lo que queda tras pagar también los gastos de operar el negocio día a día.' },
+        { label: 'Margen bruto', value: pct(data.grossMargin), explain: 'De cada euro vendido, lo que queda tras pagar solo el coste directo de producir o comprar lo que vende.', color: scoreColor(easyMode?.gmScore) },
+        { label: 'Margen operativo', value: pct(data.opMargin), explain: 'De cada euro vendido, lo que queda tras pagar también los gastos de operar el negocio día a día.', color: scoreColor(easyMode?.omScore) },
         { label: 'Margen neto', value: pct(data.netMargin), explain: 'De cada euro vendido, lo que llega al beneficio final, después de todos los gastos e impuestos.' },
         { label: 'ROE — retorno sobre el capital', value: pct(data.roe), explain: 'Cuánto beneficio genera la empresa por cada euro que han puesto los accionistas.' },
         { label: 'ROA — retorno sobre activos', value: pct(data.roa), explain: 'Cuánto beneficio genera la empresa por cada euro de activos que posee: edificios, maquinaria, caja...' },
-        { label: 'ROIC — retorno sobre el capital invertido', value: pct(data.roic), explain: 'Cuánto beneficio genera por cada euro invertido en el negocio, venga de accionistas o de deuda. La métrica favorita de muchos inversores para juzgar si un negocio es realmente bueno.' },
+        { label: 'ROIC — retorno sobre el capital invertido', value: pct(data.roic), explain: 'Cuánto beneficio genera por cada euro invertido en el negocio, venga de accionistas o de deuda. La métrica favorita de muchos inversores para juzgar si un negocio es realmente bueno.', color: scoreColor(easyMode?.roicScore) },
       ],
     },
     {
@@ -203,11 +215,11 @@ function NewStockNumbersContent({ params }) {
         { label: 'Activos totales', value: money(data.assetsVal, sym), explain: 'Todo lo que posee la empresa: caja, inventario, edificios, maquinaria...' },
         { label: 'Pasivos totales', value: money(data.totalLiabilitiesVal, sym), explain: 'Todo lo que debe la empresa a terceros: deuda, proveedores, impuestos pendientes...' },
         { label: 'Patrimonio neto', value: money(data.equityVal, sym), explain: 'Lo que quedaría para los accionistas si la empresa vendiera todo y pagara todas sus deudas.' },
-        { label: 'Deuda neta', value: netDebtExplain, explain: 'La deuda de la empresa menos el dinero en caja. Negativa significa que tiene más caja que deuda — una posición cómoda.' },
+        { label: 'Deuda neta', value: netDebtValue, explain: 'La deuda de la empresa menos el dinero en caja. Negativa significa que tiene más caja que deuda — una posición cómoda.', color: scoreColor(easyMode?.deScore) },
         { label: 'Caja disponible', value: money(data.cashVal, sym), explain: 'Dinero en efectivo e inversiones a corto plazo que la empresa tiene disponible ya mismo.' },
         { label: 'Deuda a largo plazo', value: money(data.debtVal, sym), explain: 'Préstamos y bonos que la empresa debe devolver a más de un año vista.' },
-        { label: 'Deuda / capital (D/E)', value: data.debtToEquity != null ? data.debtToEquity.toFixed(2) : null, explain: 'Cuánta deuda tiene la empresa comparada con el dinero de los accionistas. Más alto significa más riesgo.' },
-        { label: 'Ratio corriente', value: currentRatio != null ? currentRatio.toFixed(2) : null, explain: 'Si la empresa podría pagar sus deudas a corto plazo solo con lo que tiene a mano. Por encima de 1 es buena señal.' },
+        { label: 'Deuda / capital (D/E)', value: data.debtToEquity != null ? data.debtToEquity.toFixed(2) : null, explain: 'Cuánta deuda tiene la empresa comparada con el dinero de los accionistas. Más alto significa más riesgo.', color: scoreColor(easyMode?.deScore) },
+        { label: 'Ratio corriente', value: currentRatio != null ? currentRatio.toFixed(2) : null, explain: 'Si la empresa podría pagar sus deudas a corto plazo solo con lo que tiene a mano. Por encima de 1 es buena señal.', color: scoreColor(easyMode?.crScore) },
       ],
     },
     {
@@ -254,6 +266,9 @@ function NewStockNumbersContent({ params }) {
       <div>
         <h1 style={{ margin: '0 0 4px', fontSize: '24px', fontWeight: 800, letterSpacing: '-0.02em' }}>Todos los números</h1>
         <div style={{ fontSize: '13px', color: C.text2, fontWeight: 600 }}>{data.name || ticker} · {ticker}</div>
+        <div style={{ fontSize: '12px', color: C.text3, marginTop: '8px' }}>
+          Los números en <span style={{ color: C.green, fontWeight: 700 }}>verde</span> van bien, en <span style={{ color: C.red, fontWeight: 700 }}>rojo</span> conviene vigilarlos — comparados con lo normal para el tamaño y el sector de la empresa. Los que quedan en negro todavía no tienen un umbral propio.
+        </div>
       </div>
 
       <QualityBreakdown easyMode={easyMode} />
