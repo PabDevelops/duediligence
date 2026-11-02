@@ -139,7 +139,7 @@ function NewStockPageContent({ params }) {
             <div style={{ fontSize: '13px', color: C.text2, fontWeight: 600 }}>{ticker}{data.exchange ? ` · ${data.exchange}` : ''}</div>
           </div>
         </div>
-        <div style={{ display: 'flex', alignItems: 'flex-start', gap: '26px', flexWrap: 'wrap' }}>
+        <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: '26px', flexWrap: 'wrap', flex: '1 1 240px' }}>
           <div style={{ textAlign: 'right' }}>
             <div style={{ fontSize: '26px', fontWeight: 800 }}>{price != null ? formatCurrency(price, sym) : 'N/D'}</div>
             {data.priceChangePct != null && (
