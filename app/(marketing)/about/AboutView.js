@@ -222,7 +222,7 @@ export default function AboutView({ dict }) {
             <PrimaryButton href="/sign-up" style={{ padding: '0 28px', height: '48px' }}>
               {t.hero.ctaPrimary}
             </PrimaryButton>
-            <SecondaryButton href="/home" style={{ padding: '0 28px', height: '48px' }}>
+            <SecondaryButton href="/new" style={{ padding: '0 28px', height: '48px' }}>
               {t.hero.ctaSecondary}
             </SecondaryButton>
           </div>

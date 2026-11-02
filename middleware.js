@@ -39,11 +39,13 @@ function domainRedirect(request, hasVisitedBefore) {
 
   // Anyone who's already been to the site before (carries the tq_gid guest cookie,
   // minted on their very first-ever request — see below) skips the marketing landing
-  // entirely and goes straight into the terminal. Cookie-less visitors (first real
+  // entirely and goes straight into the app. Cookie-less visitors (first real
   // touch, or stateless crawlers/SEO bots) still see the landing normally, so organic
   // acquisition and indexing are unaffected.
+  // /new (the beginner-friendly redesign) is the default app experience now; the old
+  // dense terminal is untouched and still fully reachable at /home for anyone who wants it.
   if (pathname === '/' && hasVisitedBefore) {
-    return NextResponse.redirect(new URL('/home', request.url), 307);
+    return NextResponse.redirect(new URL('/new', request.url), 307);
   }
 
   return null;
