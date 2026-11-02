@@ -162,7 +162,7 @@ function NewStockPageContent({ params }) {
         <StockChart ticker={ticker} currency={data.currency} height={280} />
       </div>
 
-      <Link href={`/stock/${ticker}`} style={{
+      <Link href={`/new/stock/${ticker}/numbers`} style={{
         background: C.surface, border: `1px solid ${C.border}`, borderRadius: '20px', padding: '22px 26px', boxSizing: 'border-box',
         display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '16px', textDecoration: 'none', color: 'inherit',
       }}>
