@@ -1,5 +1,6 @@
 'use client';
 import { use, Suspense, useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import NewNav from '../../../components/new/NewNav';
 import StockLogo from '../../../components/workspace/StockLogo';
@@ -57,11 +58,32 @@ export default function NewStockPage({ params }) {
 function NewStockPageContent({ params }) {
   const { ticker: rawTicker } = use(params);
   const ticker = rawTicker.toUpperCase();
+  const router = useRouter();
   const { isSignedIn, isLoaded } = useUser();
   const { data, error, loading } = useStockData(ticker);
 
   const [following, setFollowing] = useState(false);
   const [chartRange, setChartRange] = useState('1y');
+
+  // /api/stock only knows a ticker is a fund once /api/etfs has processed it at least once
+  // (that flag lives on the same stock_cache row) — a ticker nobody has ever opened via
+  // /etfs before comes back here looking like a stock with every fundamental blank. If this
+  // one's already flagged, bounce immediately; if it just has no fundamentals at all (the
+  // same shape a never-seen ETF has), probe /api/etfs in the background — a real thin stock
+  // just errors out of that probe and this page renders normally, but a fund gets seeded
+  // and this redirects to its real page instead of showing a wall of "N/D".
+  useEffect(() => {
+    if (!data) return;
+    if (data.isEtf) { router.replace(`/etfs/${ticker}`); return; }
+    if (hasFundamentals(data)) return;
+    let active = true;
+    fetch('/api/etfs', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ ticker }) })
+      .then(r => r.json())
+      .then(d => { if (active && !d.error) router.replace(`/etfs/${ticker}`); })
+      .catch(() => {});
+    return () => { active = false; };
+  }, [data, ticker, router]);
+
   useEffect(() => {
     if (!isLoaded) return;
     if (!isSignedIn) { setFollowing(isInGuestWatchlist(ticker)); return; }
