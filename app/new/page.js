@@ -131,7 +131,7 @@ export default function NewDashboardPage() {
 
   return (
     <div style={{ width: '100%', minHeight: '100vh', boxSizing: 'border-box', background: C.bg, color: C.ink, fontFamily: "'Plus Jakarta Sans', system-ui, sans-serif" }}>
-      <div style={{ maxWidth: '1120px', margin: '0 auto', padding: '32px 24px 96px', display: 'flex', flexDirection: 'column', gap: '40px', boxSizing: 'border-box' }}>
+      <div style={{ maxWidth: '1320px', margin: '0 auto', padding: '32px 24px 96px', display: 'flex', flexDirection: 'column', gap: '40px', boxSizing: 'border-box' }}>
 
         <NewNav active="inicio" />
 
