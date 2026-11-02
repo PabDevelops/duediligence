@@ -269,7 +269,7 @@ export default function NewDashboardPage() {
         </div>
 
         <div className="new-dash-2col" style={{ display: 'grid', gridTemplateColumns: 'repeat(2, minmax(0, 1fr))', gap: '14px' }}>
-          <div style={{ background: C.surface, border: `1px solid ${C.border}`, borderRadius: '20px', padding: '22px 24px', boxSizing: 'border-box' }}>
+          <div style={{ background: C.surface, border: `1px solid ${C.border}`, borderRadius: '20px', padding: '22px 24px', boxSizing: 'border-box', minWidth: 0 }}>
             <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', marginBottom: '6px' }}>
               <h2 style={{ margin: 0, fontSize: '16px', fontWeight: 800 }}>Próximos resultados</h2>
               <Link href="/new/calendar" style={{ fontSize: '13px', color: C.text2, textDecoration: 'none', fontWeight: 700 }}>Ver todo →</Link>
@@ -300,7 +300,7 @@ export default function NewDashboardPage() {
             )}
           </div>
 
-          <div style={{ background: C.surface, border: `1px solid ${C.border}`, borderRadius: '20px', padding: '22px 24px', boxSizing: 'border-box' }}>
+          <div style={{ background: C.surface, border: `1px solid ${C.border}`, borderRadius: '20px', padding: '22px 24px', boxSizing: 'border-box', minWidth: 0 }}>
             <h2 style={{ margin: '0 0 6px', fontSize: '16px', fontWeight: 800 }}>Movimientos de hoy</h2>
             {movers === null ? (
               <div style={{ fontSize: '13px', color: C.text3 }}>Cargando…</div>
