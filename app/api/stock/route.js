@@ -2083,7 +2083,25 @@ export async function GET(request) {
     const fhShareOutstanding = fhProfile?.shareOutstanding ? fhProfile.shareOutstanding * 1e6 : null;
     const xbrlSharesLookPartial = sharesValAdj != null && fhShareOutstanding != null
       && sharesValAdj < fhShareOutstanding / 2 && fhShareOutstanding / sharesValAdj < 20;
-    const sharesForCalc = (xbrlSharesLookPartial ? fhShareOutstanding : sharesValAdj) || sharesFinnhub;
+    // Finnhub's profile endpoint (the only source for fhShareOutstanding) can itself fail or omit
+    // shareOutstanding on a given fetch without that being a real company event — when it does, the
+    // check above has nothing to cross-check sharesValAdj against and silently falls through to a
+    // possibly-partial XBRL figure, undoing a correction a prior fetch already established (verified
+    // against real data: MNTN reverted from the corrected ~74.8M back to the narrow 16.44M XBRL tag
+    // between two fetches a few hours apart, with no new anomaly logged, because that fetch's
+    // fhProfile call came back without shareOutstanding — present.length < 2 in flagDataAnomaly
+    // skips flagging when there's nothing to compare the lone surviving source against). Same
+    // "stale beats blank" reasoning as currentPrice/beta/high52 above: when this fetch can't
+    // corroborate either way, prefer the prior cache's own last-known sharesOutstanding over
+    // re-deriving from a dimension-unaware XBRL tag already known to sometimes be wrong for this
+    // exact ticker shape. Same 2x/20x bounds as the primary check, so this only engages for a gap
+    // that actually looks like the Up-C pattern, not any routine share-count drift.
+    const priorSharesLookCorrected = fhShareOutstanding == null && sharesValAdj != null
+      && priorCachedData?.sharesOutstanding != null
+      && priorCachedData.sharesOutstanding > sharesValAdj * 2 && priorCachedData.sharesOutstanding / sharesValAdj < 20;
+    const sharesForCalc = (xbrlSharesLookPartial ? fhShareOutstanding
+      : priorSharesLookCorrected ? priorCachedData.sharesOutstanding
+      : sharesValAdj) || sharesFinnhub;
     await flagDataAnomaly(ticker, 'sharesOutstanding', [
       { source: 'sec_xbrl', value: sharesValAdj },
       { source: 'finnhub_metric', value: sharesFinnhub },
