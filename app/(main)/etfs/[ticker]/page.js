@@ -29,37 +29,6 @@ function etfVerdict(composite) {
   return { tier: 'bad', label: 'Cuidado' };
 }
 
-const FACTOR_META = {
-  cost: { label: 'COSTE', explain: 'Cuánto te cobra el fondo al año por gestionarlo — más bajo es mejor, es dinero que no sale de tu bolsillo.' },
-  liquidity: { label: 'LIQUIDEZ', explain: 'Qué tan fácil es comprar y vender sin mover el precio — fondos grandes y con mucho volumen son más líquidos.' },
-  diversification: { label: 'DIVERSIFICACIÓN', explain: 'Qué tan repartido está entre distintas empresas — menos concentrado en pocas posiciones es más diversificado.' },
-};
-
-function QualityBreakdown({ factors }) {
-  const scoreColor = (s) => s == null ? C.text3 : s >= 70 ? C.green : s >= 40 ? C.ink : C.red;
-  return (
-    <div style={{ background: C.surface, border: `1px solid ${C.border}`, borderRadius: '20px', padding: '24px 26px', boxSizing: 'border-box' }}>
-      <h2 style={{ margin: '0 0 4px', fontSize: '15px', fontWeight: 800 }}>De qué se compone la nota</h2>
-      <div style={{ fontSize: '12px', color: C.text2, lineHeight: 1.5, marginBottom: '18px' }}>
-        La nota de 0 a 100 de la cabecera es la media de estas tres piezas (solo las que el fondo reporta).
-      </div>
-      <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-        {Object.entries(factors).map(([key, f]) => (
-          <div key={key} style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
-            <div style={{ width: '42px', height: '42px', borderRadius: '12px', background: C.bg, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '14px', fontWeight: 800, color: scoreColor(f.score), flexShrink: 0 }}>
-              {f.available && f.score != null ? Math.round(f.score) : 'N/D'}
-            </div>
-            <div>
-              <div style={{ fontSize: '13px', fontWeight: 700 }}>{FACTOR_META[key].label}</div>
-              <div style={{ fontSize: '12px', color: C.text2, lineHeight: 1.5 }}>{f.available ? FACTOR_META[key].explain : f.reason}</div>
-            </div>
-          </div>
-        ))}
-      </div>
-    </div>
-  );
-}
-
 function WeightBars({ title, items, emptyLabel, barColor }) {
   if (!items || items.length === 0) {
     return (
@@ -185,6 +154,8 @@ function NewEtfPageContent({ params }) {
     { label: 'Patrimonio gestionado', value: etf.aum },
     { label: 'Rentabilidad por dividendo', value: etf.yield },
     { label: 'PER promedio', value: etf.pe },
+    { label: 'Volumen medio diario', value: etf.volume },
+    { label: 'Beta', value: etf.beta },
   ].filter(s => s.value && s.value !== 'N/A' && s.value !== 'See Prospectus');
 
   return (
@@ -275,7 +246,16 @@ function NewEtfPageContent({ params }) {
         </div>
       )}
 
-      <QualityBreakdown factors={quality.factors} />
+      <Link href={`/etfs/${ticker}/numbers`} style={{
+        background: C.surface, border: `1px solid ${C.border}`, borderRadius: '20px', padding: '22px 26px', boxSizing: 'border-box',
+        display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '16px', textDecoration: 'none', color: 'inherit',
+      }}>
+        <div>
+          <div style={{ fontSize: '15px', fontWeight: 800, marginBottom: '4px' }}>Ver números</div>
+          <div style={{ fontSize: '12px', color: C.text2 }}>Coste, rendimiento, riesgo y de qué se compone la nota de calidad.</div>
+        </div>
+        <svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke={C.text2} strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}><polyline points="9 6 15 12 9 18"></polyline></svg>
+      </Link>
 
       <div className="new-dash-2col" style={{ display: 'grid', gridTemplateColumns: 'repeat(2, minmax(0, 1fr))', gap: '14px' }}>
         <WeightBars title="Principales posiciones" items={etf.holdings} emptyLabel="El fondo no reporta sus posiciones." barColor={C.lime} />
