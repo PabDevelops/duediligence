@@ -240,7 +240,7 @@ export default function NewDashboardPage() {
             <h2 style={{ margin: '0 0 14px', fontSize: '18px', fontWeight: 800 }}>Aprende algo nuevo</h2>
             <div className="new-card-grid-3" style={{ display: 'grid', gridTemplateColumns: 'repeat(3, minmax(0, 1fr))', gap: '14px' }}>
               {learnPosts.map(post => (
-                <Link key={post.slug} href={`/blog/${post.slug}`} style={{
+                <Link key={post.slug} href={`/new/aprende/${post.slug}`} style={{
                   textDecoration: 'none', color: 'inherit', background: C.surface, border: `1px solid ${C.border}`,
                   borderRadius: '16px', padding: '20px', display: 'flex', flexDirection: 'column', gap: '10px', boxSizing: 'border-box',
                 }}>

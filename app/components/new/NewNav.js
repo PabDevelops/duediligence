@@ -12,7 +12,7 @@ const NAV_ITEMS = [
   { key: 'inicio', label: 'Inicio', href: '/new' },
   { key: 'seguidos', label: 'Seguidos', href: '/new/watchlist' },
   { key: 'calendario', label: 'Calendario', href: '/new/calendar' },
-  { key: 'aprende', label: 'Aprende', href: '/blog' },
+  { key: 'aprende', label: 'Aprende', href: '/new/aprende' },
 ];
 
 export default function NewNav({ active }) {
