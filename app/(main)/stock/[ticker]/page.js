@@ -21,9 +21,9 @@ const hasFundamentals = (d) => d.revVal != null || d.niVal != null || d.marketCa
 // theme it's rendered inside) instead of hardcoding a palette — this wrapper feeds it the
 // cream/lime palette so the real chart (with real data) drops in without forking it.
 const CHART_RANGES = [
+  { value: '1d', label: '1D' },
+  { value: '1w', label: '1S' },
   { value: '1m', label: '1M' },
-  { value: '3m', label: '3M' },
-  { value: '1y', label: '1A' },
   { value: 'max', label: 'Todo' },
 ];
 
@@ -63,7 +63,7 @@ function NewStockPageContent({ params }) {
   const { data, error, loading } = useStockData(ticker);
 
   const [following, setFollowing] = useState(false);
-  const [chartRange, setChartRange] = useState('1y');
+  const [chartRange, setChartRange] = useState('1m');
 
   // /api/stock only knows a ticker is a fund once /api/etfs has processed it at least once
   // (that flag lives on the same stock_cache row) — a ticker nobody has ever opened via
