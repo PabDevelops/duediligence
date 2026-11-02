@@ -43,7 +43,7 @@ export default function NewNav({ active }) {
         </nav>
 
         <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexShrink: 0 }}>
-          <Link href={isSignedIn ? '/profile' : '/sign-in'} aria-label={isSignedIn ? 'Tu perfil' : 'Iniciar sesión'}
+          <Link href={isSignedIn ? '/profile' : '/new/sign-in'} aria-label={isSignedIn ? 'Tu perfil' : 'Iniciar sesión'}
             style={{ width: '36px', height: '36px', borderRadius: '50%', background: C.avatarBg, border: `1px solid ${C.border}`, flexShrink: 0 }} />
 
           <button

@@ -41,7 +41,10 @@ export async function GET(request) {
     const { error } = await supabase.auth.exchangeCodeForSession(code);
     if (error) {
       console.error('OAuth code exchange failed:', error.message);
-      return NextResponse.redirect(`${origin}/sign-in?error=${encodeURIComponent(error.message)}`);
+      // Send the error back to whichever sign-in page this flow started from —
+      // /new/sign-in for the beginner-friendly redesign, /sign-in for the old terminal.
+      const signInPath = next.startsWith('/new') ? '/new/sign-in' : '/sign-in';
+      return NextResponse.redirect(`${origin}${signInPath}?error=${encodeURIComponent(error.message)}`);
     }
     return response;
   }
