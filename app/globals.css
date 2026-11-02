@@ -1094,3 +1094,66 @@ tr:hover td.sticky-col {
   100% { transform: translateX(180px) rotate(20deg); }
 }
 
+/* --- /new redesign (beginner-friendly, cream/lime theme) — responsive overrides --- */
+
+/* NewNav (app/components/new/NewNav.js): logo / nav pills / avatar in one row on desktop.
+   Below the breakpoint, the pill list (.new-nav-links) hides entirely and a burger button
+   reveals the same links as a slide-down menu (.new-nav-mobile-menu) instead — nested
+   flex-wrap (the row wrapping AND the pill list wrapping at once) previously produced an
+   unpredictable layout on narrow screens (the avatar ended up orphaned on its own line). */
+.new-nav-row { flex-wrap: nowrap; }
+.new-nav-links { display: flex; flex-wrap: nowrap; }
+.new-nav-burger { display: none; }
+.new-nav-mobile-menu { display: none; }
+
+@media (max-width: 680px) {
+  .new-nav-links { display: none; }
+
+  .new-nav-burger {
+    display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 5px;
+    width: 36px; height: 36px; border-radius: 10px; border: 1px solid #ECE1C9; background: transparent;
+    padding: 0; cursor: pointer; flex-shrink: 0;
+  }
+  .new-nav-burger span {
+    display: block; width: 16px; height: 2px; border-radius: 2px; background: #1C1B18;
+    transition: transform 0.25s ease, opacity 0.2s ease;
+  }
+  .new-nav-burger.is-open span:nth-child(1) { transform: translateY(7px) rotate(45deg); }
+  .new-nav-burger.is-open span:nth-child(2) { opacity: 0; }
+  .new-nav-burger.is-open span:nth-child(3) { transform: translateY(-7px) rotate(-45deg); }
+
+  .new-nav-mobile-menu {
+    display: flex; flex-direction: column; gap: 4px;
+    max-height: 0; opacity: 0; overflow: hidden; margin-top: 0;
+    transition: max-height 0.3s ease, opacity 0.25s ease, margin-top 0.3s ease;
+  }
+  .new-nav-mobile-menu.is-open { max-height: 320px; opacity: 1; margin-top: 12px; }
+}
+
+/* Dashboard's watchlist-preview and "Aprende algo nuevo" card grids — 3 columns is too
+   cramped for card content (logo, name, price, verdict badge) once each column drops much
+   below ~220px. */
+@media (max-width: 900px) {
+  .new-card-grid-3 { grid-template-columns: repeat(2, minmax(0, 1fr)) !important; }
+}
+@media (max-width: 580px) {
+  .new-card-grid-3 { grid-template-columns: 1fr !important; }
+}
+
+/* Watchlist row (app/new/watchlist/page.js): logo + name/ticker + verdict badge all sit in
+   one flex line. The badge has flex-shrink:0 so on narrow phones it can squeeze the
+   name/ticker column down to zero width instead of shrinking itself — hide it below the
+   width where that starts happening and let the row's own click-through (to the stock page,
+   where the verdict shows in full) cover the loss. display lives here, not inline, so this
+   override actually wins (an inline display:flex would beat it regardless of specificity). */
+.new-watchlist-badge { display: flex; }
+@media (max-width: 420px) {
+  .new-watchlist-badge { display: none; }
+}
+
+/* Dashboard's "Próximos resultados" / "Movimientos de hoy" pair — two cards side by side
+   get too narrow for the row content (logo, name, date/timing) below ~700px. */
+@media (max-width: 700px) {
+  .new-dash-2col { grid-template-columns: 1fr !important; }
+}
+
