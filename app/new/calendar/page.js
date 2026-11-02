@@ -12,7 +12,9 @@ const MONTHS = ['ENE', 'FEB', 'MAR', 'ABR', 'MAY', 'JUN', 'JUL', 'AGO', 'SEP', '
 const RANGE_DAYS = 13;
 const ITEMS_PER_DAY = 5;
 
-const timingLabel = (hour) => hour === 'bmo' ? 'Antes de abrir' : hour === 'amc' ? 'Después del cierre' : 'Hora sin confirmar';
+// Kept short (not "Antes de abrir" / "Después del cierre") so this badge doesn't crowd out
+// the company name on the earnings row at mobile widths.
+const timingLabel = (hour) => hour === 'bmo' ? 'Apertura' : hour === 'amc' ? 'Cierre' : 'Sin confirmar';
 
 const toDateStr = (d) => d.toISOString().slice(0, 10);
 
@@ -147,9 +149,9 @@ export default function NewCalendarPage() {
                       <div key={item.ticker} style={{ display: 'flex', alignItems: 'center', gap: '14px', padding: '16px 22px', borderBottom: `1px solid ${C.borderSoft}` }}>
                         <Link href={`/new/stock/${item.ticker}`} style={{ display: 'flex', alignItems: 'center', gap: '14px', flex: 1, minWidth: 0, textDecoration: 'none', color: 'inherit' }}>
                           <StockLogo ticker={item.ticker} name={item.name} size={36} />
-                          <div style={{ minWidth: 0 }}>
+                          <div style={{ minWidth: 0, flex: '1 1 auto' }}>
                             <div style={{ fontSize: '14px', fontWeight: 700, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{item.name || item.ticker}</div>
-                            <div style={{ fontSize: '12px', color: C.text2 }}>{item.ticker}</div>
+                            <div style={{ fontSize: '12px', color: C.text2, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{item.ticker}</div>
                           </div>
                         </Link>
                         <span style={{ fontSize: '11px', fontWeight: 700, color: C.text2, background: C.bg, borderRadius: '20px', padding: '5px 12px', whiteSpace: 'nowrap', flexShrink: 0 }}>

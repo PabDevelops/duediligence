@@ -25,12 +25,12 @@ function WatchlistRow({ item, onRemove }) {
     <div style={{ display: 'flex', alignItems: 'center', gap: '14px', padding: '18px 24px', borderBottom: `1px solid ${C.borderSoft}` }}>
       <Link href={`/new/stock/${item.ticker}`} style={{ display: 'flex', alignItems: 'center', gap: '14px', flex: 1, minWidth: 0, textDecoration: 'none', color: 'inherit' }}>
         <StockLogo ticker={item.ticker} name={item.name} size={38} />
-        <div style={{ minWidth: 0, flexShrink: 1 }}>
+        <div style={{ minWidth: 0, flex: '1 1 auto' }}>
           <div style={{ fontSize: '14px', fontWeight: 700, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{item.name || item.ticker}</div>
-          <div style={{ fontSize: '12px', color: C.text2 }}>{item.ticker}</div>
+          <div style={{ fontSize: '12px', color: C.text2, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{item.ticker}</div>
         </div>
         {badge && (
-          <div style={{ display: 'flex', alignItems: 'center', gap: '6px', padding: '5px 12px', borderRadius: '20px', background: badge.bg, flexShrink: 0, marginLeft: '8px' }}>
+          <div className="new-watchlist-badge" style={{ alignItems: 'center', gap: '6px', padding: '5px 12px', borderRadius: '20px', background: badge.bg, flexShrink: 0, marginLeft: '8px' }}>
             <span aria-hidden="true" style={{ width: '7px', height: '7px', borderRadius: '50%', background: badge.dot }} />
             <span style={{ fontSize: '11px', fontWeight: 700, color: badge.text, whiteSpace: 'nowrap' }}>{verdict.label}</span>
           </div>

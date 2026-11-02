@@ -1140,3 +1140,14 @@ tr:hover td.sticky-col {
   .new-card-grid-3 { grid-template-columns: 1fr !important; }
 }
 
+/* Watchlist row (app/new/watchlist/page.js): logo + name/ticker + verdict badge all sit in
+   one flex line. The badge has flex-shrink:0 so on narrow phones it can squeeze the
+   name/ticker column down to zero width instead of shrinking itself — hide it below the
+   width where that starts happening and let the row's own click-through (to the stock page,
+   where the verdict shows in full) cover the loss. display lives here, not inline, so this
+   override actually wins (an inline display:flex would beat it regardless of specificity). */
+.new-watchlist-badge { display: flex; }
+@media (max-width: 420px) {
+  .new-watchlist-badge { display: none; }
+}
+
