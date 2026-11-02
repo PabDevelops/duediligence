@@ -22,9 +22,39 @@ const LEARN_FALLBACK_ICON = (
 const WATCHLIST_PREVIEW_LIMIT = 3;
 const MARKET_PREVIEW_LIMIT = 3;
 const LEARN_PREVIEW_LIMIT = 3;
+const EARNINGS_PREVIEW_LIMIT = 3;
+const EARNINGS_RANGE_DAYS = 13;
+const MOVERS_PREVIEW_LIMIT = 4;
+const NEWS_PREVIEW_LIMIT = 3;
 
 const hasFundamentals = (d) => d.revVal != null || d.niVal != null || d.marketCap != null
   || d.roic != null || d.grossMargin != null || (d.revHistory?.length ?? 0) > 0;
+
+const MONTHS_SHORT = ['ene', 'feb', 'mar', 'abr', 'may', 'jun', 'jul', 'ago', 'sep', 'oct', 'nov', 'dic'];
+const toDateStr = (d) => d.toISOString().slice(0, 10);
+
+// Same short labels used on /new/calendar — "Antes de abrir"/"Después del cierre" is too
+// long for a one-line preview row at this width.
+const timingLabelShort = (hour) => hour === 'bmo' ? 'Apertura' : hour === 'amc' ? 'Cierre' : 'Sin confirmar';
+
+function shortDateLabel(dateStr) {
+  const today = new Date();
+  const todayStr = toDateStr(today);
+  const tomorrowStr = toDateStr(new Date(today.getTime() + 86400000));
+  if (dateStr === todayStr) return 'Hoy';
+  if (dateStr === tomorrowStr) return 'Mañana';
+  const d = new Date(dateStr + 'T00:00:00');
+  return `${d.getDate()} ${MONTHS_SHORT[d.getMonth()]}`;
+}
+
+// /api/filings' RSS-sourced relative-time strings ("2h ago") come pre-formatted in English —
+// translating in place is simpler than re-deriving it from a timestamp this page doesn't have.
+function esRelativeTime(time) {
+  const m = /^(\d+)([mhd]) ago$/.exec(time || '');
+  if (!m) return time || '';
+  const unit = m[2] === 'm' ? 'min' : m[2];
+  return `hace ${m[1]}${unit}`;
+}
 
 function WatchlistCard({ item }) {
   const easyMode = computeEasyMode(item, hasFundamentals(item));
@@ -120,6 +150,38 @@ export default function NewDashboardPage() {
     return () => { active = false; };
   }, []);
 
+  const [earnings, setEarnings] = useState(null);
+  useEffect(() => {
+    let active = true;
+    const today = new Date();
+    const from = toDateStr(today);
+    const to = toDateStr(new Date(today.getTime() + EARNINGS_RANGE_DAYS * 86400000));
+    fetch(`/api/earnings?from=${from}&to=${to}`).then(r => r.json()).then(d => {
+      if (!active) return;
+      const sorted = [...(d.earnings || [])].sort((a, b) => a.date.localeCompare(b.date));
+      setEarnings(sorted.slice(0, EARNINGS_PREVIEW_LIMIT));
+    }).catch(() => { if (active) setEarnings([]); });
+    return () => { active = false; };
+  }, []);
+
+  const [movers, setMovers] = useState(null);
+  useEffect(() => {
+    let active = true;
+    fetch('/api/movers').then(r => r.json()).then(d => {
+      if (active) setMovers((d.bigCapMovers || []).slice(0, MOVERS_PREVIEW_LIMIT));
+    }).catch(() => { if (active) setMovers([]); });
+    return () => { active = false; };
+  }, []);
+
+  const [news, setNews] = useState(null);
+  useEffect(() => {
+    let active = true;
+    fetch('/api/filings').then(r => r.json()).then(d => {
+      if (active) setNews((d.filings || []).slice(0, NEWS_PREVIEW_LIMIT));
+    }).catch(() => { if (active) setNews([]); });
+    return () => { active = false; };
+  }, []);
+
   const [learnPosts, setLearnPosts] = useState(null);
   useEffect(() => {
     let active = true;
@@ -206,6 +268,70 @@ export default function NewDashboardPage() {
           )}
         </div>
 
+        <div className="new-dash-2col" style={{ display: 'grid', gridTemplateColumns: 'repeat(2, minmax(0, 1fr))', gap: '14px' }}>
+          <div style={{ background: C.surface, border: `1px solid ${C.border}`, borderRadius: '20px', padding: '22px 24px', boxSizing: 'border-box' }}>
+            <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', marginBottom: '6px' }}>
+              <h2 style={{ margin: 0, fontSize: '16px', fontWeight: 800 }}>Próximos resultados</h2>
+              <Link href="/new/calendar" style={{ fontSize: '13px', color: C.text2, textDecoration: 'none', fontWeight: 700 }}>Ver todo →</Link>
+            </div>
+            {earnings === null ? (
+              <div style={{ fontSize: '13px', color: C.text3 }}>Cargando…</div>
+            ) : earnings.length === 0 ? (
+              <div style={{ fontSize: '13px', color: C.text2, padding: '10px 0' }}>No hay resultados próximos en los próximos días.</div>
+            ) : (
+              <div>
+                {earnings.map(e => (
+                  <Link key={`${e.ticker}-${e.date}`} href={`/new/stock/${e.ticker}`} style={{
+                    display: 'flex', alignItems: 'center', gap: '12px', padding: '10px 0',
+                    textDecoration: 'none', color: 'inherit', borderBottom: `1px solid ${C.borderSoft}`,
+                  }}>
+                    <StockLogo ticker={e.ticker} name={e.name} size={32} />
+                    <div style={{ flex: '1 1 auto', minWidth: 0 }}>
+                      <div style={{ fontSize: '13px', fontWeight: 700, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{e.name || e.ticker}</div>
+                      <div style={{ fontSize: '11px', color: C.text2 }}>{e.ticker}</div>
+                    </div>
+                    <div style={{ textAlign: 'right', flexShrink: 0 }}>
+                      <div style={{ fontSize: '12px', fontWeight: 700 }}>{shortDateLabel(e.date)}</div>
+                      <div style={{ fontSize: '11px', color: C.text2 }}>{timingLabelShort(e.hour)}</div>
+                    </div>
+                  </Link>
+                ))}
+              </div>
+            )}
+          </div>
+
+          <div style={{ background: C.surface, border: `1px solid ${C.border}`, borderRadius: '20px', padding: '22px 24px', boxSizing: 'border-box' }}>
+            <h2 style={{ margin: '0 0 6px', fontSize: '16px', fontWeight: 800 }}>Movimientos de hoy</h2>
+            {movers === null ? (
+              <div style={{ fontSize: '13px', color: C.text3 }}>Cargando…</div>
+            ) : movers.length === 0 ? (
+              <div style={{ fontSize: '13px', color: C.text2, padding: '10px 0' }}>Sin datos de mercado recientes.</div>
+            ) : (
+              <div>
+                {movers.map(m => {
+                  const up = m.priceChangePct >= 0;
+                  const color = up ? C.green : C.red;
+                  return (
+                    <Link key={m.ticker} href={`/new/stock/${m.ticker}`} style={{
+                      display: 'flex', alignItems: 'center', gap: '12px', padding: '10px 0',
+                      textDecoration: 'none', color: 'inherit', borderBottom: `1px solid ${C.borderSoft}`,
+                    }}>
+                      <StockLogo ticker={m.ticker} name={m.name} size={32} />
+                      <div style={{ flex: '1 1 auto', minWidth: 0 }}>
+                        <div style={{ fontSize: '13px', fontWeight: 700, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{m.name || m.ticker}</div>
+                        <div style={{ fontSize: '11px', color: C.text2 }}>{m.ticker}</div>
+                      </div>
+                      <div style={{ fontSize: '13px', fontWeight: 700, color, flexShrink: 0 }}>
+                        {up ? '+' : ''}{m.priceChangePct.toFixed(2)}%
+                      </div>
+                    </Link>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+        </div>
+
         {markets && markets.length > 0 && (
           <div style={{ background: C.surface, border: `1px solid ${C.border}`, borderRadius: '20px', padding: '22px 24px', boxSizing: 'border-box' }}>
             <h2 style={{ margin: '0 0 16px', fontSize: '16px', fontWeight: 800 }}>El mercado hoy</h2>
@@ -231,6 +357,31 @@ export default function NewDashboardPage() {
                   </div>
                 );
               })}
+            </div>
+          </div>
+        )}
+
+        {news && news.length > 0 && (
+          <div>
+            <h2 style={{ margin: '0 0 14px', fontSize: '18px', fontWeight: 800 }}>Últimas noticias</h2>
+            <div className="new-card-grid-3" style={{ display: 'grid', gridTemplateColumns: 'repeat(3, minmax(0, 1fr))', gap: '14px' }}>
+              {news.map(n => (
+                <a key={n.id} href={n.url} target="_blank" rel="noopener noreferrer" style={{
+                  textDecoration: 'none', color: 'inherit', background: C.surface, border: `1px solid ${C.border}`,
+                  borderRadius: '16px', overflow: 'hidden', display: 'flex', flexDirection: 'column', boxSizing: 'border-box',
+                }}>
+                  {n.image && (
+                    <img src={n.image} alt="" style={{ width: '100%', height: '140px', objectFit: 'cover', display: 'block' }}
+                      onError={e => { e.currentTarget.style.display = 'none'; }} />
+                  )}
+                  <div style={{ padding: '16px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                    <div style={{ fontSize: '13px', fontWeight: 700, lineHeight: 1.4, overflow: 'hidden', display: '-webkit-box', WebkitLineClamp: 3, WebkitBoxOrient: 'vertical' }}>
+                      {n.title}
+                    </div>
+                    <div style={{ fontSize: '11px', color: C.text3 }}>{n.source} · {esRelativeTime(n.time)}</div>
+                  </div>
+                </a>
+              ))}
             </div>
           </div>
         )}

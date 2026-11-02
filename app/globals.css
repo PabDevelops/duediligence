@@ -1151,3 +1151,9 @@ tr:hover td.sticky-col {
   .new-watchlist-badge { display: none; }
 }
 
+/* Dashboard's "Próximos resultados" / "Movimientos de hoy" pair — two cards side by side
+   get too narrow for the row content (logo, name, date/timing) below ~700px. */
+@media (max-width: 700px) {
+  .new-dash-2col { grid-template-columns: 1fr !important; }
+}
+
