@@ -344,7 +344,10 @@ function NewStockPageContent({ params }) {
 
       {(() => {
         const keyStats = [
-          { label: 'P/E', value: data.pe != null ? data.pe.toFixed(1) : null },
+          // A negative P/E (net loss) isn't "cheap" — it's not a multiple at all, so it's
+          // omitted here the same way any other unavailable stat is, instead of showing a
+          // confusing signed number with no color to explain it. Same threshold as Numbers.
+          { label: 'P/E', value: data.pe != null && data.pe > 0 && data.pe <= 300 ? data.pe.toFixed(1) : null },
           { label: 'Capitalización', value: data.marketCap != null ? formatCurrency(data.marketCap, sym) : null },
           { label: 'Ingresos (interanual)', value: data.revGrowth != null ? `${data.revGrowth > 0 ? '+' : ''}${data.revGrowth.toFixed(1)}%` : null, color: scoreColor(easyMode?.revGrowthScore) },
           { label: 'ROIC', value: data.roic != null ? `${data.roic.toFixed(1)}%` : null, color: scoreColor(easyMode?.roicScore) },

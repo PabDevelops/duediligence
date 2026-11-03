@@ -17,7 +17,9 @@ const hasFundamentals = (d) => d.revVal != null || d.niVal != null || d.marketCa
 const NM_MULTIPLE = 300;
 
 const pct = (v, forceSign = false) => v == null ? null : `${forceSign && v > 0 ? '+' : ''}${v.toFixed(1)}%`;
-const mult = (v) => v == null ? null : v > NM_MULTIPLE ? 'N/M' : v.toFixed(2);
+// A multiple at or below zero (a net loss, or negative free cash flow) isn't "cheap" — it
+// isn't a multiple at all — so it's treated the same as unavailable, not shown as a signed number.
+const mult = (v) => v == null || v <= 0 ? null : v > NM_MULTIPLE ? 'N/M' : v.toFixed(2);
 const money = (v, sym) => v == null ? null : formatCurrency(v, sym);
 const days = (v) => v == null ? null : `${v} días`;
 
