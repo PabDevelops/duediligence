@@ -163,6 +163,13 @@ export default function WorkspaceLayout({ children }) {
             globals.css. clip still clamps horizontal overflow without that side effect. */}
         <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', maxWidth: '100%', overflowX: 'clip' }}>
           <main style={{ flex: 1, maxWidth: '100%', overflowX: 'clip' }}>{(access === 'granted' || isPublic) ? children : null}</main>
+          {/* Privacy/Terms are only linked from the marketing pages' footer — a signed-in Pro
+              user living in Portfolio/Screener/Settings never sees those again otherwise. */}
+          {(access === 'granted' || isPublic) && (
+            <div style={{ textAlign: 'center', padding: '20px 24px 28px', fontSize: '11px', color: 'var(--ws-text-3)' }}>
+              © {new Date().getFullYear()} Bulltrace · <a href="/privacy" style={{ color: 'var(--ws-text-3)', textDecoration: 'none' }}>Privacidad</a> · <a href="/terms" style={{ color: 'var(--ws-text-3)', textDecoration: 'none' }}>Términos de uso</a>
+            </div>
+          )}
         </div>
       </div>
 
