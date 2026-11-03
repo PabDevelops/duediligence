@@ -12,6 +12,14 @@ const dateLabel = (d) => {
   return parsed.toLocaleDateString('es-ES', { year: 'numeric', month: 'long', day: 'numeric' });
 };
 
+// Same 0-70/40 breakpoints QualityBreakdown below already colors the cost/liquidity/
+// diversification pillars with — reused here so a stat's color always means the same thing it
+// means in the headline quality note. Only wired to stats that genuinely have one of
+// computeETFQualityScore's existing factor scores behind them (expense ratio -> cost, AUM/
+// volume -> liquidity); yield/PE/beta have no equivalent scoring for funds, so they stay plain
+// black rather than getting a color backed by nothing — same rule the stock Numbers page uses.
+const scoreColor = (s) => s == null ? C.ink : s >= 70 ? C.green : s >= 40 ? C.ink : C.red;
+
 const FACTOR_META = {
   cost: { label: 'COSTE', explain: 'Cuánto te cobra el fondo al año por gestionarlo — más bajo es mejor, es dinero que no sale de tu bolsillo aunque no vendas nada.' },
   liquidity: { label: 'LIQUIDEZ', explain: 'Qué tan fácil es comprar y vender sin mover el precio — fondos grandes y con mucho volumen son más líquidos.' },
@@ -19,7 +27,10 @@ const FACTOR_META = {
 };
 
 function QualityBreakdown({ composite, factors }) {
-  const scoreColor = (s) => s == null ? C.text3 : s >= 70 ? C.green : s >= 40 ? C.ink : C.red;
+  // Null here means "this factor has no data for this fund" (shows N/D) — kept visually muted
+  // (C.text3) rather than scoreColor's plain-black default below, which means something
+  // different: "this stat has no quality judgment behind it at all."
+  const pillarColor = (s) => s == null ? C.text3 : s >= 70 ? C.green : s >= 40 ? C.ink : C.red;
   return (
     <div style={{ background: C.surface, border: `1px solid ${C.border}`, borderRadius: '20px', padding: '24px 26px', boxSizing: 'border-box' }}>
       <h2 style={{ margin: '0 0 4px', fontSize: '15px', fontWeight: 800 }}>De qué se compone la nota de calidad</h2>
@@ -29,7 +40,7 @@ function QualityBreakdown({ composite, factors }) {
       <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
         {Object.entries(factors).map(([key, f]) => (
           <div key={key} style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
-            <div style={{ width: '42px', height: '42px', borderRadius: '12px', background: C.bg, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '14px', fontWeight: 800, color: scoreColor(f.score), flexShrink: 0 }}>
+            <div style={{ width: '42px', height: '42px', borderRadius: '12px', background: C.bg, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '14px', fontWeight: 800, color: pillarColor(f.score), flexShrink: 0 }}>
               {f.available && f.score != null ? Math.round(f.score) : 'N/D'}
             </div>
             <div>
@@ -66,7 +77,7 @@ function StatSection({ title, intro, stats }) {
               <div style={{ fontSize: '13px', fontWeight: 700, marginBottom: '3px' }}>{s.label}</div>
               <div style={{ fontSize: '12px', color: C.text2, lineHeight: 1.5 }}>{s.explain}</div>
             </div>
-            <div style={{ fontSize: '16px', fontWeight: 800, whiteSpace: 'nowrap', flexShrink: 0 }}>{s.value}</div>
+            <div style={{ fontSize: '16px', fontWeight: 800, whiteSpace: 'nowrap', flexShrink: 0, color: s.color ?? C.ink }}>{s.value}</div>
           </div>
         ))}
       </div>
@@ -139,15 +150,18 @@ function NewEtfNumbersContent({ params }) {
       <div>
         <h1 style={{ margin: 0, fontSize: '24px', fontWeight: 800, letterSpacing: '-0.02em' }}>Todos los números</h1>
         <div style={{ fontSize: '13px', color: C.text2, marginTop: '4px' }}>{etf.name} · {ticker}</div>
+        <div style={{ fontSize: '12px', color: C.text3, marginTop: '8px' }}>
+          Los números en <span style={{ color: C.green, fontWeight: 700 }}>verde</span> van bien, en <span style={{ color: C.red, fontWeight: 700 }}>rojo</span> conviene vigilarlos — comparados con otros fondos. Rentabilidad por dividendo, PER y Beta todavía no tienen un umbral propio.
+        </div>
       </div>
 
       <StatSection
         title="Coste y tamaño — ¿cuánto cuesta y cuán grande es?"
         intro="Un fondo más barato y más grande suele ser más fácil de mantener a largo plazo."
         stats={[
-          { label: 'Gastos al año (TER)', value: etf.expenseRatio, explain: 'Lo que te cobra el fondo cada año por gestionarlo, como % de tu inversión. Sale de tu bolsillo aunque no vendas nada — más bajo es mejor.' },
-          { label: 'Patrimonio gestionado (AUM)', value: etf.aum, explain: 'El dinero total que los inversores tienen metido en este fondo. Más grande suele significar más estabilidad.' },
-          { label: 'Volumen medio diario', value: etf.volume, explain: 'Cuántas participaciones se compran y venden cada día de media. Más volumen facilita comprar o vender sin mover el precio.' },
+          { label: 'Gastos al año (TER)', value: etf.expenseRatio, explain: 'Lo que te cobra el fondo cada año por gestionarlo, como % de tu inversión. Sale de tu bolsillo aunque no vendas nada — más bajo es mejor.', color: scoreColor(quality?.factors.cost.score) },
+          { label: 'Patrimonio gestionado (AUM)', value: etf.aum, explain: 'El dinero total que los inversores tienen metido en este fondo. Más grande suele significar más estabilidad.', color: scoreColor(quality?.factors.liquidity.score) },
+          { label: 'Volumen medio diario', value: etf.volume, explain: 'Cuántas participaciones se compran y venden cada día de media. Más volumen facilita comprar o vender sin mover el precio.', color: scoreColor(quality?.factors.liquidity.score) },
         ]}
       />
 
