@@ -797,15 +797,25 @@ async function fetchDescription(ticker) {
   } catch { return null; }
 }
 
-// Translates result.description to Spanish exactly once per ticker and marks it with
-// descriptionTranslated, so the paid translation call only runs the first time a given
-// English description is seen — every subsequent fetch within the same 24h-or-so cache cycle
-// reuses priorCachedData's already-translated text instead of re-translating it. Mutates
-// `result` in place; callers run this right before upserting so the translated text (not the
-// English original) is what gets cached and served.
+// A properly translated+summarized description should land well under this — generous headroom
+// over the ~400-500 chars translateDescription targets, so normal output never re-triggers.
+// Descriptions already translated before summarization was added (plain translation of the
+// original, sometimes a multi-paragraph legal dump) sit well above it, so this also catches and
+// reprocesses those instead of leaving them stuck long forever.
+const MAX_DESCRIPTION_CHARS = 700;
+
+// Translates (and condenses) result.description to Spanish exactly once per ticker and marks it
+// with descriptionTranslated, so the paid translation call only runs the first time a given
+// description needs work — every subsequent fetch within the same 24h-or-so cache cycle reuses
+// priorCachedData's already-processed text instead of redoing it. Mutates `result` in place;
+// callers run this right before upserting so the translated text (not the English original) is
+// what gets cached and served.
 async function ensureSpanishDescription(result, priorCachedData) {
   if (!result.description) return;
-  if (priorCachedData?.descriptionTranslated && priorCachedData?.description === result.description) {
+  const alreadyDone = priorCachedData?.descriptionTranslated
+    && priorCachedData?.description === result.description
+    && result.description.length <= MAX_DESCRIPTION_CHARS;
+  if (alreadyDone) {
     result.descriptionTranslated = true;
     return;
   }
