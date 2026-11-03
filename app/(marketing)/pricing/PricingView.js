@@ -1,13 +1,13 @@
 'use client';
 import { useState } from 'react';
 import { useUser } from '../../components/AuthProvider';
-import Topbar from '../../components/Topbar';
-import Footer from '../../components/marketing/Footer';
+import NewMarketingNav from '../../components/new/NewMarketingNav';
+import NewMarketingFooter from '../../components/new/NewMarketingFooter';
+import { NEW_COLORS as C } from '../../components/new/theme';
 
-export default function PricingView({ dict }) {
+export default function PricingView() {
   const { isSignedIn } = useUser();
   const [loading, setLoading] = useState(null);
-  const t = dict.pricing;
 
   const checkout = async (priceId) => {
     if (!isSignedIn) { window.location.href = '/sign-in'; return; }
@@ -23,102 +23,86 @@ export default function PricingView({ dict }) {
   const MONTHLY_ID = process.env.NEXT_PUBLIC_STRIPE_PRICE_MONTHLY;
   const ANNUAL_ID = process.env.NEXT_PUBLIC_STRIPE_PRICE_ANNUAL;
 
-  const freePlan = {
-    id: 'free',
-    label: t.free.label,
-    price: t.free.price,
-    suffix: t.free.suffix,
-    features: t.free.features,
-    cta: t.free.cta,
-    isFree: true,
-  };
-
-  const proPlans = [
-    { id: MONTHLY_ID, label: t.monthly, price: '$14.99', suffix: t.priceSuffixMonthly, cta: t.ctaStart, features: t.proFeatures, highlight: false },
-    { id: ANNUAL_ID, label: t.annual, price: '$9.99', suffix: t.priceSuffixAnnual, cta: `${t.ctaStart} ${t.ctaStartAnnual}`, features: t.proFeatures, highlight: true },
+  const plans = [
+    {
+      id: 'free', label: 'Gratis', price: '0€', suffix: 'sin tarjeta', isFree: true, cta: 'Crear cuenta gratis',
+      features: [
+        'Veredictos y proyección a 5 años en cada acción',
+        'Nota de calidad en cada acción',
+        'Lista de seguimiento guardada',
+        'Explorador de acciones y ETFs sin límite',
+      ],
+    },
+    {
+      id: MONTHLY_ID, label: 'Mensual', price: '14,99 €', suffix: '/mes', cta: 'Hazte Pro',
+      features: ['Todo lo de Gratis', 'Seguimiento de cartera multi-divisa', 'Cobertura completa de ETFs', 'Descubrimiento diario sin límite'],
+    },
+    {
+      id: ANNUAL_ID, label: 'Anual', price: '9,99 €', suffix: '/mes · 119,99 €/año', cta: 'Hazte Pro — ahorra 33%', highlight: true,
+      features: ['Todo lo de Gratis', 'Seguimiento de cartera multi-divisa', 'Cobertura completa de ETFs', 'Descubrimiento diario sin límite'],
+    },
   ];
 
-  const plans = [freePlan, ...proPlans];
-
   return (
-    <div style={{ background: 'var(--bg)', minHeight: '100vh', color: 'var(--text)', fontFamily: 'Inter, sans-serif', position: 'relative', overflow: 'hidden' }}>
-      <div style={{ position: 'absolute', top: '80px', left: '20%', width: '600px', height: '400px', background: 'radial-gradient(ellipse, rgba(199,255,56,0.08) 0%, transparent 70%)', pointerEvents: 'none', zIndex: 0 }} />
-      <Topbar />
+    <div style={{ width: '100%', minHeight: '100vh', boxSizing: 'border-box', background: C.bg, color: C.ink, fontFamily: "'Plus Jakarta Sans', system-ui, sans-serif" }}>
+      <div style={{ maxWidth: 'min(1200px, 92vw)', margin: '0 auto', padding: '32px 24px 0', display: 'flex', flexDirection: 'column', gap: '24px', boxSizing: 'border-box' }}>
+        <NewMarketingNav active="precios" />
+      </div>
 
-      <div style={{ maxWidth: '1100px', margin: '0 auto', padding: '56px 20px 80px', position: 'relative', zIndex: 1 }}>
-
-        {/* Header */}
+      <div style={{ maxWidth: '980px', margin: '0 auto', padding: '40px 24px 96px', boxSizing: 'border-box' }}>
         <div style={{ textAlign: 'center', marginBottom: '48px' }}>
-          <div style={{ color: 'var(--accent)', fontSize: '11px', letterSpacing: '2px', marginBottom: '12px', fontWeight: 700 }}>{t.eyebrow}</div>
-          <h1 style={{ fontSize: '40px', fontWeight: 800, letterSpacing: '-1px', marginBottom: '12px', lineHeight: 1.1 }}>
-            {t.titleLine1}<br /><span style={{ color: 'var(--accent)' }}>{t.titleLine2}</span>
+          <h1 style={{ margin: '0 0 12px', fontSize: 'clamp(28px, 4vw, 40px)', fontWeight: 800, letterSpacing: '-0.02em', lineHeight: 1.1 }}>
+            Gratis para empezar.<br />Hazte Pro cuando lo necesites.
           </h1>
-          <p style={{ color: 'var(--text-2)', fontSize: '15px', lineHeight: 1.7, maxWidth: '520px', margin: '0 auto' }}>
-            {t.subtitle}
+          <p style={{ margin: '0 auto', maxWidth: '520px', fontSize: '14px', color: C.text2, lineHeight: 1.6 }}>
+            Crea una cuenta gratis para ver veredictos completos y explorar sin límite — sin tarjeta. Pasa a Pro para cartera, ETFs y descubrimiento ilimitado.
           </p>
         </div>
 
-        {/* Plans — free, monthly, and annual side by side */}
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: '20px', maxWidth: '980px', margin: '0 auto' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '18px' }}>
           {plans.map(plan => (
             <div key={plan.id} style={{
-              background: plan.highlight ? 'rgba(199,255,56,0.06)' : 'var(--bg-1)',
-              border: plan.highlight ? '1.5px solid var(--accent)' : '1px solid var(--border)',
-              padding: '28px',
-              position: 'relative',
-              display: 'flex',
-              flexDirection: 'column',
+              background: plan.highlight ? '#F6FFDE' : C.surface,
+              border: plan.highlight ? `1.5px solid ${C.lime}` : `1px solid ${C.border}`,
+              borderRadius: '20px', padding: '28px', position: 'relative', display: 'flex', flexDirection: 'column', boxSizing: 'border-box',
             }}>
               {plan.highlight && (
-                <div style={{
-                  position: 'absolute', top: '-13px', right: '20px',
-                  background: 'var(--accent)', color: 'var(--accent-text)', fontSize: '11px', fontWeight: 800,
-                  padding: '4px 14px', fontFamily: 'Inter, sans-serif',
-                }}>
-                  {t.badge}
+                <div style={{ position: 'absolute', top: '-12px', right: '20px', background: C.lime, color: C.ink, fontSize: '10px', fontWeight: 800, letterSpacing: '0.04em', padding: '4px 12px', borderRadius: '20px' }}>
+                  MÁS POPULAR
                 </div>
               )}
-              <div style={{ color: 'var(--accent)', fontSize: '11px', letterSpacing: '2px', marginBottom: '8px', fontWeight: 700 }}>{plan.label.toUpperCase()}</div>
-              <div style={{ fontSize: '40px', fontWeight: 900, marginBottom: '4px', letterSpacing: '-1px' }}>{plan.price}</div>
-              <div style={{ color: 'var(--text-3)', fontSize: '13px', marginBottom: '24px' }}>{plan.suffix}</div>
-              <div style={{ borderTop: '1px solid var(--border)', paddingTop: '20px', marginBottom: '24px', display: 'flex', flexDirection: 'column', gap: '12px', flex: 1 }}>
+              <div style={{ fontSize: '11px', fontWeight: 700, color: C.text3, letterSpacing: '0.06em', marginBottom: '8px', textTransform: 'uppercase' }}>{plan.label}</div>
+              <div style={{ fontSize: '36px', fontWeight: 800, letterSpacing: '-0.02em', marginBottom: '4px' }}>{plan.price}</div>
+              <div style={{ color: C.text3, fontSize: '13px', marginBottom: '22px' }}>{plan.suffix}</div>
+              <div style={{ borderTop: `1px solid ${C.borderSoft}`, paddingTop: '18px', marginBottom: '22px', display: 'flex', flexDirection: 'column', gap: '11px', flex: 1 }}>
                 {plan.features.map(f => (
-                  <div key={f} style={{ display: 'flex', gap: '10px', alignItems: 'flex-start', color: 'var(--text-2)', fontSize: '14px', lineHeight: 1.5 }}>
-                    <span style={{ color: 'var(--accent)', flexShrink: 0, fontWeight: 700 }}>✓</span>{f}
+                  <div key={f} style={{ display: 'flex', gap: '9px', alignItems: 'flex-start', color: C.text2, fontSize: '13px', lineHeight: 1.5 }}>
+                    <span style={{ color: C.ink, flexShrink: 0, fontWeight: 700 }}>✓</span>{f}
                   </div>
                 ))}
               </div>
               <button
-                onClick={() => plan.isFree ? (window.location.href = '/sign-up') : checkout(plan.id)}
+                onClick={() => plan.isFree ? (window.location.href = '/home') : checkout(plan.id)}
                 disabled={loading !== null}
                 style={{
-                  width: '100%',
-                  padding: '13px',
-                  fontSize: '15px',
-                  fontWeight: 700,
-                  fontFamily: 'Inter, sans-serif',
-                  background: plan.highlight ? 'var(--accent)' : 'transparent',
-                  color: plan.highlight ? 'var(--accent-text)' : 'var(--text)',
-                  border: plan.highlight ? 'none' : '1px solid var(--text)',
-                  borderRadius: 0,
-                  cursor: 'pointer',
-                  transition: 'opacity 0.15s',
-                }}
-                onMouseEnter={e => e.currentTarget.style.opacity = 0.9}
-                onMouseLeave={e => e.currentTarget.style.opacity = 1}
-              >
-                {loading === plan.id ? t.ctaLoading : plan.cta}
+                  width: '100%', padding: '13px', borderRadius: '12px', fontSize: '14px', fontWeight: 700, fontFamily: 'inherit',
+                  background: plan.highlight ? C.lime : plan.isFree ? 'transparent' : C.ink,
+                  color: plan.highlight ? C.ink : plan.isFree ? C.ink : '#FFFFFF',
+                  border: plan.isFree ? `1px solid ${C.ink}` : 'none',
+                  cursor: loading !== null ? 'default' : 'pointer', opacity: loading !== null ? 0.6 : 1,
+                }}>
+                {loading === plan.id ? 'Cargando…' : plan.cta}
               </button>
             </div>
           ))}
         </div>
 
-        <div style={{ textAlign: 'center', marginTop: '32px', color: 'var(--text-3)', fontSize: '13px' }}>
-          {t.footNote}
+        <div style={{ textAlign: 'center', marginTop: '28px', color: C.text3, fontSize: '12px' }}>
+          Pago seguro con Stripe · Cancela cuando quieras · Sin cargos ocultos
         </div>
       </div>
 
-      <Footer dict={dict.home.footer} />
+      <NewMarketingFooter />
     </div>
   );
 }

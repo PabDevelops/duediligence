@@ -1,12 +1,11 @@
-import { getDictionary } from '../../../lib/i18n/getDictionary';
 import PricingView from './PricingView';
 
 export const metadata = {
-  title: 'Pricing & Plans — Bulltrace',
-  description: 'Create a free Bulltrace account for full DCF valuation, projections, Fair Value, and an uncapped stock screener. No credit card. Upgrade to Pro for Portfolio, ETFs, and unlimited discovery.',
+  title: 'Precios y planes — Bulltrace',
+  description: 'Crea una cuenta gratis en Bulltrace para ver veredictos completos, proyección a 5 años y explorar sin límite. Sin tarjeta. Hazte Pro para cartera, ETFs y descubrimiento ilimitado.',
   openGraph: {
-    title: 'Pricing & Plans | Bulltrace',
-    description: 'Free to start, no credit card. Upgrade to Pro for multi-currency Portfolio tracking, full ETF coverage, and unlimited daily stock discovery.',
+    title: 'Precios y planes | Bulltrace',
+    description: 'Gratis para empezar, sin tarjeta. Hazte Pro para seguimiento de cartera multi-divisa, cobertura completa de ETFs y descubrimiento diario ilimitado.',
     url: 'https://bulltrace.app/pricing',
     siteName: 'Bulltrace',
     images: [{ url: '/og-screenshot.png', width: 1200, height: 630 }],
@@ -14,8 +13,8 @@ export const metadata = {
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'Pricing & Plans | Bulltrace',
-    description: 'Free to start, no credit card. Upgrade to Pro for multi-currency Portfolio tracking, full ETF coverage, and unlimited daily stock discovery.',
+    title: 'Precios y planes | Bulltrace',
+    description: 'Gratis para empezar, sin tarjeta. Hazte Pro para seguimiento de cartera multi-divisa, cobertura completa de ETFs y descubrimiento diario ilimitado.',
     images: ['/og-screenshot.png'],
   },
   alternates: {
@@ -24,6 +23,5 @@ export const metadata = {
 };
 
 export default function Pricing() {
-  const dict = getDictionary();
-  return <PricingView dict={dict} />;
+  return <PricingView />;
 }

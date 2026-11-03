@@ -1103,11 +1103,17 @@ tr:hover td.sticky-col {
    unpredictable layout on narrow screens (the avatar ended up orphaned on its own line). */
 .new-nav-row { flex-wrap: nowrap; }
 .new-nav-links { display: flex; flex-wrap: nowrap; }
+/* NewMarketingNav's sign-in/CTA group (app/components/new/NewMarketingNav.js) — same
+   breakpoint as .new-nav-links so neither leaves a gap where sign-in/CTA is hidden but the
+   burger that's meant to replace it hasn't appeared yet (a plain .desktop-only, which hides
+   at 768px instead of 680px, did exactly that). */
+.new-nav-cta { display: flex; flex-wrap: nowrap; }
 .new-nav-burger { display: none; }
 .new-nav-mobile-menu { display: none; }
 
 @media (max-width: 680px) {
   .new-nav-links { display: none; }
+  .new-nav-cta { display: none; }
 
   .new-nav-burger {
     display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 5px;

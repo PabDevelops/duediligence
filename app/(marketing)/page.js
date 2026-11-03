@@ -1,7 +1,8 @@
-import { getDictionary } from '../../lib/i18n/getDictionary';
 import HomeView from './HomeView';
 
 export const metadata = {
+  title: 'Bulltrace — Entiende cualquier acción antes de invertir',
+  description: 'Datos directos de la SEC, una nota de calidad clara y una proyección a 5 años para cualquier acción — sin jerga, sin recomendaciones de compra/venta. Gratis para empezar.',
   alternates: {
     canonical: '/',
   },
@@ -65,13 +66,12 @@ const authorJsonLd = {
 };
 
 export default function Home() {
-  const dict = getDictionary();
   return (
     <>
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(softwareAppJsonLd) }} />
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(organizationJsonLd) }} />
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(authorJsonLd) }} />
-      <HomeView dict={dict} />
+      <HomeView />
     </>
   );
 }

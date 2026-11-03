@@ -1,20 +1,24 @@
 'use client';
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import Topbar from '../../components/Topbar';
+import NewMarketingNav from '../../components/new/NewMarketingNav';
+import { NEW_COLORS as C } from '../../components/new/theme';
 
-export default function StartTrialView({ dict }) {
+const FEATURES = [
+  'Todo lo del plan Gratis',
+  'Seguimiento de cartera multi-divisa',
+  'Cobertura completa de ETFs',
+  'Descubrimiento diario sin límite',
+];
+
+export default function StartTrialView() {
   const router = useRouter();
   const [loading, setLoading] = useState(null);
   const [annual, setAnnual] = useState(true);
   const [isPro, setIsPro] = useState(false);
-  const t = dict.startTrial;
 
   useEffect(() => {
-    fetch('/api/subscription')
-      .then(r => r.json())
-      .then(d => setIsPro(d.isPro))
-      .catch(() => {});
+    fetch('/api/subscription').then(r => r.json()).then(d => setIsPro(d.isPro)).catch(() => {});
   }, []);
 
   const checkout = async (priceId) => {
@@ -31,67 +35,67 @@ export default function StartTrialView({ dict }) {
   const ANNUAL_ID = process.env.NEXT_PUBLIC_STRIPE_PRICE_ANNUAL;
 
   return (
-    <div style={{ background: 'var(--bg)', minHeight: '100vh', color: 'var(--text)', fontFamily: 'Inter, sans-serif', position: 'relative', overflow: 'hidden' }}>
-      <div style={{ position: 'absolute', top: '80px', left: '20%', width: '600px', height: '400px', background: 'radial-gradient(ellipse, rgba(167,139,250,0.1) 0%, transparent 70%)', pointerEvents: 'none', zIndex: 0 }} />
-      <Topbar />
+    <div style={{ width: '100%', minHeight: '100vh', boxSizing: 'border-box', background: C.bg, color: C.ink, fontFamily: "'Plus Jakarta Sans', system-ui, sans-serif" }}>
+      <div style={{ maxWidth: 'min(1200px, 92vw)', margin: '0 auto', padding: '32px 24px 0', boxSizing: 'border-box' }}>
+        <NewMarketingNav active="precios" />
+      </div>
 
-      <div style={{ maxWidth: '520px', margin: '0 auto', padding: '56px 20px', position: 'relative', zIndex: 1 }}>
-
-        <div style={{ textAlign: 'center', marginBottom: '32px' }}>
-          <div style={{ color: 'var(--accent)', fontSize: '11px', letterSpacing: '2px', marginBottom: '12px', fontWeight: 700 }}>{t.eyebrow}</div>
-          <h1 style={{ fontSize: '32px', fontWeight: 800, letterSpacing: '-1px', marginBottom: '12px', lineHeight: 1.1 }}>
-            {t.titleLine1} <span style={{ color: 'var(--accent)' }}>{t.titleLine2}</span>
+      <div style={{ maxWidth: '460px', margin: '0 auto', padding: '40px 24px 96px', boxSizing: 'border-box' }}>
+        <div style={{ textAlign: 'center', marginBottom: '28px' }}>
+          <div style={{ fontSize: '11px', fontWeight: 700, color: C.text3, letterSpacing: '0.06em', marginBottom: '10px' }}>EMPIEZA TU PRUEBA</div>
+          <h1 style={{ margin: '0 0 10px', fontSize: '28px', fontWeight: 800, letterSpacing: '-0.02em', lineHeight: 1.15 }}>
+            14 días de Pro, <span style={{ color: C.green }}>gratis</span>.
           </h1>
-          <p style={{ color: 'var(--text-2)', fontSize: '15px', lineHeight: 1.7 }}>
-            {t.subtitle}
+          <p style={{ margin: 0, fontSize: '13px', color: C.text2, lineHeight: 1.6 }}>
+            Acceso completo a cartera, ETFs y descubrimiento ilimitado. Sin tarjeta para empezar.
           </p>
         </div>
 
-        <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '28px' }}>
-          <div className="glass" style={{ display: 'flex', gap: '4px', padding: '4px', borderRadius: '14px' }}>
-            <button onClick={() => setAnnual(false)}
-              style={{ padding: '10px 24px', borderRadius: '10px', background: !annual ? 'linear-gradient(135deg, #a78bfa, #60a5fa)' : 'transparent', color: !annual ? '#000' : 'var(--text-2)', border: 'none', fontFamily: 'Inter, sans-serif', fontSize: '14px', fontWeight: 700, cursor: 'pointer', transition: 'all 0.2s' }}>
-              {t.monthly}
+        <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '22px' }}>
+          <div style={{ display: 'flex', gap: '4px', padding: '4px', borderRadius: '14px', background: C.surface, border: `1px solid ${C.border}` }}>
+            <button type="button" onClick={() => setAnnual(false)} style={{
+              padding: '9px 20px', borderRadius: '10px', fontFamily: 'inherit', fontSize: '13px', fontWeight: 700, cursor: 'pointer', border: 'none',
+              background: !annual ? C.lime : 'transparent', color: C.ink,
+            }}>
+              Mensual
             </button>
-            <button onClick={() => setAnnual(true)}
-              style={{ padding: '10px 24px', borderRadius: '10px', background: annual ? 'linear-gradient(135deg, #a78bfa, #60a5fa)' : 'transparent', color: annual ? '#000' : 'var(--text-2)', border: 'none', fontFamily: 'Inter, sans-serif', fontSize: '14px', fontWeight: 700, cursor: 'pointer', transition: 'all 0.2s' }}>
-              {t.annual}
+            <button type="button" onClick={() => setAnnual(true)} style={{
+              padding: '9px 20px', borderRadius: '10px', fontFamily: 'inherit', fontSize: '13px', fontWeight: 700, cursor: 'pointer', border: 'none',
+              background: annual ? C.lime : 'transparent', color: C.ink,
+            }}>
+              Anual · ahorra 33%
             </button>
           </div>
         </div>
 
-        <div style={{ background: 'rgba(167,139,250,0.06)', border: '1.5px solid rgba(167,139,250,0.4)', borderRadius: '20px', padding: '28px', backdropFilter: 'blur(24px)' }}>
-          <div style={{ color: 'var(--accent)', fontSize: '11px', letterSpacing: '2px', marginBottom: '12px', fontWeight: 700 }}>{t.planName}</div>
-          <div style={{ fontSize: '40px', fontWeight: 900, marginBottom: '4px', letterSpacing: '-1px' }}>
-            {annual ? '$9.99' : '$14.99'}
+        <div style={{ background: '#F6FFDE', border: `1.5px solid ${C.lime}`, borderRadius: '20px', padding: '26px', boxSizing: 'border-box' }}>
+          <div style={{ fontSize: '11px', fontWeight: 700, color: C.text3, letterSpacing: '0.06em', marginBottom: '10px' }}>PLAN PRO</div>
+          <div style={{ fontSize: '36px', fontWeight: 800, letterSpacing: '-0.02em', marginBottom: '4px' }}>
+            {annual ? '9,99 €' : '14,99 €'}
           </div>
-          <div style={{ color: 'var(--text-3)', fontSize: '13px', marginBottom: '20px' }}>
-            {annual ? t.priceSuffixAnnual : t.priceSuffixMonthly}
+          <div style={{ color: C.text3, fontSize: '13px', marginBottom: '20px' }}>
+            {annual ? '/mes · facturado 119,99 €/año tras la prueba' : '/mes'}
           </div>
-          <div style={{ borderTop: '1px solid var(--border)', paddingTop: '20px', marginBottom: '24px', display: 'flex', flexDirection: 'column', gap: '12px' }}>
-            {t.features.map(f => (
-              <div key={f} style={{ display: 'flex', gap: '10px', alignItems: 'flex-start', color: 'var(--text-2)', fontSize: '14px', lineHeight: 1.5 }}>
-                <span style={{ color: 'var(--accent)', flexShrink: 0, fontWeight: 700 }}>✓</span>{f}
+          <div style={{ borderTop: `1px solid ${C.borderSoft}`, paddingTop: '18px', marginBottom: '22px', display: 'flex', flexDirection: 'column', gap: '11px' }}>
+            {FEATURES.map(f => (
+              <div key={f} style={{ display: 'flex', gap: '9px', alignItems: 'flex-start', color: C.text2, fontSize: '13px', lineHeight: 1.5 }}>
+                <span style={{ color: C.ink, flexShrink: 0, fontWeight: 700 }}>✓</span>{f}
               </div>
             ))}
           </div>
           <button
-            onClick={() => {
-              if (isPro) {
-                router.push('/home');
-              } else {
-                checkout(annual ? ANNUAL_ID : MONTHLY_ID);
-              }
-            }}
+            onClick={() => isPro ? router.push('/home') : checkout(annual ? ANNUAL_ID : MONTHLY_ID)}
             disabled={loading !== null}
-            className="btn-primary"
-            style={{ width: '100%', padding: '13px', borderRadius: '12px', fontSize: '15px' }}>
-            {loading ? t.ctaLoading : isPro ? t.ctaGoToTerminal : t.ctaStart}
+            style={{
+              width: '100%', padding: '13px', borderRadius: '12px', fontSize: '14px', fontWeight: 700, fontFamily: 'inherit',
+              background: C.lime, color: C.ink, border: 'none', cursor: loading !== null ? 'default' : 'pointer', opacity: loading !== null ? 0.6 : 1,
+            }}>
+            {loading ? 'Cargando…' : isPro ? 'Ir a la app →' : 'Empezar mi prueba gratis →'}
           </button>
         </div>
 
-        <div style={{ textAlign: 'center', marginTop: '20px', color: 'var(--text-3)', fontSize: '13px' }}>
-          {t.footNote}
+        <div style={{ textAlign: 'center', marginTop: '18px', color: C.text3, fontSize: '12px' }}>
+          Pago seguro con Stripe · Cancela cuando quieras
         </div>
       </div>
     </div>
