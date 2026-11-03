@@ -2,6 +2,7 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import { useUser } from '../AuthProvider';
+import Avatar from './Avatar';
 import { NEW_COLORS as C } from './theme';
 
 // Shared top nav for the /new redesign — ported from the Design canvas mockup's repeated
@@ -19,8 +20,12 @@ const NAV_ITEMS = [
 ];
 
 export default function NewNav({ active }) {
-  const { isSignedIn } = useUser();
+  const { user, isSignedIn } = useUser();
   const [open, setOpen] = useState(false);
+
+  // Precios only makes sense to pitch at someone who isn't already a customer — once signed
+  // in, it's just noise (their plan status already lives on /profile).
+  const items = isSignedIn ? NAV_ITEMS : [...NAV_ITEMS, { key: 'precios', label: 'Precios', href: '/pricing' }];
 
   return (
     <div className="new-nav-wrap">
@@ -33,7 +38,7 @@ export default function NewNav({ active }) {
         </Link>
 
         <nav aria-label="Principal" className="new-nav-links" style={{ alignItems: 'center', gap: '4px' }}>
-          {NAV_ITEMS.map(item => (
+          {items.map(item => (
             <Link key={item.key} href={item.href} style={{
               padding: '7px 14px', borderRadius: '20px', fontSize: '13px', fontWeight: 700, textDecoration: 'none',
               background: active === item.key ? C.lime : 'transparent',
@@ -46,8 +51,20 @@ export default function NewNav({ active }) {
         </nav>
 
         <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexShrink: 0 }}>
-          <Link href={isSignedIn ? '/profile' : '/sign-in'} aria-label={isSignedIn ? 'Tu perfil' : 'Iniciar sesión'}
-            style={{ width: '36px', height: '36px', borderRadius: '50%', background: C.avatarBg, border: `1px solid ${C.border}`, flexShrink: 0 }} />
+          {isSignedIn ? (
+            <Link href="/profile" aria-label="Tu perfil">
+              <Avatar user={user} size={36} />
+            </Link>
+          ) : (
+            <div className="new-nav-cta" style={{ alignItems: 'center', gap: '10px' }}>
+              <Link href="/sign-in" style={{ fontSize: '13px', fontWeight: 700, color: C.text2, textDecoration: 'none', whiteSpace: 'nowrap' }}>
+                Iniciar sesión
+              </Link>
+              <Link href="/sign-up" style={{ padding: '9px 16px', borderRadius: '20px', fontSize: '13px', fontWeight: 700, textDecoration: 'none', background: C.lime, color: C.ink, whiteSpace: 'nowrap' }}>
+                Empieza gratis
+              </Link>
+            </div>
+          )}
 
           <button
             type="button"
@@ -62,7 +79,7 @@ export default function NewNav({ active }) {
       </div>
 
       <nav aria-label="Principal (móvil)" className={`new-nav-mobile-menu${open ? ' is-open' : ''}`}>
-        {NAV_ITEMS.map(item => (
+        {items.map(item => (
           <Link key={item.key} href={item.href} onClick={() => setOpen(false)} style={{
             padding: '12px 14px', borderRadius: '12px', fontSize: '14px', fontWeight: 700, textDecoration: 'none',
             background: active === item.key ? C.lime : 'transparent',
@@ -71,6 +88,16 @@ export default function NewNav({ active }) {
             {item.label}
           </Link>
         ))}
+        {!isSignedIn && (
+          <>
+            <Link href="/sign-in" onClick={() => setOpen(false)} style={{ padding: '12px 14px', borderRadius: '12px', fontSize: '14px', fontWeight: 700, textDecoration: 'none', color: C.text2 }}>
+              Iniciar sesión
+            </Link>
+            <Link href="/sign-up" onClick={() => setOpen(false)} style={{ padding: '12px 14px', borderRadius: '12px', fontSize: '14px', fontWeight: 700, textDecoration: 'none', background: C.lime, color: C.ink }}>
+              Empieza gratis
+            </Link>
+          </>
+        )}
       </nav>
     </div>
   );

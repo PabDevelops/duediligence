@@ -1,10 +1,14 @@
 'use client';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { useUser } from '../../components/AuthProvider';
 import { createClient } from '../../../lib/supabase/client';
 import NewNav from '../../components/new/NewNav';
+import Avatar from '../../components/new/Avatar';
 import { NEW_COLORS as C } from '../../components/new/theme';
+
+const MAX_AVATAR_BYTES = 5 * 1024 * 1024;
+const ALLOWED_AVATAR_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
 
 const inputStyle = {
   padding: '11px 14px', borderRadius: '10px', border: `1px solid ${C.border}`, background: '#FDFBF6',
@@ -32,6 +36,9 @@ export default function NewProfilePage() {
   const [profileMsg, setProfileMsg] = useState({ type: '', text: '' });
   const [securityMsg, setSecurityMsg] = useState({ type: '', text: '' });
   const [watchlistCount, setWatchlistCount] = useState(0);
+  const [avatarUploading, setAvatarUploading] = useState(false);
+  const [avatarMsg, setAvatarMsg] = useState('');
+  const fileInputRef = useRef(null);
 
   useEffect(() => {
     if (!isLoaded) return;
@@ -43,6 +50,42 @@ export default function NewProfilePage() {
     fetch('/api/watchlist').then(r => r.json()).then(d => setWatchlistCount((d?.tickers || []).length))
       .catch(() => {}).finally(() => setLoading(false));
   }, [isSignedIn, isLoaded]);
+
+  const handleAvatarChange = async (e) => {
+    const file = e.target.files?.[0];
+    e.target.value = ''; // let picking the same file again re-trigger onChange
+    if (!file) return;
+
+    setAvatarMsg('');
+    if (!ALLOWED_AVATAR_TYPES.includes(file.type)) {
+      setAvatarMsg('Usa una imagen JPG, PNG, WEBP o GIF.');
+      return;
+    }
+    if (file.size > MAX_AVATAR_BYTES) {
+      setAvatarMsg('La imagen pesa más de 5 MB — prueba con una más ligera.');
+      return;
+    }
+
+    setAvatarUploading(true);
+    try {
+      const ext = file.name.split('.').pop() || 'jpg';
+      const path = `${user.id}/avatar.${ext}`;
+      const { error: uploadError } = await supabase.storage.from('avatars').upload(path, file, { upsert: true });
+      if (uploadError) throw uploadError;
+
+      const { data: { publicUrl } } = supabase.storage.from('avatars').getPublicUrl(path);
+      // Cache-bust — the path never changes between uploads (upsert overwrites the same
+      // file), so without this the browser/CDN would keep showing the old image.
+      const bustedUrl = `${publicUrl}?t=${Date.now()}`;
+
+      const { error: updateError } = await supabase.auth.updateUser({ data: { avatar_url: bustedUrl } });
+      if (updateError) throw updateError;
+    } catch (err) {
+      setAvatarMsg(err.message || 'No se pudo subir la foto.');
+    } finally {
+      setAvatarUploading(false);
+    }
+  };
 
   const handleUpdateProfile = async (e) => {
     e.preventDefault();
@@ -111,8 +154,25 @@ export default function NewProfilePage() {
     <Shell>
       <div style={{ ...cardStyle, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '20px' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '18px', minWidth: 0 }}>
-          <div aria-hidden="true" style={{ width: '56px', height: '56px', borderRadius: '50%', background: C.lime, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '22px', fontWeight: 800, color: C.ink, flexShrink: 0 }}>
-            {(displayName || user?.email || '?').charAt(0).toUpperCase()}
+          <div style={{ position: 'relative', flexShrink: 0 }}>
+            <Avatar user={user} size={56} />
+            <button
+              type="button"
+              onClick={() => fileInputRef.current?.click()}
+              disabled={avatarUploading}
+              aria-label="Cambiar foto de perfil"
+              title="Cambiar foto de perfil"
+              style={{
+                position: 'absolute', bottom: '-2px', right: '-2px', width: '22px', height: '22px', borderRadius: '50%',
+                background: C.ink, color: '#FFFFFF', border: `2px solid ${C.bg}`, display: 'flex', alignItems: 'center', justifyContent: 'center',
+                cursor: avatarUploading ? 'default' : 'pointer', padding: 0, opacity: avatarUploading ? 0.6 : 1,
+              }}>
+              <svg aria-hidden="true" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z" />
+                <circle cx="12" cy="13" r="4" />
+              </svg>
+            </button>
+            <input ref={fileInputRef} type="file" accept="image/jpeg,image/png,image/webp,image/gif" onChange={handleAvatarChange} style={{ display: 'none' }} />
           </div>
           <div style={{ minWidth: 0 }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap' }}>
@@ -127,6 +187,11 @@ export default function NewProfilePage() {
             <div style={{ fontSize: '12px', color: C.text2, marginTop: '4px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
               {user?.email} · Miembro desde {user?.created_at ? new Date(user.created_at).toLocaleDateString('es-ES', { year: 'numeric', month: 'long', day: 'numeric' }) : '—'}
             </div>
+            {(avatarUploading || avatarMsg) && (
+              <div style={{ fontSize: '11px', color: avatarMsg ? C.red : C.text3, marginTop: '4px' }}>
+                {avatarUploading ? 'Subiendo foto…' : avatarMsg}
+              </div>
+            )}
           </div>
         </div>
         <button onClick={signOut} style={{ ...btnStyle, background: C.surface, border: `1px solid ${C.border}`, color: C.red }}>

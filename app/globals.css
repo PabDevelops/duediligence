@@ -1130,10 +1130,14 @@ tr:hover td.sticky-col {
 
   .new-nav-mobile-menu {
     display: flex; flex-direction: column; gap: 4px;
-    max-height: 0; opacity: 0; overflow: hidden; margin-top: 0;
+    max-height: 0; opacity: 0; overflow: hidden auto; margin-top: 0;
     transition: max-height 0.3s ease, opacity 0.25s ease, margin-top 0.3s ease;
   }
-  .new-nav-mobile-menu.is-open { max-height: 320px; opacity: 1; margin-top: 12px; }
+  /* NewNav's signed-out state adds Precios + Iniciar sesión + Empieza gratis on top of the
+     7 base nav items (10 rows total) — 320px was sized for the signed-in 7-row case and
+     clipped the rest. 70vh with its own scroll keeps this safe for any future item count
+     and any viewport height, instead of guessing another fixed pixel ceiling. */
+  .new-nav-mobile-menu.is-open { max-height: 70vh; opacity: 1; margin-top: 12px; }
 }
 
 /* Dashboard's watchlist-preview and "Aprende algo nuevo" card grids — 3 columns is too
