@@ -85,6 +85,7 @@ function NewEtfPageContent({ params }) {
   const [etf, setEtf] = useState(undefined); // undefined = loading, null = not found
   const [following, setFollowing] = useState(false);
   const [chartRange, setChartRange] = useState('1m');
+  const [refreshing, setRefreshing] = useState(false);
 
   useEffect(() => {
     let active = true;
@@ -101,6 +102,22 @@ function NewEtfPageContent({ params }) {
     }).catch(() => { if (active) setEtf(null); });
     return () => { active = false; };
   }, [ticker]);
+
+  // force: true bypasses the 24h cache window server-side (see app/api/etfs/route.js's POST
+  // handler) — same "Actualizar datos" pattern the stock page already has.
+  const refetchEtf = async () => {
+    setRefreshing(true);
+    try {
+      const res = await fetch('/api/etfs', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ ticker, force: true }) });
+      const fresh = await res.json();
+      if (!fresh.error) setEtf(fresh);
+    } catch {
+      // Silent — the page keeps showing whatever it already had rather than an error for a
+      // manual refresh that simply failed to reach the server.
+    } finally {
+      setRefreshing(false);
+    }
+  };
 
   useEffect(() => {
     if (!isLoaded) return;
@@ -119,11 +136,12 @@ function NewEtfPageContent({ params }) {
       if (next) addToGuestWatchlist(ticker); else removeFromGuestWatchlist(ticker);
       return;
     }
-    if (next) {
-      await fetch('/api/watchlist', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ ticker }) });
-    } else {
-      await fetch('/api/watchlist', { method: 'DELETE', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ ticker }) });
-    }
+    const res = next
+      ? await fetch('/api/watchlist', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ ticker }) })
+      : await fetch('/api/watchlist', { method: 'DELETE', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ ticker }) });
+    // The optimistic toggle above is wrong if the request actually failed — revert so the
+    // button reflects what's really saved instead of silently drifting from it.
+    if (!res.ok) setFollowing(!next);
   };
 
   if (etf === undefined) {
@@ -295,6 +313,14 @@ function NewEtfPageContent({ params }) {
           Ver qué datos faltan y sus límites →
         </Link>
       </div>
+
+      <button type="button" onClick={refetchEtf} disabled={refreshing} style={{
+        padding: '12px', borderRadius: '12px', border: `1px solid ${C.border}`, background: C.surface,
+        color: C.text2, fontFamily: 'inherit', fontSize: '12px', fontWeight: 700,
+        cursor: refreshing ? 'not-allowed' : 'pointer', opacity: refreshing ? 0.6 : 1,
+      }}>
+        {refreshing ? 'Actualizando…' : '↻ Actualizar datos'}
+      </button>
     </Shell>
   );
 }

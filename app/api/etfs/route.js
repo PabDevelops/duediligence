@@ -372,7 +372,7 @@ export async function GET() {
 
 export async function POST(request) {
   try {
-    const { ticker } = await request.json();
+    const { ticker, force } = await request.json();
     if (!ticker) {
       return Response.json({ error: 'Ticker is required' }, { status: 400 });
     }
@@ -385,7 +385,10 @@ export async function POST(request) {
       .eq('ticker', cleanTicker)
       .single();
 
-    if (cached?.data?.isEtf) {
+    // force bypasses the freshness check entirely — same as /api/stock's ?refresh=true, for the
+    // "Actualizar datos" button, which exists precisely so a stale-but-not-yet-24h-old row can
+    // be refetched on demand instead of waiting out the cache window.
+    if (!force && cached?.data?.isEtf) {
       const hoursOld = (Date.now() - new Date(cached.updated_at).getTime()) / 36e5;
       if (hoursOld < CACHE_HOURS) {
         return Response.json({ ...cached.data, updatedAt: cached.updated_at });
