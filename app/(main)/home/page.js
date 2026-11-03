@@ -10,6 +10,7 @@ import { getGuestWatchlist } from '../../../lib/guestWatchlist';
 import { computeEasyMode } from '../../../lib/stockScoring';
 import { stockVerdict } from '../../../lib/verdict';
 import { formatCurrency } from '../../../lib/formatters';
+import { toScore100, scoreTier } from '../../../lib/scoreScale';
 import { NEW_COLORS as C, VERDICT_BADGE } from '../../components/new/theme';
 
 const LEARN_FALLBACK_ICON = (
@@ -20,7 +21,7 @@ const LEARN_FALLBACK_ICON = (
 );
 
 const WATCHLIST_PREVIEW_LIMIT = 3;
-const MARKET_PREVIEW_LIMIT = 3;
+const LEADERS_PREVIEW_LIMIT = 4;
 const LEARN_PREVIEW_LIMIT = 3;
 const EARNINGS_PREVIEW_LIMIT = 3;
 const EARNINGS_RANGE_DAYS = 13;
@@ -141,15 +142,6 @@ export default function NewDashboardPage() {
     return () => { active = false; };
   }, [isLoaded, isSignedIn]);
 
-  const [markets, setMarkets] = useState(null);
-  useEffect(() => {
-    let active = true;
-    fetch('/api/market').then(r => r.json()).then(d => {
-      if (active) setMarkets((d.markets || []).slice(0, MARKET_PREVIEW_LIMIT));
-    }).catch(() => { if (active) setMarkets([]); });
-    return () => { active = false; };
-  }, []);
-
   const [earnings, setEarnings] = useState(null);
   useEffect(() => {
     let active = true;
@@ -165,11 +157,14 @@ export default function NewDashboardPage() {
   }, []);
 
   const [movers, setMovers] = useState(null);
+  const [leaders, setLeaders] = useState(null);
   useEffect(() => {
     let active = true;
     fetch('/api/movers').then(r => r.json()).then(d => {
-      if (active) setMovers((d.bigCapMovers || []).slice(0, MOVERS_PREVIEW_LIMIT));
-    }).catch(() => { if (active) setMovers([]); });
+      if (!active) return;
+      setMovers((d.bigCapMovers || []).slice(0, MOVERS_PREVIEW_LIMIT));
+      setLeaders((d.topScore || []).slice(0, LEADERS_PREVIEW_LIMIT));
+    }).catch(() => { if (active) { setMovers([]); setLeaders([]); } });
     return () => { active = false; };
   }, []);
 
@@ -357,29 +352,35 @@ export default function NewDashboardPage() {
           </div>
         </div>
 
-        {markets && markets.length > 0 && (
+        {leaders && leaders.length > 0 && (
           <div style={{ background: C.surface, border: `1px solid ${C.border}`, borderRadius: '20px', padding: '22px 24px', boxSizing: 'border-box' }}>
-            <h2 style={{ margin: '0 0 16px', fontSize: '16px', fontWeight: 800 }}>El mercado hoy</h2>
-            <div style={{ display: 'flex', gap: '32px', flexWrap: 'wrap' }}>
-              {markets.map(m => {
-                const up = m.changePct != null && m.changePct >= 0;
-                const color = m.changePct == null ? C.text2 : up ? C.green : C.red;
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '6px' }}>
+              <h2 style={{ margin: 0, fontSize: '16px', fontWeight: 800 }}>Líderes por calidad hoy</h2>
+              <Link href="/radar" style={{ fontSize: '12px', fontWeight: 700, color: C.ink, textDecoration: 'none', flexShrink: 0 }}>Ver más →</Link>
+            </div>
+            <div style={{ fontSize: '12px', color: C.text2, marginBottom: '10px' }}>Las mejor puntuadas, con el mismo modelo de calidad que ves en cada ficha.</div>
+            <div>
+              {leaders.map((s, i) => {
+                const score100 = toScore100(s.score);
+                const tier = scoreTier(score100);
+                const badge = tier ? VERDICT_BADGE[tier] : null;
                 return (
-                  <div key={m.symbol} style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                    {m.changePct != null && (
-                      up ? (
-                        <svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke={C.green} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="3 17 9 11 13 15 21 7"></polyline><polyline points="14 7 21 7 21 14"></polyline></svg>
-                      ) : (
-                        <svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke={C.red} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="3 7 9 13 13 9 21 17"></polyline><polyline points="14 17 21 17 21 10"></polyline></svg>
-                      )
-                    )}
-                    <div>
-                      <div style={{ fontSize: '13px', color: C.text2 }}>{m.label}</div>
-                      <div style={{ fontSize: '15px', fontWeight: 700, color }}>
-                        {m.changePct != null ? `${m.changePct >= 0 ? '+' : ''}${m.changePct.toFixed(1)}%` : 'N/D'}
-                      </div>
+                  <Link key={s.ticker} href={`/stock/${s.ticker}`} style={{
+                    display: 'flex', alignItems: 'center', gap: '12px', padding: '10px 0',
+                    textDecoration: 'none', color: 'inherit', borderTop: i > 0 ? `1px solid ${C.borderSoft}` : 'none',
+                  }}>
+                    <StockLogo ticker={s.ticker} name={s.name} size={32} />
+                    <div style={{ flex: '1 1 auto', minWidth: 0 }}>
+                      <div style={{ fontSize: '13px', fontWeight: 700, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{s.name || s.ticker}</div>
+                      <div style={{ fontSize: '11px', color: C.text2 }}>{s.ticker}</div>
                     </div>
-                  </div>
+                    {badge && (
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '5px', padding: '4px 10px', borderRadius: '20px', background: badge.bg, flexShrink: 0 }}>
+                        <span aria-hidden="true" style={{ width: '6px', height: '6px', borderRadius: '50%', background: badge.dot }} />
+                        <span style={{ fontSize: '11px', fontWeight: 700, color: badge.text }}>{score100}</span>
+                      </div>
+                    )}
+                  </Link>
                 );
               })}
             </div>

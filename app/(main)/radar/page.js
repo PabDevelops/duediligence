@@ -6,6 +6,7 @@ import Sparkline from '../../components/Sparkline';
 import { useUser } from '../../components/AuthProvider';
 import { getGuestWatchlist, addToGuestWatchlist, removeFromGuestWatchlist } from '../../../lib/guestWatchlist';
 import { formatCurrency } from '../../../lib/formatters';
+import { toScore100, scoreTier } from '../../../lib/scoreScale';
 import { NEW_COLORS as C, VERDICT_BADGE } from '../../components/new/theme';
 
 // Same curated ticker baskets as app/api/explore/route.js (THEMES) — ids must match what
@@ -51,13 +52,6 @@ const THEME_GROUPS = [
     ],
   },
 ];
-
-// /api/movers' topScore.score is easyMode.finalNote on a 1-5 scale (see lib/stockScoring.js),
-// not the 0-100 score shown everywhere else in the app (easyMode.score100) — convert before
-// applying the same 70/40 breakpoints the rest of the app uses, or a top-quality 5 reads as
-// "bad" against thresholds meant for 0-100.
-const toScore100 = (finalNote) => finalNote == null ? null : Math.round((finalNote / 5) * 100);
-const scoreTier = (score100) => score100 == null ? null : score100 >= 70 ? 'good' : score100 >= 40 ? 'caution' : 'bad';
 
 function AddButton({ ticker, active, onToggle }) {
   return (
