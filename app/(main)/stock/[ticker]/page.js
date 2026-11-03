@@ -67,7 +67,7 @@ function NewStockPageContent({ params }) {
   const ticker = rawTicker.toUpperCase();
   const router = useRouter();
   const { isSignedIn, isLoaded } = useUser();
-  const { data, error, loading } = useStockData(ticker);
+  const { data, error, loading, refreshing, refetch } = useStockData(ticker);
 
   const [following, setFollowing] = useState(false);
   const [chartRange, setChartRange] = useState('1m');
@@ -369,6 +369,14 @@ function NewStockPageContent({ params }) {
           Ver qué datos faltan y sus límites →
         </Link>
       </div>
+
+      <button type="button" onClick={refetch} disabled={refreshing} style={{
+        padding: '12px', borderRadius: '12px', border: `1px solid ${C.border}`, background: C.surface,
+        color: C.text2, fontFamily: 'inherit', fontSize: '12px', fontWeight: 700,
+        cursor: refreshing ? 'not-allowed' : 'pointer', opacity: refreshing ? 0.6 : 1,
+      }}>
+        {refreshing ? 'Actualizando…' : '↻ Actualizar datos'}
+      </button>
     </Shell>
   );
 }
