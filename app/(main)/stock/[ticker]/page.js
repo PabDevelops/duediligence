@@ -79,6 +79,7 @@ function NewStockPageContent({ params }) {
   const [following, setFollowing] = useState(false);
   const [chartRange, setChartRange] = useState('1m');
   const [insiderTrades, setInsiderTrades] = useState(null);
+  const [showAllInsiders, setShowAllInsiders] = useState(false);
 
   // /api/stock only knows a ticker is a fund once /api/etfs has processed it at least once
   // (that flag lives on the same stock_cache row) — a ticker nobody has ever opened via
@@ -111,7 +112,8 @@ function NewStockPageContent({ params }) {
 
   useEffect(() => {
     let active = true;
-    fetch(`/api/insider-trades?ticker=${ticker}&limit=6`).then(r => r.json()).then(d => {
+    setShowAllInsiders(false);
+    fetch(`/api/insider-trades?ticker=${ticker}&limit=20`).then(r => r.json()).then(d => {
       if (active) setInsiderTrades(d.transactions || []);
     }).catch(() => { if (active) setInsiderTrades([]); });
     return () => { active = false; };
@@ -408,14 +410,16 @@ function NewStockPageContent({ params }) {
             <div style={{ fontSize: '12px', color: C.text2 }}>Últimos movimientos declarados por directivos y consejeros de {companyName} (SEC Form 4).</div>
           </div>
           <div>
-            {insiderTrades.map((t, i) => (
+            {(showAllInsiders ? insiderTrades : insiderTrades.slice(0, 5)).map((t, i) => (
               <div key={i} style={{
                 display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '12px',
                 padding: '10px 0', borderTop: i > 0 ? `1px solid ${C.borderSoft}` : 'none',
               }}>
                 <div style={{ minWidth: 0 }}>
                   <div style={{ fontSize: '13px', fontWeight: 700, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{t.insider}</div>
-                  <div style={{ fontSize: '11px', color: C.text3 }}>{t.date}</div>
+                  <div style={{ fontSize: '11px', color: C.text3, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                    {t.role ? `${t.role} · ` : ''}{t.date}
+                  </div>
                 </div>
                 <div style={{ fontSize: '12px', fontWeight: 800, color: t.isOpenMarket ? (t.type === 'BUY' ? C.green : C.red) : C.text3, flexShrink: 0, textAlign: 'right' }}>
                   {t.type === 'BUY' ? '▲' : '▼'} {TXN_CODE_LABELS[t.code] || t.type} · {t.shares >= 1000 ? `${Math.round(t.shares / 1000)}K` : t.shares} acciones
@@ -423,6 +427,17 @@ function NewStockPageContent({ params }) {
               </div>
             ))}
           </div>
+          {insiderTrades.length > 5 && (
+            <button
+              type="button"
+              onClick={() => setShowAllInsiders(v => !v)}
+              style={{
+                alignSelf: 'flex-start', background: 'none', border: 'none', cursor: 'pointer', padding: 0,
+                fontSize: '12px', fontWeight: 700, color: C.ink, fontFamily: 'inherit',
+              }}>
+              {showAllInsiders ? 'Ver menos' : `Ver ${insiderTrades.length - 5} más`}
+            </button>
+          )}
         </div>
       )}
 
