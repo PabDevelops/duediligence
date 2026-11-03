@@ -1,5 +1,6 @@
 import { supabase } from '../../../lib/supabase';
 import { getYahooAuth } from '../../../lib/yahooFinance';
+import { rateLimit, getClientIp } from '../../../lib/rateLimit';
 
 const FH_KEY = process.env.FINNHUB_API_KEY;
 const CACHE_HOURS = 24;
@@ -376,6 +377,15 @@ export async function POST(request) {
     if (!ticker) {
       return Response.json({ error: 'Ticker is required' }, { status: 400 });
     }
+
+    // Same reasoning as /api/stock's ?refresh=true: only the forced path (the "Actualizar
+    // datos" button) bypasses the 24h cache and hits Yahoo for real, so it's the only one
+    // worth throttling — a normal add/lookup already costs nothing extra on a cache hit.
+    if (force) {
+      const { ok } = rateLimit(`etf-refresh:${getClientIp(request)}`, { limit: 10, windowMs: 60_000 });
+      if (!ok) return Response.json({ error: 'Demasiadas actualizaciones seguidas — espera un momento.' }, { status: 429 });
+    }
+
     const cleanTicker = ticker.trim().toUpperCase();
 
     // 1. Check if it's already in stock_cache with isEtf = true and still fresh

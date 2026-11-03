@@ -1,5 +1,6 @@
 import { supabase } from '../../../../lib/supabase';
 import { checkIsAdmin } from '../../../../lib/isAdmin';
+import { sanitizeBlogHtml } from '../../../../lib/sanitizeBlogHtml';
 
 export async function GET(req, { params }) {
   const { slug } = await params;
@@ -19,7 +20,7 @@ export async function PUT(req, { params }) {
 
   const { error } = await supabase.from('blog_posts').update({
     title, description, date, read_time: readTime, tag, tickers, sentiment, author,
-    content: content || [], content_html: contentHtml ?? null, published,
+    content: content || [], content_html: sanitizeBlogHtml(contentHtml) ?? null, published,
   }).eq('slug', slug);
 
   if (error) return Response.json({ error: error.message }, { status: 500 });

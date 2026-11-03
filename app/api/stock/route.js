@@ -5,6 +5,7 @@ import { fetchForm4Transactions, computeInsiderOwnershipPct } from '../../../lib
 import { cleanCompanyName } from '../../../lib/secTickers.js';
 import { flagDataAnomaly } from '../../../lib/dataAnomalies.js';
 import { normalizeSector } from '../../../lib/sectorMapping.js';
+import { rateLimit, getClientIp } from '../../../lib/rateLimit.js';
 
 const FH_KEY = process.env.FINNHUB_API_KEY;
 const AV_KEY = process.env.ALPHA_VANTAGE_API_KEY;
@@ -1016,6 +1017,15 @@ export async function GET(request) {
 
   if (!ticker) {
     return Response.json({ error: 'Ticker requerido' }, { status: 400 });
+  }
+
+  // Only the forced path is worth rate limiting — it bypasses the 24h cache entirely and
+  // fans out to Finnhub/SEC EDGAR/Yahoo/AlphaVantage/Claude (translation), unlike a normal
+  // cached GET (which every page view already triggers and must stay unthrottled). Keyed by
+  // IP, not ticker, so one visitor can't just rotate tickers to dodge it.
+  if (searchParams.get('refresh') === 'true') {
+    const { ok } = rateLimit(`stock-refresh:${getClientIp(request)}`, { limit: 10, windowMs: 60_000 });
+    if (!ok) return Response.json({ error: 'Demasiadas actualizaciones seguidas — espera un momento.' }, { status: 429 });
   }
 
   const riskFreeRate = await fetchRiskFreeRate();

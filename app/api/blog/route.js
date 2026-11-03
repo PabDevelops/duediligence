@@ -1,5 +1,6 @@
 import { supabase } from '../../../lib/supabase';
 import { checkIsAdmin } from '../../../lib/isAdmin';
+import { sanitizeBlogHtml } from '../../../lib/sanitizeBlogHtml';
 
 export async function GET(req) {
   const { searchParams } = new URL(req.url);
@@ -36,7 +37,7 @@ export async function POST(req) {
     sentiment: sentiment || 'neutral',
     author: author || 'Bulltrace Team',
     content: content || [],
-    content_html: contentHtml || null,
+    content_html: sanitizeBlogHtml(contentHtml) || null,
     published: published !== false,
   });
 
