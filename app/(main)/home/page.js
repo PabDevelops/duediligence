@@ -204,50 +204,75 @@ export default function NewDashboardPage() {
           </p>
         </div>
 
-        <div style={{ background: C.surface, border: `1px solid ${C.border}`, borderRadius: '20px', padding: '28px', display: 'flex', flexDirection: 'column', gap: '16px', boxSizing: 'border-box', position: 'relative', maxWidth: '640px' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-            <svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke={C.ink} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="7"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
-            <span style={{ fontSize: '15px', fontWeight: 700 }}>Comprueba un consejo</span>
-          </div>
-          <form onSubmit={handleSubmit} style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
-            <label className="sr-only" htmlFor="ticker-check" style={{ position: 'absolute', width: '1px', height: '1px', overflow: 'hidden', clip: 'rect(0,0,0,0)' }}>Nombre de la empresa o ticker</label>
-            <input
-              id="ticker-check"
-              type="text"
-              value={query}
-              onChange={e => { setQuery(e.target.value); setShowSuggestions(true); }}
-              onFocus={() => setShowSuggestions(true)}
-              autoComplete="off"
-              placeholder="Ej: Tesla, PLTR, un ETF..."
-              style={{ flex: '1 1 260px', height: '48px', borderRadius: '12px', border: `1px solid ${C.border}`, padding: '0 16px', fontSize: '14px', fontFamily: 'inherit', background: '#FDFBF6', boxSizing: 'border-box', color: C.ink }}
-            />
-            <button type="submit" style={{ height: '48px', padding: '0 24px', borderRadius: '12px', border: 'none', background: C.lime, color: C.ink, fontWeight: 700, fontSize: '14px', fontFamily: 'inherit', cursor: 'pointer' }}>
-              Comprobar
-            </button>
-          </form>
-          {showSuggestions && query.trim() && suggestions.length > 0 && (
-            <div style={{
-              position: 'absolute', top: '100%', left: '28px', right: '28px', zIndex: 20, marginTop: '4px',
-              border: `1px solid ${C.border}`, borderRadius: '12px', overflow: 'hidden', background: C.surface,
-              boxShadow: '0 12px 30px rgba(28,27,24,0.12)',
-            }}>
-              {suggestions.map(s => (
-                <button key={s.ticker} onClick={() => goToTicker(s.ticker, s.isEtf)} type="button" style={{
-                  display: 'flex', alignItems: 'center', gap: '10px', width: '100%', padding: '10px 14px',
-                  border: 'none', borderBottom: `1px solid ${C.borderSoft}`, background: 'transparent',
-                  cursor: 'pointer', textAlign: 'left', fontFamily: 'inherit',
-                }}>
-                  <StockLogo ticker={s.ticker} name={s.name} size={24} />
-                  <div style={{ flex: 1, minWidth: 0 }}>
-                    <div style={{ fontSize: '13px', fontWeight: 700, color: C.ink }}>
-                      {s.name} <span style={{ color: C.text2, fontWeight: 600 }}>· {s.ticker}</span>
-                    </div>
-                    {s.sector && <div style={{ fontSize: '11px', color: C.text3 }}>{s.sector}</div>}
-                  </div>
-                </button>
-              ))}
+        <div className={learnPosts && learnPosts.length > 0 ? 'new-dash-2col' : undefined} style={{ display: 'grid', gridTemplateColumns: learnPosts && learnPosts.length > 0 ? 'repeat(2, minmax(0, 1fr))' : '1fr', gap: '14px', alignItems: 'stretch' }}>
+          <div style={{ background: C.surface, border: `1px solid ${C.border}`, borderRadius: '20px', padding: '28px', display: 'flex', flexDirection: 'column', gap: '16px', boxSizing: 'border-box', position: 'relative', minWidth: 0 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+              <svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke={C.ink} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="7"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+              <span style={{ fontSize: '15px', fontWeight: 700 }}>Comprueba un consejo</span>
             </div>
-          )}
+            <form onSubmit={handleSubmit} style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
+              <label className="sr-only" htmlFor="ticker-check" style={{ position: 'absolute', width: '1px', height: '1px', overflow: 'hidden', clip: 'rect(0,0,0,0)' }}>Nombre de la empresa o ticker</label>
+              <input
+                id="ticker-check"
+                type="text"
+                value={query}
+                onChange={e => { setQuery(e.target.value); setShowSuggestions(true); }}
+                onFocus={() => setShowSuggestions(true)}
+                autoComplete="off"
+                placeholder="Ej: Tesla, PLTR, un ETF..."
+                style={{ flex: '1 1 260px', height: '48px', borderRadius: '12px', border: `1px solid ${C.border}`, padding: '0 16px', fontSize: '14px', fontFamily: 'inherit', background: '#FDFBF6', boxSizing: 'border-box', color: C.ink }}
+              />
+              <button type="submit" style={{ height: '48px', padding: '0 24px', borderRadius: '12px', border: 'none', background: C.lime, color: C.ink, fontWeight: 700, fontSize: '14px', fontFamily: 'inherit', cursor: 'pointer' }}>
+                Comprobar
+              </button>
+            </form>
+            {showSuggestions && query.trim() && suggestions.length > 0 && (
+              <div style={{
+                position: 'absolute', top: '100%', left: '28px', right: '28px', zIndex: 20, marginTop: '4px',
+                border: `1px solid ${C.border}`, borderRadius: '12px', overflow: 'hidden', background: C.surface,
+                boxShadow: '0 12px 30px rgba(28,27,24,0.12)',
+              }}>
+                {suggestions.map(s => (
+                  <button key={s.ticker} onClick={() => goToTicker(s.ticker, s.isEtf)} type="button" style={{
+                    display: 'flex', alignItems: 'center', gap: '10px', width: '100%', padding: '10px 14px',
+                    border: 'none', borderBottom: `1px solid ${C.borderSoft}`, background: 'transparent',
+                    cursor: 'pointer', textAlign: 'left', fontFamily: 'inherit',
+                  }}>
+                    <StockLogo ticker={s.ticker} name={s.name} size={24} />
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <div style={{ fontSize: '13px', fontWeight: 700, color: C.ink }}>
+                        {s.name} <span style={{ color: C.text2, fontWeight: 600 }}>· {s.ticker}</span>
+                      </div>
+                      {s.sector && <div style={{ fontSize: '11px', color: C.text3 }}>{s.sector}</div>}
+                    </div>
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+
+          {learnPosts && learnPosts.length > 0 && (() => {
+            const featured = learnPosts[0];
+            return (
+              <Link href={`/aprende/${featured.slug}`} style={{
+                textDecoration: 'none', color: 'inherit', background: C.surface, border: `1px solid ${C.border}`,
+                borderRadius: '20px', padding: '28px', display: 'flex', flexDirection: 'column', gap: '14px',
+                boxSizing: 'border-box', minWidth: 0,
+              }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                  {LEARN_FALLBACK_ICON}
+                  <span style={{ fontSize: '15px', fontWeight: 700 }}>Aprende algo nuevo</span>
+                </div>
+                <div>
+                  <div style={{ fontSize: '14px', fontWeight: 700, marginBottom: '6px' }}>{featured.title}</div>
+                  <div style={{ fontSize: '13px', color: C.text2, lineHeight: 1.55, overflow: 'hidden', display: '-webkit-box', WebkitLineClamp: 3, WebkitBoxOrient: 'vertical' }}>
+                    {featured.description}
+                  </div>
+                </div>
+                <div style={{ fontSize: '12px', fontWeight: 700, color: C.ink, marginTop: 'auto' }}>Leer →</div>
+              </Link>
+            );
+          })()}
         </div>
 
         <div>
