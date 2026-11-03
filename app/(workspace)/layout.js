@@ -6,10 +6,10 @@ import PaywallModal from '../components/workspace/PaywallModal';
 import { useUser } from '../components/AuthProvider';
 
 // Routes reachable without an account (and without a Pro subscription) as
-// part of the anonymous-access exploration flow. home/stock/calendar/watchlist/search
+// part of the anonymous-access exploration flow. home/stock/calendar/watchlist/search/radar
 // moved out of this route group (to app/(main)), so they're not listed here
 // any more — this layout never mounts for them now.
-const PUBLIC_ROUTES = ['/screener', '/radar'];
+const PUBLIC_ROUTES = ['/screener'];
 
 function isPublicPath(path) {
   return PUBLIC_ROUTES.some(r => path === r || path.startsWith(r + '/'));

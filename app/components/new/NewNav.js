@@ -12,6 +12,7 @@ const NAV_ITEMS = [
   { key: 'inicio', label: 'Inicio', href: '/home' },
   { key: 'seguidos', label: 'Seguidos', href: '/watchlist' },
   { key: 'etfs', label: 'ETFs', href: '/etfs' },
+  { key: 'radar', label: 'Radar', href: '/radar' },
   { key: 'calendario', label: 'Calendario', href: '/calendar' },
   { key: 'aprende', label: 'Aprende', href: '/aprende' },
   { key: 'buscar', label: 'Buscar', href: '/search' },

@@ -17,6 +17,13 @@ import { NEW_COLORS as C, VERDICT_BADGE } from '../../../components/new/theme';
 const hasFundamentals = (d) => d.revVal != null || d.niVal != null || d.marketCap != null
   || d.roic != null || d.grossMargin != null || (d.revHistory?.length ?? 0) > 0;
 
+// SEC Form 4 transaction codes — P/S are genuine open-market trades, everything else
+// (grants, exercises, tax withholding, gifts...) moves shares for administrative reasons,
+// not a real buy/sell signal.
+const TXN_CODE_LABELS = {
+  P: 'COMPRA', S: 'VENTA', A: 'CONCESIÓN', M: 'EJERCICIO', F: 'RETENCIÓN FISCAL', G: 'REGALO', C: 'CONVERSIÓN',
+};
+
 // Same 0-5 scale and >=4/>=3 breakpoints the Numbers page's stats and the quality-note
 // pillars already color with — kept in sync so a stat means the same thing everywhere it
 // shows up, not a second invented scale.
@@ -71,6 +78,7 @@ function NewStockPageContent({ params }) {
 
   const [following, setFollowing] = useState(false);
   const [chartRange, setChartRange] = useState('1m');
+  const [insiderTrades, setInsiderTrades] = useState(null);
 
   // /api/stock only knows a ticker is a fund once /api/etfs has processed it at least once
   // (that flag lives on the same stock_cache row) — a ticker nobody has ever opened via
@@ -100,6 +108,14 @@ function NewStockPageContent({ params }) {
     }).catch(() => {});
     return () => { active = false; };
   }, [isLoaded, isSignedIn, ticker]);
+
+  useEffect(() => {
+    let active = true;
+    fetch(`/api/insider-trades?ticker=${ticker}&limit=6`).then(r => r.json()).then(d => {
+      if (active) setInsiderTrades(d.transactions || []);
+    }).catch(() => { if (active) setInsiderTrades([]); });
+    return () => { active = false; };
+  }, [ticker]);
 
   const toggleFollow = async () => {
     const next = !following;
@@ -352,6 +368,31 @@ function NewStockPageContent({ params }) {
         <div style={{ background: C.surface, border: `1px solid ${C.border}`, borderRadius: '20px', padding: '26px', boxSizing: 'border-box', display: 'flex', flexDirection: 'column', gap: '10px' }}>
           <h2 style={{ margin: 0, fontSize: '15px', fontWeight: 800 }}>¿A qué se dedica {companyName}?</h2>
           <p style={{ margin: 0, fontSize: '13px', color: '#45413A', lineHeight: 1.6 }}>{data.description}</p>
+        </div>
+      )}
+
+      {insiderTrades && insiderTrades.length > 0 && (
+        <div style={{ background: C.surface, border: `1px solid ${C.border}`, borderRadius: '20px', padding: '22px 26px', boxSizing: 'border-box', display: 'flex', flexDirection: 'column', gap: '12px' }}>
+          <div>
+            <h2 style={{ margin: '0 0 4px', fontSize: '15px', fontWeight: 800 }}>Actividad de insiders</h2>
+            <div style={{ fontSize: '12px', color: C.text2 }}>Últimos movimientos declarados por directivos y consejeros de {companyName} (SEC Form 4).</div>
+          </div>
+          <div>
+            {insiderTrades.map((t, i) => (
+              <div key={i} style={{
+                display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '12px',
+                padding: '10px 0', borderTop: i > 0 ? `1px solid ${C.borderSoft}` : 'none',
+              }}>
+                <div style={{ minWidth: 0 }}>
+                  <div style={{ fontSize: '13px', fontWeight: 700, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{t.insider}</div>
+                  <div style={{ fontSize: '11px', color: C.text3 }}>{t.date}</div>
+                </div>
+                <div style={{ fontSize: '12px', fontWeight: 800, color: t.isOpenMarket ? (t.type === 'BUY' ? C.green : C.red) : C.text3, flexShrink: 0, textAlign: 'right' }}>
+                  {t.type === 'BUY' ? '▲' : '▼'} {TXN_CODE_LABELS[t.code] || t.type} · {t.shares >= 1000 ? `${Math.round(t.shares / 1000)}K` : t.shares} acciones
+                </div>
+              </div>
+            ))}
+          </div>
         </div>
       )}
 
