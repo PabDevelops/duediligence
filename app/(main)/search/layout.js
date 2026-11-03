@@ -1,6 +1,6 @@
 export const metadata = {
-  title: 'Search Stocks | Bulltrace',
-  description: 'Search thousands of US stocks by ticker or company name.',
+  title: 'Buscar acciones y fondos | Bulltrace',
+  description: 'Busca entre miles de acciones y ETFs por ticker o nombre de empresa.',
   robots: { index: false, follow: false },
 };
 

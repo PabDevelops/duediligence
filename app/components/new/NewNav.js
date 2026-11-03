@@ -14,6 +14,7 @@ const NAV_ITEMS = [
   { key: 'etfs', label: 'ETFs', href: '/etfs' },
   { key: 'calendario', label: 'Calendario', href: '/calendar' },
   { key: 'aprende', label: 'Aprende', href: '/aprende' },
+  { key: 'buscar', label: 'Buscar', href: '/search' },
 ];
 
 export default function NewNav({ active }) {
