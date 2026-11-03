@@ -108,11 +108,12 @@ function NewStockPageContent({ params }) {
       if (next) addToGuestWatchlist(ticker); else removeFromGuestWatchlist(ticker);
       return;
     }
-    if (next) {
-      await fetch('/api/watchlist', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ ticker }) });
-    } else {
-      await fetch('/api/watchlist', { method: 'DELETE', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ ticker }) });
-    }
+    const res = next
+      ? await fetch('/api/watchlist', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ ticker }) })
+      : await fetch('/api/watchlist', { method: 'DELETE', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ ticker }) });
+    // The optimistic toggle above is wrong if the request actually failed — revert so the
+    // button reflects what's really saved instead of silently drifting from it.
+    if (!res.ok) setFollowing(!next);
   };
 
   // Phil Town-style sticker price — reuses the same Monte Carlo projector /start and the

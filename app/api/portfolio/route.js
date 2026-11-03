@@ -56,12 +56,15 @@ export async function POST(request) {
     return Response.json({ error: error.message || 'Failed to add holding' }, { status: 500 });
   }
 
-  // Auto-add to watchlist when added to portfolio
+  // Auto-add to watchlist when added to portfolio. onConflict names the real unique constraint
+  // (user_id, ticker) — see the matching comment in app/api/watchlist/route.js's POST handler
+  // for why upsert() needs this explicitly (the table's actual primary key is a surrogate `id`
+  // column that's never conflicted against here).
   try {
     await supabase.from('watchlists').upsert({
       user_id: userId,
       ticker: ticker.toUpperCase(),
-    });
+    }, { onConflict: 'user_id,ticker' });
   } catch (err) {
     console.error('Failed to auto-add to watchlist:', err);
   }

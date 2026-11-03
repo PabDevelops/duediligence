@@ -46,35 +46,12 @@ export async function GET(request) {
   if (watchlistError) console.error('GET /api/watchlist:', watchlistError);
   watchlistData = watchlistData || [];
 
-  // 2. Fetch portfolio holdings to auto-sync pre-existing assets
-  const { data: portfolioData } = await supabase
-    .from('portfolio_holdings')
-    .select('ticker')
-    .eq('user_id', userId);
-
-  if (portfolioData && portfolioData.length > 0) {
-    const portfolioTickers = [...new Set(portfolioData.map(p => p.ticker))];
-    const watchlistTickersSet = new Set(watchlistData.map(w => w.ticker));
-
-    const missingTickers = portfolioTickers.filter(t => !watchlistTickersSet.has(t));
-    if (missingTickers.length > 0) {
-      // Upsert all missing tickers into watchlist
-      const upsertRows = missingTickers.map(t => ({
-        user_id: userId,
-        ticker: t,
-      }));
-      await supabase.from('watchlists').upsert(upsertRows);
-
-      // Re-fetch updated watchlist
-      const { data: updatedWatchlistData } = await supabase
-        .from('watchlists')
-        .select('ticker, created_at, pie')
-        .eq('user_id', userId)
-        .order('created_at', { ascending: false });
-
-      watchlistData = updatedWatchlistData || [];
-    }
-  }
+  // Portfolio holdings are synced into the watchlist once, at the moment a holding is actually
+  // added (app/api/portfolio/route.js POST, app/api/portfolio/import/route.js) — NOT here. This
+  // used to re-upsert every portfolio ticker on every single read of the watchlist, which meant
+  // removing ("dejar de seguir") a ticker that was also held in Portfolio got silently undone on
+  // the very next page load, since the DELETE just ran moments before this same resync fired
+  // again and re-inserted it.
 
   if (watchlistData.length === 0) {
     return Response.json({ tickers: [] });
@@ -115,7 +92,17 @@ export async function POST(request) {
   const row = { user_id: userId, ticker: ticker.toUpperCase() };
   if (pie !== undefined) row.pie = pie ? pie.trim() || null : null;
 
-  await supabase.from('watchlists').upsert(row);
+  // watchlists' primary key is the surrogate `id` column, not (user_id, ticker) — without
+  // onConflict naming the real unique constraint (watchlists_user_id_ticker_key), upsert()
+  // targets `id` by default, which a row with no `id` in its payload can never actually
+  // conflict on. Re-following a ticker that already has a row (e.g. one added via Portfolio)
+  // used to hit that unique constraint as a plain INSERT and fail outright — silently, since
+  // the error was never checked — instead of updating the existing row like an upsert should.
+  const { error: upsertError } = await supabase.from('watchlists').upsert(row, { onConflict: 'user_id,ticker' });
+  if (upsertError) {
+    console.error('POST /api/watchlist upsert error:', upsertError);
+    return Response.json({ error: 'No se pudo guardar' }, { status: 500 });
+  }
 
   const { count } = await supabase
     .from('watchlists')

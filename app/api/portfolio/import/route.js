@@ -37,7 +37,8 @@ export async function POST(request) {
         user_id: userId,
         ticker: t,
       }));
-      await supabase.from('watchlists').upsert(watchlistRows);
+      // onConflict: see the matching comment in app/api/watchlist/route.js's POST handler.
+      await supabase.from('watchlists').upsert(watchlistRows, { onConflict: 'user_id,ticker' });
     }
   } catch (err) {
     console.error('Failed to auto-add imported tickers to watchlist:', err);
