@@ -1,5 +1,5 @@
 import { supabase } from '../../../lib/supabase.js';
-import { getYahooAuth, fetchYahooAnalystTarget } from '../../../lib/yahooFinance.js';
+import { getYahooAuth, fetchYahooAnalystTarget, fetchYahooDescription } from '../../../lib/yahooFinance.js';
 import { fetchForm4Transactions, computeInsiderOwnershipPct } from '../../../lib/secInsiders.js';
 import { cleanCompanyName } from '../../../lib/secTickers.js';
 import { flagDataAnomaly } from '../../../lib/dataAnomalies.js';
@@ -2275,13 +2275,16 @@ export async function GET(request) {
       sector: normalizeSector(fhProfile.finnhubIndustry) || priorCachedData?.sector || null,
       industry: fhProfile.finnhubIndustry || priorCachedData?.industry || null,
       exchange: fhProfile.exchange || priorCachedData?.exchange || null,
-      // AlphaVantage's free-tier rate limit is shared across every ticker this app fetches, so
-      // it's commonly exhausted — without the priorCachedData fallback, a ticker that already
-      // had a good description from a prior successful fetch got that description silently
-      // overwritten with null on the next 24h cache refresh whenever the quota happened to be
-      // spent at that moment, instead of keeping what was already known (same "stale beats
-      // blank" reasoning sector/industry/exchange/employees/weburl already use right above).
-      description: fhProfile.description || priorCachedData?.description || await fetchDescription(ticker),
+      // Finnhub's profile2 has no description field at all, so this used to go straight to
+      // AlphaVantage's low, shared free-tier rate limit as the only live source for this very
+      // common path (any well-covered SEC filer — AAPL, MSFT, ...). The priorCachedData
+      // fallback means a description that was already fetched successfully once stays put
+      // across cache refreshes instead of getting silently overwritten with null whenever that
+      // quota happens to be spent (same "stale beats blank" reasoning sector/industry/exchange/
+      // employees/weburl already use right above). Yahoo (free, no shared quota) and only then
+      // AlphaVantage are tried as deferred fallbacks below, once it's known the cache has
+      // nothing — see the fetchYahooDescription/fetchDescription calls further down.
+      description: fhProfile.description || priorCachedData?.description || null,
       employees: fhProfile.employeeTotal || priorCachedData?.employees || null,
       weburl: fhProfile.weburl || priorCachedData?.weburl || null,
       revVal, niVal, oiVal, fcfVal, assetsVal, equityVal, debtVal: effectiveDebtVal, cashVal, sharesVal, rdVal,
@@ -2403,6 +2406,17 @@ export async function GET(request) {
     // above entirely) still needs this fetched separately rather than staying null forever.
     if (result.analystTarget == null) {
       result.analystTarget = await fetchYahooAnalystTarget(ticker).catch(() => null);
+    }
+
+    // Same reasoning as analystTarget above, for description: Finnhub never has one and the
+    // cache may not either (first time this ticker's ever been fetched, or a prior fetch never
+    // got one). Try Yahoo (free, no shared quota) before falling back to AlphaVantage, which is
+    // now the last resort instead of the only source.
+    if (result.description == null) {
+      result.description = await fetchYahooDescription(ticker).catch(() => null);
+    }
+    if (result.description == null) {
+      result.description = await fetchDescription(ticker).catch(() => null);
     }
 
     result.isEtf = cachedIsEtf;
