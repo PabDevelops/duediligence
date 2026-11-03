@@ -129,10 +129,16 @@ async function fetchETFData(ticker) {
   if (holdingsModule.holdings && holdingsModule.holdings.length > 0) {
     holdings = holdingsModule.holdings.map((h) => {
       const wRaw = h.holdingPercent?.raw;
-      const weight = wRaw != null ? `${(wRaw * 100).toFixed(2)}%` : 'See Prospectus';
+      // 'See Prospectus' makes sense for the fund-level stats below ("this isn't in our feed,
+      // the fund's official document would have it") — it doesn't for one holding in a list
+      // we're already showing, and it rendered as unlocalized English either way (confirmed:
+      // app/(main)/etfs/[ticker]/page.js's WeightBars renders item.weight/item.name directly,
+      // with no filter the way the fund-level stats have). 'N/D' matches what every other
+      // missing value in this Spanish-language app already shows.
+      const weight = wRaw != null ? `${(wRaw * 100).toFixed(2)}%` : 'N/D';
       return {
-        name: h.holdingName || h.symbol || 'Unknown Holding',
-        ticker: h.symbol || 'N/A',
+        name: h.holdingName || h.symbol || 'Posición sin nombre',
+        ticker: h.symbol || 'N/D',
         weight,
       };
     });
@@ -268,12 +274,15 @@ async function fetchETFData(ticker) {
   return {
     ticker: cleanTicker,
     name,
-    issuer: profileModule.family || statsModule.fundFamily || 'Fund Provider',
+    // null (not an English placeholder string like the old 'Fund Provider'/'Underlying Assets')
+    // so a missing value hides this row the same way every other genuinely-unavailable stat on
+    // this page already does, instead of rendering English text that reads like a real answer.
+    issuer: profileModule.family || statsModule.fundFamily || null,
     assetClass,
     expenseRatio,
     aum,
     inception: statsModule.fundInceptionDate?.fmt || 'N/A',
-    indexTracked: profileModule.categoryName || statsModule.category || 'Underlying Assets',
+    indexTracked: profileModule.categoryName || statsModule.category || null,
     volume,
     yield: divYield,
     pe,
