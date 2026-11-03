@@ -94,12 +94,18 @@ function QualityBreakdown({ easyMode }) {
           </div>
         ))}
         <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
-          <div style={{ width: '42px', height: '42px', borderRadius: '12px', background: C.bg, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '13px', fontWeight: 800, color: easyMode.moatColor, flexShrink: 0 }}>
-            {easyMode.moat === 'WIDE' ? 'AMPLIO' : easyMode.moat === 'NARROW' ? 'ALGO' : 'NINGUNO'}
+          <div style={{ width: '42px', height: '42px', borderRadius: '12px', background: C.bg, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '13px', fontWeight: 800, color: easyMode.moatColor, flexShrink: 0, textAlign: 'center', padding: '0 2px' }}>
+            {easyMode.moat === 'WIDE' ? 'AMPLIO' : easyMode.moat === 'NARROW' ? 'ALGO' : easyMode.moat === 'UNKNOWN' ? 'S/D' : 'NINGUNO'}
           </div>
           <div>
             <div style={{ fontSize: '13px', fontWeight: 700 }}>MOAT (VENTAJA COMPETITIVA)</div>
-            <div style={{ fontSize: '12px', color: C.text2, lineHeight: 1.5 }}>Si tiene algo que la protege de la competencia a largo plazo: marca fuerte, costes más bajos, efecto red...</div>
+            <div style={{ fontSize: '12px', color: C.text2, lineHeight: 1.5 }}>
+              {easyMode.moat === 'UNKNOWN'
+                ? 'No hay suficientes datos (ROIC ni margen operativo) para saber si esta empresa tiene algo que la proteja de la competencia a largo plazo — no es que se haya comprobado que no la tiene, es que no se puede valorar todavía.'
+                : easyMode.moat === 'NONE'
+                ? 'Con los datos disponibles (ROIC y margen operativo), no se detecta algo que la proteja claramente de la competencia a largo plazo: marca fuerte, costes más bajos, efecto red...'
+                : 'Si tiene algo que la protege de la competencia a largo plazo: marca fuerte, costes más bajos, efecto red...'}
+            </div>
           </div>
         </div>
       </div>
@@ -178,10 +184,10 @@ function NewStockNumbersContent({ params }) {
       intro: 'Compara lo que pagas por la acción con lo que el negocio realmente gana o genera en caja.',
       stats: [
         { label: 'Capitalización bursátil', value: money(data.marketCap, sym), explain: 'Lo que vale la empresa entera en bolsa: precio de la acción × número de acciones.' },
-        { label: 'P/E — precio / beneficio', value: mult(data.pe), explain: 'Cuántos años de beneficio actual tardarías en "recuperar" el precio que pagas. Más bajo suele ser más barato.' },
-        { label: 'P/FCF — precio / caja libre', value: mult(truePfcf), explain: 'Como el P/E, pero con el dinero que realmente genera el negocio (caja libre) en vez del beneficio contable.', color: scoreColor(easyMode?.pfcfScore) },
-        { label: 'EV/EBITDA', value: data.evEbitda != null ? data.evEbitda.toFixed(2) : null, explain: 'El valor de la empresa, incluida su deuda, comparado con su beneficio operativo bruto. Útil para comparar empresas con distinta deuda.' },
-        { label: 'P/B — precio / valor contable', value: data.priceToBook != null ? data.priceToBook.toFixed(2) : null, explain: 'Cuánto pagas por cada euro de patrimonio neto que tiene la empresa en el balance.' },
+        { label: 'P/E — precio / beneficio', value: mult(data.pe), explain: 'Cuántas veces el beneficio anual actual estás pagando por la acción. No es un "plazo para recuperar la inversión" — ignora cómo cambiarán el crecimiento y los márgenes, así que solo tiene sentido comparado con empresas similares o con su propio historial.' },
+        { label: 'P/FCF — precio / caja libre', value: mult(truePfcf), explain: 'Como el P/E, pero con el dinero que realmente genera el negocio (caja libre) en vez del beneficio contable — menos fácil de maquillar con decisiones contables.', color: scoreColor(easyMode?.pfcfScore) },
+        { label: 'EV/EBITDA', value: data.evEbitda != null ? data.evEbitda.toFixed(2) : null, explain: 'El valor de la empresa, incluida su deuda, comparado con su beneficio operativo bruto. Útil para comparar empresas con distinta deuda, pero puede salir engañosamente bajo en negocios que necesitan invertir mucho en maquinaria o infraestructura cada año.' },
+        { label: 'P/B — precio / valor contable', value: data.priceToBook != null ? data.priceToBook.toFixed(2) : null, explain: 'Cuánto pagas por cada euro de patrimonio neto que tiene la empresa en el balance. Pierde utilidad en negocios cuyo valor real está en marca, patentes o software — activos que el balance no recoge bien.' },
         { label: 'Rentabilidad por FCF', value: pct(trueFcfYield), explain: 'El reverso del P/FCF: cuánta caja libre genera la empresa cada año por cada euro que vale en bolsa.', color: scoreColor(easyMode?.fcfYieldScore) },
         { label: 'Rentabilidad por dividendo', value: data.dividendYield ? pct(+data.dividendYield) : null, explain: 'Cuánto te paga en dividendos al año por cada euro invertido, al precio de hoy.' },
       ],

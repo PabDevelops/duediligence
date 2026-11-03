@@ -10,8 +10,8 @@ import { useStockData } from '../../../../lib/hooks/useStockData';
 import { useEntryPriceProjection } from '../../../../lib/hooks/useEntryPriceProjection';
 import { isInGuestWatchlist, addToGuestWatchlist, removeFromGuestWatchlist } from '../../../../lib/guestWatchlist';
 import { computeEasyMode, computeFundamentalGrowth } from '../../../../lib/stockScoring';
-import { stockVerdict } from '../../../../lib/verdict';
-import { formatCurrency } from '../../../../lib/formatters';
+import { stockVerdict, investigateQuestions } from '../../../../lib/verdict';
+import { formatCurrency, formatTimeAgo } from '../../../../lib/formatters';
 import { NEW_COLORS as C, VERDICT_BADGE } from '../../../components/new/theme';
 
 const hasFundamentals = (d) => d.revVal != null || d.niVal != null || d.marketCap != null
@@ -144,6 +144,7 @@ function NewStockPageContent({ params }) {
   const companyName = (data.name || ticker).split(' ')[0];
   const verdict = easyMode ? stockVerdict(easyMode, companyName) : null;
   const badge = verdict ? VERDICT_BADGE[verdict.tier] : null;
+  const investigateQs = easyMode ? investigateQuestions(easyMode) : [];
 
   return (
     <Shell>
@@ -192,17 +193,37 @@ function NewStockPageContent({ params }) {
       </div>
 
       {verdict && (
-        <div style={{ background: C.surface, border: `1px solid ${C.border}`, borderRadius: '20px', padding: '26px', display: 'flex', flexDirection: 'column', gap: '16px', boxSizing: 'border-box' }}>
+        <div style={{ background: C.surface, border: `1px solid ${C.border}`, borderRadius: '20px', padding: '26px', display: 'flex', flexDirection: 'column', gap: '18px', boxSizing: 'border-box' }}>
           <div style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', padding: '7px 16px', borderRadius: '20px', background: badge.bg, width: 'fit-content' }}>
             <span aria-hidden="true" style={{ width: '8px', height: '8px', borderRadius: '50%', background: badge.dot }} />
             <span style={{ fontSize: '13px', fontWeight: 800, color: badge.text }}>{verdict.label}</span>
           </div>
-          <ul style={{ margin: 0, paddingLeft: '18px', display: 'flex', flexDirection: 'column', gap: '9px', fontSize: '14px', lineHeight: 1.6, color: '#45413A' }}>
-            {verdict.reasons.map((r, i) => <li key={i}>{r}</li>)}
-          </ul>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '14px', fontSize: '14px', lineHeight: 1.6, color: '#45413A' }}>
+            <div>
+              <div style={{ fontSize: '11px', fontWeight: 700, color: C.text3, letterSpacing: '0.02em', marginBottom: '5px' }}>CALIDAD DEL NEGOCIO</div>
+              {verdict.dimensions.quality}
+            </div>
+            <div>
+              <div style={{ fontSize: '11px', fontWeight: 700, color: C.text3, letterSpacing: '0.02em', marginBottom: '5px' }}>VALORACIÓN</div>
+              {verdict.dimensions.valuation}
+            </div>
+            <div>
+              <div style={{ fontSize: '11px', fontWeight: 700, color: C.text3, letterSpacing: '0.02em', marginBottom: '5px' }}>RIESGOS</div>
+              {verdict.dimensions.risks}
+            </div>
+          </div>
           <div style={{ fontSize: '12px', color: C.text3, paddingTop: '10px', borderTop: `1px solid ${C.borderSoft}` }}>
             Esto no es consejo de inversión, es un punto de partida — investiga más antes de decidir.
           </div>
+        </div>
+      )}
+
+      {investigateQs.length > 0 && (
+        <div style={{ background: C.surface, border: `1px solid ${C.border}`, borderRadius: '20px', padding: '22px 26px', boxSizing: 'border-box', display: 'flex', flexDirection: 'column', gap: '12px' }}>
+          <div style={{ fontSize: '15px', fontWeight: 800 }}>Qué deberías investigar ahora</div>
+          <ul style={{ margin: 0, paddingLeft: '18px', display: 'flex', flexDirection: 'column', gap: '8px', fontSize: '13px', lineHeight: 1.5, color: '#45413A' }}>
+            {investigateQs.map((q, i) => <li key={i}>{q}</li>)}
+          </ul>
         </div>
       )}
 
@@ -232,6 +253,14 @@ function NewStockPageContent({ params }) {
                 ? `El precio de hoy está un ${marginPct.toFixed(0)}% por debajo de lo máximo que pagarías para exigir un 15%/año — hay margen de seguridad.`
                 : `El precio de hoy está un ${Math.abs(marginPct).toFixed(0)}% por encima de lo máximo que pagarías para exigir un 15%/año — según este modelo, estarías pagando de más.`}
             </div>
+
+            {entryProjection.driftAnnual != null && (
+              <div style={{ fontSize: '11px', color: C.text3, lineHeight: 1.5 }}>
+                Supuesto de partida del modelo: un crecimiento medio de alrededor del{' '}
+                {(entryProjection.driftAnnual * 100).toFixed(1)}% al año{entryProjection.volAnnual != null ? ` y una volatilidad del precio de ${(entryProjection.volAnnual * 100).toFixed(0)}%` : ''},
+                estimados a partir del crecimiento histórico de la acción, del negocio y (si existe) del objetivo medio de los analistas — si cualquiera de esos tres cambia, esta proyección cambia con ellos.
+              </div>
+            )}
 
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))', gap: '18px', paddingTop: '4px', borderTop: `1px solid ${C.borderSoft}` }}>
               <div>
@@ -324,6 +353,22 @@ function NewStockPageContent({ params }) {
           <p style={{ margin: 0, fontSize: '13px', color: '#45413A', lineHeight: 1.6 }}>{data.description}</p>
         </div>
       )}
+
+      <div style={{ background: C.surface, border: `1px solid ${C.border}`, borderRadius: '20px', padding: '22px 26px', boxSizing: 'border-box', display: 'flex', flexDirection: 'column', gap: '10px' }}>
+        <div style={{ fontSize: '13px', fontWeight: 800 }}>Cómo se ha calculado todo esto</div>
+        <div style={{ fontSize: '12px', color: C.text2, lineHeight: 1.6 }}>
+          {data.updatedAt && <>Datos financieros actualizados {formatTimeAgo(data.updatedAt)}. </>}
+          La proyección a 5 años no es una simulación al azar: combina directamente el crecimiento
+          histórico de la acción, el crecimiento del negocio y (cuando existe) el objetivo medio de
+          los analistas, junto con la volatilidad histórica del precio — si cambian esos datos para
+          esta empresa, cambia la proyección con ellos. Nunca se inventan cifras: cuando un dato no
+          está disponible para esta empresa, se muestra como N/D en vez de rellenarse con una
+          estimación silenciosa.
+        </div>
+        <Link href={`/stock/${ticker}/numbers`} style={{ fontSize: '12px', fontWeight: 700, color: C.ink, textDecoration: 'none', width: 'fit-content' }}>
+          Ver qué datos faltan y sus límites →
+        </Link>
+      </div>
     </Shell>
   );
 }
