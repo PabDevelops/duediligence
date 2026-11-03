@@ -29,6 +29,14 @@ const TXN_CODE_LABELS = {
 // shows up, not a second invented scale.
 const scoreColor = (s) => s == null ? C.ink : s >= 4 ? C.green : s >= 3 ? C.ink : C.red;
 
+const EARNINGS_HOUR_LABELS = { bmo: 'antes de la apertura', amc: 'después del cierre', dmh: 'durante el mercado' };
+
+const formatEarningsDate = (dateStr) => {
+  const d = new Date(`${dateStr}T00:00:00`);
+  const sameYear = d.getFullYear() === new Date().getFullYear();
+  return d.toLocaleDateString('es-ES', { day: 'numeric', month: 'long', ...(sameYear ? {} : { year: 'numeric' }) });
+};
+
 // StockChart reads its colors from --ws-* CSS custom properties (so it can follow whichever
 // theme it's rendered inside) instead of hardcoding a palette — this wrapper feeds it the
 // cream/lime palette so the real chart (with real data) drops in without forking it.
@@ -80,6 +88,8 @@ function NewStockPageContent({ params }) {
   const [chartRange, setChartRange] = useState('1m');
   const [insiderTrades, setInsiderTrades] = useState(null);
   const [showAllInsiders, setShowAllInsiders] = useState(false);
+  const [news, setNews] = useState(null);
+  const [nextEarnings, setNextEarnings] = useState(null);
 
   // /api/stock only knows a ticker is a fund once /api/etfs has processed it at least once
   // (that flag lives on the same stock_cache row) — a ticker nobody has ever opened via
@@ -116,6 +126,28 @@ function NewStockPageContent({ params }) {
     fetch(`/api/insider-trades?ticker=${ticker}&limit=20`).then(r => r.json()).then(d => {
       if (active) setInsiderTrades(d.transactions || []);
     }).catch(() => { if (active) setInsiderTrades([]); });
+    return () => { active = false; };
+  }, [ticker]);
+
+  useEffect(() => {
+    let active = true;
+    fetch(`/api/company-news?ticker=${ticker}&limit=5`).then(r => r.json()).then(d => {
+      if (active) setNews(d.articles || []);
+    }).catch(() => { if (active) setNews([]); });
+    return () => { active = false; };
+  }, [ticker]);
+
+  useEffect(() => {
+    let active = true;
+    setNextEarnings(null);
+    fetch(`/api/earnings?ticker=${ticker}`).then(r => r.json()).then(d => {
+      if (!active) return;
+      const todayStr = new Date().toISOString().slice(0, 10);
+      const upcoming = (d.earnings || [])
+        .filter(e => e.date >= todayStr)
+        .sort((a, b) => a.date.localeCompare(b.date));
+      setNextEarnings(upcoming[0] || null);
+    }).catch(() => { if (active) setNextEarnings(null); });
     return () => { active = false; };
   }, [ticker]);
 
@@ -210,6 +242,14 @@ function NewStockPageContent({ params }) {
           )}
         </div>
       </div>
+
+      {nextEarnings && (
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '12px', color: C.text2, background: C.surface, border: `1px solid ${C.border}`, borderRadius: '12px', padding: '10px 16px', width: 'fit-content', boxSizing: 'border-box' }}>
+          <span aria-hidden="true">📅</span>
+          Próxima presentación de resultados: <strong style={{ color: C.ink, fontWeight: 700 }}>{formatEarningsDate(nextEarnings.date)}</strong>
+          {EARNINGS_HOUR_LABELS[nextEarnings.hour] ? ` (${EARNINGS_HOUR_LABELS[nextEarnings.hour]})` : ''}
+        </div>
+      )}
 
       {verdict && (
         <div style={{ background: C.surface, border: `1px solid ${C.border}`, borderRadius: '20px', padding: '26px', display: 'flex', flexDirection: 'column', gap: '18px', boxSizing: 'border-box' }}>
@@ -400,6 +440,33 @@ function NewStockPageContent({ params }) {
         <div style={{ background: C.surface, border: `1px solid ${C.border}`, borderRadius: '20px', padding: '26px', boxSizing: 'border-box', display: 'flex', flexDirection: 'column', gap: '10px' }}>
           <h2 style={{ margin: 0, fontSize: '15px', fontWeight: 800 }}>¿A qué se dedica {companyName}?</h2>
           <p style={{ margin: 0, fontSize: '13px', color: '#45413A', lineHeight: 1.6 }}>{data.description}</p>
+        </div>
+      )}
+
+      {news && news.length > 0 && (
+        <div style={{ background: C.surface, border: `1px solid ${C.border}`, borderRadius: '20px', padding: '22px 26px', boxSizing: 'border-box', display: 'flex', flexDirection: 'column', gap: '12px' }}>
+          <div>
+            <h2 style={{ margin: '0 0 4px', fontSize: '15px', fontWeight: 800 }}>Noticias recientes</h2>
+            <div style={{ fontSize: '12px', color: C.text2 }}>Últimos 30 días, de más a menos reciente — no es una selección por relevancia, solo por fecha.</div>
+          </div>
+          <div>
+            {news.map((a, i) => (
+              <a
+                key={i}
+                href={a.url || undefined}
+                target={a.url ? '_blank' : undefined}
+                rel={a.url ? 'noopener noreferrer' : undefined}
+                style={{
+                  display: 'block', padding: '10px 0', borderTop: i > 0 ? `1px solid ${C.borderSoft}` : 'none',
+                  textDecoration: 'none', color: 'inherit', cursor: a.url ? 'pointer' : 'default',
+                }}>
+                <div style={{ fontSize: '13px', fontWeight: 700, lineHeight: 1.4, marginBottom: '4px' }}>{a.headline}</div>
+                <div style={{ fontSize: '11px', color: C.text3 }}>
+                  {a.source}{a.source && ' · '}{formatTimeAgo(a.publishedAt)}
+                </div>
+              </a>
+            ))}
+          </div>
         </div>
       )}
 

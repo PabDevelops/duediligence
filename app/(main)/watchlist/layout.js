@@ -1,9 +1,9 @@
 export const metadata = {
-  title: 'My Watchlist | Bulltrace',
-  description: 'Track your favourite stocks. Quality scores, fair value estimates and key financials for every stock on your watchlist.',
+  title: 'Lo que sigues | Bulltrace',
+  description: 'Sigue tus acciones favoritas. Nota de calidad, valor razonable y datos clave de cada una en tu lista de seguimiento.',
   openGraph: {
-    title: 'My Watchlist | Bulltrace',
-    description: 'Track your favourite stocks with quality scores and fair value estimates.',
+    title: 'Lo que sigues | Bulltrace',
+    description: 'Sigue tus acciones favoritas con nota de calidad y valor razonable.',
     url: 'https://bulltrace.app/watchlist',
     siteName: 'Bulltrace',
     images: [{ url: '/og-screenshot.png', width: 1200, height: 630 }],
@@ -11,8 +11,8 @@ export const metadata = {
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'My Watchlist | Bulltrace',
-    description: 'Track your favourite stocks with quality scores and fair value estimates.',
+    title: 'Lo que sigues | Bulltrace',
+    description: 'Sigue tus acciones favoritas con nota de calidad y valor razonable.',
     images: ['/og-screenshot.png'],
   },
   alternates: { canonical: 'https://bulltrace.app/watchlist' },

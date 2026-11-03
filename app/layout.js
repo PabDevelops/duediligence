@@ -10,8 +10,8 @@ import AdSense from './components/AdSense';
 
 export const metadata = {
   metadataBase: new URL('https://bulltrace.app'),
-  title: "Bulltrace — Professional Investment Analysis",
-  description: "Professional fundamental analysis powered by direct company filings. SEC EDGAR source verification, normalized multi-currency portfolios, intrinsic valuation modeling, and community intelligence.",
+  title: "Bulltrace — Entiende cualquier acción antes de invertir",
+  description: "Análisis fundamental de acciones con datos directos de la SEC. Nota de calidad, proyección a 5 años y veredictos claros — sin jerga, sin recomendaciones de compra o venta.",
   icons: {
     icon: '/favicon.png',
     apple: '/apple-touch-icon.png',
@@ -26,8 +26,8 @@ export const metadata = {
     title: 'Bulltrace',
   },
   openGraph: {
-    title: "Bulltrace — Professional Investment Analysis",
-    description: "Professional investment analysis powered by direct company filings. SEC EDGAR source verification, normalized multi-currency portfolios, intrinsic valuation modeling, and community intelligence.",
+    title: "Bulltrace — Entiende cualquier acción antes de invertir",
+    description: "Análisis fundamental de acciones con datos directos de la SEC. Nota de calidad, proyección a 5 años y veredictos claros — sin jerga, sin recomendaciones de compra o venta.",
     url: "https://bulltrace.app",
     siteName: "Bulltrace",
     images: [
@@ -41,8 +41,8 @@ export const metadata = {
   },
   twitter: {
     card: "summary_large_image",
-    title: "Bulltrace — Professional Investment Analysis",
-    description: "Professional investment analysis powered by direct company filings. SEC EDGAR source verification, normalized multi-currency portfolios, intrinsic valuation modeling, and community intelligence.",
+    title: "Bulltrace — Entiende cualquier acción antes de invertir",
+    description: "Análisis fundamental de acciones con datos directos de la SEC. Nota de calidad, proyección a 5 años y veredictos claros — sin jerga, sin recomendaciones de compra o venta.",
     images: ["https://bulltrace.app/og-screenshot.png"],
   },
 };
@@ -56,7 +56,7 @@ export const viewport = {
 export default function RootLayout({ children }) {
   return (
     <AuthProvider>
-      <html lang="en" suppressHydrationWarning>
+      <html lang="es" suppressHydrationWarning>
         <head suppressHydrationWarning>
           {/* Next's appleWebApp metadata (above) only emits the newer "mobile-web-app-capable"
               tag in this Next.js version — iOS Safari still specifically needs the apple-

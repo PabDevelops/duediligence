@@ -8,12 +8,12 @@ export async function generateMetadata({ params }) {
 
     if (data.error) {
       return {
-        title: `${t} Stock Analysis — Bulltrace`,
-        description: `Professional investment analysis for ${t}, powered by direct company filings. SEC EDGAR source verification, intrinsic valuation, and financial metrics.`,
+        title: `${t} — Análisis de la acción | Bulltrace`,
+        description: `Análisis de inversión para ${t}, con datos directos de la SEC: verificación de presentaciones, valoración intrínseca y métricas financieras.`,
       };
     }
 
-    const descSnippet = `Professional fundamental analysis for ${data.name} (${t}). Verified SEC EDGAR financial statements, intrinsic valuation modeling, and quality scores.`;
+    const descSnippet = `Análisis fundamental de ${data.name} (${t}). Estados financieros verificados de la SEC, valoración intrínseca y nota de calidad.`;
 
     const ogDesc = [
       data.pe ? `P/E ${data.pe.toFixed(1)}` : null,
@@ -22,19 +22,19 @@ export async function generateMetadata({ params }) {
     ].filter(Boolean).join(' · ');
 
     return {
-      title: `${data.name} (${t}) Stock Analysis & SEC Filings — Bulltrace`,
+      title: `${data.name} (${t}) — Análisis y datos de la SEC | Bulltrace`,
       description: descSnippet,
       openGraph: {
-        title: `${data.name} (${t}) — Stock Analysis & SEC Filings | Bulltrace`,
+        title: `${data.name} (${t}) — Análisis y datos de la SEC | Bulltrace`,
         description: ogDesc ? `${ogDesc} · ${descSnippet}` : descSnippet,
         url: `https://bulltrace.app/stock/${t}`,
         siteName: 'Bulltrace',
-        images: [{ url: 'https://bulltrace.app/og-image.png', width: 1200, height: 630, alt: `${data.name} stock analysis` }],
+        images: [{ url: 'https://bulltrace.app/og-image.png', width: 1200, height: 630, alt: `Análisis de ${data.name}` }],
         type: 'website',
       },
       twitter: {
         card: 'summary_large_image',
-        title: `${data.name} (${t}) — Stock Analysis & SEC Filings | Bulltrace`,
+        title: `${data.name} (${t}) — Análisis y datos de la SEC | Bulltrace`,
         description: ogDesc ? `${ogDesc} · ${descSnippet}` : descSnippet,
         images: ['https://bulltrace.app/og-image.png'],
       },
@@ -44,8 +44,8 @@ export async function generateMetadata({ params }) {
     };
   } catch {
     return {
-      title: `${t} Stock Analysis — Bulltrace`,
-      description: `Professional investment analysis for ${t}, powered by direct company filings. SEC EDGAR source verification, intrinsic valuation, and financial metrics.`,
+      title: `${t} — Análisis de la acción | Bulltrace`,
+      description: `Análisis de inversión para ${t}, con datos directos de la SEC: verificación de presentaciones, valoración intrínseca y métricas financieras.`,
     };
   }
 }

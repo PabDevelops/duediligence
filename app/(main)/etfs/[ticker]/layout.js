@@ -13,27 +13,27 @@ export async function generateMetadata({ params }) {
 
     if (data.error) {
       return {
-        title: `${t} ETF Analysis — Bulltrace`,
-        description: `Track and analyze the ${t} ETF, including expense ratio, AUM, dividend yield, holdings, and sector weightings.`,
+        title: `${t} — Análisis del ETF | Bulltrace`,
+        description: `Sigue y analiza el ETF ${t}: gastos, patrimonio gestionado, rentabilidad por dividendo, posiciones y reparto sectorial.`,
       };
     }
 
-    const descSnippet = `${data.name} (${t}) ETF analysis: expense ratio ${data.expenseRatio}, AUM ${data.aum}, dividend yield ${data.yield}, top holdings, and sector allocation.`;
+    const descSnippet = `Análisis de ${data.name} (${t}): gastos ${data.expenseRatio}, patrimonio ${data.aum}, rentabilidad por dividendo ${data.yield}, principales posiciones y reparto sectorial.`;
 
     return {
-      title: `${data.name} (${t}) ETF Analysis — Bulltrace`,
+      title: `${data.name} (${t}) — Análisis del ETF | Bulltrace`,
       description: descSnippet,
       openGraph: {
-        title: `${data.name} (${t}) — ETF Analysis | Bulltrace`,
+        title: `${data.name} (${t}) — Análisis del ETF | Bulltrace`,
         description: descSnippet,
         url: `https://bulltrace.app/etfs/${t}`,
         siteName: 'Bulltrace',
-        images: [{ url: 'https://bulltrace.app/og-image.png', width: 1200, height: 630, alt: `${data.name} ETF analysis` }],
+        images: [{ url: 'https://bulltrace.app/og-image.png', width: 1200, height: 630, alt: `Análisis de ${data.name}` }],
         type: 'website',
       },
       twitter: {
         card: 'summary_large_image',
-        title: `${data.name} (${t}) — ETF Analysis | Bulltrace`,
+        title: `${data.name} (${t}) — Análisis del ETF | Bulltrace`,
         description: descSnippet,
         images: ['https://bulltrace.app/og-image.png'],
       },
@@ -43,8 +43,8 @@ export async function generateMetadata({ params }) {
     };
   } catch {
     return {
-      title: `${t} ETF Analysis — Bulltrace`,
-      description: `Track and analyze the ${t} ETF, including expense ratio, AUM, dividend yield, holdings, and sector weightings.`,
+      title: `${t} — Análisis del ETF | Bulltrace`,
+      description: `Sigue y analiza el ETF ${t}: gastos, patrimonio gestionado, rentabilidad por dividendo, posiciones y reparto sectorial.`,
     };
   }
 }
