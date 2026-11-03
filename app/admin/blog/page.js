@@ -1,7 +1,8 @@
 'use client';
 import { useState, useEffect } from 'react';
+import Link from 'next/link';
 import { useUser } from '../../components/AuthProvider';
-import Topbar from '../../components/Topbar';
+import { NEW_COLORS as C } from '../../components/new/theme';
 import RichEditor from './RichEditor';
 
 function blocksToHtml(content) {
@@ -10,6 +11,26 @@ function blocksToHtml(content) {
 
 function slugify(title) {
   return title.toLowerCase().trim().replace(/[^a-z0-9\s-]/g, '').replace(/\s+/g, '-').replace(/-+/g, '-');
+}
+
+const inputStyle = {
+  padding: '11px 14px', borderRadius: '10px', border: `1px solid ${C.border}`, background: '#FDFBF6',
+  color: C.ink, fontFamily: 'inherit', fontSize: '14px', outline: 'none', boxSizing: 'border-box', width: '100%',
+};
+const labelStyle = { fontSize: '11px', color: C.text3, fontWeight: 700, letterSpacing: '0.04em', marginBottom: '6px', display: 'block' };
+
+function Shell({ children }) {
+  return (
+    <div style={{ width: '100%', minHeight: '100vh', boxSizing: 'border-box', background: C.bg, color: C.ink, fontFamily: "'Plus Jakarta Sans', system-ui, sans-serif" }}>
+      <div style={{ maxWidth: '820px', margin: '0 auto', padding: '32px 24px 96px', display: 'flex', flexDirection: 'column', gap: '24px', boxSizing: 'border-box' }}>
+        <Link href="/aprende" style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', fontSize: '13px', fontWeight: 700, color: C.text2, textDecoration: 'none', width: 'fit-content' }}>
+          <svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg>
+          Volver a Aprende
+        </Link>
+        {children}
+      </div>
+    </div>
+  );
 }
 
 export default function AdminBlogPage() {
@@ -27,15 +48,15 @@ export default function AdminBlogPage() {
     fetch('/api/admin/check').then(r => r.json()).then(d => setIsAdmin(d.isAdmin)).catch(() => setIsAdmin(false));
   }, [isLoaded]);
 
-  useEffect(() => {
-    if (isAdmin) loadPosts();
-  }, [isAdmin]);
-
   const loadPosts = async () => {
     const res = await fetch('/api/admin/blog');
     const d = await res.json();
     setPosts(d.posts || []);
   };
+
+  useEffect(() => {
+    if (isAdmin) loadPosts();
+  }, [isAdmin]);
 
   const startNew = () => {
     setEditing({ slug: '', title: '', description: '', date: new Date().toISOString().slice(0, 10), readTime: '4 min read', tag: 'Fundamentals', sentiment: 'neutral', author: 'Bulltrace Team', published: true });
@@ -77,136 +98,140 @@ export default function AdminBlogPage() {
   };
 
   const remove = async (slug) => {
-    if (!confirm(`Delete post "${slug}"?`)) return;
+    if (!confirm(`¿Eliminar el artículo "${slug}"?`)) return;
     await fetch(`/api/blog/${slug}`, { method: 'DELETE' });
     loadPosts();
   };
 
   if (!isLoaded || isAdmin === null) {
-    return <div style={{ background: 'var(--bg)', minHeight: '100vh', color: 'var(--text-3)', fontFamily: 'Inter, sans-serif', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>Loading...</div>;
+    return <Shell><div style={{ fontSize: '13px', color: C.text3 }}>Cargando…</div></Shell>;
   }
 
   if (!isSignedIn || !isAdmin) {
     return (
-      <div style={{ background: 'var(--bg)', minHeight: '100vh', color: 'var(--text)', fontFamily: 'Inter, sans-serif' }}>
-        <Topbar />
-        <div style={{ maxWidth: '480px', margin: '0 auto', padding: '100px 24px', textAlign: 'center' }}>
-          <div style={{ fontSize: '20px', fontWeight: 800, marginBottom: '8px' }}>Not authorized</div>
-          <div style={{ color: 'var(--text-3)', fontSize: '14px' }}>This page is restricted.</div>
+      <Shell>
+        <div style={{ background: C.surface, border: `1px solid ${C.border}`, borderRadius: '20px', padding: '28px', textAlign: 'center' }}>
+          <div style={{ fontSize: '17px', fontWeight: 800, marginBottom: '6px' }}>No autorizado</div>
+          <div style={{ color: C.text2, fontSize: '13px' }}>Esta página está restringida al equipo de Bulltrace.</div>
         </div>
-      </div>
+      </Shell>
     );
   }
 
-  const inputStyle = { width: '100%', padding: '10px 14px', borderRadius: '10px', border: '1px solid var(--border)', background: 'var(--bg-1)', color: 'var(--text)', fontSize: '14px', fontFamily: 'Inter, sans-serif' };
-  const labelStyle = { fontSize: '11px', color: 'var(--text-3)', fontWeight: 700, letterSpacing: '1px', marginBottom: '6px', display: 'block' };
-
   return (
-    <div style={{ background: 'var(--bg)', minHeight: '100vh', color: 'var(--text)', fontFamily: 'Inter, sans-serif' }}>
-      <Topbar />
-      <div style={{ maxWidth: '760px', margin: '0 auto', padding: '40px 24px 100px' }}>
+    <Shell>
+      {!editing ? (
+        <>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '12px' }}>
+            <h1 style={{ margin: 0, fontSize: '26px', fontWeight: 800, letterSpacing: '-0.02em' }}>Blog · Admin</h1>
+            <button onClick={startNew} style={{ height: '42px', padding: '0 20px', borderRadius: '12px', border: 'none', background: C.lime, color: C.ink, fontWeight: 700, fontSize: '14px', fontFamily: 'inherit', cursor: 'pointer' }}>
+              + Nuevo artículo
+            </button>
+          </div>
 
-        {!editing ? (
-          <>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '28px' }}>
-              <h1 style={{ fontSize: '26px', fontWeight: 800 }}>Blog admin</h1>
-              <button onClick={startNew} className="btn-primary">+ New post</button>
-            </div>
-
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-              {posts.map(post => (
-                <div key={post.slug} className="glass" style={{ padding: '16px 18px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '12px' }}>
-                  <div>
-                    <div style={{ fontWeight: 700, fontSize: '14px', marginBottom: '4px' }}>
-                      {post.title} {!post.published && <span style={{ color: 'var(--text-3)', fontSize: '11px' }}>(draft)</span>}
-                    </div>
-                    <div style={{ color: 'var(--text-3)', fontSize: '12px' }}>/{post.slug} · {post.tickers?.length > 0 ? post.tickers.join(', ') : 'no tickers linked'}</div>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+            {posts.map(post => (
+              <div key={post.slug} style={{ background: C.surface, border: `1px solid ${C.border}`, borderRadius: '16px', padding: '16px 20px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '12px', boxSizing: 'border-box' }}>
+                <div style={{ minWidth: 0 }}>
+                  <div style={{ fontWeight: 700, fontSize: '14px', marginBottom: '3px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                    {post.title} {!post.published && <span style={{ color: C.text3, fontSize: '11px', fontWeight: 600 }}>(borrador)</span>}
                   </div>
-                  <div style={{ display: 'flex', gap: '8px', flexShrink: 0 }}>
-                    <button onClick={() => startEdit(post)} className="btn-secondary" style={{ padding: '6px 12px', fontSize: '12px' }}>Edit</button>
-                    <button onClick={() => remove(post.slug)} style={{ padding: '6px 12px', fontSize: '12px', borderRadius: '8px', border: '1px solid rgba(248,113,113,0.4)', background: 'transparent', color: 'var(--red)', cursor: 'pointer', fontFamily: 'Inter, sans-serif' }}>Delete</button>
-                  </div>
+                  <div style={{ color: C.text2, fontSize: '12px' }}>/{post.slug} · {post.tickers?.length > 0 ? post.tickers.join(', ') : 'sin tickers vinculados'}</div>
                 </div>
-              ))}
-              {posts.length === 0 && <div style={{ color: 'var(--text-3)', fontSize: '14px', textAlign: 'center', padding: '40px' }}>No posts yet.</div>}
+                <div style={{ display: 'flex', gap: '8px', flexShrink: 0 }}>
+                  <button onClick={() => startEdit(post)} style={{ padding: '8px 14px', fontSize: '12px', fontWeight: 700, borderRadius: '10px', border: `1px solid ${C.border}`, background: 'transparent', color: C.ink, cursor: 'pointer', fontFamily: 'inherit' }}>Editar</button>
+                  <button onClick={() => remove(post.slug)} style={{ padding: '8px 14px', fontSize: '12px', fontWeight: 700, borderRadius: '10px', border: `1px solid ${C.red}55`, background: 'transparent', color: C.red, cursor: 'pointer', fontFamily: 'inherit' }}>Eliminar</button>
+                </div>
+              </div>
+            ))}
+            {posts.length === 0 && (
+              <div style={{ background: C.surface, border: `1px solid ${C.border}`, borderRadius: '16px', padding: '40px', textAlign: 'center', color: C.text2, fontSize: '13px' }}>
+                Todavía no hay artículos.
+              </div>
+            )}
+          </div>
+        </>
+      ) : (
+        <>
+          <button onClick={() => setEditing(null)} style={{ background: 'none', border: 'none', color: C.text2, fontSize: '13px', fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit', padding: 0, width: 'fit-content', display: 'flex', alignItems: 'center', gap: '6px' }}>
+            <svg aria-hidden="true" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg>
+            Volver
+          </button>
+
+          <h1 style={{ margin: 0, fontSize: '22px', fontWeight: 800, letterSpacing: '-0.02em' }}>{editing.slug ? 'Editar artículo' : 'Nuevo artículo'}</h1>
+
+          <div style={{ background: C.surface, border: `1px solid ${C.border}`, borderRadius: '20px', padding: '26px', display: 'flex', flexDirection: 'column', gap: '18px', boxSizing: 'border-box' }}>
+            <div>
+              <label style={labelStyle}>TÍTULO</label>
+              <input style={inputStyle} value={editing.title} onChange={e => setEditing({ ...editing, title: e.target.value })} placeholder="Qué es el ROIC y por qué importa" />
             </div>
-          </>
-        ) : (
-          <>
-            <button onClick={() => setEditing(null)} style={{ background: 'none', border: 'none', color: 'var(--text-3)', fontSize: '13px', fontWeight: 600, cursor: 'pointer', marginBottom: '20px', fontFamily: 'Inter, sans-serif', padding: 0 }}>← Back</button>
 
-            <h1 style={{ fontSize: '22px', fontWeight: 800, marginBottom: '24px' }}>{editing.slug ? 'Edit post' : 'New post'}</h1>
-
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-              <div>
-                <label style={labelStyle}>TITLE</label>
-                <input style={inputStyle} value={editing.title} onChange={e => setEditing({ ...editing, title: e.target.value })} placeholder="What is ROIC and why it matters" />
-              </div>
-
-              <div>
-                <label style={labelStyle}>SLUG (leave blank to auto-generate from title, only for new posts)</label>
-                <input style={inputStyle} value={editing.slug} onChange={e => setEditing({ ...editing, slug: slugify(e.target.value) })} placeholder="what-is-roic" disabled={!!editing.created_at} />
-              </div>
-
-              <div>
-                <label style={labelStyle}>DESCRIPTION (1-2 sentences, used in previews and SEO)</label>
-                <textarea style={{ ...inputStyle, minHeight: '60px', resize: 'vertical' }} value={editing.description} onChange={e => setEditing({ ...editing, description: e.target.value })} />
-              </div>
-
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr 1fr', gap: '12px' }}>
-                <div>
-                  <label style={labelStyle}>DATE</label>
-                  <input type="date" style={inputStyle} value={editing.date} onChange={e => setEditing({ ...editing, date: e.target.value })} />
-                </div>
-                <div>
-                  <label style={labelStyle}>READ TIME</label>
-                  <input style={inputStyle} value={editing.readTime} onChange={e => setEditing({ ...editing, readTime: e.target.value })} placeholder="4 min read" />
-                </div>
-                <div>
-                  <label style={labelStyle}>TAG</label>
-                  <input style={inputStyle} value={editing.tag} onChange={e => setEditing({ ...editing, tag: e.target.value })} placeholder="Fundamentals" />
-                </div>
-                <div>
-                  <label style={labelStyle}>AUTHOR</label>
-                  <input style={inputStyle} value={editing.author || ''} onChange={e => setEditing({ ...editing, author: e.target.value })} placeholder="Bulltrace Team" />
-                </div>
-              </div>
-
-              <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: '12px' }}>
-                <div>
-                  <label style={labelStyle}>LINKED TICKERS (comma-separated, optional — shows post on those stock pages)</label>
-                  <input style={inputStyle} value={tickersInput} onChange={e => setTickersInput(e.target.value)} placeholder="AAPL, MSFT" />
-                </div>
-                <div>
-                  <label style={labelStyle}>SENTIMENT (dot color on stock page)</label>
-                  <select style={inputStyle} value={editing.sentiment || 'neutral'} onChange={e => setEditing({ ...editing, sentiment: e.target.value })}>
-                    <option value="positive">🟢 Positive</option>
-                    <option value="neutral">🟡 Neutral</option>
-                    <option value="negative">🔴 Negative</option>
-                  </select>
-                </div>
-              </div>
-
-              <div>
-                <label style={labelStyle}>BODY</label>
-                <RichEditor html={htmlBody} onChange={setHtmlBody} />
-              </div>
-
-              <label style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '13px', color: 'var(--text-2)', cursor: 'pointer' }}>
-                <input type="checkbox" checked={editing.published} onChange={e => setEditing({ ...editing, published: e.target.checked })} />
-                Published (visible on the site)
-              </label>
-
-              {error && <div style={{ color: 'var(--red)', fontSize: '13px' }}>{error}</div>}
-
-              <button onClick={save} disabled={saving || !editing.title} className="btn-primary" style={{ opacity: saving || !editing.title ? 0.5 : 1 }}>
-                {saving ? 'Saving...' : 'Save post'}
-              </button>
+            <div>
+              <label style={labelStyle}>SLUG (déjalo en blanco para generarlo del título — solo en artículos nuevos)</label>
+              <input style={inputStyle} value={editing.slug} onChange={e => setEditing({ ...editing, slug: slugify(e.target.value) })} placeholder="que-es-el-roic" disabled={!!editing.created_at} />
             </div>
-          </>
-        )}
 
-      </div>
-    </div>
+            <div>
+              <label style={labelStyle}>DESCRIPCIÓN (1-2 frases, se usa en las vistas previas y el SEO)</label>
+              <textarea style={{ ...inputStyle, minHeight: '70px', resize: 'vertical' }} value={editing.description} onChange={e => setEditing({ ...editing, description: e.target.value })} />
+            </div>
+
+            <div className="new-dash-2col" style={{ display: 'grid', gridTemplateColumns: 'repeat(4, minmax(0, 1fr))', gap: '12px' }}>
+              <div>
+                <label style={labelStyle}>FECHA</label>
+                <input type="date" style={inputStyle} value={editing.date} onChange={e => setEditing({ ...editing, date: e.target.value })} />
+              </div>
+              <div>
+                <label style={labelStyle}>TIEMPO DE LECTURA</label>
+                <input style={inputStyle} value={editing.readTime} onChange={e => setEditing({ ...editing, readTime: e.target.value })} placeholder="4 min" />
+              </div>
+              <div>
+                <label style={labelStyle}>ETIQUETA</label>
+                <input style={inputStyle} value={editing.tag} onChange={e => setEditing({ ...editing, tag: e.target.value })} placeholder="Fundamentals" />
+              </div>
+              <div>
+                <label style={labelStyle}>AUTOR</label>
+                <input style={inputStyle} value={editing.author || ''} onChange={e => setEditing({ ...editing, author: e.target.value })} placeholder="Bulltrace Team" />
+              </div>
+            </div>
+
+            <div className="new-dash-2col" style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: '12px' }}>
+              <div>
+                <label style={labelStyle}>TICKERS VINCULADOS (separados por comas, opcional — muestra el artículo en esas fichas)</label>
+                <input style={inputStyle} value={tickersInput} onChange={e => setTickersInput(e.target.value)} placeholder="AAPL, MSFT" />
+              </div>
+              <div>
+                <label style={labelStyle}>TONO (color del punto en la ficha)</label>
+                <select style={inputStyle} value={editing.sentiment || 'neutral'} onChange={e => setEditing({ ...editing, sentiment: e.target.value })}>
+                  <option value="positive">🟢 Positivo</option>
+                  <option value="neutral">🟡 Neutro</option>
+                  <option value="negative">🔴 Negativo</option>
+                </select>
+              </div>
+            </div>
+
+            <div>
+              <label style={labelStyle}>CONTENIDO</label>
+              <RichEditor html={htmlBody} onChange={setHtmlBody} />
+            </div>
+
+            <label style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '13px', color: C.text2, cursor: 'pointer', fontWeight: 600 }}>
+              <input type="checkbox" checked={editing.published} onChange={e => setEditing({ ...editing, published: e.target.checked })} />
+              Publicado (visible en la web)
+            </label>
+
+            {error && <div style={{ color: C.red, fontSize: '13px', background: '#F8DFDA', borderRadius: '10px', padding: '10px 12px' }}>{error}</div>}
+
+            <button onClick={save} disabled={saving || !editing.title} style={{
+              height: '46px', padding: '0 24px', borderRadius: '12px', border: 'none', background: C.lime, color: C.ink,
+              fontWeight: 700, fontSize: '14px', fontFamily: 'inherit', cursor: saving || !editing.title ? 'not-allowed' : 'pointer',
+              opacity: saving || !editing.title ? 0.5 : 1,
+            }}>
+              {saving ? 'Guardando…' : 'Guardar artículo'}
+            </button>
+          </div>
+        </>
+      )}
+    </Shell>
   );
 }
