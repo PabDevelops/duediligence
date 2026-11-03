@@ -8,7 +8,8 @@ import { useUser } from '../../../components/AuthProvider';
 import { useStockData } from '../../../../lib/hooks/useStockData';
 import { isInGuestWatchlist, addToGuestWatchlist, removeFromGuestWatchlist } from '../../../../lib/guestWatchlist';
 import { computeETFQualityScore } from '../../../../lib/etfQuality';
-import { formatCurrency } from '../../../../lib/formatters';
+import { etfVerdict, investigateEtfQuestions } from '../../../../lib/verdict';
+import { formatCurrency, formatTimeAgo } from '../../../../lib/formatters';
 import { NEW_COLORS as C, VERDICT_BADGE } from '../../../components/new/theme';
 
 const CHART_RANGES = [
@@ -23,13 +24,6 @@ const CHART_THEME_VARS = {
   '--ws-bg-1': C.surface, '--ws-bg-2': C.bg, '--ws-accent': C.lime,
   '--ws-text-3': C.text3, '--ws-border': C.border, '--ws-red': C.red,
 };
-
-function etfVerdict(composite) {
-  if (composite == null) return null;
-  if (composite >= 70) return { tier: 'good', label: 'Fondo sólido' };
-  if (composite >= 40) return { tier: 'caution', label: 'Normalito' };
-  return { tier: 'bad', label: 'Cuidado' };
-}
 
 function WeightBars({ title, items, emptyLabel, barColor }) {
   if (!items || items.length === 0) {
@@ -148,8 +142,9 @@ function NewEtfPageContent({ params }) {
   const price = priceData?.currentPrice;
   const sym = priceData?.currency === 'EUR' ? '€' : priceData?.currency === 'GBP' ? '£' : '$';
   const quality = computeETFQualityScore(etf);
-  const verdict = etfVerdict(quality.composite);
+  const verdict = etfVerdict(etf);
   const badge = verdict ? VERDICT_BADGE[verdict.tier] : null;
+  const investigateQs = investigateEtfQuestions(etf, quality);
 
   const essentials = [
     { label: 'Gastos al año', value: etf.expenseRatio },
@@ -207,14 +202,37 @@ function NewEtfPageContent({ params }) {
       </div>
 
       {verdict && (
-        <div style={{ background: C.surface, border: `1px solid ${C.border}`, borderRadius: '20px', padding: '26px', display: 'flex', flexDirection: 'column', gap: '12px', boxSizing: 'border-box' }}>
+        <div style={{ background: C.surface, border: `1px solid ${C.border}`, borderRadius: '20px', padding: '26px', display: 'flex', flexDirection: 'column', gap: '18px', boxSizing: 'border-box' }}>
           <div style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', padding: '7px 16px', borderRadius: '20px', background: badge.bg, width: 'fit-content' }}>
             <span aria-hidden="true" style={{ width: '8px', height: '8px', borderRadius: '50%', background: badge.dot }} />
             <span style={{ fontSize: '13px', fontWeight: 800, color: badge.text }}>{verdict.label}</span>
           </div>
-          <div style={{ fontSize: '12px', color: C.text3, paddingTop: '6px', borderTop: `1px solid ${C.borderSoft}` }}>
-            Basado en coste, liquidez y diversificación — no es una recomendación de inversión.
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '14px', fontSize: '14px', lineHeight: 1.6, color: '#45413A' }}>
+            <div>
+              <div style={{ fontSize: '11px', fontWeight: 700, color: C.text3, letterSpacing: '0.02em', marginBottom: '5px' }}>COSTE</div>
+              {verdict.dimensions.cost}
+            </div>
+            <div>
+              <div style={{ fontSize: '11px', fontWeight: 700, color: C.text3, letterSpacing: '0.02em', marginBottom: '5px' }}>LIQUIDEZ</div>
+              {verdict.dimensions.liquidity}
+            </div>
+            <div>
+              <div style={{ fontSize: '11px', fontWeight: 700, color: C.text3, letterSpacing: '0.02em', marginBottom: '5px' }}>DIVERSIFICACIÓN</div>
+              {verdict.dimensions.diversification}
+            </div>
           </div>
+          <div style={{ fontSize: '12px', color: C.text3, paddingTop: '10px', borderTop: `1px solid ${C.borderSoft}` }}>
+            Esto no es consejo de inversión, es un punto de partida — investiga más antes de decidir.
+          </div>
+        </div>
+      )}
+
+      {investigateQs.length > 0 && (
+        <div style={{ background: C.surface, border: `1px solid ${C.border}`, borderRadius: '20px', padding: '22px 26px', boxSizing: 'border-box', display: 'flex', flexDirection: 'column', gap: '12px' }}>
+          <div style={{ fontSize: '15px', fontWeight: 800 }}>Qué deberías investigar ahora</div>
+          <ul style={{ margin: 0, paddingLeft: '18px', display: 'flex', flexDirection: 'column', gap: '8px', fontSize: '13px', lineHeight: 1.5, color: '#45413A' }}>
+            {investigateQs.map((q, i) => <li key={i}>{q}</li>)}
+          </ul>
         </div>
       )}
 
@@ -262,6 +280,20 @@ function NewEtfPageContent({ params }) {
       <div className="new-dash-2col" style={{ display: 'grid', gridTemplateColumns: 'repeat(2, minmax(0, 1fr))', gap: '14px' }}>
         <WeightBars title="Principales posiciones" items={etf.holdings} emptyLabel="El fondo no reporta sus posiciones." barColor={C.lime} />
         <WeightBars title="Por sector" items={etf.sectors} emptyLabel="El fondo no reporta su reparto por sector." barColor={C.ink} />
+      </div>
+
+      <div style={{ background: C.surface, border: `1px solid ${C.border}`, borderRadius: '20px', padding: '22px 26px', boxSizing: 'border-box', display: 'flex', flexDirection: 'column', gap: '10px' }}>
+        <div style={{ fontSize: '13px', fontWeight: 800 }}>Cómo se ha calculado todo esto</div>
+        <div style={{ fontSize: '12px', color: C.text2, lineHeight: 1.6 }}>
+          {etf.updatedAt && <>Datos del fondo actualizados {formatTimeAgo(etf.updatedAt)}. </>}
+          La nota de calidad combina solo lo que el propio fondo reporta — comisión, patrimonio
+          gestionado, volumen y sus posiciones — nunca estima ni rellena un dato que no está
+          disponible: cuando algo falta (como suele pasar con fondos pequeños o poco conocidos),
+          esa pieza simplemente no entra en la nota en vez de inventarse.
+        </div>
+        <Link href={`/etfs/${ticker}/numbers`} style={{ fontSize: '12px', fontWeight: 700, color: C.ink, textDecoration: 'none', width: 'fit-content' }}>
+          Ver qué datos faltan y sus límites →
+        </Link>
       </div>
     </Shell>
   );

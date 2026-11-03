@@ -6,28 +6,7 @@ import MarketStatusDot from '../components/workspace/MarketStatusDot';
 import { formatCurrency } from '../../lib/formatters';
 import { computeEasyMode, computeFundamentalGrowth } from '../../lib/stockScoring';
 import { useEntryPriceProjection } from '../../lib/hooks/useEntryPriceProjection';
-import { stockVerdict } from '../../lib/verdict';
-
-function etfVerdict(fund) {
-  const expensePct = parseFloat(fund.expenseRatio);
-  const hasExpense = !Number.isNaN(expensePct);
-  const cheap = hasExpense && expensePct <= 0.2;
-  const pricey = hasExpense && expensePct > 0.5;
-
-  let tier, label, emoji;
-  if (cheap) { tier = 'good'; label = 'Comisión baja, pinta razonable'; emoji = '✅'; }
-  else if (pricey) { tier = 'caution'; label = 'Comisión alta para ser un fondo'; emoji = '⚠️'; }
-  else { tier = 'caution'; label = 'Revisa la comisión antes de entrar'; emoji = '⚠️'; }
-
-  const reasons = [];
-  reasons.push(hasExpense
-    ? `Comisión anual del ${fund.expenseRatio} — ${cheap ? 'está entre las bajas' : pricey ? 'es alta comparada con fondos similares' : 'es una comisión normal'}.`
-    : 'No encontramos la comisión anual de este fondo — revísala en el folleto antes de invertir.');
-  reasons.push(`Es un fondo (${fund.holdings?.length || 'varias'} posiciones), no una empresa suelta — reparte el riesgo en vez de apostarlo todo a una.`);
-  if (fund.aum && fund.aum !== 'See Prospectus') reasons.push(`Tiene ${fund.aum} gestionados — un fondo grande suele ser más fácil de comprar/vender sin perder dinero en el camino.`);
-
-  return { tier, label, emoji, reasons };
-}
+import { stockVerdict, etfVerdict } from '../../lib/verdict';
 
 const TIER_COLOR = { good: 'var(--ws-accent)', caution: '#eab308', bad: 'var(--ws-red)' };
 

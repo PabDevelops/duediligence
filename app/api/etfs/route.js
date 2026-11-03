@@ -305,7 +305,10 @@ export async function GET() {
     if (error) throw error;
 
     const rows = data || [];
-    let etfs = rows.map((row) => row.data);
+    // Exposed as updatedAt (camelCase, matching app/api/stock/route.js's convention) so the
+    // frontend can show data freshness the same way stock pages already do — this was
+    // previously only used internally for the staleness check below, never sent to the client.
+    let etfs = rows.map((row) => ({ ...row.data, updatedAt: row.updated_at }));
     const existingTickers = new Set(etfs.map((e) => e.ticker));
 
     // Find missing default tickers (US defaults + known international ETFs)
@@ -319,12 +322,13 @@ export async function GET() {
         missingTickers.map(async (ticker) => {
           try {
             const etfData = await fetchETFData(ticker);
+            const seededAt = new Date().toISOString();
             await supabase.from('stock_cache').upsert({
               ticker,
               data: etfData,
-              updated_at: new Date().toISOString(),
+              updated_at: seededAt,
             });
-            return etfData;
+            return { ...etfData, updatedAt: seededAt };
           } catch (err) {
             console.error(`Failed to seed default ETF ${ticker}:`, err);
             return null;
@@ -384,23 +388,24 @@ export async function POST(request) {
     if (cached?.data?.isEtf) {
       const hoursOld = (Date.now() - new Date(cached.updated_at).getTime()) / 36e5;
       if (hoursOld < CACHE_HOURS) {
-        return Response.json(cached.data);
+        return Response.json({ ...cached.data, updatedAt: cached.updated_at });
       }
     }
 
     // 2. Fetch price, name, and basic indicators
     const etfObject = mergeWithPriorEtfData(await fetchETFData(cleanTicker), cached?.data);
+    const fetchedAt = new Date().toISOString();
 
     // Upsert into stock_cache
     const { error: upsertError } = await supabase.from('stock_cache').upsert({
       ticker: cleanTicker,
       data: etfObject,
-      updated_at: new Date().toISOString(),
+      updated_at: fetchedAt,
     });
 
     if (upsertError) throw upsertError;
 
-    return Response.json(etfObject);
+    return Response.json({ ...etfObject, updatedAt: fetchedAt });
   } catch (err) {
     console.error('Error creating global ETF:', err);
     return Response.json({ error: err.message }, { status: 500 });

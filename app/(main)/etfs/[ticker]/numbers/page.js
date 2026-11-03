@@ -170,7 +170,7 @@ function NewEtfNumbersContent({ params }) {
         intro="Ninguno de estos números garantiza el futuro, pero dan una idea de cómo se ha comportado el fondo."
         stats={[
           { label: 'Rentabilidad por dividendo', value: etf.yield, explain: 'Cuánto te paga el fondo en dividendos al año, como porcentaje del precio de hoy.' },
-          { label: 'PER promedio', value: etf.pe, explain: 'La media del ratio precio/beneficio de las empresas que tiene el fondo — cuántos años de beneficio pagas por ellas, de media.' },
+          { label: 'PER promedio', value: etf.pe, explain: 'La media de cuántas veces el beneficio anual estás pagando por las empresas del fondo. No es un "plazo para recuperar la inversión" — solo tiene sentido comparado con el PER de otros fondos o índices similares.' },
           { label: 'Beta', value: etf.beta, explain: 'Cuánto se mueve el fondo comparado con el mercado en general. Por encima de 1 significa que suele moverse más fuerte, para bien y para mal.' },
         ]}
       />

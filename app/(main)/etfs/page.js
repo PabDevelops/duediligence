@@ -4,7 +4,7 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import NewNav from '../../components/new/NewNav';
 import StockLogo from '../../components/workspace/StockLogo';
-import { computeETFQualityScore } from '../../../lib/etfQuality';
+import { etfVerdict } from '../../../lib/verdict';
 import { NEW_COLORS as C, VERDICT_BADGE } from '../../components/new/theme';
 
 const CATEGORIES = [
@@ -15,19 +15,8 @@ const CATEGORIES = [
   { id: 'fixed', label: 'Bonos y oro' },
 ];
 
-// Same 70/40 thresholds the quality score itself already used (lib/etfQuality.js and the old
-// ETF Quality tab) — just mapped onto the same good/caution/bad badge the stock pages use,
-// instead of a separate STRONG/FAIR/WEAK vocabulary.
-function etfVerdict(composite) {
-  if (composite == null) return null;
-  if (composite >= 70) return { tier: 'good', label: 'Fondo sólido' };
-  if (composite >= 40) return { tier: 'caution', label: 'Normalito' };
-  return { tier: 'bad', label: 'Cuidado' };
-}
-
 function EtfCard({ etf }) {
-  const quality = computeETFQualityScore(etf);
-  const verdict = etfVerdict(quality?.composite);
+  const verdict = etfVerdict(etf);
   const badge = verdict ? VERDICT_BADGE[verdict.tier] : null;
 
   return (
