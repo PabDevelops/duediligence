@@ -17,6 +17,14 @@ export const metadata = {
     apple: '/apple-touch-icon.png',
     other: [{ rel: 'icon', url: '/icon-512.png', sizes: '512x512' }],
   },
+  // iOS doesn't read the Web App Manifest's display:'standalone' the way Android/Chrome does —
+  // this is what actually gets Safari's "Add to Home Screen" to open without the browser chrome
+  // there. appleWebApp.title is deliberately short: iOS truncates the home-screen label hard.
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: 'default',
+    title: 'Bulltrace',
+  },
   openGraph: {
     title: "Bulltrace — Professional Investment Analysis",
     description: "Professional investment analysis powered by direct company filings. SEC EDGAR source verification, normalized multi-currency portfolios, intrinsic valuation modeling, and community intelligence.",
@@ -42,6 +50,7 @@ export const metadata = {
 export const viewport = {
   width: 'device-width',
   initialScale: 1,
+  themeColor: '#1C1B18',
 };
 
 export default function RootLayout({ children }) {
@@ -49,6 +58,10 @@ export default function RootLayout({ children }) {
     <AuthProvider>
       <html lang="en" suppressHydrationWarning>
         <head suppressHydrationWarning>
+          {/* Next's appleWebApp metadata (above) only emits the newer "mobile-web-app-capable"
+              tag in this Next.js version — iOS Safari still specifically needs the apple-
+              prefixed one to open "Add to Home Screen" without browser chrome. */}
+          <meta name="apple-mobile-web-app-capable" content="yes" />
           <script dangerouslySetInnerHTML={{ __html: `(function(){try{document.documentElement.setAttribute('data-ws-theme','dark')}catch(e){}})()` }} />
           <AdSense />
         </head>
