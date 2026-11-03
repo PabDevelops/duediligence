@@ -4,11 +4,12 @@ import Link from 'next/link';
 import { useUser } from '../AuthProvider';
 import { NEW_COLORS as C } from './theme';
 
-// Cream/lime nav for the pre-signup marketing pages (landing, pricing, start-trial, success) —
-// a sibling to NewNav (the signed-in app's own nav), not a reskin of it: a logged-out visitor
-// has no use for Inicio/Seguidos/ETFs/etc., so this carries marketing links instead
-// (Precios/FAQ) plus sign-in/CTA, same cream/lime visual language as the rest of the new theme.
+// Cream/lime nav for the pre-signup marketing pages (landing, about, pricing, start-trial,
+// success, faq, privacy, terms) — a sibling to NewNav (the signed-in app's own nav), not a
+// reskin of it: a logged-out visitor has no use for Inicio/Seguidos/ETFs/etc., so this carries
+// marketing links instead, same cream/lime visual language as the rest of the new theme.
 const NAV_ITEMS = [
+  { key: 'about', label: 'Sobre nosotros', href: '/about' },
   { key: 'precios', label: 'Precios', href: '/pricing' },
   { key: 'faq', label: 'FAQ', href: '/faq' },
 ];

@@ -1,20 +1,19 @@
-import { getDictionary } from '../../../lib/i18n/getDictionary';
 import FaqView from './FaqView';
+import { FAQ_ITEMS } from './faqItems';
 
 export const metadata = {
-  title: 'FAQ — Bulltrace',
-  description: 'Common questions about Bulltrace: what it is, how the GARP scoring engine works, coverage, and pricing.',
+  title: 'Preguntas frecuentes — Bulltrace',
+  description: 'Respuestas cortas sobre qué es Bulltrace, cómo funciona la nota de calidad, cobertura y precios.',
   alternates: {
     canonical: '/faq',
   },
 };
 
 export default function Faq() {
-  const dict = getDictionary();
   const faqJsonLd = {
     '@context': 'https://schema.org',
     '@type': 'FAQPage',
-    mainEntity: dict.faq.items.map(({ q, a }) => ({
+    mainEntity: FAQ_ITEMS.map(({ q, a }) => ({
       '@type': 'Question',
       name: q,
       acceptedAnswer: { '@type': 'Answer', text: a },
@@ -24,7 +23,7 @@ export default function Faq() {
   return (
     <>
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(faqJsonLd) }} />
-      <FaqView dict={dict} />
+      <FaqView />
     </>
   );
 }

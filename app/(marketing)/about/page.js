@@ -1,12 +1,11 @@
-import { getDictionary } from '../../../lib/i18n/getDictionary';
 import AboutView from './AboutView';
 
 export const metadata = {
-  title: 'About Bulltrace — How It Works',
-  description: 'Bulltrace analyses stocks from SEC EDGAR filings and gives you a simple quality score and fair value estimate. No finance degree needed.',
+  title: 'Sobre Bulltrace — Cómo funciona',
+  description: 'Bulltrace analiza acciones a partir de presentaciones de SEC EDGAR y te da una nota de calidad sencilla y una estimación de valor razonable. No hace falta ser economista.',
   openGraph: {
-    title: 'About Bulltrace — How It Works',
-    description: 'Real data from company filings. Simple quality score and fair value. No jargon.',
+    title: 'Sobre Bulltrace — Cómo funciona',
+    description: 'Datos reales de las presentaciones de cada empresa. Nota de calidad sencilla y valor razonable. Sin jerga.',
     url: 'https://bulltrace.app/about',
     siteName: 'Bulltrace',
     images: [{ url: '/og-screenshot.png', width: 1200, height: 630 }],
@@ -14,8 +13,8 @@ export const metadata = {
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'About Bulltrace — How It Works',
-    description: 'Real data from company filings. Simple quality score and fair value. No jargon.',
+    title: 'Sobre Bulltrace — Cómo funciona',
+    description: 'Datos reales de las presentaciones de cada empresa. Nota de calidad sencilla y valor razonable. Sin jerga.',
     images: ['/og-screenshot.png'],
   },
   alternates: {
@@ -24,6 +23,5 @@ export const metadata = {
 };
 
 export default function About() {
-  const dict = getDictionary();
-  return <AboutView dict={dict} />;
+  return <AboutView />;
 }

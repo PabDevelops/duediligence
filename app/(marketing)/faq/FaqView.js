@@ -1,25 +1,32 @@
 'use client';
-import Topbar from '../../components/Topbar';
-import Footer from '../../components/marketing/Footer';
+import NewMarketingNav from '../../components/new/NewMarketingNav';
+import NewMarketingFooter from '../../components/new/NewMarketingFooter';
+import { NEW_COLORS as C } from '../../components/new/theme';
+import { FAQ_ITEMS as ITEMS } from './faqItems';
 
-export default function FaqView({ dict }) {
-  const t = dict.faq;
+export default function FaqView() {
   return (
-    <div style={{ background: 'var(--bg)', minHeight: '100vh', color: 'var(--text)', fontFamily: 'Inter, sans-serif' }}>
-      <Topbar />
-      <div style={{ maxWidth: '760px', margin: '0 auto', padding: '60px 24px 100px' }}>
-        <div style={{ color: 'var(--accent)', fontSize: '11px', letterSpacing: '2px', marginBottom: '12px', fontWeight: 700 }}>{t.eyebrow}</div>
-        <h1 style={{ fontSize: '36px', fontWeight: 800, letterSpacing: '-1px', marginBottom: '12px' }}>{t.title}</h1>
-        <p style={{ color: 'var(--text-2)', fontSize: '14px', lineHeight: 1.7, marginBottom: '48px' }}>{t.subtitle}</p>
+    <div style={{ width: '100%', minHeight: '100vh', boxSizing: 'border-box', background: C.bg, color: C.ink, fontFamily: "'Plus Jakarta Sans', system-ui, sans-serif" }}>
+      <div style={{ maxWidth: 'min(1200px, 92vw)', margin: '0 auto', padding: '32px 24px 0', boxSizing: 'border-box' }}>
+        <NewMarketingNav active="faq" />
+      </div>
 
-        {t.items.map(item => (
-          <div key={item.q} style={{ marginBottom: '28px', paddingBottom: '28px', borderBottom: '1px solid var(--border)' }}>
-            <h2 style={{ fontSize: '17px', fontWeight: 700, color: 'var(--text)', marginBottom: '10px' }}>{item.q}</h2>
-            <p style={{ color: 'var(--text-2)', fontSize: '14px', lineHeight: 1.8 }}>{item.a}</p>
+      <div style={{ maxWidth: '720px', margin: '0 auto', padding: '40px 24px 96px', boxSizing: 'border-box' }}>
+        <div style={{ fontSize: '11px', fontWeight: 700, color: C.text3, letterSpacing: '0.08em', textTransform: 'uppercase', marginBottom: '10px' }}>PREGUNTAS FRECUENTES</div>
+        <h1 style={{ margin: '0 0 12px', fontSize: '30px', fontWeight: 800, letterSpacing: '-0.02em' }}>Respuestas directas</h1>
+        <p style={{ margin: '0 0 40px', fontSize: '14px', color: C.text2, lineHeight: 1.6 }}>
+          Respuestas cortas y directas sobre qué es Bulltrace, cómo funciona la nota de calidad y cuánto cuesta.
+        </p>
+
+        {ITEMS.map(item => (
+          <div key={item.q} style={{ marginBottom: '24px', paddingBottom: '24px', borderBottom: `1px solid ${C.borderSoft}` }}>
+            <h2 style={{ margin: '0 0 8px', fontSize: '15px', fontWeight: 800 }}>{item.q}</h2>
+            <p style={{ margin: 0, color: C.text2, fontSize: '13.5px', lineHeight: 1.7 }}>{item.a}</p>
           </div>
         ))}
       </div>
-      <Footer dict={dict.home.footer} />
+
+      <NewMarketingFooter />
     </div>
   );
 }

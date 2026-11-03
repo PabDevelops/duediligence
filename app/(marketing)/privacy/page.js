@@ -1,13 +1,12 @@
-import { getDictionary } from '../../../lib/i18n/getDictionary';
 import PrivacyView from './PrivacyView';
 
 export const metadata = {
+  title: 'Política de privacidad — Bulltrace',
   alternates: {
     canonical: '/privacy',
   },
 };
 
 export default function Privacy() {
-  const dict = getDictionary();
-  return <PrivacyView dict={dict} />;
+  return <PrivacyView />;
 }
