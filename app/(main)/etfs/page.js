@@ -15,6 +15,13 @@ const CATEGORIES = [
   { id: 'fixed', label: 'Bonos y oro' },
 ];
 
+// 'See Prospectus'/'N/A' are the raw sentinels app/api/etfs/route.js falls back to when a
+// field isn't reported — meant to be filtered out or relabeled before display, not shown as-is
+// (confirmed: this card rendered etf.expenseRatio/etf.yield directly, so those leaked onto
+// every card in the list as unlocalized English, the same bug already fixed on the ETF detail
+// and holdings pages). 'N/D' matches what every other missing value in this app shows.
+const displayValue = (v) => (!v || v === 'See Prospectus' || v === 'N/A') ? 'N/D' : v;
+
 function EtfCard({ etf }) {
   const verdict = etfVerdict(etf);
   const badge = verdict ? VERDICT_BADGE[verdict.tier] : null;
@@ -35,11 +42,11 @@ function EtfCard({ etf }) {
       <div style={{ display: 'flex', gap: '20px' }}>
         <div>
           <div style={{ fontSize: '10px', color: C.text3, fontWeight: 700 }}>GASTOS</div>
-          <div style={{ fontSize: '14px', fontWeight: 700 }}>{etf.expenseRatio}</div>
+          <div style={{ fontSize: '14px', fontWeight: 700 }}>{displayValue(etf.expenseRatio)}</div>
         </div>
         <div>
           <div style={{ fontSize: '10px', color: C.text3, fontWeight: 700 }}>RENTABILIDAD</div>
-          <div style={{ fontSize: '14px', fontWeight: 700 }}>{etf.yield}</div>
+          <div style={{ fontSize: '14px', fontWeight: 700 }}>{displayValue(etf.yield)}</div>
         </div>
       </div>
       {badge && (
