@@ -1185,7 +1185,7 @@ export async function GET(request) {
         name: yh.name,
         ticker,
         exchange: yh.exchange,
-        description: fundamentals?.description || null,
+        description: fundamentals?.description || priorCachedData?.description || null,
         currentPrice: yh.currentPrice,
         priceChange: yh.priceChange,
         priceChangePct: yh.priceChangePct,
@@ -1281,7 +1281,7 @@ export async function GET(request) {
           name: yh.name,
           ticker,
           exchange: yh.exchange,
-          description: fundamentals?.description || null,
+          description: fundamentals?.description || priorCachedData?.description || null,
           currentPrice: yh.currentPrice,
           priceChange: yh.priceChange,
           priceChangePct: yh.priceChangePct,
@@ -1369,7 +1369,7 @@ export async function GET(request) {
         sector: normalizeSector(fhProfile.finnhubIndustry) || yh?.sector || priorCachedData?.sector || null,
         industry: fhProfile.finnhubIndustry || yh?.industry || priorCachedData?.industry || null,
         exchange: fhProfile.exchange || priorCachedData?.exchange || null,
-        description: yh?.description || fhProfile.description || await fetchDescription(ticker),
+        description: yh?.description || fhProfile.description || priorCachedData?.description || await fetchDescription(ticker),
         currentPrice: resolvedCurrentPrice,
         priceChange: fh.d || null,
         priceChangePct: fh.dp || null,
@@ -2275,7 +2275,13 @@ export async function GET(request) {
       sector: normalizeSector(fhProfile.finnhubIndustry) || priorCachedData?.sector || null,
       industry: fhProfile.finnhubIndustry || priorCachedData?.industry || null,
       exchange: fhProfile.exchange || priorCachedData?.exchange || null,
-      description: fhProfile.description || await fetchDescription(ticker),
+      // AlphaVantage's free-tier rate limit is shared across every ticker this app fetches, so
+      // it's commonly exhausted — without the priorCachedData fallback, a ticker that already
+      // had a good description from a prior successful fetch got that description silently
+      // overwritten with null on the next 24h cache refresh whenever the quota happened to be
+      // spent at that moment, instead of keeping what was already known (same "stale beats
+      // blank" reasoning sector/industry/exchange/employees/weburl already use right above).
+      description: fhProfile.description || priorCachedData?.description || await fetchDescription(ticker),
       employees: fhProfile.employeeTotal || priorCachedData?.employees || null,
       weburl: fhProfile.weburl || priorCachedData?.weburl || null,
       revVal, niVal, oiVal, fcfVal, assetsVal, equityVal, debtVal: effectiveDebtVal, cashVal, sharesVal, rdVal,
