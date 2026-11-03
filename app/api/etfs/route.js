@@ -14,6 +14,26 @@ const INTERNATIONAL_SEED_TICKERS = [
   'VUAG.L', 'VUSA.L', 'SSLN.L', 'SGLN.L', 'INRG.L', 'EIMI.L', 'VWRL.L', 'VWRA.L', 'IUSA.L', 'CSPX.L'
 ];
 
+// Yahoo's fundProfile/summaryDetail/defaultKeyStatistics modules can each come back thin on
+// any individual fetch (crumb hiccup, a field Yahoo just doesn't populate that round) without
+// the fund's real data having changed — same flakiness already documented throughout
+// app/api/stock/route.js, which falls back to priorCachedData on nearly every field for exactly
+// this reason. This file had none of that: every field here was sourced purely from the current
+// fetch, so a transient gap silently overwrote a good "0.03%"/"$450.2B" with the "See
+// Prospectus"/"N/A" sentinel on the next 24h refresh. Applied after fetchETFData returns, so
+// every call site (seed, stale-refresh, POST) gets the same protection from one place.
+const MISSING_ETF_VALUES = new Set(['See Prospectus', 'N/A', null, undefined]);
+function mergeWithPriorEtfData(fresh, prior) {
+  if (!prior) return fresh;
+  const merged = { ...fresh };
+  for (const key of ['expenseRatio', 'aum', 'yield', 'pe', 'beta', 'volume', 'inception', 'indexTracked', 'issuer']) {
+    if (MISSING_ETF_VALUES.has(merged[key]) && !MISSING_ETF_VALUES.has(prior[key])) merged[key] = prior[key];
+  }
+  if ((!merged.holdings || merged.holdings.length === 0) && prior.holdings?.length > 0) merged.holdings = prior.holdings;
+  if ((!merged.sectors || merged.sectors.length === 0) && prior.sectors?.length > 0) merged.sectors = prior.sectors;
+  return merged;
+}
+
 async function fetchETFData(ticker) {
   const cleanTicker = ticker.trim().toUpperCase();
   const auth = await getYahooAuth();
@@ -309,15 +329,15 @@ export async function GET() {
 
     // Refresh stale rows (expense ratio, AUM, yield, holdings drift over time) without
     // blocking this response — the refreshed data shows up on the next page load.
-    const staleTickers = rows
-      .filter((row) => (Date.now() - new Date(row.updated_at).getTime()) / 36e5 > CACHE_HOURS)
-      .map((row) => row.data.ticker);
+    const staleRows = rows
+      .filter((row) => (Date.now() - new Date(row.updated_at).getTime()) / 36e5 > CACHE_HOURS);
 
-    if (staleTickers.length > 0) {
+    if (staleRows.length > 0) {
       Promise.all(
-        staleTickers.map(async (ticker) => {
+        staleRows.map(async (row) => {
+          const ticker = row.data.ticker;
           try {
-            const fresh = await fetchETFData(ticker);
+            const fresh = mergeWithPriorEtfData(await fetchETFData(ticker), row.data);
             await supabase.from('stock_cache').upsert({
               ticker,
               data: fresh,
@@ -360,7 +380,7 @@ export async function POST(request) {
     }
 
     // 2. Fetch price, name, and basic indicators
-    const etfObject = await fetchETFData(cleanTicker);
+    const etfObject = mergeWithPriorEtfData(await fetchETFData(cleanTicker), cached?.data);
 
     // Upsert into stock_cache
     const { error: upsertError } = await supabase.from('stock_cache').upsert({
