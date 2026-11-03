@@ -1,5 +1,6 @@
 import { supabase } from '../../../lib/supabase.js';
 import { getYahooAuth, fetchYahooAnalystTarget, fetchYahooDescription } from '../../../lib/yahooFinance.js';
+import { translateDescription } from '../../../lib/translateDescription.js';
 import { fetchForm4Transactions, computeInsiderOwnershipPct } from '../../../lib/secInsiders.js';
 import { cleanCompanyName } from '../../../lib/secTickers.js';
 import { flagDataAnomaly } from '../../../lib/dataAnomalies.js';
@@ -796,6 +797,27 @@ async function fetchDescription(ticker) {
   } catch { return null; }
 }
 
+// Translates result.description to Spanish exactly once per ticker and marks it with
+// descriptionTranslated, so the paid translation call only runs the first time a given
+// English description is seen — every subsequent fetch within the same 24h-or-so cache cycle
+// reuses priorCachedData's already-translated text instead of re-translating it. Mutates
+// `result` in place; callers run this right before upserting so the translated text (not the
+// English original) is what gets cached and served.
+async function ensureSpanishDescription(result, priorCachedData) {
+  if (!result.description) return;
+  if (priorCachedData?.descriptionTranslated && priorCachedData?.description === result.description) {
+    result.descriptionTranslated = true;
+    return;
+  }
+  const original = result.description;
+  result.description = await translateDescription(original);
+  // translateDescription falls back to returning the untouched original on any failure (missing
+  // key, rate limit, network error) — only mark success when it actually changed, so a transient
+  // failure gets retried on the next fetch instead of permanently mislabeling English text as
+  // already translated.
+  result.descriptionTranslated = result.description !== original;
+}
+
 // 10-year Treasury yield, used as the risk-free rate in the WACC/DCF model. Same value
 // for every ticker, so unlike fetchDescription this is safe (good, even) to let Next
 // cache — an hour-stale risk-free rate doesn't meaningfully change a WACC estimate.
@@ -1197,6 +1219,8 @@ export async function GET(request) {
         isEtf: cachedIsEtf,
       };
 
+      await ensureSpanishDescription(result, priorCachedData);
+
       try {
         await supabase.from('stock_cache').upsert({ ticker, data: result, updated_at: fetchedAt });
       } catch (e) {}
@@ -1292,6 +1316,8 @@ export async function GET(request) {
           internationalSource: 'yahoo',
           isEtf: cachedIsEtf,
         };
+
+        await ensureSpanishDescription(yhResult, priorCachedData);
 
         try {
           await supabase.from('stock_cache').upsert({ ticker, data: yhResult, updated_at: fetchedAt });
@@ -1482,6 +1508,8 @@ export async function GET(request) {
           priceToBook: marketCapBefore && pq.equityVal > 0 ? +(marketCapBefore / pq.equityVal).toFixed(2) : null,
         };
       }
+
+      await ensureSpanishDescription(result, priorCachedData);
 
       const valCountFallback = [result.revVal, result.niVal, result.fcfVal, result.assetsVal, result.debtVal, result.cashVal].filter(v => v !== null).length;
       const isEtfFallback = result.sector === 'ETF' || result.industry === 'ETF';
@@ -2418,6 +2446,7 @@ export async function GET(request) {
     if (result.description == null) {
       result.description = await fetchDescription(ticker).catch(() => null);
     }
+    await ensureSpanishDescription(result, priorCachedData);
 
     result.isEtf = cachedIsEtf;
     const finalValidCount = [result.revVal, result.niVal, result.fcfVal, result.assetsVal, result.debtVal, result.cashVal].filter(v => v !== null).length;
