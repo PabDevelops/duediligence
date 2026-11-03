@@ -128,7 +128,13 @@ export default function NewWatchlistPage() {
       const addRes = await fetch('/api/watchlist', {
         method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ ticker }),
       });
-      if (addRes.ok) { setAddQuery(''); fetchWatchlist(); } else { setAddError('No se pudo añadir.'); }
+      if (addRes.ok) {
+        setAddQuery('');
+        fetchWatchlist();
+      } else {
+        const body = await addRes.json().catch(() => ({}));
+        setAddError(body.error || 'No se pudo añadir.');
+      }
     } catch {
       setAddError('Error de conexión.');
     } finally {

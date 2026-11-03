@@ -7,7 +7,7 @@ import { NEW_COLORS as C } from '../../components/new/theme';
 const FEATURES = [
   'Todo lo del plan Gratis',
   'Seguimiento de cartera multi-divisa',
-  'Cobertura completa de ETFs',
+  'Lista de seguimiento sin límite',
   'Descubrimiento diario sin límite',
 ];
 
@@ -47,7 +47,7 @@ export default function StartTrialView() {
             14 días de Pro, <span style={{ color: C.green }}>gratis</span>.
           </h1>
           <p style={{ margin: 0, fontSize: '13px', color: C.text2, lineHeight: 1.6 }}>
-            Acceso completo a cartera, ETFs y descubrimiento ilimitado. Sin tarjeta para empezar.
+            Acceso completo a cartera, seguimiento sin límite y descubrimiento ilimitado. Sin tarjeta para empezar.
           </p>
         </div>
 

@@ -28,18 +28,18 @@ export default function PricingView() {
       id: 'free', label: 'Gratis', price: '0€', suffix: 'sin tarjeta', isFree: true, cta: 'Crear cuenta gratis',
       features: [
         'Veredictos y proyección a 5 años en cada acción',
-        'Nota de calidad en cada acción',
-        'Lista de seguimiento guardada',
+        'Nota de calidad en cada acción y ETF',
+        'Lista de seguimiento (hasta 20 acciones)',
         'Explorador de acciones y ETFs sin límite',
       ],
     },
     {
       id: MONTHLY_ID, label: 'Mensual', price: '14,99 €', suffix: '/mes', cta: 'Hazte Pro',
-      features: ['Todo lo de Gratis', 'Seguimiento de cartera multi-divisa', 'Cobertura completa de ETFs', 'Descubrimiento diario sin límite'],
+      features: ['Todo lo de Gratis', 'Seguimiento de cartera multi-divisa', 'Lista de seguimiento sin límite', 'Descubrimiento diario sin límite'],
     },
     {
       id: ANNUAL_ID, label: 'Anual', price: '9,99 €', suffix: '/mes · 119,99 €/año', cta: 'Hazte Pro — ahorra 33%', highlight: true,
-      features: ['Todo lo de Gratis', 'Seguimiento de cartera multi-divisa', 'Cobertura completa de ETFs', 'Descubrimiento diario sin límite'],
+      features: ['Todo lo de Gratis', 'Seguimiento de cartera multi-divisa', 'Lista de seguimiento sin límite', 'Descubrimiento diario sin límite'],
     },
   ];
 
@@ -55,7 +55,7 @@ export default function PricingView() {
             Gratis para empezar.<br />Hazte Pro cuando lo necesites.
           </h1>
           <p style={{ margin: '0 auto', maxWidth: '520px', fontSize: '14px', color: C.text2, lineHeight: 1.6 }}>
-            Crea una cuenta gratis para ver veredictos completos y explorar sin límite — sin tarjeta. Pasa a Pro para cartera, ETFs y descubrimiento ilimitado.
+            Crea una cuenta gratis para ver veredictos completos y explorar sin límite — sin tarjeta. Pasa a Pro para cartera, seguimiento sin límite y descubrimiento ilimitado.
           </p>
         </div>
 

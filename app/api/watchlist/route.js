@@ -1,8 +1,14 @@
 import { getUserId } from '../../../lib/auth';
 import { supabase } from '../../../lib/supabase';
+import { checkIsPro } from '../../../lib/isPro';
 
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;
+
+// Free signed-in tier: unlimited single-ticker analysis, but a capped watchlist — "track as
+// many as you want, forever" is the one thing reserved for Pro now that nearly everything
+// else (verdicts, ETFs, Radar, news, insiders...) is free even for guests.
+const FREE_WATCHLIST_LIMIT = 20;
 
 // Guests have no persisted watchlist row, but the client keeps a session-only
 // list in sessionStorage (see lib/guestWatchlist.js) and passes it here to
@@ -86,10 +92,37 @@ export async function POST(request) {
   const { ticker, pie } = await request.json();
   if (!ticker) return Response.json({ error: 'Ticker required' }, { status: 400 });
 
+  const upperTicker = ticker.toUpperCase();
+
+  // The limit only applies to genuinely new tickers — re-saving (e.g. moving pie) an already-
+  // followed one must never get blocked by a cap the user is already at or past.
+  const { data: existing } = await supabase
+    .from('watchlists')
+    .select('id')
+    .eq('user_id', userId)
+    .eq('ticker', upperTicker)
+    .maybeSingle();
+
+  if (!existing) {
+    const isPro = await checkIsPro();
+    if (!isPro) {
+      const { count } = await supabase
+        .from('watchlists')
+        .select('*', { count: 'exact', head: true })
+        .eq('user_id', userId);
+      if ((count || 0) >= FREE_WATCHLIST_LIMIT) {
+        return Response.json({
+          error: `El plan gratuito sigue hasta ${FREE_WATCHLIST_LIMIT} acciones a la vez — hazte Pro para seguir sin límite.`,
+          limitReached: true,
+        }, { status: 403 });
+      }
+    }
+  }
+
   // Only set `pie` on the row when the caller actually passed one — omitting it lets an
   // upsert against an already-watched ticker leave its existing list assignment alone
   // instead of silently resetting it to General.
-  const row = { user_id: userId, ticker: ticker.toUpperCase() };
+  const row = { user_id: userId, ticker: upperTicker };
   if (pie !== undefined) row.pie = pie ? pie.trim() || null : null;
 
   // watchlists' primary key is the surrogate `id` column, not (user_id, ticker) — without

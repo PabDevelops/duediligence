@@ -131,7 +131,7 @@ export default function HomeView() {
             <div style={{ fontSize: '34px', fontWeight: 800, letterSpacing: '-0.02em', marginTop: '12px' }}>0 €</div>
             <div style={{ fontSize: '13px', color: C.text2, marginTop: '4px' }}>sin tarjeta</div>
             <ul style={{ listStyle: 'none', margin: '20px 0 0', padding: 0, display: 'flex', flexDirection: 'column', gap: '10px' }}>
-              {['Veredictos y proyección a 5 años', 'Nota de calidad en cada acción', 'Explorador sin límite'].map(f => (
+              {['Veredictos y proyección a 5 años', 'Nota de calidad en cada acción', 'Lista de seguimiento (hasta 20)'].map(f => (
                 <li key={f} style={{ fontSize: '13px', color: C.text2, display: 'flex', gap: '8px' }}>
                   <span style={{ color: C.text3, fontWeight: 700 }}>+</span>{f}
                 </li>
@@ -147,7 +147,7 @@ export default function HomeView() {
             </div>
             <div style={{ fontSize: '13px', color: C.text2, marginTop: '4px' }}>facturado 119,99 €/año</div>
             <ul style={{ listStyle: 'none', margin: '20px 0 0', padding: 0, display: 'flex', flexDirection: 'column', gap: '10px' }}>
-              {['Todo lo de Gratis', 'Cartera multi-divisa', 'Cobertura completa de ETFs'].map(f => (
+              {['Todo lo de Gratis', 'Cartera multi-divisa', 'Seguimiento sin límite'].map(f => (
                 <li key={f} style={{ fontSize: '13px', color: C.text2, display: 'flex', gap: '8px' }}>
                   <span style={{ color: C.text3, fontWeight: 700 }}>+</span>{f}
                 </li>

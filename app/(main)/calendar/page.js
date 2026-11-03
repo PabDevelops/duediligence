@@ -30,6 +30,7 @@ export default function NewCalendarPage() {
   const { isSignedIn, isLoaded } = useUser();
   const [earnings, setEarnings] = useState(null); // null = loading
   const [watched, setWatched] = useState(new Set());
+  const [watchError, setWatchError] = useState('');
   const [onlyWatched, setOnlyWatched] = useState(false);
   const [expandedDays, setExpandedDays] = useState(new Set());
 
@@ -63,6 +64,7 @@ export default function NewCalendarPage() {
 
   const toggleWatch = async (ticker) => {
     const isWatched = watched.has(ticker);
+    setWatchError('');
     setWatched(prev => {
       const next = new Set(prev);
       if (isWatched) next.delete(ticker); else next.add(ticker);
@@ -72,10 +74,19 @@ export default function NewCalendarPage() {
       if (isWatched) removeFromGuestWatchlist(ticker); else addToGuestWatchlist(ticker);
       return;
     }
-    if (isWatched) {
-      await fetch('/api/watchlist', { method: 'DELETE', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ ticker }) });
-    } else {
-      await fetch('/api/watchlist', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ ticker }) });
+    const res = isWatched
+      ? await fetch('/api/watchlist', { method: 'DELETE', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ ticker }) })
+      : await fetch('/api/watchlist', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ ticker }) });
+    // The optimistic toggle above is wrong if the request actually failed (e.g. the free
+    // watchlist limit) — revert so the star reflects what's really saved.
+    if (!res.ok) {
+      setWatched(prev => {
+        const next = new Set(prev);
+        if (isWatched) next.add(ticker); else next.delete(ticker);
+        return next;
+      });
+      const body = await res.json().catch(() => ({}));
+      if (body.error) setWatchError(body.error);
     }
   };
 
@@ -107,6 +118,12 @@ export default function NewCalendarPage() {
           <h1 style={{ margin: '0 0 4px', fontSize: '24px', fontWeight: 800, letterSpacing: '-0.02em' }}>Próximos resultados</h1>
           <div style={{ fontSize: '13px', color: C.text2 }}>Cuándo las empresas cuentan cómo les ha ido este trimestre.</div>
         </div>
+
+        {watchError && (
+          <div style={{ fontSize: '12px', color: C.red, background: '#F8DFDA', borderRadius: '10px', padding: '10px 14px' }}>
+            {watchError}
+          </div>
+        )}
 
         <div style={{ display: 'flex', gap: '8px' }}>
           <button type="button" onClick={() => setOnlyWatched(false)} style={{

@@ -189,6 +189,7 @@ export default function RadarPage() {
   const [movers, setMovers] = useState(null);
   const [markets, setMarkets] = useState([]);
   const [watchlistTickers, setWatchlistTickers] = useState([]);
+  const [watchlistError, setWatchlistError] = useState('');
 
   const [basketCategory, setBasketCategory] = useState('bigtech');
   const [basketCache, setBasketCache] = useState({});
@@ -230,6 +231,7 @@ export default function RadarPage() {
 
   const toggleWatchlist = useCallback(async (ticker) => {
     const inWatchlist = watchlistTickers.includes(ticker);
+    setWatchlistError('');
     if (!isSignedIn) {
       if (inWatchlist) { removeFromGuestWatchlist(ticker); setWatchlistTickers(prev => prev.filter(t => t !== ticker)); }
       else { const { added } = addToGuestWatchlist(ticker); if (added) setWatchlistTickers(prev => [...prev, ticker]); }
@@ -237,11 +239,18 @@ export default function RadarPage() {
     }
     setWatchlistTickers(prev => inWatchlist ? prev.filter(t => t !== ticker) : [...prev, ticker]);
     try {
-      await fetch('/api/watchlist', {
+      const res = await fetch('/api/watchlist', {
         method: inWatchlist ? 'DELETE' : 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ ticker }),
       });
+      // The optimistic toggle above is wrong if the request actually failed (e.g. the free
+      // watchlist limit) — revert so the row's state reflects what's really saved.
+      if (!res.ok) {
+        setWatchlistTickers(prev => inWatchlist ? [...prev, ticker] : prev.filter(t => t !== ticker));
+        const body = await res.json().catch(() => ({}));
+        if (body.error) setWatchlistError(body.error);
+      }
     } catch {}
   }, [isSignedIn, watchlistTickers]);
 
@@ -262,6 +271,12 @@ export default function RadarPage() {
             Qué se mueve hoy, qué destaca por calidad fundamental, y cestas de empresas para explorar por tema.
           </p>
         </div>
+
+        {watchlistError && (
+          <div style={{ fontSize: '12px', color: C.red, background: '#F8DFDA', borderRadius: '10px', padding: '10px 14px' }}>
+            {watchlistError}
+          </div>
+        )}
 
         {loading ? (
           <div style={{ fontSize: '13px', color: C.text3 }}>Cargando…</div>

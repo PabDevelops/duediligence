@@ -85,6 +85,7 @@ function NewStockPageContent({ params }) {
   const { data, error, loading, refreshing, refetch } = useStockData(ticker);
 
   const [following, setFollowing] = useState(false);
+  const [followError, setFollowError] = useState('');
   const [chartRange, setChartRange] = useState('1m');
   const [insiderTrades, setInsiderTrades] = useState(null);
   const [showAllInsiders, setShowAllInsiders] = useState(false);
@@ -154,6 +155,7 @@ function NewStockPageContent({ params }) {
   const toggleFollow = async () => {
     const next = !following;
     setFollowing(next);
+    setFollowError('');
     if (!isSignedIn) {
       if (next) addToGuestWatchlist(ticker); else removeFromGuestWatchlist(ticker);
       return;
@@ -163,7 +165,11 @@ function NewStockPageContent({ params }) {
       : await fetch('/api/watchlist', { method: 'DELETE', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ ticker }) });
     // The optimistic toggle above is wrong if the request actually failed — revert so the
     // button reflects what's really saved instead of silently drifting from it.
-    if (!res.ok) setFollowing(!next);
+    if (!res.ok) {
+      setFollowing(!next);
+      const body = await res.json().catch(() => ({}));
+      if (body.error) setFollowError(body.error);
+    }
   };
 
   // Phil Town-style sticker price — reuses the same Monte Carlo projector /start and the
@@ -204,12 +210,15 @@ function NewStockPageContent({ params }) {
           <svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg>
           Volver
         </Link>
-        <button type="button" onClick={toggleFollow} style={{
-          height: '36px', padding: '0 16px', borderRadius: '12px', fontWeight: 700, fontSize: '12px', fontFamily: 'inherit', cursor: 'pointer',
-          border: following ? 'none' : `1px solid ${C.ink}`, background: following ? C.lime : 'transparent', color: C.ink,
-        }}>
-          {following ? '✓ Siguiendo' : '+ Seguir'}
-        </button>
+        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '6px' }}>
+          <button type="button" onClick={toggleFollow} style={{
+            height: '36px', padding: '0 16px', borderRadius: '12px', fontWeight: 700, fontSize: '12px', fontFamily: 'inherit', cursor: 'pointer',
+            border: following ? 'none' : `1px solid ${C.ink}`, background: following ? C.lime : 'transparent', color: C.ink,
+          }}>
+            {following ? '✓ Siguiendo' : '+ Seguir'}
+          </button>
+          {followError && <div style={{ fontSize: '11px', color: C.red, maxWidth: '220px', textAlign: 'right' }}>{followError}</div>}
+        </div>
       </div>
 
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '16px' }}>

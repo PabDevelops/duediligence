@@ -705,7 +705,7 @@ export default function WorkspaceScreener() {
                       {fmtN(s.pe)}
                     </td>
                     <td style={{ padding: '10px 14px', textAlign: 'right', fontWeight: 700, color: s.revGrowth > 15 ? 'var(--ws-accent)' : s.revGrowth < 0 ? 'var(--ws-red)' : 'var(--ws-text)' }}>
-                      {s.revGrowth !== null ? `${s.revGrowth > 0 ? '+' : ''}${s.revGrowth}%` : '—'}
+                      {gated(s.revGrowth !== null ? `${s.revGrowth > 0 ? '+' : ''}${s.revGrowth}%` : '—')}
                     </td>
                     <td style={{ padding: '10px 14px', textAlign: 'right' }}>
                       {gated(fmtP(s.opMargin))}
