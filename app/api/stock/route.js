@@ -1046,6 +1046,46 @@ export async function GET(request) {
     priorCachedData = cached?.data ?? null;
     priorCachedUpdatedAt = cached?.updated_at ?? null;
 
+    // /api/etfs owns this ticker's data shape and freshness lifecycle entirely — a stock_cache
+    // row it writes (expenseRatio/aum/yield/holdings/sectors, no SEC-style financials at all)
+    // has nothing this route's own refetch pipeline could add. The isEtf/isComplete check
+    // further below only protected a row while it stayed within the 24h financials-freshness
+    // window; the moment an ETF's /api/etfs cache turned stale, that guard failed and execution
+    // fell through to the ordinary refetch pipeline below — for a "."-suffixed ticker, the
+    // international-stock branch, which unconditionally builds and upserts a completely
+    // different object shape that never sets expenseRatio/aum/yield/holdings/sectors, silently
+    // destroying them while still carrying isEtf:true forward. Confirmed against real data:
+    // EIMI.L's cache row had a full company-fundamentals shape (eps/roa/niHistory/...) with
+    // isEtf:true and every ETF-specific field simply absent — this route had clearly run for it
+    // after its /api/etfs cache aged past 24h. Short-circuit unconditionally here instead:
+    // refresh just the live price (the one thing ETF ticker pages actually need from this
+    // route, since fetchETFData itself never sets currentPrice) and never touch anything else.
+    if (cachedIsEtf) {
+      let freshPriceData = null;
+      try {
+        if (ticker.includes('.')) {
+          freshPriceData = await fetchYahooQuote(ticker).catch(() => null);
+        } else {
+          const fhRes = await fetch(`https://finnhub.io/api/v1/quote?symbol=${ticker}&token=${FH_KEY}`);
+          if (fhRes.ok) {
+            const fh = await fhRes.json();
+            if (fh.c != null) {
+              freshPriceData = { currentPrice: fh.c, priceChange: fh.d || null, priceChangePct: fh.dp || null, prevClose: fh.pc || null };
+            }
+          }
+        }
+      } catch (err) {
+        console.error('Error fetching ETF price:', err);
+      }
+      if (freshPriceData?.currentPrice != null) {
+        const priceUpdatedAt = new Date().toISOString();
+        const updatedData = { ...priorCachedData, ...freshPriceData };
+        supabase.from('stock_cache').upsert({ ticker, data: updatedData, updated_at: priceUpdatedAt }).then(() => {}).catch(() => {});
+        return Response.json({ ...updatedData, cached: true, priceUpdated: true, updatedAt: priceUpdatedAt });
+      }
+      return Response.json({ ...priorCachedData, cached: true, updatedAt: priorCachedUpdatedAt });
+    }
+
     const forceRefresh = searchParams.get('refresh') === 'true';
     if (cached && !forceRefresh) {
       const hoursOld = (Date.now() - new Date(cached.updated_at).getTime()) / (1000 * 60 * 60);
