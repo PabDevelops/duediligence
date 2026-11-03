@@ -52,7 +52,12 @@ const THEME_GROUPS = [
   },
 ];
 
-const scoreTier = (score) => score == null ? null : score >= 70 ? 'good' : score >= 40 ? 'caution' : 'bad';
+// /api/movers' topScore.score is easyMode.finalNote on a 1-5 scale (see lib/stockScoring.js),
+// not the 0-100 score shown everywhere else in the app (easyMode.score100) — convert before
+// applying the same 70/40 breakpoints the rest of the app uses, or a top-quality 5 reads as
+// "bad" against thresholds meant for 0-100.
+const toScore100 = (finalNote) => finalNote == null ? null : Math.round((finalNote / 5) * 100);
+const scoreTier = (score100) => score100 == null ? null : score100 >= 70 ? 'good' : score100 >= 40 ? 'caution' : 'bad';
 
 function AddButton({ ticker, active, onToggle }) {
   return (
@@ -118,7 +123,8 @@ function MoverRow({ s, watching, onToggle }) {
 }
 
 function LeaderRow({ s, watching, onToggle }) {
-  const tier = scoreTier(s.score);
+  const score100 = toScore100(s.score);
+  const tier = scoreTier(score100);
   const badge = tier ? VERDICT_BADGE[tier] : null;
   return (
     <a href={`/stock/${s.ticker}`} style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '10px 4px', textDecoration: 'none', color: 'inherit' }}>
@@ -130,7 +136,7 @@ function LeaderRow({ s, watching, onToggle }) {
       {badge && (
         <div style={{ display: 'flex', alignItems: 'center', gap: '5px', padding: '4px 10px', borderRadius: '20px', background: badge.bg, flexShrink: 0 }}>
           <span aria-hidden="true" style={{ width: '6px', height: '6px', borderRadius: '50%', background: badge.dot }} />
-          <span style={{ fontSize: '11px', fontWeight: 700, color: badge.text }}>{s.score.toFixed(0)}</span>
+          <span style={{ fontSize: '11px', fontWeight: 700, color: badge.text }}>{score100}</span>
         </div>
       )}
       <AddButton ticker={s.ticker} active={watching} onToggle={onToggle} />

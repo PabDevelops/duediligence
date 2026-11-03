@@ -271,6 +271,21 @@ function NewStockPageContent({ params }) {
                 : `El precio de hoy está un ${Math.abs(marginPct).toFixed(0)}% por encima de lo máximo que pagarías para exigir un 15%/año — según este modelo, estarías pagando de más.`}
             </div>
 
+            {/* This card's margin of safety assumes growth continues; the verdict card above
+                judges today's multiple on its own, with no growth assumption — for a fast
+                grower the two can disagree without either being wrong, so that needs saying
+                instead of leaving two contradictory-looking badges unexplained. */}
+            {verdict?.expensive && marginPct >= 10 && (
+              <div style={{ fontSize: '12px', color: C.text3, lineHeight: 1.5, padding: '10px 12px', background: C.bg, borderRadius: '10px' }}>
+                Esto no contradice el &quot;caro ahora&quot; de arriba: ese veredicto mira el múltiplo de hoy sin asumir crecimiento futuro, mientras que este margen de seguridad solo existe si el crecimiento reciente se mantiene los próximos años. Si se frena, el precio de hoy deja de tener margen.
+              </div>
+            )}
+            {verdict?.cheap && marginPct < 0 && (
+              <div style={{ fontSize: '12px', color: C.text3, lineHeight: 1.5, padding: '10px 12px', background: C.bg, borderRadius: '10px' }}>
+                Esto no contradice el múltiplo contenido de arriba: aquello mira el precio de hoy sin exigir una rentabilidad concreta, mientras que este modelo sí exige un 15%/año — con el crecimiento estimado para esta empresa, ni siquiera el precio de hoy llega a ese listón.
+              </div>
+            )}
+
             {entryProjection.driftAnnual != null && (
               <div style={{ fontSize: '11px', color: C.text3, lineHeight: 1.5 }}>
                 Supuesto de partida del modelo: un crecimiento medio de alrededor del{' '}
