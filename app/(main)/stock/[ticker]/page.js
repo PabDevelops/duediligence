@@ -10,7 +10,7 @@ import { useStockData } from '../../../../lib/hooks/useStockData';
 import { useEntryPriceProjection } from '../../../../lib/hooks/useEntryPriceProjection';
 import { isInGuestWatchlist, addToGuestWatchlist, removeFromGuestWatchlist } from '../../../../lib/guestWatchlist';
 import { computeEasyMode } from '../../../../lib/stockScoring';
-import { stockVerdict, investigateQuestions } from '../../../../lib/verdict';
+import { engineVerdict, engineInvestigateQuestions } from '../../../../lib/verdict';
 import { formatCurrency, formatTimeAgo } from '../../../../lib/formatters';
 import { NEW_COLORS as C, VERDICT_BADGE } from '../../../components/new/theme';
 
@@ -191,17 +191,15 @@ function NewStockPageContent({ params }) {
 
   const price = data.currentPrice;
   const sym = data.currency === 'EUR' ? '€' : data.currency === 'GBP' ? '£' : '$';
+  // computeEasyMode/easyMode only remain for the two score-colored "Lo esencial" stats further
+  // down (Ingresos/ROIC) — the verdict card, investigate questions and headline quality score
+  // all read the V2 engine (entryProjection.engine) now, so the whole page narrates one model
+  // instead of two disagreeing ones for the same ticker.
   const easyMode = computeEasyMode(data, hasFundamentals(data));
   const companyName = (data.name || ticker).split(' ')[0];
-  const verdict = easyMode ? stockVerdict(easyMode, companyName) : null;
+  const verdict = engineVerdict(entryProjection.engine, companyName);
   const badge = verdict ? VERDICT_BADGE[verdict.tier] : null;
-  const investigateQs = easyMode ? investigateQuestions(easyMode) : [];
-  // The headline number next to the price — now the V2 engine's own quality score (lib/engine),
-  // not computeEasyMode's score100, so it agrees with the "Calidad" figure on /analisis instead
-  // of showing two different numbers for "quality" on the same ticker. verdict/investigateQs
-  // below still read computeEasyMode: that card's text (ROIC commentary, "qué investigar")
-  // isn't part of this swap. Hidden rather than falling back to the old score when the engine
-  // can't compute one — showing a number from a different scale would be its own confusion.
+  const investigateQs = engineInvestigateQuestions(entryProjection.engine);
   const qualityScore = entryProjection.engine?.quality?.score ?? null;
 
   return (
@@ -267,6 +265,7 @@ function NewStockPageContent({ params }) {
             <span aria-hidden="true" style={{ width: '8px', height: '8px', borderRadius: '50%', background: badge.dot }} />
             <span style={{ fontSize: '13px', fontWeight: 800, color: badge.text }}>{verdict.label}</span>
           </div>
+          {verdict.pattern?.text && <div style={{ fontSize: '13px', color: C.text2, lineHeight: 1.5 }}>{verdict.pattern.text}</div>}
           <div style={{ display: 'flex', flexDirection: 'column', gap: '14px', fontSize: '14px', lineHeight: 1.6, color: '#45413A' }}>
             <div>
               <div style={{ fontSize: '11px', fontWeight: 700, color: C.text3, letterSpacing: '0.02em', marginBottom: '5px' }}>CALIDAD DEL NEGOCIO</div>
