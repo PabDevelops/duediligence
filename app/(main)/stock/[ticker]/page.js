@@ -202,8 +202,22 @@ function NewStockPageContent({ params }) {
   const investigateQs = engineInvestigateQuestions(entryProjection.engine);
   const qualityScore = entryProjection.engine?.quality?.score ?? null;
 
+  // Lets AI crawlers and answer engines identify which company this page is about without
+  // having to parse the rendered layout — schema.org Corporation, not a rating/review type, so
+  // nothing here reads as a formal endorsement of the stock itself.
+  const stockJsonLd = {
+    '@context': 'https://schema.org',
+    '@type': 'Corporation',
+    name: data.name || ticker,
+    tickerSymbol: ticker,
+    ...(data.sector ? { industry: data.sector } : {}),
+    ...(data.weburl ? { url: data.weburl } : {}),
+    description: `${data.name || ticker} (${ticker})${qualityScore != null ? ` — nota de calidad ${qualityScore}/100` : ''} según Bulltrace: análisis de calidad del negocio, crecimiento, valoración, riesgo y potencial, más un escenario de valor a 5 años, con datos de SEC EDGAR, Yahoo Finance y Finnhub.`,
+  };
+
   return (
     <Shell>
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(stockJsonLd) }} />
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '12px' }}>
         <Link href="/home" style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', fontSize: '13px', fontWeight: 700, color: C.text2, textDecoration: 'none', width: 'fit-content' }}>
           <svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg>

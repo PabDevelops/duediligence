@@ -29,17 +29,18 @@ const WHY_ITEMS = [
 ];
 
 const METHOD_STEPS = [
-  { title: '1. Valor base por caja libre', capsule: 'El Valor Base por Caja Libre es la valoración de partida de una empresa, calculada directamente a partir de su caja libre reportada, antes de cualquier ajuste.', desc: 'Es la base de la nota: una cifra de valoración construida directamente desde la caja libre, antes de aplicar cualquier ajuste de calidad, balance o riesgo.' },
-  { title: '2. Multiplicador de calidad', capsule: 'El Multiplicador de Calidad sube o baja ese valor base usando métricas de calidad del negocio como márgenes, rentabilidad y consistencia.', desc: 'Los negocios con una economía más sólida y duradera reciben un multiplicador más alto sobre su valor base; los de peor calidad se descuentan.' },
-  { title: '3. Ajuste por balance', capsule: 'El Ajuste por Balance tiene en cuenta la solidez o el riesgo del balance, premiando la deuda baja y penalizando el apalancamiento elevado.', desc: 'Una empresa con un balance conservador se ajusta más favorablemente que una que carga con mucha deuda u otro riesgo estructural.' },
-  { title: '4. Penalización por riesgos', capsule: 'La Penalización por Riesgos reduce la nota cuando aparecen debilidades fundamentales, para protegerse de las clásicas trampas de valor.', desc: 'El último paso resta puntos cuando hay señales de alerta concretas, para que una nota que parece barata no se confunda con un negocio sano.' },
+  { title: '1. Calidad', capsule: 'Calidad del negocio: cuánto gana sobre lo que invierte, sin mirar el precio.', desc: 'Compara el retorno sobre el capital invertido (ROIC, o ROE en bancos y aseguradoras) con el coste de ese capital. Un negocio que gana claramente más de lo que le cuesta financiarse crea valor con cada euro que reinvierte; uno que gana menos, lo destruye aunque crezca.' },
+  { title: '2. Crecimiento', capsule: 'Crecimiento y evolución: si el negocio mejora o empeora, no solo cuánto vale hoy.', desc: 'Compara el último periodo con su propio historial — ingresos, margen operativo, beneficio y caja libre — para distinguir una mejora sostenida de un rebote de un solo trimestre.' },
+  { title: '3. Valoración', capsule: 'Valoración: si el precio de hoy compensa lo que el negocio genera.', desc: 'Compara el precio con varios múltiplos a la vez (P/E, EV/EBITDA, P/FCF u otros, según el modelo de negocio) frente a rangos orientativos del sector, junto con la rentabilidad implícita que ofrece hoy.' },
+  { title: '4. Riesgo', capsule: 'Riesgo: lo que puede salir mal, categoría por categoría.', desc: 'Repasa deuda, liquidez, dilución, dependencia de clientes o de crecimiento futuro y otras señales, marcando cada una como confirmada, posible, descartada o no evaluable con los datos disponibles — nunca como "sin riesgo" solo porque falte el dato.' },
+  { title: '5. Potencial', capsule: 'Potencial: las cuatro anteriores combinadas, sin que una tape a las demás.', desc: 'Pondera calidad, valoración, riesgo y crecimiento en una sola lectura — pero con topes: un negocio excelente a un precio muy exigente, o uno de riesgo alto, no puede salir con buena nota solo porque otra dimensión sea fuerte.' },
 ];
 
 const TLDR_ITEMS = [
-  'Bulltrace puntúa más de 260 empresas cotizadas con un marco propio basado en metodología GARP y centrado en la caja libre.',
-  'La puntuación sigue 4 pasos: Valor base por caja libre, Multiplicador de calidad, Ajuste por balance, Penalización por riesgos.',
-  'Las empresas con caja libre negativa reciben una Nota de Supervivencia Pre-FCF independiente, en vez de quedar excluidas.',
-  'Todos los datos proceden directamente de presentaciones de SEC EDGAR y de Finnhub.',
+  'Bulltrace analiza más de 260 empresas cotizadas en cinco dimensiones independientes: calidad, crecimiento, valoración, riesgo y potencial.',
+  'Calidad y valoración se calculan por separado a propósito: un negocio excelente puede ser una mala compra a un precio excesivo, y uno mediocre puede estar barato sin que eso garantice nada.',
+  'Un modelo de flujos de caja descontados a 5 años (tres escenarios, sin mirar el precio pasado de la acción ni los objetivos de los analistas) calcula cuánto pagarías hoy para exigir un 15% anual.',
+  'Todos los datos proceden de presentaciones de SEC EDGAR, Yahoo Finance y Finnhub — nunca de una cifra inventada cuando falta un dato.',
   'El acceso completo cuesta 14,99 €/mes o 119,99 €/año, con una prueba gratuita de 14 días y sin tarjeta.',
 ];
 
@@ -127,10 +128,10 @@ export default function AboutView() {
       {/* METHODOLOGY */}
       <section style={{ borderTop: `1px solid ${C.border}` }}>
         <div style={{ ...NARROW, padding: 'clamp(48px, 7vw, 72px) 24px' }}>
-          <SectionLabel>CÓMO FUNCIONA LA NOTA</SectionLabel>
-          <h2 style={{ fontSize: '26px', fontWeight: 800, letterSpacing: '-0.02em', marginBottom: '10px', marginTop: 0 }}>La Nota Bulltrace, paso a paso</h2>
+          <SectionLabel>CÓMO FUNCIONA EL ANÁLISIS</SectionLabel>
+          <h2 style={{ fontSize: '26px', fontWeight: 800, letterSpacing: '-0.02em', marginBottom: '10px', marginTop: 0 }}>Las cinco dimensiones, una por una</h2>
           <p style={{ color: C.text2, fontSize: '14px', lineHeight: 1.65, marginBottom: '36px' }}>
-            Bulltrace convierte la caja libre en una única nota ajustada por calidad para más de 260 empresas, a través de cuatro pasos de cálculo encadenados.
+            Bulltrace analiza más de 260 empresas en cinco dimensiones independientes — nunca mezcladas en una sola nota — para que un negocio excelente a un precio caro y uno mediocre a un precio barato no se confundan.
           </p>
 
           <div style={{ display: 'flex', flexDirection: 'column', gap: '26px', marginBottom: '36px' }}>
@@ -144,22 +145,22 @@ export default function AboutView() {
           </div>
 
           <div style={{ marginBottom: '28px' }}>
-            <h3 style={{ fontSize: '15px', fontWeight: 800, marginBottom: '7px' }}>¿Y si la caja libre es negativa?</h3>
+            <h3 style={{ fontSize: '15px', fontWeight: 800, marginBottom: '7px' }}>Y un escenario a 5 años, aparte de la nota</h3>
             <p style={{ color: C.ink, fontSize: '13px', lineHeight: 1.65, marginBottom: '5px', fontWeight: 600 }}>
-              Las empresas con caja libre negativa se saltan por completo la nota de cuatro pasos y reciben en su lugar una Nota de Supervivencia Pre-FCF independiente.
+              Un modelo de flujos de caja descontados a 5 años, con tres escenarios (conservador, central y optimista), calcula qué precio pagarías hoy para exigir una rentabilidad del 15% anual.
             </p>
             <p style={{ color: C.text2, fontSize: '13px', lineHeight: 1.65, margin: 0 }}>
-              En lugar de excluir del explorador a las empresas no rentables o en fase inicial, Bulltrace aplica una Nota de Supervivencia Pre-FCF diseñada para evaluar su viabilidad con sus propios criterios.
+              Nunca usa el precio pasado de la acción ni los objetivos de los analistas para proyectar — solo ingresos, márgenes, reinversión, deuda neta y número de acciones. Cuando los datos no sostienen una proyección fiable, lo dice en vez de inventar un número.
             </p>
           </div>
 
           <div>
-            <h3 style={{ fontSize: '15px', fontWeight: 800, marginBottom: '7px' }}>Fuentes de datos: SEC EDGAR y Finnhub</h3>
+            <h3 style={{ fontSize: '15px', fontWeight: 800, marginBottom: '7px' }}>Fuentes de datos: SEC EDGAR, Yahoo Finance y Finnhub</h3>
             <p style={{ color: C.ink, fontSize: '13px', lineHeight: 1.65, marginBottom: '5px', fontWeight: 600 }}>
-              Cada nota de Bulltrace se basa en estados financieros primarios obtenidos directamente de presentaciones de SEC EDGAR y de Finnhub, nunca en estimaciones.
+              Cada análisis de Bulltrace se basa en estados financieros primarios, obtenidos directamente de presentaciones de SEC EDGAR y de Yahoo Finance y Finnhub, nunca en estimaciones.
             </p>
             <p style={{ color: C.text2, fontSize: '13px', lineHeight: 1.65, margin: 0 }}>
-              Las notas se calculan a partir de datos de fuente primaria, no de resúmenes de terceros, así que cada cifra se puede rastrear hasta la presentación original.
+              Las cifras se calculan a partir de datos de fuente primaria, no de resúmenes de terceros, así que cada número se puede rastrear hasta la presentación original.
             </p>
           </div>
         </div>
