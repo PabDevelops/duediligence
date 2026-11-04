@@ -367,6 +367,36 @@ function NewPortfolioPageContent() {
     }
   };
 
+  // Shared between the desktop table row and the mobile card — a locked
+  // badge for a Trading 212-synced position, otherwise the manual
+  // buy/sell/edit/remove controls.
+  const positionActions = (p, isLocked, lastLot) => (
+    isLocked ? (
+      <span style={{ fontSize: '10px', fontWeight: 700, color: C.text3 }} title="Esta posición se sincroniza desde Trading 212 y no se puede editar a mano.">
+        🔌 T212
+      </span>
+    ) : (
+      <>
+        <button type="button" onClick={() => setBuyTicker(p.ticker)} title="Comprar más acciones"
+          style={{ fontSize: '10px', padding: '6px 10px', marginRight: '4px', borderRadius: '8px', border: 'none', background: C.lime, color: C.ink, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit' }}>
+          Comprar
+        </button>
+        <button type="button" onClick={() => setSellPosition(p)} title="Vender acciones"
+          style={{ fontSize: '10px', padding: '5px 9px', marginRight: '4px', borderRadius: '8px', border: `1px solid ${C.border}`, background: 'transparent', color: C.text2, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit' }}>
+          Vender
+        </button>
+        <button type="button" onClick={() => setEditLot(lastLot)} title={`Editar última entrada: ${lastLot.shares} acc. @ ${lastLot.cost_basis} ${lastLot.cost_basis_currency} el ${lastLot.purchase_date}`}
+          style={{ background: 'none', border: 'none', color: C.text3, cursor: 'pointer', fontSize: '13px', marginLeft: '2px' }}>
+          ✎
+        </button>
+        <button type="button" onClick={() => removePosition(p.ticker)} title={`Eliminar toda la posición de ${p.ticker}`}
+          style={{ background: 'none', border: 'none', color: C.text3, cursor: 'pointer', fontSize: '13px', marginLeft: '8px' }}>
+          ✕
+        </button>
+      </>
+    )
+  );
+
   const pageShellStyle = { width: '100%', minHeight: '100vh', boxSizing: 'border-box', background: C.bg, color: C.ink, fontFamily: "'Plus Jakarta Sans', system-ui, sans-serif", overflowX: 'hidden' };
   const innerStyle = { maxWidth: 'min(1200px, 92vw)', margin: '0 auto', padding: '32px 24px 96px', display: 'flex', flexDirection: 'column', gap: '24px', boxSizing: 'border-box' };
 
@@ -561,7 +591,7 @@ function NewPortfolioPageContent() {
 
             <ActivityFeed activity={activity} />
 
-            <div style={{ background: C.surface, border: `1px solid ${C.border}`, borderRadius: '20px', overflowX: 'auto', boxSizing: 'border-box' }}>
+            <div className="new-portfolio-table-desktop" style={{ background: C.surface, border: `1px solid ${C.border}`, borderRadius: '20px', overflowX: 'auto', boxSizing: 'border-box' }}>
               <div style={{ minWidth: '860px' }}>
                 <div style={{ display: 'flex', alignItems: 'center', padding: '10px 16px', borderBottom: `1px solid ${C.borderSoft}`, fontSize: '10px', fontWeight: 700, color: C.text3, textTransform: 'uppercase', letterSpacing: '0.4px' }}>
                   <div style={{ flex: '1 1 220px', textAlign: 'left' }}>Acción</div>
@@ -604,35 +634,54 @@ function NewPortfolioPageContent() {
                         {p.gain == null ? '—' : `${p.gain >= 0 ? '+' : ''}${fmtC(p.gain)} (${p.gainPct >= 0 ? '+' : ''}${p.gainPct.toFixed(1)}%)`}
                       </div>
                       <div style={{ width: '140px', textAlign: 'right', whiteSpace: 'nowrap' }} onClick={e => e.stopPropagation()}>
-                        {isLocked ? (
-                          <span style={{ fontSize: '10px', fontWeight: 700, color: C.text3 }} title="Esta posición se sincroniza desde Trading 212 y no se puede editar a mano.">
-                            🔌 T212
-                          </span>
-                        ) : (
-                          <>
-                            <button type="button" onClick={() => setBuyTicker(p.ticker)} title="Comprar más acciones"
-                              style={{ fontSize: '10px', padding: '6px 10px', marginRight: '4px', borderRadius: '8px', border: 'none', background: C.lime, color: C.ink, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit' }}>
-                              Comprar
-                            </button>
-                            <button type="button" onClick={() => setSellPosition(p)} title="Vender acciones"
-                              style={{ fontSize: '10px', padding: '5px 9px', marginRight: '4px', borderRadius: '8px', border: `1px solid ${C.border}`, background: 'transparent', color: C.text2, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit' }}>
-                              Vender
-                            </button>
-                            <button type="button" onClick={() => setEditLot(lastLot)} title={`Editar última entrada: ${lastLot.shares} acc. @ ${lastLot.cost_basis} ${lastLot.cost_basis_currency} el ${lastLot.purchase_date}`}
-                              style={{ background: 'none', border: 'none', color: C.text3, cursor: 'pointer', fontSize: '13px', marginLeft: '2px' }}>
-                              ✎
-                            </button>
-                            <button type="button" onClick={() => removePosition(p.ticker)} title={`Eliminar toda la posición de ${p.ticker}`}
-                              style={{ background: 'none', border: 'none', color: C.text3, cursor: 'pointer', fontSize: '13px', marginLeft: '8px' }}>
-                              ✕
-                            </button>
-                          </>
-                        )}
+                        {positionActions(p, isLocked, lastLot)}
                       </div>
                     </div>
                   );
                 })}
               </div>
+            </div>
+
+            {/* Mobile equivalent of the table above — stacked cards instead of a
+                wide, horizontally-scrolling table (see .new-portfolio-table-* in
+                globals.css for the breakpoint). Same data, same actions. */}
+            <div className="new-portfolio-table-mobile" style={{ background: C.surface, border: `1px solid ${C.border}`, borderRadius: '20px', boxSizing: 'border-box' }}>
+              {positions.map(p => {
+                const lastLot = [...p.lots].sort((a, b) => new Date(b.created_at) - new Date(a.created_at))[0];
+                const isLocked = p.lots.every(l => connectedPortfolioIds.has(l.portfolio_id));
+                return (
+                  <div key={p.ticker} onClick={() => openInNewTab(`/stock/${p.ticker}`)}
+                    style={{ padding: '14px 16px', borderTop: `1px solid ${C.borderSoft}`, cursor: 'pointer' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                      <StockLogo ticker={p.ticker} size={32} />
+                      <div style={{ flex: 1, minWidth: 0 }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontWeight: 700, fontSize: '13px', color: C.ink }}>
+                          {p.ticker}
+                          <MarketStatusDot ticker={p.ticker} />
+                        </div>
+                        <div style={{ color: C.text3, fontSize: '11px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{p.name || '…'}</div>
+                      </div>
+                      <div style={{ textAlign: 'right', flexShrink: 0 }}>
+                        <div style={{ fontSize: '13px', fontWeight: 700, color: C.ink }}>{fmtC(p.marketValue ?? p.cost)}</div>
+                        <div style={{ fontSize: '11px', fontWeight: 700, color: p.gain == null ? C.text3 : p.gain >= 0 ? C.green : C.red }}>
+                          {p.gain == null ? '—' : `${p.gain >= 0 ? '+' : ''}${fmtC(p.gain)} (${p.gainPct >= 0 ? '+' : ''}${p.gainPct.toFixed(1)}%)`}
+                        </div>
+                      </div>
+                    </div>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '10px', marginTop: '10px' }}>
+                      <div style={{ fontSize: '11px', color: C.text3, minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                        {p.shares.toLocaleString(undefined, { maximumFractionDigits: 4 })} acc. @ {p.avgCostNative != null ? formatCurrency(p.avgCostNative, CURRENCY_SYMBOLS[p.costCurrency] || p.costCurrency) : fmtC(p.avgCost)}
+                        {p.dayChangePct != null && (
+                          <span style={{ color: p.dayChangePct >= 0 ? C.green : C.red }}> · hoy {p.dayChangePct >= 0 ? '+' : ''}{p.dayChangePct.toFixed(2)}%</span>
+                        )}
+                      </div>
+                      <div onClick={e => e.stopPropagation()} style={{ whiteSpace: 'nowrap', flexShrink: 0 }}>
+                        {positionActions(p, isLocked, lastLot)}
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
             </div>
           </>
         )}

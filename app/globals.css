@@ -175,6 +175,17 @@ html, body {
   to   { transform: rotate(360deg); }
 }
 
+/* Portfolio holdings: a wide multi-column table reads fine on desktop but
+   needed horizontal scrolling on a phone (minWidth: 860px against a ~400px
+   viewport) — stacked cards below 768px instead, same breakpoint the rest of
+   the app switches "desktop vs. not" on. */
+.new-portfolio-table-desktop { display: block; }
+.new-portfolio-table-mobile { display: none; }
+@media (max-width: 768px) {
+  .new-portfolio-table-desktop { display: none; }
+  .new-portfolio-table-mobile { display: block; }
+}
+
 /* Scroll reveal animation */
 @keyframes fadeUp {
   from { opacity: 0; transform: translateY(24px); }
