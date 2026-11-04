@@ -1,4 +1,5 @@
-import { createClient } from '@supabase/supabase-js';
+import { supabase } from '../../../lib/supabase';
+import { getUserId } from '../../../lib/auth';
 
 const ACHIEVEMENTS = {
   stock_explorer:    { title: 'Explorer',            description: 'Search 20+ different stocks',            icon: '🔍', rarity: 'common' },
@@ -6,19 +7,13 @@ const ACHIEVEMENTS = {
   pro_subscriber:    { title: 'Pro Member',          description: 'Upgraded to Bulltrace Pro',                icon: '💎', rarity: 'uncommon' },
 };
 
-function getSupabase() {
-  return createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL || '',
-    process.env.SUPABASE_SERVICE_ROLE_KEY || ''
-  );
-}
-
 export async function GET(req) {
   try {
-    const supabase = getSupabase();
-    const { searchParams } = new URL(req.url);
-    const userId = searchParams.get('userId');
-    if (!userId) return Response.json({ error: 'userId required' }, { status: 400 });
+    // userId always comes from the session, never the query string — this route used to
+    // trust a client-supplied userId against a service-role client, letting anyone read or
+    // (in POST) write any other user's achievements. See the matching note on POST.
+    const userId = await getUserId();
+    if (!userId) return Response.json({ error: 'Not authenticated' }, { status: 401 });
 
     const { data, error } = await supabase
       .from('user_achievements')
@@ -44,11 +39,14 @@ export async function GET(req) {
 
 export async function POST(req) {
   try {
-    const supabase = getSupabase();
-    const { userId, achievementKey } = await req.json();
+    const userId = await getUserId();
+    if (!userId) return Response.json({ error: 'Not authenticated' }, { status: 401 });
 
-    if (!userId || !achievementKey) {
-      return Response.json({ error: 'userId and achievementKey required' }, { status: 400 });
+    // Only achievementKey comes from the body — userId is never trusted from the client (see
+    // the note on GET), so a caller can only ever unlock achievements for their own session.
+    const { achievementKey } = await req.json();
+    if (!achievementKey) {
+      return Response.json({ error: 'achievementKey required' }, { status: 400 });
     }
 
     const achievement = ACHIEVEMENTS[achievementKey];

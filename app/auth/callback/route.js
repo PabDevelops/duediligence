@@ -7,10 +7,20 @@ import { getCookieDomain } from '../../../lib/cookieDomain';
 // (and silently drop the Set-Cookie) for every subsequent visitor.
 export const dynamic = 'force-dynamic';
 
+// `next` is attacker-controlled (anyone can craft this link, no code or session needed) —
+// `${origin}${next}` is a plain string concatenation, so a value like "@evil.com" produces
+// "https://bulltrace.app@evil.com", which browsers parse as userinfo "bulltrace.app" at
+// host "evil.com" and happily navigate to. Only accept a single-leading-slash internal path.
+function safeNext(raw) {
+  if (typeof raw !== 'string' || raw === '') return '/';
+  if (!raw.startsWith('/') || raw.startsWith('//') || raw.startsWith('/\\')) return '/';
+  return raw;
+}
+
 export async function GET(request) {
   const { searchParams, origin } = new URL(request.url);
   const code = searchParams.get('code');
-  const next = searchParams.get('next') || '/';
+  const next = safeNext(searchParams.get('next'));
 
   if (code) {
     // Cookies are written straight onto this response (not via the generic
