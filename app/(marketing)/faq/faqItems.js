@@ -2,15 +2,15 @@
 export const FAQ_ITEMS = [
   {
     q: '¿Qué es Bulltrace?',
-    a: 'Bulltrace es una herramienta de análisis de inversión para particulares que combina un explorador de acciones, seguimiento de cartera y veredictos de calidad en un mismo panel, usando un sistema de puntuación basado en caja libre (metodología GARP).',
+    a: 'Bulltrace es una herramienta de análisis de inversión para particulares que combina análisis fundamental de acciones, seguimiento de cartera y veredictos de calidad en un mismo panel, usando datos directos de la SEC y cinco dimensiones de análisis independientes.',
   },
   {
     q: '¿Cómo funciona la puntuación de Bulltrace?',
-    a: 'Bulltrace puntúa cada empresa en cuatro pasos: Valor base por caja libre, Multiplicador de calidad, Ajuste por balance y Penalización por riesgos. Las empresas con caja libre negativa reciben en su lugar una Nota de Supervivencia Pre-FCF.',
+    a: 'Bulltrace analiza cada empresa en cinco dimensiones independientes — calidad, crecimiento, valoración, riesgo y potencial — en vez de mezclarlas en una sola nota, para que un negocio excelente a un precio caro y uno mediocre a un precio barato no se confundan. Aparte, un modelo de flujos de caja descontados a 5 años calcula cuánto pagarías hoy para exigir un 15% anual.',
   },
   {
     q: '¿Cuántas empresas cubre Bulltrace?',
-    a: 'Bulltrace cubre más de 260 empresas cotizadas, con datos de SEC EDGAR y Finnhub.',
+    a: 'Bulltrace cubre más de 260 empresas cotizadas, con datos de SEC EDGAR, Yahoo Finance y Finnhub.',
   },
   {
     q: '¿Cuánto cuesta Bulltrace?',
@@ -18,11 +18,11 @@ export const FAQ_ITEMS = [
   },
   {
     q: '¿En qué se diferencia Bulltrace de otros exploradores como Simply Wall St o Finchat?',
-    a: 'Bulltrace está construido específicamente sobre la metodología GARP con una nota propia basada en caja libre, no en múltiplos genéricos ni semáforos de "salud financiera". Es una herramienta completa, no solo un explorador — el seguimiento de cartera vive en la misma interfaz.',
+    a: 'Bulltrace separa calidad del negocio y valoración en dimensiones independientes en vez de mezclarlas en un único semáforo de "salud financiera" o en múltiplos genéricos, y nunca inventa un número cuando falta un dato. Es una herramienta completa, no solo un explorador — el seguimiento de cartera vive en la misma interfaz.',
   },
   {
     q: '¿Funciona Bulltrace para empresas sin beneficios o con caja libre negativa?',
-    a: 'Sí. En lugar de excluirlas, Bulltrace aplica una Nota de Supervivencia Pre-FCF diseñada para evaluar su viabilidad, pensada para empresas en fase inicial o actualmente no rentables.',
+    a: 'Sí. La nota de calidad y el resto de dimensiones se calculan igual, sin necesitar beneficios positivos. Cuando los datos no sostienen un cálculo fiable (por ejemplo, el escenario a 5 años en una empresa que quema caja sin visibilidad), Bulltrace lo muestra como N/D y explica por qué, en vez de forzar un número.',
   },
   {
     q: '¿Quién ha creado Bulltrace?',

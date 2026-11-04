@@ -12,7 +12,7 @@ const CONTAINER = { maxWidth: 'min(1200px, 92vw)', margin: '0 auto', padding: '0
 
 const STATS = [
   { value: '260+', label: 'empresas cubiertas, puntuadas igual cada vez' },
-  { value: 'SEC EDGAR + Finnhub', label: 'datos directos de la fuente, no notas de prensa con retraso' },
+  { value: 'SEC EDGAR + Finnhub', label: 'y Yahoo Finance — datos directos de la fuente, no notas de prensa con retraso' },
   { value: '0 €', label: 'para empezar — pasa a Pro solo si el valor lo justifica' },
 ];
 
@@ -24,10 +24,11 @@ const FEATURES = [
 ];
 
 const METHOD_STEPS = [
-  { title: '1. Valor base por caja libre', capsule: 'El punto de partida: una valoración construida directamente desde la caja libre que reporta la empresa, antes de cualquier ajuste.' },
-  { title: '2. Multiplicador de calidad', capsule: 'Sube o baja ese valor base según márgenes, rentabilidad y consistencia del negocio.' },
-  { title: '3. Ajuste por balance', capsule: 'Premia una deuda baja y penaliza un apalancamiento alto.' },
-  { title: '4. Penalización por riesgos', capsule: 'Resta puntos cuando aparecen señales de alerta concretas, para no confundir "barato" con "sano".' },
+  { title: '1. Calidad', capsule: 'Cuánto gana el negocio sobre lo que invierte (ROIC, o ROE en bancos), frente a su coste de capital — sin mirar el precio.' },
+  { title: '2. Crecimiento', capsule: 'Si ingresos, márgenes y caja libre mejoran o empeoran frente a su propio historial, no solo el último trimestre.' },
+  { title: '3. Valoración', capsule: 'Si el precio de hoy compensa lo que el negocio genera, con varios múltiplos a la vez, no uno solo.' },
+  { title: '4. Riesgo', capsule: 'Qué puede salir mal — deuda, dilución, dependencia de crecimiento futuro — marcado como confirmado, posible o no evaluable.' },
+  { title: '5. Potencial', capsule: 'Las cuatro anteriores combinadas, sin dejar que una puntuación fuerte tape una debilidad clara en otra.' },
 ];
 
 export default function HomeView() {
@@ -99,13 +100,13 @@ export default function HomeView() {
       {/* METHODOLOGY TEASER */}
       <section style={{ background: C.surface, borderTop: `1px solid ${C.border}`, borderBottom: `1px solid ${C.border}` }}>
         <div style={{ ...CONTAINER, padding: 'clamp(48px, 7vw, 80px) 24px' }}>
-          <div style={{ fontSize: '11px', fontWeight: 700, color: C.text3, letterSpacing: '0.08em', textTransform: 'uppercase' }}>Cómo se calcula la nota</div>
-          <h2 style={{ fontSize: '28px', fontWeight: 800, letterSpacing: '-0.02em', marginTop: '8px', maxWidth: '26ch' }}>La nota de calidad, paso a paso</h2>
+          <div style={{ fontSize: '11px', fontWeight: 700, color: C.text3, letterSpacing: '0.08em', textTransform: 'uppercase' }}>Cómo lo analizamos</div>
+          <h2 style={{ fontSize: '28px', fontWeight: 800, letterSpacing: '-0.02em', marginTop: '8px', maxWidth: '26ch' }}>Cinco preguntas, nunca una sola nota</h2>
           <p style={{ fontSize: '14px', color: C.text2, lineHeight: 1.6, marginTop: '12px', maxWidth: '56ch' }}>
-            Convertimos la caja libre de cada empresa en una única nota ajustada por calidad, en cuatro pasos encadenados.
+            Analizamos cada empresa en cinco dimensiones independientes — un negocio excelente puede ser una mala compra a un precio excesivo, y uno mediocre puede estar barato sin que eso garantice nada.
           </p>
 
-          <div className="method-teaser-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '22px', marginTop: '32px' }}>
+          <div className="method-teaser-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: '22px', marginTop: '32px' }}>
             {METHOD_STEPS.map(step => (
               <div key={step.title}>
                 <h3 style={{ fontSize: '13.5px', fontWeight: 800, margin: 0 }}>{step.title}</h3>
