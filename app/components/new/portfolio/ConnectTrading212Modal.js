@@ -10,23 +10,26 @@ const STEPS = [
   <>Ve a tu perfil (arriba a la izquierda) → <strong>Ajustes</strong> → <strong>API (Beta)</strong>.</>,
   <>Pulsa <strong>Generar clave de API</strong>.</>,
   <>Activa al menos los permisos de solo lectura de <strong>cartera</strong> y <strong>cuenta</strong> — no actives nada de órdenes, Bulltrace no necesita (ni puede) operar.</>,
-  <>Trading 212 te muestra la clave <strong>una sola vez</strong>: cópiala ahora.</>,
-  <>Vuelve aquí y pégala abajo.</>,
+  <>Trading 212 te muestra una <strong>Clave</strong> y un <strong>Secreto</strong> (API Key y API Secret) <strong>una sola vez</strong>: copia los dos ahora, no podrás verlos de nuevo después.</>,
+  <>Vuelve aquí y pega cada uno en su campo.</>,
 ];
 
 export default function ConnectTrading212Modal({ portfolio, onClose, onConnected }) {
   const [apiKey, setApiKey] = useState('');
+  const [apiSecret, setApiSecret] = useState('');
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState(null);
 
+  const ready = apiKey.trim() && apiSecret.trim();
+
   const submit = async (e) => {
     e.preventDefault();
-    if (!apiKey.trim()) return;
+    if (!ready) return;
     setSaving(true);
     setError(null);
     const res = await fetch('/api/portfolio/trading212/connect', {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ portfolio_id: portfolio.id, apiKey: apiKey.trim() }),
+      body: JSON.stringify({ portfolio_id: portfolio.id, apiKey: apiKey.trim(), apiSecret: apiSecret.trim() }),
     });
     setSaving(false);
     if (!res.ok) {
@@ -54,8 +57,13 @@ export default function ConnectTrading212Modal({ portfolio, onClose, onConnected
 
         <form onSubmit={submit} style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
           <div>
-            <div style={{ ...labelStyle, marginBottom: '6px' }}>CLAVE DE API</div>
+            <div style={{ ...labelStyle, marginBottom: '6px' }}>CLAVE DE API (API KEY)</div>
             <input type="password" value={apiKey} onChange={e => setApiKey(e.target.value)} style={inputStyle} placeholder="Pega aquí tu clave" autoFocus required autoComplete="off" />
+          </div>
+
+          <div>
+            <div style={{ ...labelStyle, marginBottom: '6px' }}>SECRETO DE API (API SECRET)</div>
+            <input type="password" value={apiSecret} onChange={e => setApiSecret(e.target.value)} style={inputStyle} placeholder="Pega aquí tu secreto" required autoComplete="off" />
           </div>
 
           {error && (
@@ -67,8 +75,8 @@ export default function ConnectTrading212Modal({ portfolio, onClose, onConnected
               style={{ flex: 1, height: '42px', borderRadius: '12px', border: `1px solid ${C.border}`, background: 'transparent', color: C.text2, fontWeight: 700, fontSize: '13px', cursor: 'pointer', fontFamily: 'inherit' }}>
               Cancelar
             </button>
-            <button type="submit" disabled={!apiKey.trim() || saving}
-              style={{ flex: 2, height: '42px', borderRadius: '12px', border: 'none', background: C.lime, color: C.ink, fontWeight: 700, fontSize: '13px', cursor: saving ? 'default' : 'pointer', fontFamily: 'inherit', opacity: (!apiKey.trim() || saving) ? 0.6 : 1 }}>
+            <button type="submit" disabled={!ready || saving}
+              style={{ flex: 2, height: '42px', borderRadius: '12px', border: 'none', background: C.lime, color: C.ink, fontWeight: 700, fontSize: '13px', cursor: saving ? 'default' : 'pointer', fontFamily: 'inherit', opacity: (!ready || saving) ? 0.6 : 1 }}>
               {saving ? 'Conectando…' : 'Conectar'}
             </button>
           </div>

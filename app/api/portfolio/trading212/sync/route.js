@@ -5,13 +5,13 @@ import { syncPortfolioFromTrading212 } from '../../../../../lib/trading212Sync';
 const MIN_SYNC_INTERVAL_MS = 30000;
 
 async function syncOne(pf) {
-  const { data: apiKey } = await supabase.rpc('t212_read_secret', { secret_id: pf.t212_secret_id });
-  if (!apiKey) {
+  const { data: credential } = await supabase.rpc('t212_read_secret', { secret_id: pf.t212_secret_id });
+  if (!credential) {
     await supabase.from('portfolios').update({ t212_sync_error: 'Clave no encontrada — reconecta la cuenta.' }).eq('id', pf.id);
     return { portfolio_id: pf.id, error: 'Clave no encontrada' };
   }
   try {
-    const result = await syncPortfolioFromTrading212(pf.id, apiKey);
+    const result = await syncPortfolioFromTrading212(pf.id, credential);
     return { portfolio_id: pf.id, ...result };
   } catch (err) {
     return { portfolio_id: pf.id, error: err.message };

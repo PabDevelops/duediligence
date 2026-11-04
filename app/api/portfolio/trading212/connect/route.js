@@ -1,15 +1,15 @@
 import { getUserId } from '../../../../../lib/auth';
 import { supabase } from '../../../../../lib/supabase';
-import { fetchAccount } from '../../../../../lib/trading212';
+import { fetchAccount, packCredentials } from '../../../../../lib/trading212';
 import { syncPortfolioFromTrading212 } from '../../../../../lib/trading212Sync';
 
 export async function POST(request) {
   const userId = await getUserId();
   if (!userId) return Response.json({ error: 'Not authenticated' }, { status: 401 });
 
-  const { portfolio_id, apiKey } = await request.json();
-  if (!portfolio_id || !apiKey?.trim()) {
-    return Response.json({ error: 'portfolio_id y apiKey son obligatorios' }, { status: 400 });
+  const { portfolio_id, apiKey, apiSecret } = await request.json();
+  if (!portfolio_id || !apiKey?.trim() || !apiSecret?.trim()) {
+    return Response.json({ error: 'portfolio_id, apiKey y apiSecret son obligatorios' }, { status: 400 });
   }
 
   const { data: pf, error: pfErr } = await supabase
@@ -20,10 +20,13 @@ export async function POST(request) {
     .single();
   if (pfErr || !pf) return Response.json({ error: 'Portfolio no encontrado' }, { status: 404 });
 
-  // Prove the key actually works (and has the right scope) before saving it —
-  // cheapest real call that needs both account-level access and a valid key.
+  const credential = packCredentials(apiKey.trim(), apiSecret.trim());
+
+  // Prove the key+secret actually work (and have the right scope) before
+  // saving them — cheapest real call that needs both account-level access
+  // and valid credentials.
   try {
-    await fetchAccount(apiKey.trim());
+    await fetchAccount(credential);
   } catch (err) {
     return Response.json({ error: err.message || 'No se pudo validar la clave de Trading 212' }, { status: 400 });
   }
@@ -35,7 +38,7 @@ export async function POST(request) {
   }
 
   const { data: secretId, error: secretErr } = await supabase.rpc('t212_create_secret', {
-    secret_value: apiKey.trim(),
+    secret_value: credential,
     secret_name: `t212-${portfolio_id}`,
   });
   if (secretErr) {
@@ -50,7 +53,7 @@ export async function POST(request) {
   }).eq('id', portfolio_id);
 
   try {
-    await syncPortfolioFromTrading212(portfolio_id, apiKey.trim());
+    await syncPortfolioFromTrading212(portfolio_id, credential);
   } catch (err) {
     // Connected and the key is valid (we already proved that above) — a
     // failure here is a sync hiccup, not a reason to undo the connection.
