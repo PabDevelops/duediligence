@@ -21,8 +21,12 @@ import PortfolioRing from '../../components/new/portfolio/PortfolioRing';
 import { openInNewTab } from '../../../lib/openInNewTab';
 import { NEW_COLORS as C } from '../../components/new/theme';
 
-// Only used to show amounts in a stock's own native currency (e.g. a GBP-quoted VOD.L) —
-// there's no reporting-currency picker anymore, everything aggregates in USD.
+// There's still no manual reporting-currency picker — "Patrimonio neto" (always
+// cross-account) and the growth chart stay in USD via fmtC; everything else
+// scoped to one account defaults to that account's own currency (fmtR, defined
+// below, once accountCurrency is known) when it's a connected Trading 212
+// account, otherwise USD. CURRENCY_SYMBOLS is also used standalone for a
+// position's own native currency (e.g. a GBP-quoted VOD.L's price/avg cost).
 const CURRENCY_SYMBOLS = { USD: '$', EUR: '€', GBP: '£' };
 const fmtC = (val) => formatCurrency(val, '$');
 
@@ -71,7 +75,7 @@ function NewPortfolioPageContent() {
   const [snapshots, setSnapshots] = useState([]);
   const [connectTarget, setConnectTarget] = useState(null);
   const [syncingIds, setSyncingIds] = useState(() => new Set());
-  const { rates, toUSD, toUSDStable, fxReady } = useCurrencyRates();
+  const { rates, toUSD, toUSDStable, fromUSD, fxReady } = useCurrencyRates();
 
   const loadPortfolios = async () => {
     if (!isSignedIn) return;
@@ -271,9 +275,23 @@ function NewPortfolioPageContent() {
       : allCashTransactions.filter(t => t.portfolio_id === p.id).reduce((sum, t) => sum + toUSD(Number(t.amount), t.currency), 0);
     return {
       id: p.id, name: p.name, icon: /sipp/i.test(p.name) ? '🏦' : '📈', value: investedValue + cash,
+      // A connected account's own card reads in that account's real currency
+      // by default — no picker, just using what we already know about it.
+      currency: connected ? (p.t212_cash_currency || 'USD') : 'USD',
       connected, lastSyncedAt: p.t212_last_synced_at, syncError: p.t212_sync_error, portfolio: p,
     };
   }), [portfolios, allHoldings, allCashTransactions, stocks, rates]);
+
+  // The currently-viewed account's own currency — used for everything scoped
+  // to that one account (stats cards, the holdings list). "Patrimonio neto"
+  // and the growth chart stay in USD regardless, since those are always the
+  // cross-account total (see netWorthTotals), which has no single currency
+  // of its own to default to.
+  const accountCurrency = useMemo(() => {
+    if (selectedPortfolioId === 'all') return 'USD';
+    return portfolios.find(p => p.id === selectedPortfolioId)?.t212_cash_currency || 'USD';
+  }, [selectedPortfolioId, portfolios]);
+  const fmtR = (usdVal) => formatCurrency(fromUSD(usdVal, accountCurrency), CURRENCY_SYMBOLS[accountCurrency] || '$');
 
   const connectedPortfolioIds = useMemo(() =>
     new Set(portfolios.filter(p => p.t212_connected_at).map(p => p.id)),
@@ -506,7 +524,7 @@ function NewPortfolioPageContent() {
                     }}>
                     <div style={{ fontSize: '20px', marginBottom: '8px' }}>{card.icon}</div>
                     <div style={{ fontSize: '11px', fontWeight: 700, color: C.ink, marginBottom: '4px', textTransform: 'uppercase', letterSpacing: '0.3px' }}>{card.name}</div>
-                    <div style={{ fontSize: '16px', fontWeight: 700, color: C.text2, marginBottom: '8px' }}>{fmtC(card.value)}</div>
+                    <div style={{ fontSize: '16px', fontWeight: 700, color: C.text2, marginBottom: '8px' }}>{formatCurrency(fromUSD(card.value, card.currency), CURRENCY_SYMBOLS[card.currency] || '$')}</div>
                     {card.connected ? (
                       <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
                         <div onClick={e => { e.stopPropagation(); disconnectTrading212(card.portfolio); }} title={card.syncError || 'Desconectar de Trading 212'}
@@ -571,16 +589,16 @@ function NewPortfolioPageContent() {
             <div className="new-portfolio-stats-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '12px' }}>
               <div style={{ minWidth: 0, background: C.surface, border: `1px solid ${C.border}`, borderRadius: '16px', padding: '14px', boxSizing: 'border-box' }}>
                 <div style={{ fontSize: '10px', color: C.text3, letterSpacing: '0.5px', marginBottom: '6px', fontWeight: 700, textTransform: 'uppercase' }}>Valor de mercado</div>
-                <div style={{ fontSize: '19px', fontWeight: 800, color: C.ink }}>{fmtC(totals.investedValue)}</div>
+                <div style={{ fontSize: '19px', fontWeight: 800, color: C.ink }}>{fmtR(totals.investedValue)}</div>
               </div>
               <div style={{ minWidth: 0, background: C.surface, border: `1px solid ${C.border}`, borderRadius: '16px', padding: '14px', boxSizing: 'border-box' }}>
                 <div style={{ fontSize: '10px', color: C.text3, letterSpacing: '0.5px', marginBottom: '6px', fontWeight: 700, textTransform: 'uppercase' }}>Coste</div>
-                <div style={{ fontSize: '19px', fontWeight: 800, color: C.ink }}>{fmtC(totals.cost)}</div>
+                <div style={{ fontSize: '19px', fontWeight: 800, color: C.ink }}>{fmtR(totals.cost)}</div>
               </div>
               <div style={{ minWidth: 0, background: C.surface, border: `1px solid ${C.border}`, borderRadius: '16px', padding: '14px', boxSizing: 'border-box' }}>
                 <div style={{ fontSize: '10px', color: C.text3, letterSpacing: '0.5px', marginBottom: '6px', fontWeight: 700, textTransform: 'uppercase' }}>Ganancia/pérdida total</div>
                 <div style={{ fontSize: '19px', fontWeight: 800, color: totals.gain >= 0 ? C.green : C.red }}>
-                  {totals.gain >= 0 ? '+' : ''}{fmtC(totals.gain)} ({totals.gainPct >= 0 ? '+' : ''}{totals.gainPct.toFixed(1)}%)
+                  {totals.gain >= 0 ? '+' : ''}{fmtR(totals.gain)} ({totals.gainPct >= 0 ? '+' : ''}{totals.gainPct.toFixed(1)}%)
                 </div>
               </div>
             </div>
@@ -624,14 +642,14 @@ function NewPortfolioPageContent() {
                         {sparklines[p.ticker] && <Sparkline data={sparklines[p.ticker]} width={44} height={22} />}
                       </div>
                       <div style={{ width: '80px', textAlign: 'right', fontSize: '12px', color: C.ink }}>{p.shares.toLocaleString(undefined, { maximumFractionDigits: 4 })}</div>
-                      <div style={{ width: '90px', textAlign: 'right', fontSize: '12px', color: C.ink }}>{p.avgCostNative != null ? formatCurrency(p.avgCostNative, CURRENCY_SYMBOLS[p.costCurrency] || p.costCurrency) : fmtC(p.avgCost)}</div>
+                      <div style={{ width: '90px', textAlign: 'right', fontSize: '12px', color: C.ink }}>{p.avgCostNative != null ? formatCurrency(p.avgCostNative, CURRENCY_SYMBOLS[p.costCurrency] || p.costCurrency) : fmtR(p.avgCost)}</div>
                       <div style={{ width: '80px', textAlign: 'right', fontSize: '12px', fontWeight: 700, color: C.ink }}>{p.priceNative != null ? formatCurrency(p.priceNative, CURRENCY_SYMBOLS[p.priceCurrency] || p.priceCurrency) : '—'}</div>
                       <div style={{ width: '70px', textAlign: 'right', fontSize: '12px', color: p.dayChangePct == null ? C.text3 : p.dayChangePct >= 0 ? C.green : C.red }}>
                         {p.dayChangePct != null ? `${p.dayChangePct >= 0 ? '+' : ''}${p.dayChangePct.toFixed(2)}%` : '—'}
                       </div>
-                      <div style={{ width: '110px', textAlign: 'right', fontSize: '12px', fontWeight: 700, color: C.ink }}>{fmtC(p.marketValue ?? p.cost)}</div>
+                      <div style={{ width: '110px', textAlign: 'right', fontSize: '12px', fontWeight: 700, color: C.ink }}>{fmtR(p.marketValue ?? p.cost)}</div>
                       <div style={{ width: '140px', textAlign: 'right', fontSize: '12px', fontWeight: 700, color: p.gain == null ? C.text3 : p.gain >= 0 ? C.green : C.red }}>
-                        {p.gain == null ? '—' : `${p.gain >= 0 ? '+' : ''}${fmtC(p.gain)} (${p.gainPct >= 0 ? '+' : ''}${p.gainPct.toFixed(1)}%)`}
+                        {p.gain == null ? '—' : `${p.gain >= 0 ? '+' : ''}${fmtR(p.gain)} (${p.gainPct >= 0 ? '+' : ''}${p.gainPct.toFixed(1)}%)`}
                       </div>
                       <div style={{ width: '140px', textAlign: 'right', whiteSpace: 'nowrap' }} onClick={e => e.stopPropagation()}>
                         {positionActions(p, isLocked, lastLot)}
@@ -662,15 +680,15 @@ function NewPortfolioPageContent() {
                         <div style={{ color: C.text3, fontSize: '11px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{p.name || '…'}</div>
                       </div>
                       <div style={{ textAlign: 'right', flexShrink: 0 }}>
-                        <div style={{ fontSize: '13px', fontWeight: 700, color: C.ink }}>{fmtC(p.marketValue ?? p.cost)}</div>
+                        <div style={{ fontSize: '13px', fontWeight: 700, color: C.ink }}>{fmtR(p.marketValue ?? p.cost)}</div>
                         <div style={{ fontSize: '11px', fontWeight: 700, color: p.gain == null ? C.text3 : p.gain >= 0 ? C.green : C.red }}>
-                          {p.gain == null ? '—' : `${p.gain >= 0 ? '+' : ''}${fmtC(p.gain)} (${p.gainPct >= 0 ? '+' : ''}${p.gainPct.toFixed(1)}%)`}
+                          {p.gain == null ? '—' : `${p.gain >= 0 ? '+' : ''}${fmtR(p.gain)} (${p.gainPct >= 0 ? '+' : ''}${p.gainPct.toFixed(1)}%)`}
                         </div>
                       </div>
                     </div>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '10px', marginTop: '10px' }}>
                       <div style={{ fontSize: '11px', color: C.text3, minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                        {p.shares.toLocaleString(undefined, { maximumFractionDigits: 4 })} acc. @ {p.avgCostNative != null ? formatCurrency(p.avgCostNative, CURRENCY_SYMBOLS[p.costCurrency] || p.costCurrency) : fmtC(p.avgCost)}
+                        {p.shares.toLocaleString(undefined, { maximumFractionDigits: 4 })} acc. @ {p.avgCostNative != null ? formatCurrency(p.avgCostNative, CURRENCY_SYMBOLS[p.costCurrency] || p.costCurrency) : fmtR(p.avgCost)}
                         {p.dayChangePct != null && (
                           <span style={{ color: p.dayChangePct >= 0 ? C.green : C.red }}> · hoy {p.dayChangePct >= 0 ? '+' : ''}{p.dayChangePct.toFixed(2)}%</span>
                         )}
