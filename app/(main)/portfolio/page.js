@@ -1,5 +1,5 @@
 'use client';
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, Suspense } from 'react';
 import { useUser } from '../../components/AuthProvider';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
@@ -45,7 +45,7 @@ function CurrencyPicker({ currency, onChange }) {
   );
 }
 
-export default function NewPortfolioPage() {
+function NewPortfolioPageContent() {
   const { isSignedIn, isLoaded } = useUser();
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -757,5 +757,16 @@ export default function NewPortfolioPage() {
         {transferPie && <TransferPieModal pie={transferPie} sourcePortfolioId={selectedPortfolioId} portfolios={portfolios} onClose={() => setTransferPie(null)} onTransferred={() => { setTransferPie(null); loadPortfolios(); load(); }} />}
       </div>
     </div>
+  );
+}
+
+// useSearchParams() opts the whole subtree out of static prerendering unless it's inside a
+// Suspense boundary — without this wrapper, `next build` fails prerendering this page instead
+// of just falling back to client-side rendering for it (same pattern as app/(main)/search/page.js).
+export default function NewPortfolioPage() {
+  return (
+    <Suspense fallback={null}>
+      <NewPortfolioPageContent />
+    </Suspense>
   );
 }
