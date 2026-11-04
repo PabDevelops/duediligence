@@ -30,6 +30,13 @@ import { NEW_COLORS as C } from '../../components/new/theme';
 // for a position's own native currency (e.g. a GBP-quoted VOD.L's price/avg cost).
 const CURRENCY_SYMBOLS = { USD: '$', EUR: '€', GBP: '£' };
 
+// Keyboard equivalent for a <div> standing in for a link/button below — those rows/cards wrap
+// nested interactive children (action buttons), which isn't valid inside a real <a>/<button>,
+// so role="link"/"button" + tabIndex={0} + this (Enter/Space activates, same as a real element)
+// is how they stay reachable without a mouse instead of being invisible to keyboard and
+// assistive-tech users.
+const onKeyActivate = (fn) => (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); fn(); } };
+
 function NewPortfolioPageContent() {
   const { isSignedIn, isLoaded } = useUser();
   const router = useRouter();
@@ -517,7 +524,9 @@ function NewPortfolioPageContent() {
           <>
             <div>
               <PortfolioRing positions={positions} todayPct={todayPct} onSelectTicker={editFromRing} />
-              <div onClick={() => setSelectedPortfolioId('all')} style={{ textAlign: 'center', cursor: 'pointer', marginTop: '14px' }}>
+              <div onClick={() => setSelectedPortfolioId('all')} role="button" tabIndex={0} aria-pressed={selectedPortfolioId === 'all'}
+                onKeyDown={onKeyActivate(() => setSelectedPortfolioId('all'))}
+                style={{ textAlign: 'center', cursor: 'pointer', marginTop: '14px' }}>
                 <div style={{ fontSize: '10px', color: C.text3, letterSpacing: '1px', marginBottom: '4px', fontWeight: 700, textTransform: 'uppercase' }}>Patrimonio neto</div>
                 <div style={{ fontSize: '22px', fontWeight: 800, color: selectedPortfolioId === 'all' ? C.green : C.ink }}>{fmtNetWorth(netWorthTotals.value)}</div>
               </div>
@@ -529,6 +538,8 @@ function NewPortfolioPageContent() {
                 return (
                   <div key={card.id}
                     onClick={() => setSelectedPortfolioId(card.id)}
+                    role="button" tabIndex={0} aria-pressed={selected} aria-label={`Ver cuenta ${card.name}`}
+                    onKeyDown={onKeyActivate(() => setSelectedPortfolioId(card.id))}
                     style={{
                       cursor: 'pointer', borderRadius: '16px', padding: '14px', boxSizing: 'border-box',
                       border: `1px solid ${selected ? C.lime : C.border}`,
@@ -539,12 +550,12 @@ function NewPortfolioPageContent() {
                     <div style={{ fontSize: '16px', fontWeight: 700, color: C.text2, marginBottom: '8px' }}>{formatCurrency(fromUSD(card.value, card.currency), CURRENCY_SYMBOLS[card.currency] || '$')}</div>
                     {card.connected ? (
                       <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                        <div onClick={e => { e.stopPropagation(); disconnectTrading212(card.portfolio); }} title={card.syncError || 'Desconectar de Trading 212'}
-                          style={{ fontSize: '10px', fontWeight: 700, color: card.syncError ? C.red : C.text3, cursor: 'pointer' }}>
+                        <button type="button" onClick={e => { e.stopPropagation(); disconnectTrading212(card.portfolio); }} title={card.syncError || 'Desconectar de Trading 212'}
+                          style={{ background: 'none', border: 'none', padding: 0, fontFamily: 'inherit', fontSize: '10px', fontWeight: 700, color: card.syncError ? C.red : C.text3, cursor: 'pointer' }}>
                           🔌 T212 {card.syncError ? '· error' : `· ${timeAgo(card.lastSyncedAt) || 'sincronizando…'}`}
-                        </div>
+                        </button>
                         <button type="button" onClick={e => { e.stopPropagation(); syncNowTrading212(card.portfolio); }}
-                          disabled={syncingIds.has(card.id)} title="Sincronizar ahora"
+                          disabled={syncingIds.has(card.id)} title="Sincronizar ahora" aria-label="Sincronizar ahora"
                           style={{
                             background: 'none', border: 'none', padding: 0, lineHeight: 1, fontSize: '11px', color: C.text3,
                             cursor: syncingIds.has(card.id) ? 'default' : 'pointer', opacity: syncingIds.has(card.id) ? 0.4 : 1,
@@ -554,10 +565,10 @@ function NewPortfolioPageContent() {
                         </button>
                       </div>
                     ) : (
-                      <div onClick={e => { e.stopPropagation(); setConnectTarget(card.portfolio); }}
-                        style={{ fontSize: '10px', fontWeight: 700, color: C.text3, cursor: 'pointer' }}>
+                      <button type="button" onClick={e => { e.stopPropagation(); setConnectTarget(card.portfolio); }}
+                        style={{ background: 'none', border: 'none', padding: 0, fontFamily: 'inherit', fontSize: '10px', fontWeight: 700, color: C.text3, cursor: 'pointer' }}>
                         🔌 Conectar T212
-                      </div>
+                      </button>
                     )}
                   </div>
                 );
@@ -644,6 +655,8 @@ function NewPortfolioPageContent() {
                   const isLocked = p.lots.every(l => connectedPortfolioIds.has(l.portfolio_id));
                   return (
                     <div key={p.ticker} onClick={() => openInNewTab(`/stock/${p.ticker}`)}
+                      role="link" tabIndex={0} aria-label={`Abrir ${p.ticker} en una pestaña nueva`}
+                      onKeyDown={onKeyActivate(() => openInNewTab(`/stock/${p.ticker}`))}
                       style={{ display: 'flex', alignItems: 'center', padding: '12px 16px', borderTop: `1px solid ${C.borderSoft}`, cursor: 'pointer' }}>
                       <div style={{ flex: '1 1 220px', display: 'flex', alignItems: 'center', gap: '10px', minWidth: 0 }}>
                         <StockLogo ticker={p.ticker} size={28} />
@@ -686,6 +699,8 @@ function NewPortfolioPageContent() {
                 const isLocked = p.lots.every(l => connectedPortfolioIds.has(l.portfolio_id));
                 return (
                   <div key={p.ticker} onClick={() => openInNewTab(`/stock/${p.ticker}`)}
+                    role="link" tabIndex={0} aria-label={`Abrir ${p.ticker} en una pestaña nueva`}
+                    onKeyDown={onKeyActivate(() => openInNewTab(`/stock/${p.ticker}`))}
                     style={{ padding: '14px 16px', borderTop: `1px solid ${C.borderSoft}`, cursor: 'pointer' }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
                       <StockLogo ticker={p.ticker} size={32} />
