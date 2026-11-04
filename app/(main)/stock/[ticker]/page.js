@@ -10,7 +10,6 @@ import { useStockData } from '../../../../lib/hooks/useStockData';
 import { useEntryPriceProjection } from '../../../../lib/hooks/useEntryPriceProjection';
 import { isInGuestWatchlist, addToGuestWatchlist, removeFromGuestWatchlist } from '../../../../lib/guestWatchlist';
 import { computeEasyMode } from '../../../../lib/stockScoring';
-import EngineV2Panel from '../../../components/workspace/stock/EngineV2Panel';
 import { stockVerdict, investigateQuestions } from '../../../../lib/verdict';
 import { formatCurrency, formatTimeAgo } from '../../../../lib/formatters';
 import { NEW_COLORS as C, VERDICT_BADGE } from '../../../components/new/theme';
@@ -290,7 +289,57 @@ function NewStockPageContent({ params }) {
         </div>
       )}
 
-      {entryProjection.engine && <EngineV2Panel engine={entryProjection.engine} sym={sym} />}
+      {/* Four numbers, one plain-language badge, nothing else — the full five-dimension
+          breakdown (lib/engine) lives on /analisis instead. A beginner deciding "is this worth
+          digging into" shouldn't have to wade through WACC/EV-EBITDA/discount rates to get
+          there; someone who wants that depth can tap through for it. */}
+      {entryProjection.maxEntryPrice != null && entryProjection.cagr5y != null && price != null && (() => {
+        const mos = entryProjection.marginOfSafety;
+        const tier = mos == null ? 'caution' : mos >= 0.10 ? 'good' : mos >= -0.10 ? 'caution' : 'bad';
+        const priceBadge = VERDICT_BADGE[tier];
+        const priceLabel = tier === 'good' ? 'Con margen de seguridad' : tier === 'caution' ? 'En su precio justo' : 'Por encima de lo recomendado';
+        return (
+          <div style={{ background: C.surface, border: `1px solid ${C.border}`, borderRadius: '20px', padding: '22px 26px', boxSizing: 'border-box', display: 'flex', flexDirection: 'column', gap: '14px' }}>
+            <div style={{ fontSize: '11px', fontWeight: 700, color: C.text3, letterSpacing: '0.02em' }}>
+              A 5 AÑOS VISTA (estimación fundamental, no una promesa)
+            </div>
+
+            <div style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', padding: '7px 16px', borderRadius: '20px', background: priceBadge.bg, width: 'fit-content' }}>
+              <span aria-hidden="true" style={{ width: '8px', height: '8px', borderRadius: '50%', background: priceBadge.dot }} />
+              <span style={{ fontSize: '13px', fontWeight: 800, color: priceBadge.text }}>{priceLabel}</span>
+            </div>
+
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))', gap: '18px' }}>
+              <div>
+                <div style={{ fontSize: '12px', color: C.text2, marginBottom: '4px' }}>Precio actual</div>
+                <div style={{ fontSize: '20px', fontWeight: 800 }}>{formatCurrency(price, sym)}</div>
+              </div>
+              <div>
+                <div style={{ fontSize: '12px', color: C.text2, marginBottom: '4px' }}>Precio máximo de entrada</div>
+                <div style={{ fontSize: '20px', fontWeight: 800 }}>{formatCurrency(entryProjection.maxEntryPrice, sym)}</div>
+                <div style={{ fontSize: '11px', color: C.text3, marginTop: '2px' }}>para exigir un 15%/año</div>
+              </div>
+              <div>
+                <div style={{ fontSize: '12px', color: C.text2, marginBottom: '4px' }}>Margen de seguridad</div>
+                <div style={{ fontSize: '20px', fontWeight: 800, color: mos == null ? C.ink : mos >= 0 ? C.green : C.red }}>
+                  {mos == null ? 'N/D' : `${mos >= 0 ? '+' : ''}${(mos * 100).toFixed(0)}%`}
+                </div>
+              </div>
+              <div>
+                <div style={{ fontSize: '12px', color: C.text2, marginBottom: '4px' }}>Rentabilidad anual esperada</div>
+                <div style={{ fontSize: '20px', fontWeight: 800, color: entryProjection.cagr5y >= 0 ? C.green : C.red }}>
+                  {entryProjection.cagr5y >= 0 ? '+' : ''}{(entryProjection.cagr5y * 100).toFixed(1)}%
+                </div>
+                <div style={{ fontSize: '11px', color: C.text3, marginTop: '2px' }}>al año, en los próximos 5 años</div>
+              </div>
+            </div>
+
+            <Link href={`/stock/${ticker}/analisis`} style={{ fontSize: '12px', fontWeight: 700, color: C.ink, textDecoration: 'none', width: 'fit-content' }}>
+              Investigar a fondo →
+            </Link>
+          </div>
+        );
+      })()}
 
       <div style={{ background: C.surface, border: `1px solid ${C.border}`, borderRadius: '20px', boxSizing: 'border-box', overflow: 'hidden', ...CHART_THEME_VARS }}>
         {/* The chart's own built-in range/mode selector (1D-MAX + LINE/CANDLES, 9 buttons in
@@ -446,9 +495,14 @@ function NewStockPageContent({ params }) {
           central y optimista) no llevan probabilidades. Nunca se inventan cifras: cuando un dato
           no está disponible para esta empresa, se muestra como N/D y se explica por qué.
         </div>
-        <Link href={`/stock/${ticker}/numbers`} style={{ fontSize: '12px', fontWeight: 700, color: C.ink, textDecoration: 'none', width: 'fit-content' }}>
-          Ver qué datos faltan y sus límites →
-        </Link>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+          <Link href={`/stock/${ticker}/analisis`} style={{ fontSize: '12px', fontWeight: 700, color: C.ink, textDecoration: 'none', width: 'fit-content' }}>
+            Ver el análisis completo (calidad, valoración, riesgo) →
+          </Link>
+          <Link href={`/stock/${ticker}/numbers`} style={{ fontSize: '12px', fontWeight: 700, color: C.ink, textDecoration: 'none', width: 'fit-content' }}>
+            Ver qué datos faltan y sus límites →
+          </Link>
+        </div>
       </div>
 
       <button type="button" onClick={refetch} disabled={refreshing} style={{
