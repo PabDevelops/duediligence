@@ -4,6 +4,6 @@
     { "path": "/api/admin/seed-tickers", "schedule": "30 6 * * *" },
     { "path": "/api/admin/auto-post-educational", "schedule": "3 8 * * *" },
     { "path": "/api/admin/hydrate-financials", "schedule": "45 9 * * *" },
-    { "path": "/api/admin/sync-trading212", "schedule": "0 */4 * * *" }
+    { "path": "/api/admin/sync-trading212", "schedule": "15 7 * * *" }
   ]
 }
