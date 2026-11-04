@@ -21,14 +21,14 @@ import PortfolioRing from '../../components/new/portfolio/PortfolioRing';
 import { openInNewTab } from '../../../lib/openInNewTab';
 import { NEW_COLORS as C } from '../../components/new/theme';
 
-// There's still no manual reporting-currency picker — "Patrimonio neto" (always
-// cross-account) and the growth chart stay in USD via fmtC; everything else
-// scoped to one account defaults to that account's own currency (fmtR, defined
-// below, once accountCurrency is known) when it's a connected Trading 212
-// account, otherwise USD. CURRENCY_SYMBOLS is also used standalone for a
-// position's own native currency (e.g. a GBP-quoted VOD.L's price/avg cost).
+// There's still no manual reporting-currency picker. Everything defaults to
+// USD unless there's an unambiguous better answer: a connected Trading 212
+// account's own figures (and "Patrimonio neto"/the growth chart, when every
+// connected account agrees on one currency) read in that real currency
+// instead — see defaultCurrency/accountCurrency/fmtR/fmtNetWorth below, all
+// defined once portfolios is loaded. CURRENCY_SYMBOLS is also used standalone
+// for a position's own native currency (e.g. a GBP-quoted VOD.L's price/avg cost).
 const CURRENCY_SYMBOLS = { USD: '$', EUR: '€', GBP: '£' };
-const fmtC = (val) => formatCurrency(val, '$');
 
 function NewPortfolioPageContent() {
   const { isSignedIn, isLoaded } = useUser();
@@ -282,16 +282,28 @@ function NewPortfolioPageContent() {
     };
   }), [portfolios, allHoldings, allCashTransactions, stocks, rates]);
 
+  // Manual accounts don't have one inherent currency (entries can mix USD/EUR/GBP
+  // lots freely) so they never factor into this — only connected Trading 212
+  // accounts have a real, known native currency. When every connected account
+  // agrees on one, that's the unambiguous default for "all accounts" views too
+  // (most people only ever connect one broker) — only genuinely mixed-currency
+  // connected accounts fall back to USD, since there's no single right answer.
+  const connectedCurrencies = useMemo(() =>
+    [...new Set(portfolios.filter(p => p.t212_connected_at).map(p => p.t212_cash_currency || 'USD'))],
+    [portfolios]);
+  const defaultCurrency = connectedCurrencies.length === 1 ? connectedCurrencies[0] : 'USD';
+
   // The currently-viewed account's own currency — used for everything scoped
-  // to that one account (stats cards, the holdings list). "Patrimonio neto"
-  // and the growth chart stay in USD regardless, since those are always the
-  // cross-account total (see netWorthTotals), which has no single currency
-  // of its own to default to.
+  // to that one account (stats cards, the holdings list), and also for
+  // "Patrimonio neto"/the growth chart when viewing "Todos", via defaultCurrency
+  // above — those stay USD only when there's genuinely no single currency to
+  // default to (no connected account, or more than one with different currencies).
   const accountCurrency = useMemo(() => {
-    if (selectedPortfolioId === 'all') return 'USD';
+    if (selectedPortfolioId === 'all') return defaultCurrency;
     return portfolios.find(p => p.id === selectedPortfolioId)?.t212_cash_currency || 'USD';
-  }, [selectedPortfolioId, portfolios]);
+  }, [selectedPortfolioId, portfolios, defaultCurrency]);
   const fmtR = (usdVal) => formatCurrency(fromUSD(usdVal, accountCurrency), CURRENCY_SYMBOLS[accountCurrency] || '$');
+  const fmtNetWorth = (usdVal) => formatCurrency(fromUSD(usdVal, defaultCurrency), CURRENCY_SYMBOLS[defaultCurrency] || '$');
 
   const connectedPortfolioIds = useMemo(() =>
     new Set(portfolios.filter(p => p.t212_connected_at).map(p => p.id)),
@@ -507,7 +519,7 @@ function NewPortfolioPageContent() {
               <PortfolioRing positions={positions} todayPct={todayPct} onSelectTicker={editFromRing} />
               <div onClick={() => setSelectedPortfolioId('all')} style={{ textAlign: 'center', cursor: 'pointer', marginTop: '14px' }}>
                 <div style={{ fontSize: '10px', color: C.text3, letterSpacing: '1px', marginBottom: '4px', fontWeight: 700, textTransform: 'uppercase' }}>Patrimonio neto</div>
-                <div style={{ fontSize: '22px', fontWeight: 800, color: selectedPortfolioId === 'all' ? C.green : C.ink }}>{fmtC(netWorthTotals.value)}</div>
+                <div style={{ fontSize: '22px', fontWeight: 800, color: selectedPortfolioId === 'all' ? C.green : C.ink }}>{fmtNetWorth(netWorthTotals.value)}</div>
               </div>
             </div>
 
@@ -608,7 +620,7 @@ function NewPortfolioPageContent() {
               </div>
             </div>
 
-            <GrowthChart snapshots={snapshots} currentValue={netWorthTotals.value} currentCost={netWorthTotals.cost} rate={1} symbol="$" />
+            <GrowthChart snapshots={snapshots} currentValue={netWorthTotals.value} currentCost={netWorthTotals.cost} rate={defaultCurrency === 'USD' ? 1 : (rates[defaultCurrency] || 1)} symbol={CURRENCY_SYMBOLS[defaultCurrency] || '$'} />
 
             {bySectorChart.length > 1 && <AllocationChart title="ASIGNACIÓN POR SECTOR" data={bySectorChart} />}
 
