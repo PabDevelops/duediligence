@@ -4,9 +4,8 @@ import Link from 'next/link';
 import StockLogo from '../components/workspace/StockLogo';
 import MarketStatusDot from '../components/workspace/MarketStatusDot';
 import { formatCurrency } from '../../lib/formatters';
-import { computeEasyMode } from '../../lib/stockScoring';
 import { useEntryPriceProjection } from '../../lib/hooks/useEntryPriceProjection';
-import { stockVerdict, etfVerdict } from '../../lib/verdict';
+import { engineVerdict, etfVerdict } from '../../lib/verdict';
 
 const TIER_COLOR = { good: 'var(--ws-accent)', caution: '#eab308', bad: 'var(--ws-red)' };
 
@@ -32,12 +31,14 @@ function SuggestionRow({ s, onPick }) {
 // Max entry price for a 15%/yr return and the CAGR the central scenario implies, both from the
 // V2 fundamental engine (lib/engine): revenue, margins, reinvestment, net debt and share count,
 // never the share price history. Shown only when the engine can support a value; otherwise the
-// card is hidden rather than showing an invented number.
-function EntryPriceStat({ ticker, data }) {
-  const { maxEntryPrice, cagr5y } = useEntryPriceProjection({ ticker, data });
-
-  if (maxEntryPrice == null || cagr5y == null) return null;
-  const sym = data.currency === 'EUR' ? '€' : data.currency === 'GBP' ? '£' : '$';
+// card is hidden rather than showing an invented number. Takes the already-computed `engine`
+// (StartPage calls the hook once, for both this and the verdict badge below) instead of
+// recomputing it a second time for the same ticker.
+function EntryPriceStat({ engine }) {
+  const entry = engine?.entry;
+  if (!entry || entry.maxEntryPrice == null || entry.cagr == null) return null;
+  const { maxEntryPrice, cagr: cagr5y } = entry;
+  const sym = engine.currency === 'EUR' ? '€' : engine.currency === 'GBP' ? '£' : '$';
 
   return (
     <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '10px', marginTop: '12px', paddingTop: '12px', borderTop: '1px solid var(--ws-border)' }}>
@@ -102,11 +103,9 @@ export default function StartPage() {
         if (!fundRes.ok || fund.error) throw new Error(fund.error || 'No encontramos los datos de ese fondo.');
         setResult({ data, fund, verdict: etfVerdict(fund) });
       } else {
-        const hasFundamentals = data.revVal != null || data.niVal != null || data.marketCap != null
-          || data.roic != null || data.grossMargin != null || (data.revHistory?.length ?? 0) > 0;
-        const easyMode = computeEasyMode(data, hasFundamentals);
-        const companyName = (data.name || target.ticker).split(' ')[0];
-        setResult({ data, verdict: easyMode ? stockVerdict(easyMode, companyName) : null });
+        // Verdict for a stock is derived below from the V2 engine (useEntryPriceProjection is a
+        // hook — it has to run in the component body, not here), not computed in this handler.
+        setResult({ data });
       }
     } catch (err) {
       setError(err.message);
@@ -135,6 +134,14 @@ export default function StartPage() {
     setError(null);
     setQuery('');
   };
+
+  // Verdict for a stock (not a fund) comes from the V2 engine, computed once here and reused
+  // both for the badge/reasons below and for EntryPriceStat — called unconditionally, as hooks
+  // require; it already tolerates a null ticker/data on every render before something is picked.
+  const stockData = result && !result.fund ? result.data : null;
+  const stockEntryProjection = useEntryPriceProjection({ ticker: picked?.ticker, data: stockData });
+  const companyName = stockData ? (stockData.name || picked?.ticker || '').split(' ')[0] : '';
+  const displayVerdict = result?.fund ? result.verdict : (stockData ? engineVerdict(stockEntryProjection.engine, companyName) : null);
 
   return (
     <div style={{ minHeight: '100vh', background: 'var(--ws-bg)', color: 'var(--ws-text)', fontFamily: 'Inter, sans-serif' }}>
@@ -207,17 +214,17 @@ export default function StartPage() {
               </div>
             </div>
 
-            {result.verdict ? (
+            {displayVerdict ? (
               <>
                 <div style={{
                   display: 'inline-flex', alignItems: 'center', gap: '6px', padding: '5px 14px', borderRadius: '20px',
-                  background: `color-mix(in srgb, ${TIER_COLOR[result.verdict.tier]} 15%, transparent)`,
-                  color: TIER_COLOR[result.verdict.tier], fontWeight: 700, fontSize: '13px', marginBottom: '12px',
+                  background: `color-mix(in srgb, ${TIER_COLOR[displayVerdict.tier]} 15%, transparent)`,
+                  color: TIER_COLOR[displayVerdict.tier], fontWeight: 700, fontSize: '13px', marginBottom: '12px',
                 }}>
-                  {result.verdict.emoji} {result.verdict.label}
+                  {displayVerdict.emoji} {displayVerdict.label}
                 </div>
                 <ul style={{ margin: 0, paddingLeft: '18px', fontSize: '13px', lineHeight: 1.7, color: 'var(--ws-text-2)' }}>
-                  {result.verdict.reasons.map((r, i) => <li key={i}>{r}</li>)}
+                  {displayVerdict.reasons.map((r, i) => <li key={i}>{r}</li>)}
                 </ul>
               </>
             ) : (
@@ -226,8 +233,8 @@ export default function StartPage() {
               </div>
             )}
 
-            {result.verdict && !result.fund && (
-              <EntryPriceStat ticker={picked?.ticker} data={result.data} />
+            {displayVerdict && !result.fund && (
+              <EntryPriceStat engine={stockEntryProjection.engine} />
             )}
 
             <div style={{ fontSize: '11px', color: 'var(--ws-text-3)', marginTop: '14px', paddingTop: '12px', borderTop: '1px solid var(--ws-border)' }}>
