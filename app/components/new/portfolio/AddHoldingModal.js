@@ -130,14 +130,14 @@ export default function AddHoldingModal({ onClose, onAdded, editLot, presetTicke
                 {suggestions.length > 0 && (
                   <div style={{ position: 'absolute', top: '46px', left: 0, right: 0, background: C.surface, border: `1px solid ${C.border}`, borderRadius: '12px', boxShadow: '0 12px 32px rgba(28,27,24,0.12)', maxHeight: '220px', overflowY: 'auto', zIndex: 10 }}>
                     {suggestions.map(s => (
-                      <div key={s.ticker} onClick={() => pickTicker(s)}
-                        style={{ padding: '10px 14px', cursor: 'pointer', display: 'flex', gap: '10px', alignItems: 'center', fontSize: '13px' }}
+                      <button key={s.ticker} type="button" onClick={() => pickTicker(s)}
+                        style={{ width: '100%', background: 'none', border: 'none', fontFamily: 'inherit', textAlign: 'left', padding: '10px 14px', cursor: 'pointer', display: 'flex', gap: '10px', alignItems: 'center', fontSize: '13px' }}
                         onMouseEnter={e => e.currentTarget.style.background = C.bg}
                         onMouseLeave={e => e.currentTarget.style.background = 'transparent'}>
                         <StockLogo ticker={s.ticker} size={22} />
                         <span style={{ color: C.ink, fontWeight: 700 }}>{s.ticker}</span>
                         <span style={{ color: C.text2, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{s.name}</span>
-                      </div>
+                      </button>
                     ))}
                   </div>
                 )}
