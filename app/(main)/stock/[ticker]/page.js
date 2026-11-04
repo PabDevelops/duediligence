@@ -304,6 +304,13 @@ function NewStockPageContent({ params }) {
         const tier = mos == null ? 'caution' : mos >= 0.10 ? 'good' : mos >= -0.10 ? 'caution' : 'bad';
         const priceBadge = VERDICT_BADGE[tier];
         const priceLabel = tier === 'good' ? 'Con margen de seguridad' : tier === 'caution' ? 'En su precio justo' : 'Por encima de lo recomendado';
+        // This card's valuation (a 5-year discounted-cash-flow model) is a different method
+        // from the "Valoración" paragraph above (today's price vs. today's multiples) — the two
+        // can legitimately disagree, most visibly for a high-quality business whose multiples
+        // aren't screaming "muy exigente" but whose 5-year DCF still comes up short at a 15%/yr
+        // hurdle. Shown only in that specific gap, so it doesn't repeat when both already agree.
+        const engineVal = entryProjection.engine?.valuation;
+        const showMethodNote = tier === 'bad' && engineVal?.score != null && engineVal.score >= 35;
         return (
           <div style={{ background: C.surface, border: `1px solid ${C.border}`, borderRadius: '20px', padding: '22px 26px', boxSizing: 'border-box', display: 'flex', flexDirection: 'column', gap: '14px' }}>
             <div style={{ fontSize: '11px', fontWeight: 700, color: C.text3, letterSpacing: '0.02em' }}>
@@ -314,6 +321,12 @@ function NewStockPageContent({ params }) {
               <span aria-hidden="true" style={{ width: '8px', height: '8px', borderRadius: '50%', background: priceBadge.dot }} />
               <span style={{ fontSize: '13px', fontWeight: 800, color: priceBadge.text }}>{priceLabel}</span>
             </div>
+
+            {showMethodNote && (
+              <div style={{ fontSize: '12px', color: C.text3, lineHeight: 1.5, padding: '10px 12px', background: C.bg, borderRadius: '10px' }}>
+                Esto no contradice la nota de calidad ni la &quot;{engineVal.label.toLowerCase()}&quot; de arriba: aquello compara el precio de hoy con lo que la empresa gana ahora mismo. Este modelo, en cambio, proyecta cinco años de flujos de caja descontados exigiendo un 15%/año — con esos supuestos, ni el precio de hoy llega. Si el negocio crece más o mejora márgenes más de lo que asume este escenario, el resultado cambia.
+              </div>
+            )}
 
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))', gap: '18px' }}>
               <div>
