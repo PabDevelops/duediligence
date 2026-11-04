@@ -70,6 +70,7 @@ function NewPortfolioPageContent() {
   const [sellPosition, setSellPosition] = useState(null);
   const [snapshots, setSnapshots] = useState([]);
   const [connectTarget, setConnectTarget] = useState(null);
+  const [syncingIds, setSyncingIds] = useState(() => new Set());
   const { rates, toUSD, toUSDStable, fxReady } = useCurrencyRates();
 
   const loadPortfolios = async () => {
@@ -350,6 +351,22 @@ function NewPortfolioPageContent() {
     loadPortfolios();
   };
 
+  // Manual "sync now" per account — the sync route's own 30s-per-account
+  // floor already protects against spamming this, so no extra debounce
+  // needed here beyond disabling the button while a request is in flight.
+  const syncNowTrading212 = async (portfolio) => {
+    setSyncingIds(prev => new Set(prev).add(portfolio.id));
+    try {
+      await fetch('/api/portfolio/trading212/sync', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ portfolio_id: portfolio.id }),
+      });
+      await Promise.all([loadPortfolios(), load()]);
+    } finally {
+      setSyncingIds(prev => { const next = new Set(prev); next.delete(portfolio.id); return next; });
+    }
+  };
+
   const pageShellStyle = { width: '100%', minHeight: '100vh', boxSizing: 'border-box', background: C.bg, color: C.ink, fontFamily: "'Plus Jakarta Sans', system-ui, sans-serif", overflowX: 'hidden' };
   const innerStyle = { maxWidth: 'min(1200px, 92vw)', margin: '0 auto', padding: '32px 24px 96px', display: 'flex', flexDirection: 'column', gap: '24px', boxSizing: 'border-box' };
 
@@ -461,9 +478,20 @@ function NewPortfolioPageContent() {
                     <div style={{ fontSize: '11px', fontWeight: 700, color: C.ink, marginBottom: '4px', textTransform: 'uppercase', letterSpacing: '0.3px' }}>{card.name}</div>
                     <div style={{ fontSize: '16px', fontWeight: 700, color: C.text2, marginBottom: '8px' }}>{fmtC(card.value)}</div>
                     {card.connected ? (
-                      <div onClick={e => { e.stopPropagation(); disconnectTrading212(card.portfolio); }} title={card.syncError || 'Desconectar de Trading 212'}
-                        style={{ fontSize: '10px', fontWeight: 700, color: card.syncError ? C.red : C.text3, cursor: 'pointer' }}>
-                        🔌 T212 {card.syncError ? '· error' : `· ${timeAgo(card.lastSyncedAt) || 'sincronizando…'}`}
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                        <div onClick={e => { e.stopPropagation(); disconnectTrading212(card.portfolio); }} title={card.syncError || 'Desconectar de Trading 212'}
+                          style={{ fontSize: '10px', fontWeight: 700, color: card.syncError ? C.red : C.text3, cursor: 'pointer' }}>
+                          🔌 T212 {card.syncError ? '· error' : `· ${timeAgo(card.lastSyncedAt) || 'sincronizando…'}`}
+                        </div>
+                        <button type="button" onClick={e => { e.stopPropagation(); syncNowTrading212(card.portfolio); }}
+                          disabled={syncingIds.has(card.id)} title="Sincronizar ahora"
+                          style={{
+                            background: 'none', border: 'none', padding: 0, lineHeight: 1, fontSize: '11px', color: C.text3,
+                            cursor: syncingIds.has(card.id) ? 'default' : 'pointer', opacity: syncingIds.has(card.id) ? 0.4 : 1,
+                            display: 'inline-block', animation: syncingIds.has(card.id) ? 'new-portfolio-spin 0.8s linear infinite' : 'none',
+                          }}>
+                          ↻
+                        </button>
                       </div>
                     ) : (
                       <div onClick={e => { e.stopPropagation(); setConnectTarget(card.portfolio); }}
