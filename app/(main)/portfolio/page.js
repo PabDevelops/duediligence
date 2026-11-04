@@ -588,15 +588,20 @@ function NewPortfolioPageContent() {
 
             <div className="new-portfolio-stats-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '12px' }}>
               <div style={{ minWidth: 0, background: C.surface, border: `1px solid ${C.border}`, borderRadius: '16px', padding: '14px', boxSizing: 'border-box' }}>
-                <div style={{ fontSize: '10px', color: C.text3, letterSpacing: '0.5px', marginBottom: '6px', fontWeight: 700, textTransform: 'uppercase' }}>Valor de mercado</div>
+                {/* Fixed minHeight/lineHeight so this label's value lines up with the other two
+                    cards' regardless of whether its own text wraps to one line or two — "Coste"
+                    never wraps but "Valor de mercado"/"Ganancia/pérdida total" often do, and
+                    without reserving the same space for all three their numbers sat at different
+                    heights. */}
+                <div style={{ fontSize: '10px', lineHeight: '14px', minHeight: '28px', color: C.text3, letterSpacing: '0.5px', marginBottom: '6px', fontWeight: 700, textTransform: 'uppercase' }}>Valor de mercado</div>
                 <div style={{ fontSize: '19px', fontWeight: 800, color: C.ink }}>{fmtR(totals.investedValue)}</div>
               </div>
               <div style={{ minWidth: 0, background: C.surface, border: `1px solid ${C.border}`, borderRadius: '16px', padding: '14px', boxSizing: 'border-box' }}>
-                <div style={{ fontSize: '10px', color: C.text3, letterSpacing: '0.5px', marginBottom: '6px', fontWeight: 700, textTransform: 'uppercase' }}>Coste</div>
+                <div style={{ fontSize: '10px', lineHeight: '14px', minHeight: '28px', color: C.text3, letterSpacing: '0.5px', marginBottom: '6px', fontWeight: 700, textTransform: 'uppercase' }}>Coste</div>
                 <div style={{ fontSize: '19px', fontWeight: 800, color: C.ink }}>{fmtR(totals.cost)}</div>
               </div>
               <div style={{ minWidth: 0, background: C.surface, border: `1px solid ${C.border}`, borderRadius: '16px', padding: '14px', boxSizing: 'border-box' }}>
-                <div style={{ fontSize: '10px', color: C.text3, letterSpacing: '0.5px', marginBottom: '6px', fontWeight: 700, textTransform: 'uppercase' }}>Ganancia/pérdida total</div>
+                <div style={{ fontSize: '10px', lineHeight: '14px', minHeight: '28px', color: C.text3, letterSpacing: '0.5px', marginBottom: '6px', fontWeight: 700, textTransform: 'uppercase' }}>Ganancia/pérdida total</div>
                 <div style={{ fontSize: '19px', fontWeight: 800, color: totals.gain >= 0 ? C.green : C.red }}>
                   {totals.gain >= 0 ? '+' : ''}{fmtR(totals.gain)} ({totals.gainPct >= 0 ? '+' : ''}{totals.gainPct.toFixed(1)}%)
                 </div>
