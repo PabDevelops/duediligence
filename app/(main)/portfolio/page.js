@@ -278,6 +278,16 @@ function NewPortfolioPageContent() {
     new Set(portfolios.filter(p => p.t212_connected_at).map(p => p.id)),
     [portfolios]);
 
+  // Which account "Conectar Trading 212" should target from a context that
+  // isn't already scoped to one account (the empty state, reachable before
+  // any account card is even visible) — the selected one if there is one,
+  // else the first not-yet-connected account, same fallback AddHoldingModal
+  // already uses for 'all'.
+  const defaultConnectTarget = useMemo(() => {
+    if (selectedPortfolioId !== 'all') return portfolios.find(p => p.id === selectedPortfolioId) || null;
+    return portfolios.find(p => !p.t212_connected_at) || null;
+  }, [portfolios, selectedPortfolioId]);
+
   const timeAgo = (iso) => {
     if (!iso) return null;
     // Cosmetic "synced Xm ago" label only, on a fully client-gated page with no SSR/hydration to desync.
@@ -412,14 +422,14 @@ function NewPortfolioPageContent() {
             <div style={{ fontSize: '15px', fontWeight: 700, marginBottom: '6px' }}>Aún no tienes posiciones</div>
             <div style={{ fontSize: '13px', color: C.text2, marginBottom: '18px' }}>Añade tu primera posición para empezar a seguirla.</div>
             <div style={{ display: 'flex', gap: '10px', justifyContent: 'center', flexWrap: 'wrap' }}>
-              {!(selectedPortfolioId !== 'all' && connectedPortfolioIds.has(selectedPortfolioId)) && (
+              {!connectedPortfolioIds.has(selectedPortfolioId !== 'all' ? selectedPortfolioId : portfolios[0]?.id) && (
                 <button type="button" onClick={() => setShowModal(true)}
                   style={{ padding: '10px 22px', borderRadius: '12px', border: 'none', background: C.lime, color: C.ink, fontWeight: 700, fontSize: '13px', cursor: 'pointer', fontFamily: 'inherit' }}>
                   + Añadir posición
                 </button>
               )}
-              {selectedPortfolioId !== 'all' && !connectedPortfolioIds.has(selectedPortfolioId) && (
-                <button type="button" onClick={() => setConnectTarget(portfolios.find(p => p.id === selectedPortfolioId))}
+              {defaultConnectTarget && (
+                <button type="button" onClick={() => setConnectTarget(defaultConnectTarget)}
                   style={{ padding: '10px 22px', borderRadius: '12px', border: `1px solid ${C.border}`, background: 'transparent', color: C.text2, fontWeight: 700, fontSize: '13px', cursor: 'pointer', fontFamily: 'inherit' }}>
                   🔌 Conectar Trading 212
                 </button>
