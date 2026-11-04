@@ -10,7 +10,7 @@ const CURRENCIES = { USD: '$', EUR: '€', GBP: '£' };
 const inputStyle = { width: '100%', height: '42px', borderRadius: '12px', border: `1px solid ${C.border}`, padding: '0 14px', fontSize: '14px', fontFamily: 'inherit', background: '#FDFBF6', color: C.ink, boxSizing: 'border-box' };
 const labelStyle = { fontSize: '11px', fontWeight: 700, color: C.text3, textTransform: 'uppercase', letterSpacing: '0.5px' };
 
-export default function AddHoldingModal({ onClose, onAdded, existingPies, defaultCurrency, editLot, presetTicker, portfolioId, portfolios }) {
+export default function AddHoldingModal({ onClose, onAdded, editLot, presetTicker, portfolioId, portfolios }) {
   const isEdit = !!editLot;
   // portfolioId is 'all' when the page's "Todos" tab is active — that's a UI-only filter
   // value, not a real portfolio, so it can't be written to a portfolio_id uuid column.
@@ -29,17 +29,17 @@ export default function AddHoldingModal({ onClose, onAdded, existingPies, defaul
   const [sharesMode, setSharesMode] = useState(isEdit ? 'shares' : 'amount');
   const [amount, setAmount] = useState('');
   const [costBasis, setCostBasis] = useState(editLot ? String(editLot.cost_basis) : '');
-  const [costBasisCurrency, setCostBasisCurrency] = useState(editLot?.cost_basis_currency || defaultCurrency || 'USD');
   const [purchaseDate, setPurchaseDate] = useState(editLot?.purchase_date || new Date().toISOString().slice(0, 10));
-  const [pie, setPie] = useState(editLot?.pie || '');
-  const [showPieSuggestions, setShowPieSuggestions] = useState(false);
   const [deductCash, setDeductCash] = useState(false);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState(null);
   const [manualLookupState, setManualLookupState] = useState('idle'); // idle | loading | not_found
   const inputRef = useRef(null);
 
-  const pieSuggestions = existingPies.filter(p => p.toLowerCase().includes(pie.toLowerCase()) && p.toLowerCase() !== pie.toLowerCase());
+  // No currency picker — cost basis is always in the stock's own trading currency (what the
+  // stock API reports, or what the lot was already saved with when editing), one fewer thing
+  // to choose per position.
+  const costBasisCurrency = editLot ? (editLot.cost_basis_currency || 'USD') : (preview?.currency || 'USD');
 
   useEffect(() => { inputRef.current?.focus(); }, []);
 
@@ -58,7 +58,7 @@ export default function AddHoldingModal({ onClose, onAdded, existingPies, defaul
     if (!costBasis) inputRef.current?.blur();
   };
 
-  const useCurrentPrice = () => { if (preview?.currentPrice) { setCostBasis(String(preview.currentPrice)); setCostBasisCurrency('USD'); } };
+  const useCurrentPrice = () => { if (preview?.currentPrice) setCostBasis(String(preview.currentPrice)); };
 
   // Amount mode: derive shares from "how much I spent / price per share" instead of the
   // user having to do that math themselves.
@@ -92,11 +92,11 @@ export default function AddHoldingModal({ onClose, onAdded, existingPies, defaul
     const res = isEdit
       ? await fetch('/api/portfolio', {
           method: 'PATCH', headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ id: editLot.id, shares, costBasis, purchaseDate, pie, costBasisCurrency, portfolio_id: resolvedPortfolioId }),
+          body: JSON.stringify({ id: editLot.id, shares, costBasis, purchaseDate, costBasisCurrency, portfolio_id: resolvedPortfolioId }),
         })
       : await fetch('/api/portfolio', {
           method: 'POST', headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ ticker: selected.ticker, shares, costBasis, purchaseDate, pie, costBasisCurrency, portfolio_id: resolvedPortfolioId, deductCash }),
+          body: JSON.stringify({ ticker: selected.ticker, shares, costBasis, purchaseDate, costBasisCurrency, portfolio_id: resolvedPortfolioId, deductCash }),
         });
     setSaving(false);
     if (!res.ok) {
@@ -116,7 +116,7 @@ export default function AddHoldingModal({ onClose, onAdded, existingPies, defaul
           {isEdit ? `Editar posición de ${editLot.ticker}` : presetTicker ? `Comprar ${presetTicker}` : 'Añadir posición'}
         </div>
         <div style={{ fontSize: '12px', color: C.text2, marginBottom: '18px' }}>
-          {isEdit ? 'Actualiza acciones, coste o fecha de esta entrada.' : presetTicker ? `Añade una compra de ${presetTicker} directamente a tus posiciones.` : 'Busca un ticker, luego indica acciones y coste.'}
+          {isEdit ? 'Actualiza acciones o coste de esta entrada.' : presetTicker ? `Añade una compra de ${presetTicker} directamente a tus posiciones.` : 'Busca un ticker, luego indica acciones y coste.'}
         </div>
 
         <form onSubmit={submit} style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
@@ -170,7 +170,7 @@ export default function AddHoldingModal({ onClose, onAdded, existingPies, defaul
                 {preview?.currentPrice && (
                   <button type="button" onClick={useCurrentPrice}
                     style={{ fontSize: '11px', fontWeight: 700, color: C.ink, background: C.lime, border: 'none', borderRadius: '10px', padding: '7px 10px', cursor: 'pointer', fontFamily: 'inherit', whiteSpace: 'nowrap' }}>
-                    Usar ${preview.currentPrice.toFixed(2)}
+                    Usar {CURRENCIES[preview.currency] || '$'}{preview.currentPrice.toFixed(2)}
                   </button>
                 )}
               </div>
@@ -213,40 +213,16 @@ export default function AddHoldingModal({ onClose, onAdded, existingPies, defaul
             <div>
               <div style={{ ...labelStyle, marginBottom: '6px', display: 'flex', justifyContent: 'space-between' }}>
                 <span>COSTE POR ACCIÓN</span>
-                <select value={costBasisCurrency} onChange={e => setCostBasisCurrency(e.target.value)}
-                  style={{ fontSize: '10px', fontWeight: 700, color: C.green, background: 'none', border: 'none', cursor: 'pointer', padding: 0, fontFamily: 'inherit' }}>
-                  {Object.keys(CURRENCIES).map(c => <option key={c} value={c}>{c}</option>)}
-                </select>
+                <span style={{ fontSize: '10px', fontWeight: 700, color: C.text3 }}>{costBasisCurrency}</span>
               </div>
               <input type="number" step="any" min="0" value={costBasis} onChange={e => setCostBasis(e.target.value)} style={inputStyle} required />
-              <div style={{ fontSize: '10px', color: C.text3, marginTop: '4px' }}>Indica el precio tal como lo mostró tu broker, en {costBasisCurrency}.</div>
+              <div style={{ fontSize: '10px', color: C.text3, marginTop: '4px' }}>Indica el precio tal como lo mostró tu broker.</div>
             </div>
           </div>
 
           <div>
             <div style={{ ...labelStyle, marginBottom: '6px' }}>FECHA DE COMPRA</div>
             <input type="date" value={purchaseDate} onChange={e => setPurchaseDate(e.target.value)} style={inputStyle} />
-          </div>
-
-          <div style={{ position: 'relative' }}>
-            <div style={{ ...labelStyle, marginBottom: '6px' }}>CESTA (OPCIONAL) — agrupa en una cartera temática</div>
-            <input value={pie} placeholder="p. ej. Computación cuántica"
-              onChange={e => { setPie(e.target.value); setShowPieSuggestions(true); }}
-              onFocus={() => setShowPieSuggestions(true)}
-              onBlur={() => setTimeout(() => setShowPieSuggestions(false), 150)}
-              style={inputStyle} autoComplete="off" />
-            {showPieSuggestions && pieSuggestions.length > 0 && (
-              <div style={{ position: 'absolute', top: '64px', left: 0, right: 0, background: C.surface, border: `1px solid ${C.border}`, borderRadius: '12px', boxShadow: '0 12px 32px rgba(28,27,24,0.12)', zIndex: 10 }}>
-                {pieSuggestions.map(p => (
-                  <div key={p} onMouseDown={() => { setPie(p); setShowPieSuggestions(false); }}
-                    style={{ padding: '9px 14px', cursor: 'pointer', fontSize: '13px', color: C.ink }}
-                    onMouseEnter={e => e.currentTarget.style.background = C.bg}
-                    onMouseLeave={e => e.currentTarget.style.background = 'transparent'}>
-                    {p}
-                  </div>
-                ))}
-              </div>
-            )}
           </div>
 
           {total != null && (

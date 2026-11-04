@@ -10,41 +10,19 @@ import StockLogo from '../../components/workspace/StockLogo';
 
 import { formatCurrency } from '../../../lib/formatters';
 import { useCurrencyRates } from '../../../lib/hooks/useCurrencyRates';
-import ImportCsvModal from '../../components/new/portfolio/ImportCsvModal';
 import AddHoldingModal from '../../components/new/portfolio/AddHoldingModal';
 import SellModal from '../../components/new/portfolio/SellModal';
-import TransferPieModal from '../../components/new/portfolio/TransferPieModal';
 import CashModal from '../../components/new/portfolio/CashModal';
 import GrowthChart from '../../components/new/portfolio/GrowthChart';
 import AllocationChart from '../../components/new/portfolio/AllocationChart';
 import PortfolioRing from '../../components/new/portfolio/PortfolioRing';
 import { openInNewTab } from '../../../lib/openInNewTab';
-import { sumIsaValue } from '../../../lib/isaInterest';
 import { NEW_COLORS as C } from '../../components/new/theme';
 
-const fmt = (val) => formatCurrency(val, '$');
-
-const CURRENCIES = { USD: '$', EUR: '€', GBP: '£' };
-
-function CurrencyPicker({ currency, onChange }) {
-  return (
-    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-      <span style={{ fontSize: '11px', color: C.text3, fontWeight: 700 }}>Moneda</span>
-      <div style={{ display: 'flex', borderRadius: '10px', overflow: 'hidden', border: `1px solid ${C.border}` }}>
-        {Object.keys(CURRENCIES).map(c => (
-          <button key={c} type="button" onClick={() => onChange(c)}
-            style={{
-              height: '32px', padding: '0 12px', fontSize: '11px', fontWeight: 700, border: 'none', cursor: 'pointer', fontFamily: 'inherit',
-              background: currency === c ? C.lime : C.surface,
-              color: currency === c ? C.ink : C.text2,
-            }}>
-            {c}
-          </button>
-        ))}
-      </div>
-    </div>
-  );
-}
+// Only used to show amounts in a stock's own native currency (e.g. a GBP-quoted VOD.L) —
+// there's no reporting-currency picker anymore, everything aggregates in USD.
+const CURRENCY_SYMBOLS = { USD: '$', EUR: '€', GBP: '£' };
+const fmtC = (val) => formatCurrency(val, '$');
 
 function NewPortfolioPageContent() {
   const { isSignedIn, isLoaded } = useUser();
@@ -79,18 +57,10 @@ function NewPortfolioPageContent() {
   const [loadError, setLoadError] = useState(null);
   const [showModal, setShowModal] = useState(false);
   const [showCashModal, setShowCashModal] = useState(false);
-  const [cashModalBucket, setCashModalBucket] = useState('main');
   const [buyTicker, setBuyTicker] = useState(null);
-  const [showImport, setShowImport] = useState(false);
   const [editLot, setEditLot] = useState(null);
   const [sellPosition, setSellPosition] = useState(null);
   const [snapshots, setSnapshots] = useState([]);
-  const [currency, setCurrency] = useState('USD');
-  const [editingPie, setEditingPie] = useState(null);
-  const [transferPie, setTransferPie] = useState(null);
-  const [newPieName, setNewPieName] = useState('');
-  const [draggedTicker, setDraggedTicker] = useState(null);
-  const [dragOverPie, setDragOverPie] = useState(null);
   const { rates, toUSD, toUSDStable, fxReady } = useCurrencyRates();
 
   const loadPortfolios = async () => {
@@ -125,11 +95,6 @@ function NewPortfolioPageContent() {
     }
   };
 
-  useEffect(() => {
-    const saved = localStorage.getItem('portfolio_currency');
-    if (saved && CURRENCIES[saved]) setCurrency(saved);
-  }, []);
-
   // Deep link from other pages (e.g. /etfs) that want to open the buy modal directly,
   // via /portfolio?buy=TICKER. Strip the param once consumed so a refresh doesn't reopen it.
   useEffect(() => {
@@ -139,11 +104,6 @@ function NewPortfolioPageContent() {
       router.replace('/portfolio');
     }
   }, [searchParams, router]);
-
-  const changeCurrency = (c) => { setCurrency(c); localStorage.setItem('portfolio_currency', c); };
-  const rate = currency === 'USD' ? 1 : (rates[currency] || 1);
-  const symbol = CURRENCIES[currency];
-  const fmtC = (val) => formatCurrency(val == null ? null : val * rate, symbol);
 
   useEffect(() => {
     if (!isPro) return;
@@ -192,8 +152,6 @@ function NewPortfolioPageContent() {
     };
   }, [isPro]);
 
-  const existingPies = useMemo(() => [...new Set(holdings.map(h => h.pie).filter(Boolean))].sort(), [holdings]);
-
   const buildPositions = (holdingsArray) => {
     const byTicker = {};
     holdingsArray.forEach(h => {
@@ -207,7 +165,7 @@ function NewPortfolioPageContent() {
       const s = stocks[p.ticker];
       const avgCost = p.cost / p.shares;
       // Avg cost / price are shown in their real trading currency (no conversion) — only
-      // the aggregate value/gain figures get converted to your reporting currency below.
+      // the aggregate value/gain figures get converted to USD below.
       const costCurrency = p.lots[0]?.cost_basis_currency || 'USD';
       const sameCostCurrency = p.lots.every(l => (l.cost_basis_currency || 'USD') === costCurrency);
       const avgCostNative = sameCostCurrency ? p.costNative / p.shares : null;
@@ -220,45 +178,26 @@ function NewPortfolioPageContent() {
       const marketValueNative = priceNative != null ? priceNative * p.shares : null;
       const gain = marketValue != null ? marketValue - p.cost : null;
       const gainPct = marketValue != null && p.cost > 0 ? (gain / p.cost) * 100 : null;
-      const pie = p.lots.find(l => l.pie)?.pie || null;
       return {
         ...p, avgCost, price, marketValue, gain, gainPct,
         avgCostNative, costCurrency, priceNative, priceCurrency, marketValueNative,
-        name: s?.name, sector: s?.sector, pie, pe: s?.pe, dividendYield: s?.dividendYield ?? s?.yield, dayChangePct: s?.priceChangePct,
+        name: s?.name, sector: s?.sector, pe: s?.pe, dividendYield: s?.dividendYield ?? s?.yield, dayChangePct: s?.priceChangePct,
       };
-    });
+    }).sort((a, b) => (b.marketValue ?? b.cost) - (a.marketValue ?? a.cost));
   };
 
   const positions = useMemo(() => buildPositions(holdings), [holdings, stocks, rates]);
   const allPositions = useMemo(() => buildPositions(allHoldings), [allHoldings, stocks, rates]);
 
-  const isaRatesByPortfolioId = useMemo(() => {
-    const map = {};
-    portfolios.forEach(p => { map[p.id] = p.isa_interest_rate; });
-    return map;
-  }, [portfolios]);
-
-  // Total non-invested money (main cash + the ISA pot's grown value) — used for net worth /
-  // portfolio total, where both count as part of what you hold. The account cards break this
-  // back out into main cash vs. ISA so it doesn't read as one lump sum.
+  // Cash is one simple balance per account (no ISA bucket).
   const cashTotal = useMemo(() => {
-    let total = 0;
     const transactions = selectedPortfolioId === 'all' ? allCashTransactions : allCashTransactions.filter(t => t.portfolio_id === selectedPortfolioId);
-    const mainTx = transactions.filter(t => (t.bucket || 'main') === 'main');
-    const isaTxUSD = transactions.filter(t => t.bucket === 'isa').map(t => ({ ...t, amount: toUSD(Number(t.amount), t.currency) }));
-    mainTx.forEach(t => total += toUSD(Number(t.amount), t.currency));
-    total += sumIsaValue(isaTxUSD, isaRatesByPortfolioId);
-    return total;
-  }, [allCashTransactions, selectedPortfolioId, rates, isaRatesByPortfolioId]);
+    return transactions.reduce((total, t) => total + toUSD(Number(t.amount), t.currency), 0);
+  }, [allCashTransactions, selectedPortfolioId, rates]);
 
-  const allCashTotal = useMemo(() => {
-    let total = 0;
-    const mainTx = allCashTransactions.filter(t => (t.bucket || 'main') === 'main');
-    const isaTxUSD = allCashTransactions.filter(t => t.bucket === 'isa').map(t => ({ ...t, amount: toUSD(Number(t.amount), t.currency) }));
-    mainTx.forEach(t => total += toUSD(Number(t.amount), t.currency));
-    total += sumIsaValue(isaTxUSD, isaRatesByPortfolioId);
-    return total;
-  }, [allCashTransactions, rates, isaRatesByPortfolioId]);
+  const allCashTotal = useMemo(() =>
+    allCashTransactions.reduce((total, t) => total + toUSD(Number(t.amount), t.currency), 0),
+    [allCashTransactions, rates]);
 
   const totals = useMemo(() => {
     const cost = positions.reduce((a, p) => a + p.cost, 0);
@@ -290,39 +229,13 @@ function NewPortfolioPageContent() {
     return { cost, value, gain, gainPct, investedValue };
   }, [allPositions, allCashTotal]);
 
-  // One card per real-world "account" — a portfolio's invested + spendable cash, and a
-  // separate card for its ISA pot if it has one, so they read as distinct accounts instead
-  // of one number that silently includes money you've moved into the ISA.
-  const portfoliosWithIsa = useMemo(() =>
-    portfolios.filter(p => allCashTransactions.some(t => t.portfolio_id === p.id && t.bucket === 'isa')),
-    [portfolios, allCashTransactions]);
-
-  const accountCards = useMemo(() => {
-    const cards = [];
-    portfolios.forEach(p => {
-      const pPositions = buildPositions(allHoldings.filter(h => h.portfolio_id === p.id));
-      const investedValue = pPositions.reduce((a, x) => a + (x.marketValue ?? x.cost), 0);
-      const pTx = allCashTransactions.filter(t => t.portfolio_id === p.id);
-      const mainCash = pTx.filter(t => (t.bucket || 'main') === 'main').reduce((sum, t) => sum + toUSD(Number(t.amount), t.currency), 0);
-      cards.push({ id: p.id, kind: 'portfolio', name: p.name, icon: /sipp/i.test(p.name) ? '🏦' : '📈', value: investedValue + mainCash });
-
-      const isaTxUSD = pTx.filter(t => t.bucket === 'isa').map(t => ({ ...t, amount: toUSD(Number(t.amount), t.currency) }));
-      if (isaTxUSD.length > 0) {
-        cards.push({
-          id: p.id, kind: 'isa', icon: '🪙',
-          name: portfoliosWithIsa.length > 1 ? `${p.name} · ISA en efectivo` : 'ISA en efectivo',
-          value: sumIsaValue(isaTxUSD, isaRatesByPortfolioId),
-        });
-      }
-    });
-    return cards;
-  }, [portfolios, allHoldings, allCashTransactions, stocks, rates, isaRatesByPortfolioId, portfoliosWithIsa]);
-
-  const openIsaCard = (portfolioId) => {
-    setSelectedPortfolioId(portfolioId);
-    setCashModalBucket('isa');
-    setShowCashModal(true);
-  };
+  // One card per account — invested value plus its cash balance.
+  const accountCards = useMemo(() => portfolios.map(p => {
+    const pPositions = buildPositions(allHoldings.filter(h => h.portfolio_id === p.id));
+    const investedValue = pPositions.reduce((a, x) => a + (x.marketValue ?? x.cost), 0);
+    const cash = allCashTransactions.filter(t => t.portfolio_id === p.id).reduce((sum, t) => sum + toUSD(Number(t.amount), t.currency), 0);
+    return { id: p.id, name: p.name, icon: /sipp/i.test(p.name) ? '🏦' : '📈', value: investedValue + cash };
+  }), [portfolios, allHoldings, allCashTransactions, stocks, rates]);
 
   useEffect(() => {
     // fxReady — without it, this can fire while fxRates is still the hardcoded fallback
@@ -349,43 +262,6 @@ function NewPortfolioPageContent() {
     return Object.entries(bySector).map(([name, value]) => ({ name, value })).sort((a, b) => b.value - a.value);
   }, [positions, totals.investedValue]);
 
-  const byPieChart = useMemo(() => {
-    if (totals.investedValue === 0) return [];
-    const byPie = {};
-    positions.forEach(p => {
-      const key = p.pie || 'Sin asignar';
-      const val = Math.max(0, p.marketValue ?? p.cost);
-      if (val > 0) {
-        byPie[key] = (byPie[key] || 0) + (val / Math.abs(totals.investedValue)) * 100;
-      }
-    });
-    return Object.entries(byPie).map(([name, value]) => ({ name, value })).sort((a, b) => b.value - a.value);
-  }, [positions, totals.investedValue]);
-
-  const groupedByPie = useMemo(() => {
-    const groups = {};
-    positions.forEach(p => {
-      const key = p.pie || 'Sin asignar';
-      (groups[key] ||= []).push(p);
-    });
-    return Object.entries(groups)
-      .map(([name, items]) => {
-        const cost = items.reduce((a, p) => a + p.cost, 0);
-        const value = items.reduce((a, p) => a + (p.marketValue ?? p.cost), 0);
-        const gain = value - cost;
-        const gainPct = cost > 0 ? (gain / cost) * 100 : 0;
-        return { name, items: items.sort((a, b) => (b.marketValue ?? 0) - (a.marketValue ?? 0)), cost, value, gain, gainPct };
-      })
-      .sort((a, b) => (a.name === 'Sin asignar' ? 1 : b.name === 'Sin asignar' ? -1 : b.value - a.value));
-  }, [positions]);
-
-  const hasPies = groupedByPie.length > 1 || (groupedByPie.length === 1 && groupedByPie[0].name !== 'Sin asignar');
-
-  const removeLot = async (id) => {
-    await fetch('/api/portfolio', { method: 'DELETE', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id }) });
-    load();
-  };
-
   const removePosition = async (ticker) => {
     if (confirm(`¿Seguro que quieres eliminar todas las posiciones de ${ticker}?`)) {
       await fetch('/api/portfolio', { method: 'DELETE', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ ticker }) });
@@ -402,46 +278,8 @@ function NewPortfolioPageContent() {
     setEditLot(lastLot);
   };
 
-  const movePositionToPie = async (position, targetPieName) => {
-    const targetPie = targetPieName === 'Sin asignar' ? null : targetPieName;
-    if ((position.pie || null) === targetPie) return;
-    try {
-      await Promise.all(position.lots.map(l => fetch('/api/portfolio', {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          id: l.id,
-          shares: l.shares,
-          costBasis: l.cost_basis,
-          purchaseDate: l.purchase_date,
-          pie: targetPie,
-          costBasisCurrency: l.cost_basis_currency,
-        }),
-      })));
-      load();
-    } catch (err) {
-      console.error('Error moving holding to pie:', err);
-    }
-  };
-
-  const handleRenamePie = async (oldPie, newPie) => {
-    if (!newPie || !newPie.trim() || newPie.trim() === oldPie) {
-      setEditingPie(null);
-      return;
-    }
-    try {
-      const res = await fetch('/api/portfolio', {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ oldPie, newPie: newPie.trim() }),
-      });
-      if (res.ok) {
-        setEditingPie(null);
-        load();
-      }
-    } catch (err) {
-      console.error('Error renaming pie:', err);
-    }
+  const connectTrading212 = () => {
+    alert('La conexión con Trading 212 llega pronto — de momento añade tus posiciones a mano.');
   };
 
   const pageShellStyle = { width: '100%', minHeight: '100vh', boxSizing: 'border-box', background: C.bg, color: C.ink, fontFamily: "'Plus Jakarta Sans', system-ui, sans-serif", overflowX: 'hidden' };
@@ -474,7 +312,7 @@ function NewPortfolioPageContent() {
             <div style={{ background: C.surface, border: `1px solid ${C.border}`, borderRadius: '20px', padding: '36px 28px', textAlign: 'center' }}>
               <div style={{ fontSize: '15px', fontWeight: 700, marginBottom: '8px' }}>El portfolio es cosa de Bulltrace Pro</div>
               <div style={{ fontSize: '13px', color: C.text2, marginBottom: '18px', maxWidth: '420px', marginLeft: 'auto', marginRight: 'auto' }}>
-                Lleva el seguimiento de tus posiciones reales, coste medio, rendimiento y cestas temáticas — 14 días gratis para probarlo.
+                Lleva el seguimiento de tus posiciones reales, coste medio y rendimiento — 14 días gratis para probarlo.
               </div>
               <Link href="/pricing" style={{ display: 'inline-block', padding: '10px 22px', borderRadius: '12px', background: C.lime, color: C.ink, fontWeight: 700, fontSize: '13px', textDecoration: 'none' }}>Ver planes →</Link>
             </div>
@@ -499,17 +337,10 @@ function NewPortfolioPageContent() {
             <h1 style={{ margin: '0 0 4px', fontSize: '24px', fontWeight: 800, letterSpacing: '-0.02em' }}>Portfolio</h1>
             <div style={{ fontSize: '13px', color: C.text2 }}>Sigue tus posiciones y su rendimiento.</div>
           </div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap' }}>
-            <CurrencyPicker currency={currency} onChange={changeCurrency} />
-            <button type="button" onClick={() => setShowImport(true)}
-              style={{ height: '36px', padding: '0 16px', borderRadius: '12px', border: `1px solid ${C.border}`, background: 'transparent', color: C.text2, fontWeight: 700, fontSize: '12px', cursor: 'pointer', fontFamily: 'inherit' }}>
-              Importar CSV
-            </button>
-            <button type="button" onClick={() => { setCashModalBucket('main'); setShowCashModal(true); }}
-              style={{ height: '40px', padding: '0 18px', borderRadius: '12px', border: 'none', background: C.lime, color: C.ink, fontWeight: 700, fontSize: '13px', cursor: 'pointer', fontFamily: 'inherit' }}>
-              ⇄ Gestionar caja
-            </button>
-          </div>
+          <button type="button" onClick={() => setShowCashModal(true)}
+            style={{ height: '40px', padding: '0 18px', borderRadius: '12px', border: 'none', background: C.lime, color: C.ink, fontWeight: 700, fontSize: '13px', cursor: 'pointer', fontFamily: 'inherit' }}>
+            ⇄ Gestionar caja
+          </button>
         </div>
 
         {loading ? (
@@ -522,10 +353,16 @@ function NewPortfolioPageContent() {
           <div style={{ background: C.surface, border: `1px solid ${C.border}`, borderRadius: '20px', padding: '36px 28px', textAlign: 'center' }}>
             <div style={{ fontSize: '15px', fontWeight: 700, marginBottom: '6px' }}>Aún no tienes posiciones</div>
             <div style={{ fontSize: '13px', color: C.text2, marginBottom: '18px' }}>Añade tu primera posición para empezar a seguirla.</div>
-            <button type="button" onClick={() => setShowModal(true)}
-              style={{ padding: '10px 22px', borderRadius: '12px', border: 'none', background: C.lime, color: C.ink, fontWeight: 700, fontSize: '13px', cursor: 'pointer', fontFamily: 'inherit' }}>
-              + Añadir posición
-            </button>
+            <div style={{ display: 'flex', gap: '10px', justifyContent: 'center', flexWrap: 'wrap' }}>
+              <button type="button" onClick={() => setShowModal(true)}
+                style={{ padding: '10px 22px', borderRadius: '12px', border: 'none', background: C.lime, color: C.ink, fontWeight: 700, fontSize: '13px', cursor: 'pointer', fontFamily: 'inherit' }}>
+                + Añadir posición
+              </button>
+              <button type="button" onClick={connectTrading212}
+                style={{ padding: '10px 22px', borderRadius: '12px', border: `1px solid ${C.border}`, background: 'transparent', color: C.text2, fontWeight: 700, fontSize: '13px', cursor: 'pointer', fontFamily: 'inherit' }}>
+                🔌 Conectar Trading 212
+              </button>
+            </div>
           </div>
         ) : (
           <>
@@ -539,10 +376,10 @@ function NewPortfolioPageContent() {
 
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(150px, 1fr))', gap: '12px' }}>
               {accountCards.map(card => {
-                const selected = card.kind === 'portfolio' && selectedPortfolioId === card.id;
+                const selected = selectedPortfolioId === card.id;
                 return (
-                  <div key={`${card.kind}-${card.id}`}
-                    onClick={() => card.kind === 'portfolio' ? setSelectedPortfolioId(card.id) : openIsaCard(card.id)}
+                  <div key={card.id}
+                    onClick={() => setSelectedPortfolioId(card.id)}
                     style={{
                       cursor: 'pointer', borderRadius: '16px', padding: '14px', boxSizing: 'border-box',
                       border: `1px solid ${selected ? C.lime : C.border}`,
@@ -581,14 +418,18 @@ function NewPortfolioPageContent() {
               ))}
             </div>
 
-            {selectedPortfolioId !== 'all' && (
-              <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
+            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px', flexWrap: 'wrap' }}>
+              <button type="button" onClick={connectTrading212}
+                style={{ height: '34px', padding: '0 16px', borderRadius: '12px', border: `1px solid ${C.border}`, background: 'transparent', color: C.text2, fontWeight: 700, fontSize: '12px', cursor: 'pointer', fontFamily: 'inherit' }}>
+                🔌 Conectar Trading 212
+              </button>
+              {selectedPortfolioId !== 'all' && (
                 <button type="button" onClick={() => setShowModal(true)}
                   style={{ height: '34px', padding: '0 16px', borderRadius: '12px', border: 'none', background: C.lime, color: C.ink, fontWeight: 700, fontSize: '12px', cursor: 'pointer', fontFamily: 'inherit' }}>
                   + Añadir posición a {portfolios.find(p => p.id === selectedPortfolioId)?.name}
                 </button>
-              </div>
-            )}
+              )}
+            </div>
 
             <div className="new-portfolio-stats-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '12px' }}>
               <div style={{ minWidth: 0, background: C.surface, border: `1px solid ${C.border}`, borderRadius: '16px', padding: '14px', boxSizing: 'border-box' }}>
@@ -607,172 +448,81 @@ function NewPortfolioPageContent() {
               </div>
             </div>
 
-            <GrowthChart snapshots={snapshots} currentValue={netWorthTotals.value} currentCost={netWorthTotals.cost} rate={rate} symbol={symbol} />
+            <GrowthChart snapshots={snapshots} currentValue={netWorthTotals.value} currentCost={netWorthTotals.cost} rate={1} symbol="$" />
 
-            {(bySectorChart.length > 1 || hasPies) && (
-              <div style={{ display: 'grid', gridTemplateColumns: `repeat(${(bySectorChart.length > 1 ? 1 : 0) + (hasPies ? 1 : 0)}, 1fr)`, gap: '12px' }} className="new-portfolio-alloc-grid">
-                {bySectorChart.length > 1 && <AllocationChart title="ASIGNACIÓN POR SECTOR" data={bySectorChart} />}
-                {hasPies && <AllocationChart title="ASIGNACIÓN POR CESTA" data={byPieChart} />}
-              </div>
-            )}
+            {bySectorChart.length > 1 && <AllocationChart title="ASIGNACIÓN POR SECTOR" data={bySectorChart} />}
 
-            {groupedByPie.map(group => {
-              const groupAllocation = totals.investedValue > 0 ? (group.value / totals.investedValue) * 100 : 0;
-              const isEditing = editingPie === group.name;
-              const isDragOver = dragOverPie === group.name;
-              return (
-                <div key={group.name}
-                  style={{
-                    outline: isDragOver ? `2px dashed ${C.green}` : '2px dashed transparent',
-                    outlineOffset: '4px',
-                    transition: 'outline-color 0.1s ease',
-                    borderRadius: '20px',
-                  }}
-                  onDragOver={e => { if (!draggedTicker) return; e.preventDefault(); e.dataTransfer.dropEffect = 'move'; if (dragOverPie !== group.name) setDragOverPie(group.name); }}
-                  onDragLeave={e => { if (e.currentTarget.contains(e.relatedTarget)) return; setDragOverPie(prev => (prev === group.name ? null : prev)); }}
-                  onDrop={e => {
-                    e.preventDefault();
-                    const position = positions.find(p => p.ticker === draggedTicker);
-                    if (position) movePositionToPie(position, group.name);
-                    setDraggedTicker(null);
-                    setDragOverPie(null);
-                  }}
-                >
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '4px 6px 10px', flexWrap: 'wrap' }}>
-                    {isEditing ? (
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                        <input
-                          type="text"
-                          value={newPieName}
-                          onChange={e => setNewPieName(e.target.value)}
-                          onKeyDown={e => {
-                            if (e.key === 'Enter') handleRenamePie(group.name, newPieName);
-                            if (e.key === 'Escape') setEditingPie(null);
-                          }}
-                          autoFocus
-                          style={{
-                            background: '#FDFBF6', border: `1px solid ${C.border}`, color: C.ink, fontSize: '12px', fontWeight: 700,
-                            padding: '5px 10px', outline: 'none', borderRadius: '8px', width: '160px', fontFamily: 'inherit',
-                          }}
-                        />
-                        <button type="button" onClick={() => handleRenamePie(group.name, newPieName)}
-                          style={{ fontSize: '11px', padding: '6px 10px', height: '28px', borderRadius: '8px', border: 'none', background: C.lime, color: C.ink, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit' }}>
-                          Guardar
-                        </button>
-                        <button type="button" onClick={() => setEditingPie(null)}
-                          style={{ fontSize: '11px', padding: '6px 10px', height: '28px', borderRadius: '8px', border: `1px solid ${C.border}`, background: 'transparent', color: C.text2, cursor: 'pointer', fontFamily: 'inherit' }}>
-                          Cancelar
-                        </button>
-                      </div>
-                    ) : (
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                        <div style={{ fontSize: '14px', fontWeight: 800, color: C.ink }}>{group.name}</div>
-                        <button type="button"
-                          onClick={() => { setEditingPie(group.name); setNewPieName(group.name === 'Sin asignar' ? '' : group.name); }}
-                          title={`Renombrar cesta "${group.name}"`}
-                          style={{ background: 'none', border: 'none', color: C.text3, cursor: 'pointer', opacity: 0.6, padding: '2px', display: 'inline-flex', alignItems: 'center', flexShrink: 0 }}>
-                          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                            <path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"/>
-                          </svg>
-                        </button>
-                        {selectedPortfolioId !== 'all' && group.name !== 'Sin asignar' && (
-                          <button type="button" onClick={() => setTransferPie(group.name)}
-                            title={`Transferir "${group.name}" a otro portfolio`}
-                            style={{ background: 'none', border: 'none', color: C.text3, cursor: 'pointer', opacity: 0.6, padding: '2px', display: 'inline-flex', alignItems: 'center', flexShrink: 0 }}>
-                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                              <path d="M8 7h12m0 0l-4-4m4 4l-4 4m4 6H4m0 0l4 4m-4-4l4-4"/>
-                            </svg>
-                          </button>
-                        )}
-                      </div>
-                    )}
-                    <div style={{ fontSize: '12px', color: C.text3 }}>{group.items.length} posición{group.items.length !== 1 ? 'es' : ''} · {groupAllocation.toFixed(1)}% del portfolio</div>
-                    <div style={{ marginLeft: 'auto', fontSize: '13px', fontWeight: 700, color: C.ink }}>{fmtC(group.value)}</div>
-                    <div style={{ fontSize: '13px', fontWeight: 700, color: group.gain >= 0 ? C.green : C.red }}>
-                      {group.gain >= 0 ? '+' : ''}{fmtC(group.gain)} ({group.gainPct >= 0 ? '+' : ''}{group.gainPct.toFixed(1)}%)
-                    </div>
-                  </div>
-
-                  <div style={{ background: C.surface, border: `1px solid ${C.border}`, borderRadius: '20px', overflowX: 'auto', boxSizing: 'border-box' }}>
-                    <div style={{ minWidth: '880px' }}>
-                      <div style={{ display: 'flex', alignItems: 'center', padding: '10px 16px', borderBottom: `1px solid ${C.borderSoft}`, fontSize: '10px', fontWeight: 700, color: C.text3, textTransform: 'uppercase', letterSpacing: '0.4px' }}>
-                        <div style={{ flex: '1 1 220px', textAlign: 'left' }}>Acción</div>
-                        <div style={{ width: '56px', textAlign: 'center' }}>1M</div>
-                        <div style={{ width: '80px', textAlign: 'right' }}>Acciones</div>
-                        <div style={{ width: '90px', textAlign: 'right' }}>Coste medio</div>
-                        <div style={{ width: '80px', textAlign: 'right' }}>Precio</div>
-                        <div style={{ width: '70px', textAlign: 'right' }}>Día</div>
-                        <div style={{ width: '110px', textAlign: 'right' }}>Valor de mercado</div>
-                        <div style={{ width: '140px', textAlign: 'right' }}>Ganancia/pérdida</div>
-                        <div style={{ width: '140px', textAlign: 'right' }}></div>
-                      </div>
-                      {group.items.map(p => {
-                        const lastLot = [...p.lots].sort((a, b) => new Date(b.created_at) - new Date(a.created_at))[0];
-                        return (
-                          <div key={p.ticker} onClick={() => openInNewTab(`/stock/${p.ticker}`)}
-                            draggable
-                            onDragStart={e => { e.dataTransfer.effectAllowed = 'move'; e.dataTransfer.setData('text/plain', p.ticker); setDraggedTicker(p.ticker); }}
-                            onDragEnd={() => { setDraggedTicker(null); setDragOverPie(null); }}
-                            style={{ display: 'flex', alignItems: 'center', padding: '12px 16px', borderTop: `1px solid ${C.borderSoft}`, cursor: 'pointer', opacity: draggedTicker === p.ticker ? 0.4 : 1 }}>
-                            <div style={{ flex: '1 1 220px', display: 'flex', alignItems: 'center', gap: '10px', minWidth: 0 }}>
-                              <span title="Arrastra para mover a otra cesta" style={{ cursor: 'grab', color: C.text3, fontSize: '13px', lineHeight: 1, userSelect: 'none' }}>⠿</span>
-                              <StockLogo ticker={p.ticker} size={28} />
-                              <div style={{ minWidth: 0 }}>
-                                <div style={{ fontWeight: 700, color: C.ink, display: 'flex', alignItems: 'center', gap: '6px', fontSize: '13px' }}>
-                                  {p.ticker}
-                                  <MarketStatusDot ticker={p.ticker} />
-                                </div>
-                                <div style={{ color: C.text3, fontSize: '11px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{p.name || '…'}</div>
-                              </div>
-                            </div>
-                            <div style={{ width: '56px', textAlign: 'center' }}>
-                              {sparklines[p.ticker] && <Sparkline data={sparklines[p.ticker]} width={44} height={22} />}
-                            </div>
-                            <div style={{ width: '80px', textAlign: 'right', fontSize: '12px', color: C.ink }}>{p.shares.toLocaleString(undefined, { maximumFractionDigits: 4 })}</div>
-                            <div style={{ width: '90px', textAlign: 'right', fontSize: '12px', color: C.ink }}>{p.avgCostNative != null ? formatCurrency(p.avgCostNative, CURRENCIES[p.costCurrency] || p.costCurrency) : fmtC(p.avgCost)}</div>
-                            <div style={{ width: '80px', textAlign: 'right', fontSize: '12px', fontWeight: 700, color: C.ink }}>{p.priceNative != null ? formatCurrency(p.priceNative, CURRENCIES[p.priceCurrency] || p.priceCurrency) : '—'}</div>
-                            <div style={{ width: '70px', textAlign: 'right', fontSize: '12px', color: p.dayChangePct == null ? C.text3 : p.dayChangePct >= 0 ? C.green : C.red }}>
-                              {p.dayChangePct != null ? `${p.dayChangePct >= 0 ? '+' : ''}${p.dayChangePct.toFixed(2)}%` : '—'}
-                            </div>
-                            <div style={{ width: '110px', textAlign: 'right', fontSize: '12px', fontWeight: 700, color: C.ink }}>{fmtC(p.marketValue ?? p.cost)}</div>
-                            <div style={{ width: '140px', textAlign: 'right', fontSize: '12px', fontWeight: 700, color: p.gain == null ? C.text3 : p.gain >= 0 ? C.green : C.red }}>
-                              {p.gain == null ? '—' : `${p.gain >= 0 ? '+' : ''}${fmtC(p.gain)} (${p.gainPct >= 0 ? '+' : ''}${p.gainPct.toFixed(1)}%)`}
-                            </div>
-                            <div style={{ width: '140px', textAlign: 'right', whiteSpace: 'nowrap' }} onClick={e => e.stopPropagation()}>
-                              <button type="button" onClick={() => setBuyTicker(p.ticker)} title="Comprar más acciones"
-                                style={{ fontSize: '10px', padding: '6px 10px', marginRight: '4px', borderRadius: '8px', border: 'none', background: C.lime, color: C.ink, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit' }}>
-                                Comprar
-                              </button>
-                              <button type="button" onClick={() => setSellPosition(p)} title="Vender acciones"
-                                style={{ fontSize: '10px', padding: '5px 9px', marginRight: '4px', borderRadius: '8px', border: `1px solid ${C.border}`, background: 'transparent', color: C.text2, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit' }}>
-                                Vender
-                              </button>
-                              <button type="button" onClick={() => setEditLot(lastLot)} title={`Editar última entrada: ${lastLot.shares} acc. @ ${lastLot.cost_basis} ${lastLot.cost_basis_currency} el ${lastLot.purchase_date}`}
-                                style={{ background: 'none', border: 'none', color: C.text3, cursor: 'pointer', fontSize: '13px', marginLeft: '2px' }}>
-                                ✎
-                              </button>
-                              <button type="button" onClick={() => removePosition(p.ticker)} title={`Eliminar toda la posición de ${p.ticker}`}
-                                style={{ background: 'none', border: 'none', color: C.text3, cursor: 'pointer', fontSize: '13px', marginLeft: '8px' }}>
-                                ✕
-                              </button>
-                            </div>
-                          </div>
-                        );
-                      })}
-                    </div>
-                  </div>
+            <div style={{ background: C.surface, border: `1px solid ${C.border}`, borderRadius: '20px', overflowX: 'auto', boxSizing: 'border-box' }}>
+              <div style={{ minWidth: '860px' }}>
+                <div style={{ display: 'flex', alignItems: 'center', padding: '10px 16px', borderBottom: `1px solid ${C.borderSoft}`, fontSize: '10px', fontWeight: 700, color: C.text3, textTransform: 'uppercase', letterSpacing: '0.4px' }}>
+                  <div style={{ flex: '1 1 220px', textAlign: 'left' }}>Acción</div>
+                  <div style={{ width: '56px', textAlign: 'center' }}>1M</div>
+                  <div style={{ width: '80px', textAlign: 'right' }}>Acciones</div>
+                  <div style={{ width: '90px', textAlign: 'right' }}>Coste medio</div>
+                  <div style={{ width: '80px', textAlign: 'right' }}>Precio</div>
+                  <div style={{ width: '70px', textAlign: 'right' }}>Día</div>
+                  <div style={{ width: '110px', textAlign: 'right' }}>Valor de mercado</div>
+                  <div style={{ width: '140px', textAlign: 'right' }}>Ganancia/pérdida</div>
+                  <div style={{ width: '140px', textAlign: 'right' }}></div>
                 </div>
-              );
-            })}
+                {positions.map(p => {
+                  const lastLot = [...p.lots].sort((a, b) => new Date(b.created_at) - new Date(a.created_at))[0];
+                  return (
+                    <div key={p.ticker} onClick={() => openInNewTab(`/stock/${p.ticker}`)}
+                      style={{ display: 'flex', alignItems: 'center', padding: '12px 16px', borderTop: `1px solid ${C.borderSoft}`, cursor: 'pointer' }}>
+                      <div style={{ flex: '1 1 220px', display: 'flex', alignItems: 'center', gap: '10px', minWidth: 0 }}>
+                        <StockLogo ticker={p.ticker} size={28} />
+                        <div style={{ minWidth: 0 }}>
+                          <div style={{ fontWeight: 700, color: C.ink, display: 'flex', alignItems: 'center', gap: '6px', fontSize: '13px' }}>
+                            {p.ticker}
+                            <MarketStatusDot ticker={p.ticker} />
+                          </div>
+                          <div style={{ color: C.text3, fontSize: '11px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{p.name || '…'}</div>
+                        </div>
+                      </div>
+                      <div style={{ width: '56px', textAlign: 'center' }}>
+                        {sparklines[p.ticker] && <Sparkline data={sparklines[p.ticker]} width={44} height={22} />}
+                      </div>
+                      <div style={{ width: '80px', textAlign: 'right', fontSize: '12px', color: C.ink }}>{p.shares.toLocaleString(undefined, { maximumFractionDigits: 4 })}</div>
+                      <div style={{ width: '90px', textAlign: 'right', fontSize: '12px', color: C.ink }}>{p.avgCostNative != null ? formatCurrency(p.avgCostNative, CURRENCY_SYMBOLS[p.costCurrency] || p.costCurrency) : fmtC(p.avgCost)}</div>
+                      <div style={{ width: '80px', textAlign: 'right', fontSize: '12px', fontWeight: 700, color: C.ink }}>{p.priceNative != null ? formatCurrency(p.priceNative, CURRENCY_SYMBOLS[p.priceCurrency] || p.priceCurrency) : '—'}</div>
+                      <div style={{ width: '70px', textAlign: 'right', fontSize: '12px', color: p.dayChangePct == null ? C.text3 : p.dayChangePct >= 0 ? C.green : C.red }}>
+                        {p.dayChangePct != null ? `${p.dayChangePct >= 0 ? '+' : ''}${p.dayChangePct.toFixed(2)}%` : '—'}
+                      </div>
+                      <div style={{ width: '110px', textAlign: 'right', fontSize: '12px', fontWeight: 700, color: C.ink }}>{fmtC(p.marketValue ?? p.cost)}</div>
+                      <div style={{ width: '140px', textAlign: 'right', fontSize: '12px', fontWeight: 700, color: p.gain == null ? C.text3 : p.gain >= 0 ? C.green : C.red }}>
+                        {p.gain == null ? '—' : `${p.gain >= 0 ? '+' : ''}${fmtC(p.gain)} (${p.gainPct >= 0 ? '+' : ''}${p.gainPct.toFixed(1)}%)`}
+                      </div>
+                      <div style={{ width: '140px', textAlign: 'right', whiteSpace: 'nowrap' }} onClick={e => e.stopPropagation()}>
+                        <button type="button" onClick={() => setBuyTicker(p.ticker)} title="Comprar más acciones"
+                          style={{ fontSize: '10px', padding: '6px 10px', marginRight: '4px', borderRadius: '8px', border: 'none', background: C.lime, color: C.ink, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit' }}>
+                          Comprar
+                        </button>
+                        <button type="button" onClick={() => setSellPosition(p)} title="Vender acciones"
+                          style={{ fontSize: '10px', padding: '5px 9px', marginRight: '4px', borderRadius: '8px', border: `1px solid ${C.border}`, background: 'transparent', color: C.text2, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit' }}>
+                          Vender
+                        </button>
+                        <button type="button" onClick={() => setEditLot(lastLot)} title={`Editar última entrada: ${lastLot.shares} acc. @ ${lastLot.cost_basis} ${lastLot.cost_basis_currency} el ${lastLot.purchase_date}`}
+                          style={{ background: 'none', border: 'none', color: C.text3, cursor: 'pointer', fontSize: '13px', marginLeft: '2px' }}>
+                          ✎
+                        </button>
+                        <button type="button" onClick={() => removePosition(p.ticker)} title={`Eliminar toda la posición de ${p.ticker}`}
+                          style={{ background: 'none', border: 'none', color: C.text3, cursor: 'pointer', fontSize: '13px', marginLeft: '8px' }}>
+                          ✕
+                        </button>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
           </>
         )}
 
-        {(showModal || buyTicker) && <AddHoldingModal presetTicker={buyTicker} onClose={() => { setShowModal(false); setBuyTicker(null); }} onAdded={() => { setShowModal(false); setBuyTicker(null); load(); }} existingPies={existingPies} defaultCurrency={currency} portfolioId={selectedPortfolioId} portfolios={portfolios} />}
-        {showImport && <ImportCsvModal onClose={() => setShowImport(false)} onImported={() => { setShowImport(false); load(); }} defaultCurrency={currency} portfolioId={selectedPortfolioId} portfolios={portfolios} />}
-        {showCashModal && <CashModal portfolioId={selectedPortfolioId} portfolios={portfolios} initialBucket={cashModalBucket} transactions={selectedPortfolioId === 'all' ? allCashTransactions : allCashTransactions.filter(t => t.portfolio_id === selectedPortfolioId)} onClose={() => setShowCashModal(false)} onAdded={() => { load(); }} />}
-        {editLot && <AddHoldingModal onClose={() => setEditLot(null)} onAdded={() => { setEditLot(null); load(); }} existingPies={existingPies} defaultCurrency={currency} editLot={editLot} portfolioId={selectedPortfolioId} portfolios={portfolios} />}
+        {(showModal || buyTicker) && <AddHoldingModal presetTicker={buyTicker} onClose={() => { setShowModal(false); setBuyTicker(null); }} onAdded={() => { setShowModal(false); setBuyTicker(null); load(); }} portfolioId={selectedPortfolioId} portfolios={portfolios} />}
+        {showCashModal && <CashModal portfolioId={selectedPortfolioId} portfolios={portfolios} transactions={selectedPortfolioId === 'all' ? allCashTransactions : allCashTransactions.filter(t => t.portfolio_id === selectedPortfolioId)} onClose={() => setShowCashModal(false)} onAdded={() => { load(); }} />}
+        {editLot && <AddHoldingModal onClose={() => setEditLot(null)} onAdded={() => { setEditLot(null); load(); }} editLot={editLot} portfolioId={selectedPortfolioId} portfolios={portfolios} />}
         {sellPosition && <SellModal position={sellPosition} onClose={() => setSellPosition(null)} onSold={() => { setSellPosition(null); load(); }} portfolioId={selectedPortfolioId} />}
-        {transferPie && <TransferPieModal pie={transferPie} sourcePortfolioId={selectedPortfolioId} portfolios={portfolios} onClose={() => setTransferPie(null)} onTransferred={() => { setTransferPie(null); loadPortfolios(); load(); }} />}
       </div>
     </div>
   );
