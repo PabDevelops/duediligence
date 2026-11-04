@@ -5,6 +5,15 @@ import { NEW_COLORS as C } from '../theme';
 const inputStyle = { width: '100%', height: '42px', borderRadius: '12px', border: `1px solid ${C.border}`, padding: '0 14px', fontSize: '14px', fontFamily: 'inherit', background: '#FDFBF6', color: C.ink, boxSizing: 'border-box' };
 const labelStyle = { fontSize: '11px', fontWeight: 700, color: C.text3, textTransform: 'uppercase', letterSpacing: '0.5px' };
 
+const STEPS = [
+  <>Abre la app de <strong>Trading 212</strong> en tu móvil.</>,
+  <>Ve a tu perfil (arriba a la izquierda) → <strong>Ajustes</strong> → <strong>API (Beta)</strong>.</>,
+  <>Pulsa <strong>Generar clave de API</strong>.</>,
+  <>Activa al menos los permisos de solo lectura de <strong>cartera</strong> y <strong>cuenta</strong> — no actives nada de órdenes, Bulltrace no necesita (ni puede) operar.</>,
+  <>Trading 212 te muestra la clave <strong>una sola vez</strong>: cópiala ahora.</>,
+  <>Vuelve aquí y pégala abajo.</>,
+];
+
 export default function ConnectTrading212Modal({ portfolio, onClose, onConnected }) {
   const [apiKey, setApiKey] = useState('');
   const [saving, setSaving] = useState(false);
@@ -39,11 +48,9 @@ export default function ConnectTrading212Modal({ portfolio, onClose, onConnected
           Esta cuenta dejará de aceptar altas manuales.
         </div>
 
-        <div style={{ fontSize: '12px', color: C.text2, background: C.bg, border: `1px solid ${C.border}`, borderRadius: '12px', padding: '12px 14px', marginBottom: '18px' }}>
-          En la app de Trading 212: <strong>Ajustes → API</strong>, genera una clave nueva
-          y activa al menos los permisos de <strong>cartera</strong> y <strong>cuenta</strong>.
-          Solo lectura — Bulltrace nunca puede operar con tu dinero.
-        </div>
+        <ol style={{ fontSize: '12px', color: C.text2, background: C.bg, border: `1px solid ${C.border}`, borderRadius: '12px', padding: '14px 14px 14px 30px', marginBottom: '18px', display: 'flex', flexDirection: 'column', gap: '8px', listStyleType: 'decimal' }}>
+          {STEPS.map((step, i) => <li key={i} style={{ lineHeight: 1.4 }}>{step}</li>)}
+        </ol>
 
         <form onSubmit={submit} style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
           <div>
