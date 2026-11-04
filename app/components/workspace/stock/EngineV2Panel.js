@@ -39,6 +39,28 @@ function Dimension({ title, score, label, note, invert }) {
   );
 }
 
+// Potencial shows the word (and a range when a different reasonable weighting lands on a
+// different word) instead of the bare 0-100 number: "67" implies a precision the model doesn't
+// have — potential.sensitivity already proves that by recomputing the score under 4 weight sets,
+// it just wasn't shown. The number stays in the data (still usable to sort/filter stocks
+// elsewhere), it just isn't the headline here.
+function rangeText(range) {
+  return `${range.low} a ${range.high.replace(/^Potencial /, '')}`;
+}
+
+function PotentialDimension({ potential }) {
+  const text = potential.score == null ? 'No concluyente' : potential.sensitivity?.labelRange ? rangeText(potential.sensitivity.labelRange) : potential.label;
+  return (
+    <div style={{ background: C.bg, borderRadius: '14px', padding: '12px 14px', display: 'flex', flexDirection: 'column', gap: '6px', minWidth: 0 }}>
+      <div style={eyebrow}>POTENCIAL</div>
+      <div style={{ fontSize: '15px', fontWeight: 800, lineHeight: 1.2 }}>{text}</div>
+      {potential.score == null
+        ? <div style={{ fontSize: '11px', color: C.text2, lineHeight: 1.4 }}>{potential.reason}</div>
+        : potential.sensitivity?.labelRange && <div style={{ fontSize: '11px', color: C.text2, lineHeight: 1.4 }}>Cambia según cómo se pondere; no lo tomes como una cifra única.</div>}
+    </div>
+  );
+}
+
 function Block({ block, extra, defaultOpen }) {
   return (
     <details open={defaultOpen} style={{ borderTop: `1px solid ${C.borderSoft}`, paddingTop: '10px' }}>
@@ -170,11 +192,10 @@ export default function EngineV2Panel({ engine, sym = '$' }) {
             <div style={{ fontSize: '15px', fontWeight: 800, lineHeight: 1.2 }}>{risk.label}</div>
             <div style={{ fontSize: '11px', color: C.text2, lineHeight: 1.4 }}>{risk.counts.confirmed} {risk.counts.confirmed === 1 ? 'confirmado' : 'confirmados'}, {risk.counts.potential} {risk.counts.potential === 1 ? 'posible' : 'posibles'}, {risk.counts.notEvaluable} no {risk.counts.notEvaluable === 1 ? 'evaluable' : 'evaluables'}</div>
           </div>
-          <Dimension title="Potencial" score={potential.score} label={potential.label} note={potential.score == null ? potential.reason : null} />
+          <PotentialDimension potential={potential} />
         </div>
         {potential.pattern && <div style={{ ...body, background: C.bg, borderRadius: '12px', padding: '10px 12px' }}>{potential.pattern.text}</div>}
         {potential.caps?.length > 0 && <div style={{ fontSize: '12px', color: C.text2 }}>{potential.caps.join(' ')}</div>}
-        {potential.sensitivity?.dependsOnWeights && <div style={{ fontSize: '12px', color: '#8A5E12' }}>{potential.sensitivity.note}</div>}
         <div style={{ fontSize: '11px', color: C.text3 }}>{potential.notAdvice ?? 'Las puntuaciones no son recomendaciones de compra ni de venta.'}</div>
 
         <Block block={explanations.quality} defaultOpen={false} extra={quality.score != null && (
