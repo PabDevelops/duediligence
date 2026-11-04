@@ -200,7 +200,15 @@ function NewStockPageContent({ params }) {
   const verdict = engineVerdict(entryProjection.engine, companyName);
   const badge = verdict ? VERDICT_BADGE[verdict.tier] : null;
   const investigateQs = engineInvestigateQuestions(entryProjection.engine);
-  const qualityScore = entryProjection.engine?.quality?.score ?? null;
+  const quality = entryProjection.engine?.quality ?? null;
+  const qualityScore = quality?.score ?? null;
+  // "92/100" implies a precision the model doesn't have — quality.sensitivity already proves
+  // that by recomputing the score under 4 weightings of its 9 components (same mechanism as
+  // Potencial). Shown as the word, widened into a range only when a different reasonable
+  // weighting actually lands on a different word; the number stays available in the data for
+  // sorting/filtering elsewhere, it's just not the headline here.
+  const qualityRange = quality?.sensitivity?.labelRange;
+  const qualityText = qualityScore == null ? null : qualityRange ? `${qualityRange.low} a ${qualityRange.high.replace(/^Calidad /, '')}` : quality.label;
 
   // Lets AI crawlers and answer engines identify which company this page is about without
   // having to parse the rendered layout — schema.org Corporation, not a rating/review type, so
@@ -252,14 +260,13 @@ function NewStockPageContent({ params }) {
             )}
           </div>
           {qualityScore != null && (
-            <div style={{ textAlign: 'right' }}>
+            <div style={{ textAlign: 'right', maxWidth: '170px' }}>
               <div style={{ fontSize: '11px', fontWeight: 700, color: C.text3, letterSpacing: '0.02em', marginBottom: '6px' }}>NOTA DE CALIDAD</div>
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: '8px' }}>
-                <div aria-hidden="true" style={{ width: '52px', height: '8px', borderRadius: '20px', background: C.borderSoft, overflow: 'hidden' }}>
-                  <div style={{ width: `${qualityScore}%`, height: '100%', borderRadius: '20px', background: C.lime }} />
-                </div>
-                <span style={{ fontSize: '16px', fontWeight: 800 }}>{qualityScore}</span>
+              <div aria-hidden="true" style={{ width: '64px', height: '8px', borderRadius: '20px', background: C.borderSoft, overflow: 'hidden', marginLeft: 'auto', marginBottom: '6px' }}>
+                <div style={{ width: `${qualityScore}%`, height: '100%', borderRadius: '20px', background: C.lime }} />
               </div>
+              <div style={{ fontSize: '15px', fontWeight: 800, lineHeight: 1.25 }}>{qualityText}</div>
+              {qualityRange && <div style={{ fontSize: '10px', color: C.text3, marginTop: '2px' }}>Cambia según cómo se pondere</div>}
             </div>
           )}
         </div>
