@@ -1167,3 +1167,13 @@ tr:hover td.sticky-col {
   .new-dash-2col { grid-template-columns: 1fr !important; }
 }
 
+/* Portfolio's allocation-by-stock/sector/pie charts — up to 3 donut+legend cards side by
+   side (app/(main)/portfolio/page.js), too cramped below ~900px once each column holds a
+   110px donut plus a legend column. */
+@media (max-width: 900px) {
+  .new-portfolio-alloc-grid { grid-template-columns: repeat(2, minmax(0, 1fr)) !important; }
+}
+@media (max-width: 600px) {
+  .new-portfolio-alloc-grid { grid-template-columns: 1fr !important; }
+}
+
