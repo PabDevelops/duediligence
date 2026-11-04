@@ -169,6 +169,12 @@ html, body {
   75%, 100% { transform: scale(2); opacity: 0; }
 }
 
+/* Portfolio's manual "sync now" refresh icon, while a sync is in flight */
+@keyframes new-portfolio-spin {
+  from { transform: rotate(0deg); }
+  to   { transform: rotate(360deg); }
+}
+
 /* Scroll reveal animation */
 @keyframes fadeUp {
   from { opacity: 0; transform: translateY(24px); }
