@@ -9,7 +9,8 @@ import { useUser } from '../../../components/AuthProvider';
 import { useStockData } from '../../../../lib/hooks/useStockData';
 import { useEntryPriceProjection } from '../../../../lib/hooks/useEntryPriceProjection';
 import { isInGuestWatchlist, addToGuestWatchlist, removeFromGuestWatchlist } from '../../../../lib/guestWatchlist';
-import { computeEasyMode, computeFundamentalGrowth } from '../../../../lib/stockScoring';
+import { computeEasyMode } from '../../../../lib/stockScoring';
+import EngineV2Panel from '../../../components/workspace/stock/EngineV2Panel';
 import { stockVerdict, investigateQuestions } from '../../../../lib/verdict';
 import { formatCurrency, formatTimeAgo } from '../../../../lib/formatters';
 import { NEW_COLORS as C, VERDICT_BADGE } from '../../../components/new/theme';
@@ -172,15 +173,9 @@ function NewStockPageContent({ params }) {
     }
   };
 
-  // Phil Town-style sticker price — reuses the same Monte Carlo projector /start and the
-  // dark-theme stock page already use, fixed to a 5-year horizon. Called here, ahead of the
-  // loading/error early returns below, since it's a hook — guarded with `data?.` since `data`
-  // is still null on the first render(s).
-  const entryProjection = useEntryPriceProjection({
-    ticker, price: data?.currentPrice ?? null, beta: data?.beta ?? null,
-    riskFreeRate: data?.riskFreeRate, analystTarget: data?.analystTarget,
-    fundamentalGrowth: data ? computeFundamentalGrowth(data) : null,
-  });
+  // Five-dimension analysis and 5-year fundamental scenarios (lib/engine). Called ahead of the
+  // loading/error early returns below, since it's a hook, and it tolerates `data` being null.
+  const entryProjection = useEntryPriceProjection({ ticker, data });
 
   if (loading) {
     return <Shell><div style={{ fontSize: '13px', color: C.text3 }}>Cargando…</div></Shell>;
@@ -295,83 +290,7 @@ function NewStockPageContent({ params }) {
         </div>
       )}
 
-      {entryProjection.maxEntryPrice != null && price != null && (() => {
-        // Margin of safety: how far today's price sits from the max you'd pay to still
-        // demand a 15%/yr return — positive means price is below that ceiling (cheap),
-        // negative means you're paying more than the model justifies (expensive). This is
-        // the one number that actually answers "is it cheap or expensive right now", which
-        // maxEntryPrice/cagr5y alone made a reader work out for themselves.
-        const marginPct = ((entryProjection.maxEntryPrice - price) / price) * 100;
-        const priceTier = marginPct >= 10 ? 'good' : marginPct >= -10 ? 'caution' : 'bad';
-        const priceBadge = VERDICT_BADGE[priceTier];
-        const priceLabel = priceTier === 'good' ? 'Con margen de seguridad' : priceTier === 'caution' ? 'En su precio justo' : 'Por encima de lo recomendado';
-        return (
-          <div style={{ background: C.surface, border: `1px solid ${C.border}`, borderRadius: '20px', padding: '22px 26px', boxSizing: 'border-box', display: 'flex', flexDirection: 'column', gap: '14px' }}>
-            <div style={{ fontSize: '11px', fontWeight: 700, color: C.text3, letterSpacing: '0.02em' }}>
-              A 5 AÑOS VISTA (proyección, no una promesa)
-            </div>
-
-            <div style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', padding: '7px 16px', borderRadius: '20px', background: priceBadge.bg, width: 'fit-content' }}>
-              <span aria-hidden="true" style={{ width: '8px', height: '8px', borderRadius: '50%', background: priceBadge.dot }} />
-              <span style={{ fontSize: '13px', fontWeight: 800, color: priceBadge.text }}>{priceLabel}</span>
-            </div>
-
-            <div style={{ fontSize: '13px', color: '#45413A', lineHeight: 1.6 }}>
-              {marginPct >= 0
-                ? `El precio de hoy está un ${marginPct.toFixed(0)}% por debajo de lo máximo que pagarías para exigir un 15%/año — hay margen de seguridad.`
-                : `El precio de hoy está un ${Math.abs(marginPct).toFixed(0)}% por encima de lo máximo que pagarías para exigir un 15%/año — según este modelo, estarías pagando de más.`}
-            </div>
-
-            {/* This card's margin of safety assumes growth continues; the verdict card above
-                judges today's multiple on its own, with no growth assumption — for a fast
-                grower the two can disagree without either being wrong, so that needs saying
-                instead of leaving two contradictory-looking badges unexplained. */}
-            {verdict?.expensive && marginPct >= 10 && (
-              <div style={{ fontSize: '12px', color: C.text3, lineHeight: 1.5, padding: '10px 12px', background: C.bg, borderRadius: '10px' }}>
-                Esto no contradice el &quot;caro ahora&quot; de arriba: ese veredicto mira el múltiplo de hoy sin asumir crecimiento futuro, mientras que este margen de seguridad solo existe si el crecimiento reciente se mantiene los próximos años. Si se frena, el precio de hoy deja de tener margen.
-              </div>
-            )}
-            {verdict?.cheap && marginPct < 0 && (
-              <div style={{ fontSize: '12px', color: C.text3, lineHeight: 1.5, padding: '10px 12px', background: C.bg, borderRadius: '10px' }}>
-                Esto no contradice el múltiplo contenido de arriba: aquello mira el precio de hoy sin exigir una rentabilidad concreta, mientras que este modelo sí exige un 15%/año — con el crecimiento estimado para esta empresa, ni siquiera el precio de hoy llega a ese listón.
-              </div>
-            )}
-
-            {entryProjection.driftAnnual != null && (
-              <div style={{ fontSize: '11px', color: C.text3, lineHeight: 1.5 }}>
-                Supuesto de partida del modelo: un crecimiento medio de alrededor del{' '}
-                {(entryProjection.driftAnnual * 100).toFixed(1)}% al año{entryProjection.volAnnual != null ? ` y una volatilidad del precio de ${(entryProjection.volAnnual * 100).toFixed(0)}%` : ''},
-                estimados a partir del crecimiento histórico de la acción, del negocio y (si existe) del objetivo medio de los analistas — si cualquiera de esos tres cambia, esta proyección cambia con ellos.
-              </div>
-            )}
-
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))', gap: '18px', paddingTop: '4px', borderTop: `1px solid ${C.borderSoft}` }}>
-              <div>
-                <div style={{ fontSize: '12px', color: C.text2, marginBottom: '4px' }}>Precio actual</div>
-                <div style={{ fontSize: '20px', fontWeight: 800 }}>{formatCurrency(price, sym)}</div>
-              </div>
-              <div>
-                <div style={{ fontSize: '12px', color: C.text2, marginBottom: '4px' }}>Precio máximo de entrada</div>
-                <div style={{ fontSize: '20px', fontWeight: 800 }}>{formatCurrency(entryProjection.maxEntryPrice, sym)}</div>
-                <div style={{ fontSize: '11px', color: C.text3, marginTop: '2px' }}>para exigir un 15%/año</div>
-              </div>
-              <div>
-                <div style={{ fontSize: '12px', color: C.text2, marginBottom: '4px' }}>Margen de seguridad</div>
-                <div style={{ fontSize: '20px', fontWeight: 800, color: marginPct >= 0 ? C.green : C.red }}>
-                  {marginPct >= 0 ? '+' : ''}{marginPct.toFixed(1)}%
-                </div>
-              </div>
-              <div>
-                <div style={{ fontSize: '12px', color: C.text2, marginBottom: '4px' }}>Rentabilidad media anual esperada (CAGR)</div>
-                <div style={{ fontSize: '20px', fontWeight: 800, color: entryProjection.cagr5y >= 0 ? C.green : C.red }}>
-                  {entryProjection.cagr5y >= 0 ? '+' : ''}{(entryProjection.cagr5y * 100).toFixed(1)}%
-                </div>
-                <div style={{ fontSize: '11px', color: C.text3, marginTop: '2px' }}>al año, de media, en los próximos 5 años, al precio de hoy</div>
-              </div>
-            </div>
-          </div>
-        );
-      })()}
+      {entryProjection.engine && <EngineV2Panel engine={entryProjection.engine} sym={sym} />}
 
       <div style={{ background: C.surface, border: `1px solid ${C.border}`, borderRadius: '20px', boxSizing: 'border-box', overflow: 'hidden', ...CHART_THEME_VARS }}>
         {/* The chart's own built-in range/mode selector (1D-MAX + LINE/CANDLES, 9 buttons in
@@ -521,12 +440,11 @@ function NewStockPageContent({ params }) {
         <div style={{ fontSize: '13px', fontWeight: 800 }}>Cómo se ha calculado todo esto</div>
         <div style={{ fontSize: '12px', color: C.text2, lineHeight: 1.6 }}>
           {data.updatedAt && <>Datos financieros actualizados {formatTimeAgo(data.updatedAt)}. </>}
-          La proyección a 5 años no es una simulación al azar: combina directamente el crecimiento
-          histórico de la acción, el crecimiento del negocio y (cuando existe) el objetivo medio de
-          los analistas, junto con la volatilidad histórica del precio — si cambian esos datos para
-          esta empresa, cambia la proyección con ellos. Nunca se inventan cifras: cuando un dato no
-          está disponible para esta empresa, se muestra como N/D en vez de rellenarse con una
-          estimación silenciosa.
+          La proyección a 5 años se construye desde el negocio: ingresos, márgenes, impuestos,
+          reinversión, deuda neta y número de acciones. No usa la evolución pasada de la cotización
+          ni los objetivos de los analistas para proyectar. Los tres escenarios (conservador,
+          central y optimista) no llevan probabilidades. Nunca se inventan cifras: cuando un dato
+          no está disponible para esta empresa, se muestra como N/D y se explica por qué.
         </div>
         <Link href={`/stock/${ticker}/numbers`} style={{ fontSize: '12px', fontWeight: 700, color: C.ink, textDecoration: 'none', width: 'fit-content' }}>
           Ver qué datos faltan y sus límites →

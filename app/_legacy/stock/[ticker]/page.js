@@ -483,11 +483,7 @@ function StockPageContent({ params }) {
   // a second valuation model alongside relativeValue/fairValue below. Called here, ahead of
   // the loading/error early returns below, since it's a hook — guarded with `data?.` since
   // `data` is still null on the first render(s).
-  const entryProjection = useEntryPriceProjection({
-    ticker, price: data?.currentPrice ?? null, beta: data?.beta ?? null,
-    riskFreeRate: data?.riskFreeRate, analystTarget: data?.analystTarget,
-    fundamentalGrowth: data ? computeFundamentalGrowth(data) : null,
-  });
+  const entryProjection = useEntryPriceProjection({ ticker, data });
 
   useEffect(() => {
     fetch(`/api/earnings?ticker=${ticker}`, { cache: 'no-store' })
@@ -1222,14 +1218,14 @@ function StockPageContent({ params }) {
                       {entryProjection.maxEntryPrice != null && price != null && (
                         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '1px', background: 'var(--ws-border)', marginBottom: '16px' }}>
                           <div style={{ background: 'var(--ws-bg-2)', padding: '12px 8px', textAlign: 'center' }}>
-                            <div title="Precio máximo de entrada: lo que pagarías hoy por el precio mediano que proyecta el Monte Carlo a 5 años, para exigir un 15%/año de retorno."
+                            <div title="Precio máximo de entrada: lo que pagarías hoy por el valor por acción que proyecta el escenario central fundamental a 5 años, para exigir un 15%/año de retorno."
                               style={{ fontFamily: "'Inter', sans-serif", fontSize: '9px', letterSpacing: '1px', color: 'var(--ws-text-3)', fontWeight: 700, marginBottom: '6px' }}>
                               MAX ENTRY (15%/YR)
                             </div>
                             <div style={{ fontSize: '16px', fontWeight: 700, color: 'var(--ws-text)' }}>{curSym(data.currency)}{entryProjection.maxEntryPrice.toFixed(2)}</div>
                           </div>
                           <div style={{ background: 'var(--ws-bg-2)', padding: '12px 8px', textAlign: 'center' }}>
-                            <div title="CAGR esperado a 5 años: el retorno anualizado implícito en ese mismo precio mediano proyectado, partiendo del precio actual."
+                            <div title="CAGR esperado a 5 años: el retorno anualizado implícito en el valor central proyectado a partir del negocio, partiendo del precio actual."
                               style={{ fontFamily: "'Inter', sans-serif", fontSize: '9px', letterSpacing: '1px', color: 'var(--ws-text-3)', fontWeight: 700, marginBottom: '6px' }}>
                               5Y CAGR (EXPECTED)
                             </div>

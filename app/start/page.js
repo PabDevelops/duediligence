@@ -4,7 +4,7 @@ import Link from 'next/link';
 import StockLogo from '../components/workspace/StockLogo';
 import MarketStatusDot from '../components/workspace/MarketStatusDot';
 import { formatCurrency } from '../../lib/formatters';
-import { computeEasyMode, computeFundamentalGrowth } from '../../lib/stockScoring';
+import { computeEasyMode } from '../../lib/stockScoring';
 import { useEntryPriceProjection } from '../../lib/hooks/useEntryPriceProjection';
 import { stockVerdict, etfVerdict } from '../../lib/verdict';
 
@@ -29,17 +29,12 @@ function SuggestionRow({ s, onPick }) {
   );
 }
 
-// Phil Town-style sticker price: reuses the same Monte Carlo projector the real stock page's
-// Price Projection section charts, fixed to a 5-year horizon, to answer "what would I pay
-// today for a 15%/yr return" and "what return does the median path actually imply" — two
-// concrete numbers for someone deciding whether a tip is still worth acting on at today's
-// price, without building a second scoring system next to the verdict above.
+// Max entry price for a 15%/yr return and the CAGR the central scenario implies, both from the
+// V2 fundamental engine (lib/engine): revenue, margins, reinvestment, net debt and share count,
+// never the share price history. Shown only when the engine can support a value; otherwise the
+// card is hidden rather than showing an invented number.
 function EntryPriceStat({ ticker, data }) {
-  const fundamentalGrowth = computeFundamentalGrowth(data);
-  const { maxEntryPrice, cagr5y } = useEntryPriceProjection({
-    ticker, price: data.currentPrice, beta: data.beta, riskFreeRate: data.riskFreeRate,
-    analystTarget: data.analystTarget, fundamentalGrowth,
-  });
+  const { maxEntryPrice, cagr5y } = useEntryPriceProjection({ ticker, data });
 
   if (maxEntryPrice == null || cagr5y == null) return null;
   const sym = data.currency === 'EUR' ? '€' : data.currency === 'GBP' ? '£' : '$';
