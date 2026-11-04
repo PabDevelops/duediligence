@@ -17,6 +17,7 @@ import TransferPieModal from '../../components/new/portfolio/TransferPieModal';
 import CashModal from '../../components/new/portfolio/CashModal';
 import GrowthChart from '../../components/new/portfolio/GrowthChart';
 import AllocationChart from '../../components/new/portfolio/AllocationChart';
+import PortfolioRing from '../../components/new/portfolio/PortfolioRing';
 import { openInNewTab } from '../../../lib/openInNewTab';
 import { sumIsaValue } from '../../../lib/isaInterest';
 import { NEW_COLORS as C } from '../../components/new/theme';
@@ -268,6 +269,18 @@ function NewPortfolioPageContent() {
     return { cost, value, gain, gainPct, investedValue };
   }, [positions, cashTotal]);
 
+  // Today's performance, for the ring's center figure: a value-weighted average of each
+  // priced position's own day change, same spirit as totals.gainPct but for a single day
+  // instead of since-purchase. Cash isn't priced day to day, so it's simply left out of both
+  // the weight and the sum rather than treated as 0% (which would understate a real move).
+  const todayPct = useMemo(() => {
+    const priced = positions.filter(p => p.dayChangePct != null && p.marketValue != null && p.marketValue > 0);
+    const weightTotal = priced.reduce((a, p) => a + p.marketValue, 0);
+    if (weightTotal === 0) return null;
+    const weightedSum = priced.reduce((a, p) => a + p.marketValue * p.dayChangePct, 0);
+    return weightedSum / weightTotal;
+  }, [positions]);
+
   const netWorthTotals = useMemo(() => {
     const cost = allPositions.reduce((a, p) => a + p.cost, 0);
     const investedValue = allPositions.reduce((a, p) => a + (p.marketValue ?? p.cost), 0);
@@ -322,14 +335,6 @@ function NewPortfolioPageContent() {
       body: JSON.stringify({ value: netWorthTotals.value, cost: netWorthTotals.cost }),
     }).catch(() => {});
   }, [positions, netWorthTotals.value, netWorthTotals.cost, fxReady]);
-
-  const byTickerChart = useMemo(() => {
-    if (totals.investedValue === 0) return [];
-    return positions
-      .filter(p => (p.marketValue ?? p.cost) > 0)
-      .map(p => ({ name: p.ticker, value: (Math.max(0, p.marketValue ?? p.cost) / Math.abs(totals.investedValue)) * 100 }))
-      .sort((a, b) => b.value - a.value);
-  }, [positions, totals.investedValue]);
 
   const bySectorChart = useMemo(() => {
     if (totals.investedValue === 0) return [];
@@ -386,6 +391,15 @@ function NewPortfolioPageContent() {
       await fetch('/api/portfolio', { method: 'DELETE', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ ticker }) });
       load();
     }
+  };
+
+  // Clicking a position's pill on the ring is a shortcut into the same edit flow as the
+  // table's own pencil icon — opens the most recent lot for that ticker.
+  const editFromRing = (ticker) => {
+    const position = positions.find(p => p.ticker === ticker);
+    if (!position) return;
+    const lastLot = [...position.lots].sort((a, b) => new Date(b.created_at) - new Date(a.created_at))[0];
+    setEditLot(lastLot);
   };
 
   const movePositionToPie = async (position, targetPieName) => {
@@ -515,9 +529,12 @@ function NewPortfolioPageContent() {
           </div>
         ) : (
           <>
-            <div onClick={() => setSelectedPortfolioId('all')} style={{ textAlign: 'center', cursor: 'pointer' }}>
-              <div style={{ fontSize: '11px', color: C.text3, letterSpacing: '1px', marginBottom: '6px', fontWeight: 700, textTransform: 'uppercase' }}>Patrimonio neto</div>
-              <div style={{ fontSize: '34px', fontWeight: 800, color: selectedPortfolioId === 'all' ? C.green : C.ink }}>{fmtC(netWorthTotals.value)}</div>
+            <div>
+              <PortfolioRing positions={positions} todayPct={todayPct} onSelectTicker={editFromRing} />
+              <div onClick={() => setSelectedPortfolioId('all')} style={{ textAlign: 'center', cursor: 'pointer', marginTop: '14px' }}>
+                <div style={{ fontSize: '10px', color: C.text3, letterSpacing: '1px', marginBottom: '4px', fontWeight: 700, textTransform: 'uppercase' }}>Patrimonio neto</div>
+                <div style={{ fontSize: '22px', fontWeight: 800, color: selectedPortfolioId === 'all' ? C.green : C.ink }}>{fmtC(netWorthTotals.value)}</div>
+              </div>
             </div>
 
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(150px, 1fr))', gap: '12px' }}>
@@ -592,11 +609,12 @@ function NewPortfolioPageContent() {
 
             <GrowthChart snapshots={snapshots} currentValue={netWorthTotals.value} currentCost={netWorthTotals.cost} rate={rate} symbol={symbol} />
 
-            <div style={{ display: 'grid', gridTemplateColumns: `repeat(${1 + (bySectorChart.length > 1 ? 1 : 0) + (hasPies ? 1 : 0)}, 1fr)`, gap: '12px' }} className="new-portfolio-alloc-grid">
-              <AllocationChart title="ASIGNACIÓN POR ACCIÓN" data={byTickerChart} />
-              {bySectorChart.length > 1 && <AllocationChart title="ASIGNACIÓN POR SECTOR" data={bySectorChart} />}
-              {hasPies && <AllocationChart title="ASIGNACIÓN POR CESTA" data={byPieChart} />}
-            </div>
+            {(bySectorChart.length > 1 || hasPies) && (
+              <div style={{ display: 'grid', gridTemplateColumns: `repeat(${(bySectorChart.length > 1 ? 1 : 0) + (hasPies ? 1 : 0)}, 1fr)`, gap: '12px' }} className="new-portfolio-alloc-grid">
+                {bySectorChart.length > 1 && <AllocationChart title="ASIGNACIÓN POR SECTOR" data={bySectorChart} />}
+                {hasPies && <AllocationChart title="ASIGNACIÓN POR CESTA" data={byPieChart} />}
+              </div>
+            )}
 
             {groupedByPie.map(group => {
               const groupAllocation = totals.investedValue > 0 ? (group.value / totals.investedValue) * 100 : 0;
