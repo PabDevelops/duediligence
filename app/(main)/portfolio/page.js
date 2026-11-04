@@ -16,6 +16,7 @@ import CashModal from '../../components/new/portfolio/CashModal';
 import ConnectTrading212Modal from '../../components/new/portfolio/ConnectTrading212Modal';
 import GrowthChart from '../../components/new/portfolio/GrowthChart';
 import AllocationChart from '../../components/new/portfolio/AllocationChart';
+import ActivityFeed from '../../components/new/portfolio/ActivityFeed';
 import PortfolioRing from '../../components/new/portfolio/PortfolioRing';
 import { openInNewTab } from '../../../lib/openInNewTab';
 import { NEW_COLORS as C } from '../../components/new/theme';
@@ -42,6 +43,7 @@ function NewPortfolioPageContent() {
 
   const [allHoldings, setAllHoldings] = useState([]);
   const [allCashTransactions, setAllCashTransactions] = useState([]);
+  const [allActivity, setAllActivity] = useState([]);
   const [portfolios, setPortfolios] = useState([]);
   const [selectedPortfolioId, setSelectedPortfolioId] = useState('all');
 
@@ -49,6 +51,11 @@ function NewPortfolioPageContent() {
     if (selectedPortfolioId === 'all') return allHoldings;
     return allHoldings.filter(h => h.portfolio_id === selectedPortfolioId);
   }, [allHoldings, selectedPortfolioId]);
+
+  const activity = useMemo(() => {
+    if (selectedPortfolioId === 'all') return allActivity;
+    return allActivity.filter(a => a.portfolio_id === selectedPortfolioId);
+  }, [allActivity, selectedPortfolioId]);
 
   const [stocks, setStocks] = useState({});
   const [sparklines, setSparklines] = useState({});
@@ -118,14 +125,17 @@ function NewPortfolioPageContent() {
     if (!isPro || !selectedPortfolioId) return;
     Promise.all([
       fetch(`/api/portfolio?portfolioId=all`),
-      fetch(`/api/portfolio/cash?portfolioId=all`)
-    ]).then(async ([rHoldings, rCash]) => {
+      fetch(`/api/portfolio/cash?portfolioId=all`),
+      fetch(`/api/portfolio/activity?portfolioId=all`),
+    ]).then(async ([rHoldings, rCash, rActivity]) => {
       const dHoldings = await rHoldings.json();
       const dCash = await rCash.json();
+      const dActivity = await rActivity.json().catch(() => ({}));
       if (!rHoldings.ok) { setLoadError(dHoldings.error || 'No se pudo cargar tu portfolio.'); setLoading(false); return; }
       setLoadError(null);
       setAllHoldings(dHoldings.holdings || []);
       setAllCashTransactions(dCash.transactions || []);
+      setAllActivity(dActivity.activity || []);
       setLoading(false);
       const tickers = [...new Set((dHoldings.holdings || []).map(h => h.ticker))];
       tickers.forEach(ticker => {
@@ -510,6 +520,8 @@ function NewPortfolioPageContent() {
             <GrowthChart snapshots={snapshots} currentValue={netWorthTotals.value} currentCost={netWorthTotals.cost} rate={1} symbol="$" />
 
             {bySectorChart.length > 1 && <AllocationChart title="ASIGNACIÓN POR SECTOR" data={bySectorChart} />}
+
+            <ActivityFeed activity={activity} />
 
             <div style={{ background: C.surface, border: `1px solid ${C.border}`, borderRadius: '20px', overflowX: 'auto', boxSizing: 'border-box' }}>
               <div style={{ minWidth: '860px' }}>
