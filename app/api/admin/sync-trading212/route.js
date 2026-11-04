@@ -30,9 +30,9 @@ async function handler(request) {
 
   for (const pf of portfolios || []) {
     try {
-      const { data: apiKey } = await supabase.rpc('t212_read_secret', { secret_id: pf.t212_secret_id });
-      if (!apiKey) throw new Error('Secret not found');
-      await syncPortfolioFromTrading212(pf.id, apiKey);
+      const { data: credential } = await supabase.rpc('t212_read_secret', { secret_id: pf.t212_secret_id });
+      if (!credential) throw new Error('Secret not found');
+      await syncPortfolioFromTrading212(pf.id, credential);
       synced.push(pf.id);
     } catch (err) {
       failed.push({ portfolio_id: pf.id, error: err.message });
