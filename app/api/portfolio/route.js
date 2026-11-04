@@ -1,5 +1,8 @@
 import { getUserId } from '../../../lib/auth';
 import { supabase } from '../../../lib/supabase';
+import { isPortfolioConnected } from '../../../lib/trading212Sync';
+
+const CONNECTED_ERROR = 'Esta cuenta está conectada a Trading 212 — sus posiciones se sincronizan solas, no se pueden editar a mano.';
 
 export async function GET(request) {
   const userId = await getUserId();
@@ -34,6 +37,10 @@ export async function POST(request) {
   const { ticker, shares, costBasis, purchaseDate, pie, costBasisCurrency, portfolio_id, deductCash } = await request.json();
   if (!ticker || !shares || costBasis == null || Number(shares) <= 0 || Number(costBasis) < 0 || !portfolio_id) {
     return Response.json({ error: 'Invalid input' }, { status: 400 });
+  }
+
+  if (await isPortfolioConnected(portfolio_id)) {
+    return Response.json({ error: CONNECTED_ERROR }, { status: 409 });
   }
 
   const { data, error } = await supabase
@@ -97,6 +104,11 @@ export async function PATCH(request) {
     return Response.json({ error: 'Invalid input' }, { status: 400 });
   }
 
+  const { data: existing } = await supabase.from('portfolio_holdings').select('portfolio_id').eq('id', id).eq('user_id', userId).single();
+  if (existing && await isPortfolioConnected(existing.portfolio_id)) {
+    return Response.json({ error: CONNECTED_ERROR }, { status: 409 });
+  }
+
   const { data, error } = await supabase
     .from('portfolio_holdings')
     .update({
@@ -125,6 +137,10 @@ export async function PUT(request) {
   const { oldPie, newPie, portfolio_id } = await request.json();
   if (!oldPie || !newPie || !newPie.trim() || !portfolio_id) {
     return Response.json({ error: 'Old and new pie names and portfolio_id required' }, { status: 400 });
+  }
+
+  if (await isPortfolioConnected(portfolio_id)) {
+    return Response.json({ error: CONNECTED_ERROR }, { status: 409 });
   }
 
   const trimmedNewPie = newPie.trim();
@@ -157,6 +173,15 @@ export async function DELETE(request) {
 
   const { id, ticker, portfolio_id } = await request.json();
   if (!id && (!ticker || !portfolio_id)) return Response.json({ error: 'id or (ticker and portfolio_id) required' }, { status: 400 });
+
+  let targetPortfolioId = portfolio_id;
+  if (id && !targetPortfolioId) {
+    const { data: existing } = await supabase.from('portfolio_holdings').select('portfolio_id').eq('id', id).eq('user_id', userId).single();
+    targetPortfolioId = existing?.portfolio_id;
+  }
+  if (targetPortfolioId && await isPortfolioConnected(targetPortfolioId)) {
+    return Response.json({ error: CONNECTED_ERROR }, { status: 409 });
+  }
 
   if (id) {
     await supabase.from('portfolio_holdings').delete().eq('id', id).eq('user_id', userId);

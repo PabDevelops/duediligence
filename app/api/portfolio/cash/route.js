@@ -49,13 +49,17 @@ export async function POST(request) {
   // Ensure portfolio exists and belongs to user
   const { data: pfCheck, error: pfErr } = await supabase
     .from('portfolios')
-    .select('id')
+    .select('id, t212_connected_at')
     .eq('id', portfolio_id)
     .eq('user_id', userId)
     .single();
 
   if (pfErr || !pfCheck) {
     return Response.json({ error: 'Invalid portfolio' }, { status: 400 });
+  }
+
+  if (pfCheck.t212_connected_at) {
+    return Response.json({ error: 'Esta cuenta está conectada a Trading 212 — su saldo de caja se sincroniza solo.' }, { status: 409 });
   }
 
   const { data, error } = await supabase

@@ -5,9 +5,11 @@ export async function GET() {
   const userId = await getUserId();
   if (!userId) return Response.json({ portfolios: [] });
 
+  // t212_secret_id is deliberately excluded — it's an internal Vault row
+  // reference, not something the client needs (or should see at all).
   const { data, error } = await supabase
     .from('portfolios')
-    .select('*')
+    .select('id, user_id, name, created_at, isa_interest_rate, t212_connected_at, t212_last_synced_at, t212_sync_error, t212_cash, t212_cash_currency')
     .eq('user_id', userId)
     .order('created_at', { ascending: true });
 
