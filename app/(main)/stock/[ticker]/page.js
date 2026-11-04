@@ -196,6 +196,13 @@ function NewStockPageContent({ params }) {
   const verdict = easyMode ? stockVerdict(easyMode, companyName) : null;
   const badge = verdict ? VERDICT_BADGE[verdict.tier] : null;
   const investigateQs = easyMode ? investigateQuestions(easyMode) : [];
+  // The headline number next to the price — now the V2 engine's own quality score (lib/engine),
+  // not computeEasyMode's score100, so it agrees with the "Calidad" figure on /analisis instead
+  // of showing two different numbers for "quality" on the same ticker. verdict/investigateQs
+  // below still read computeEasyMode: that card's text (ROIC commentary, "qué investigar")
+  // isn't part of this swap. Hidden rather than falling back to the old score when the engine
+  // can't compute one — showing a number from a different scale would be its own confusion.
+  const qualityScore = entryProjection.engine?.quality?.score ?? null;
 
   return (
     <Shell>
@@ -232,14 +239,14 @@ function NewStockPageContent({ params }) {
               </div>
             )}
           </div>
-          {easyMode && (
+          {qualityScore != null && (
             <div style={{ textAlign: 'right' }}>
               <div style={{ fontSize: '11px', fontWeight: 700, color: C.text3, letterSpacing: '0.02em', marginBottom: '6px' }}>NOTA DE CALIDAD</div>
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: '8px' }}>
                 <div aria-hidden="true" style={{ width: '52px', height: '8px', borderRadius: '20px', background: C.borderSoft, overflow: 'hidden' }}>
-                  <div style={{ width: `${easyMode.score100}%`, height: '100%', borderRadius: '20px', background: C.lime }} />
+                  <div style={{ width: `${qualityScore}%`, height: '100%', borderRadius: '20px', background: C.lime }} />
                 </div>
-                <span style={{ fontSize: '16px', fontWeight: 800 }}>{easyMode.score100}</span>
+                <span style={{ fontSize: '16px', fontWeight: 800 }}>{qualityScore}</span>
               </div>
             </div>
           )}
