@@ -13,8 +13,10 @@ import { useCurrencyRates } from '../../../lib/hooks/useCurrencyRates';
 import AddHoldingModal from '../../components/new/portfolio/AddHoldingModal';
 import SellModal from '../../components/new/portfolio/SellModal';
 import CashModal from '../../components/new/portfolio/CashModal';
+import ConnectTrading212Modal from '../../components/new/portfolio/ConnectTrading212Modal';
 import GrowthChart from '../../components/new/portfolio/GrowthChart';
 import AllocationChart from '../../components/new/portfolio/AllocationChart';
+import ActivityFeed from '../../components/new/portfolio/ActivityFeed';
 import PortfolioRing from '../../components/new/portfolio/PortfolioRing';
 import { openInNewTab } from '../../../lib/openInNewTab';
 import { NEW_COLORS as C } from '../../components/new/theme';
@@ -41,6 +43,7 @@ function NewPortfolioPageContent() {
 
   const [allHoldings, setAllHoldings] = useState([]);
   const [allCashTransactions, setAllCashTransactions] = useState([]);
+  const [allActivity, setAllActivity] = useState([]);
   const [portfolios, setPortfolios] = useState([]);
   const [selectedPortfolioId, setSelectedPortfolioId] = useState('all');
 
@@ -48,6 +51,11 @@ function NewPortfolioPageContent() {
     if (selectedPortfolioId === 'all') return allHoldings;
     return allHoldings.filter(h => h.portfolio_id === selectedPortfolioId);
   }, [allHoldings, selectedPortfolioId]);
+
+  const activity = useMemo(() => {
+    if (selectedPortfolioId === 'all') return allActivity;
+    return allActivity.filter(a => a.portfolio_id === selectedPortfolioId);
+  }, [allActivity, selectedPortfolioId]);
 
   const [stocks, setStocks] = useState({});
   const [sparklines, setSparklines] = useState({});
@@ -61,16 +69,19 @@ function NewPortfolioPageContent() {
   const [editLot, setEditLot] = useState(null);
   const [sellPosition, setSellPosition] = useState(null);
   const [snapshots, setSnapshots] = useState([]);
+  const [connectTarget, setConnectTarget] = useState(null);
   const { rates, toUSD, toUSDStable, fxReady } = useCurrencyRates();
 
   const loadPortfolios = async () => {
     if (!isSignedIn) return;
     const r = await fetch('/api/portfolios');
     const d = await r.json();
-    setPortfolios(d.portfolios || []);
-    if (d.portfolios?.length > 0 && !selectedPortfolioId) {
-      setSelectedPortfolioId(d.portfolios[0].id);
+    const pfs = d.portfolios || [];
+    setPortfolios(pfs);
+    if (pfs.length > 0 && !selectedPortfolioId) {
+      setSelectedPortfolioId(pfs[0].id);
     }
+    return pfs;
   };
 
   useEffect(() => {
@@ -114,14 +125,17 @@ function NewPortfolioPageContent() {
     if (!isPro || !selectedPortfolioId) return;
     Promise.all([
       fetch(`/api/portfolio?portfolioId=all`),
-      fetch(`/api/portfolio/cash?portfolioId=all`)
-    ]).then(async ([rHoldings, rCash]) => {
+      fetch(`/api/portfolio/cash?portfolioId=all`),
+      fetch(`/api/portfolio/activity?portfolioId=all`),
+    ]).then(async ([rHoldings, rCash, rActivity]) => {
       const dHoldings = await rHoldings.json();
       const dCash = await rCash.json();
+      const dActivity = await rActivity.json().catch(() => ({}));
       if (!rHoldings.ok) { setLoadError(dHoldings.error || 'No se pudo cargar tu portfolio.'); setLoading(false); return; }
       setLoadError(null);
       setAllHoldings(dHoldings.holdings || []);
       setAllCashTransactions(dCash.transactions || []);
+      setAllActivity(dActivity.activity || []);
       setLoading(false);
       const tickers = [...new Set((dHoldings.holdings || []).map(h => h.ticker))];
       tickers.forEach(ticker => {
@@ -134,6 +148,21 @@ function NewPortfolioPageContent() {
   useEffect(() => {
     if (isPro && selectedPortfolioId) load({ refresh: false });
   }, [isPro, selectedPortfolioId]);
+
+  // A connected account's holdings/cash come from Trading 212, not a manual
+  // entry — if any connected account hasn't synced in 15 min, kick a sync
+  // before showing (possibly stale) data. The sync route itself has its own
+  // 30s-per-account floor, so this never hammers Trading 212 on fast reloads.
+  useEffect(() => {
+    if (!isPro || portfolios.length === 0) return;
+    const STALE_SYNC_MS = 15 * 60 * 1000;
+    const stale = portfolios.some(p => p.t212_connected_at &&
+      (!p.t212_last_synced_at || Date.now() - new Date(p.t212_last_synced_at).getTime() > STALE_SYNC_MS));
+    if (!stale) return;
+    fetch('/api/portfolio/trading212/sync', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({}) })
+      .catch(() => {})
+      .then(() => { loadPortfolios(); load(); });
+  }, [isPro, portfolios]);
 
   // Keep holding prices reasonably live — reload isn't the only way to see a move.
   // Paused while the tab is backgrounded, and re-run immediately on refocus, so an idle
@@ -229,13 +258,37 @@ function NewPortfolioPageContent() {
     return { cost, value, gain, gainPct, investedValue };
   }, [allPositions, allCashTotal]);
 
-  // One card per account — invested value plus its cash balance.
+  // One card per account — invested value plus its cash balance. A connected
+  // account's cash comes from the last Trading 212 sync, not the manual ledger
+  // (which it no longer accepts writes to).
   const accountCards = useMemo(() => portfolios.map(p => {
     const pPositions = buildPositions(allHoldings.filter(h => h.portfolio_id === p.id));
     const investedValue = pPositions.reduce((a, x) => a + (x.marketValue ?? x.cost), 0);
-    const cash = allCashTransactions.filter(t => t.portfolio_id === p.id).reduce((sum, t) => sum + toUSD(Number(t.amount), t.currency), 0);
-    return { id: p.id, name: p.name, icon: /sipp/i.test(p.name) ? '🏦' : '📈', value: investedValue + cash };
+    const connected = !!p.t212_connected_at;
+    const cash = connected
+      ? toUSD(Number(p.t212_cash || 0), p.t212_cash_currency || 'USD')
+      : allCashTransactions.filter(t => t.portfolio_id === p.id).reduce((sum, t) => sum + toUSD(Number(t.amount), t.currency), 0);
+    return {
+      id: p.id, name: p.name, icon: /sipp/i.test(p.name) ? '🏦' : '📈', value: investedValue + cash,
+      connected, lastSyncedAt: p.t212_last_synced_at, syncError: p.t212_sync_error, portfolio: p,
+    };
   }), [portfolios, allHoldings, allCashTransactions, stocks, rates]);
+
+  const connectedPortfolioIds = useMemo(() =>
+    new Set(portfolios.filter(p => p.t212_connected_at).map(p => p.id)),
+    [portfolios]);
+
+  const timeAgo = (iso) => {
+    if (!iso) return null;
+    // Cosmetic "synced Xm ago" label only, on a fully client-gated page with no SSR/hydration to desync.
+    // eslint-disable-next-line react-hooks/purity
+    const mins = Math.max(0, Math.round((Date.now() - new Date(iso).getTime()) / 60000));
+    if (mins < 1) return 'justo ahora';
+    if (mins < 60) return `hace ${mins} min`;
+    const hours = Math.round(mins / 60);
+    if (hours < 24) return `hace ${hours} h`;
+    return `hace ${Math.round(hours / 24)} d`;
+  };
 
   useEffect(() => {
     // fxReady — without it, this can fire while fxRates is still the hardcoded fallback
@@ -278,8 +331,13 @@ function NewPortfolioPageContent() {
     setEditLot(lastLot);
   };
 
-  const connectTrading212 = () => {
-    alert('La conexión con Trading 212 llega pronto — de momento añade tus posiciones a mano.');
+  const disconnectTrading212 = async (portfolio) => {
+    if (!confirm(`¿Desconectar ${portfolio.name} de Trading 212? Tus posiciones y caja sincronizadas se quedan como están, pero dejan de actualizarse solas — podrás volver a editarlas a mano.`)) return;
+    await fetch('/api/portfolio/trading212/disconnect', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ portfolio_id: portfolio.id }),
+    });
+    loadPortfolios();
   };
 
   const pageShellStyle = { width: '100%', minHeight: '100vh', boxSizing: 'border-box', background: C.bg, color: C.ink, fontFamily: "'Plus Jakarta Sans', system-ui, sans-serif", overflowX: 'hidden' };
@@ -354,14 +412,18 @@ function NewPortfolioPageContent() {
             <div style={{ fontSize: '15px', fontWeight: 700, marginBottom: '6px' }}>Aún no tienes posiciones</div>
             <div style={{ fontSize: '13px', color: C.text2, marginBottom: '18px' }}>Añade tu primera posición para empezar a seguirla.</div>
             <div style={{ display: 'flex', gap: '10px', justifyContent: 'center', flexWrap: 'wrap' }}>
-              <button type="button" onClick={() => setShowModal(true)}
-                style={{ padding: '10px 22px', borderRadius: '12px', border: 'none', background: C.lime, color: C.ink, fontWeight: 700, fontSize: '13px', cursor: 'pointer', fontFamily: 'inherit' }}>
-                + Añadir posición
-              </button>
-              <button type="button" onClick={connectTrading212}
-                style={{ padding: '10px 22px', borderRadius: '12px', border: `1px solid ${C.border}`, background: 'transparent', color: C.text2, fontWeight: 700, fontSize: '13px', cursor: 'pointer', fontFamily: 'inherit' }}>
-                🔌 Conectar Trading 212
-              </button>
+              {!(selectedPortfolioId !== 'all' && connectedPortfolioIds.has(selectedPortfolioId)) && (
+                <button type="button" onClick={() => setShowModal(true)}
+                  style={{ padding: '10px 22px', borderRadius: '12px', border: 'none', background: C.lime, color: C.ink, fontWeight: 700, fontSize: '13px', cursor: 'pointer', fontFamily: 'inherit' }}>
+                  + Añadir posición
+                </button>
+              )}
+              {selectedPortfolioId !== 'all' && !connectedPortfolioIds.has(selectedPortfolioId) && (
+                <button type="button" onClick={() => setConnectTarget(portfolios.find(p => p.id === selectedPortfolioId))}
+                  style={{ padding: '10px 22px', borderRadius: '12px', border: `1px solid ${C.border}`, background: 'transparent', color: C.text2, fontWeight: 700, fontSize: '13px', cursor: 'pointer', fontFamily: 'inherit' }}>
+                  🔌 Conectar Trading 212
+                </button>
+              )}
             </div>
           </div>
         ) : (
@@ -387,7 +449,18 @@ function NewPortfolioPageContent() {
                     }}>
                     <div style={{ fontSize: '20px', marginBottom: '8px' }}>{card.icon}</div>
                     <div style={{ fontSize: '11px', fontWeight: 700, color: C.ink, marginBottom: '4px', textTransform: 'uppercase', letterSpacing: '0.3px' }}>{card.name}</div>
-                    <div style={{ fontSize: '16px', fontWeight: 700, color: C.text2 }}>{fmtC(card.value)}</div>
+                    <div style={{ fontSize: '16px', fontWeight: 700, color: C.text2, marginBottom: '8px' }}>{fmtC(card.value)}</div>
+                    {card.connected ? (
+                      <div onClick={e => { e.stopPropagation(); disconnectTrading212(card.portfolio); }} title={card.syncError || 'Desconectar de Trading 212'}
+                        style={{ fontSize: '10px', fontWeight: 700, color: card.syncError ? C.red : C.text3, cursor: 'pointer' }}>
+                        🔌 T212 {card.syncError ? '· error' : `· ${timeAgo(card.lastSyncedAt) || 'sincronizando…'}`}
+                      </div>
+                    ) : (
+                      <div onClick={e => { e.stopPropagation(); setConnectTarget(card.portfolio); }}
+                        style={{ fontSize: '10px', fontWeight: 700, color: C.text3, cursor: 'pointer' }}>
+                        🔌 Conectar T212
+                      </div>
+                    )}
                   </div>
                 );
               })}
@@ -419,11 +492,7 @@ function NewPortfolioPageContent() {
             </div>
 
             <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px', flexWrap: 'wrap' }}>
-              <button type="button" onClick={connectTrading212}
-                style={{ height: '34px', padding: '0 16px', borderRadius: '12px', border: `1px solid ${C.border}`, background: 'transparent', color: C.text2, fontWeight: 700, fontSize: '12px', cursor: 'pointer', fontFamily: 'inherit' }}>
-                🔌 Conectar Trading 212
-              </button>
-              {selectedPortfolioId !== 'all' && (
+              {selectedPortfolioId !== 'all' && !connectedPortfolioIds.has(selectedPortfolioId) && (
                 <button type="button" onClick={() => setShowModal(true)}
                   style={{ height: '34px', padding: '0 16px', borderRadius: '12px', border: 'none', background: C.lime, color: C.ink, fontWeight: 700, fontSize: '12px', cursor: 'pointer', fontFamily: 'inherit' }}>
                   + Añadir posición a {portfolios.find(p => p.id === selectedPortfolioId)?.name}
@@ -452,6 +521,8 @@ function NewPortfolioPageContent() {
 
             {bySectorChart.length > 1 && <AllocationChart title="ASIGNACIÓN POR SECTOR" data={bySectorChart} />}
 
+            <ActivityFeed activity={activity} />
+
             <div style={{ background: C.surface, border: `1px solid ${C.border}`, borderRadius: '20px', overflowX: 'auto', boxSizing: 'border-box' }}>
               <div style={{ minWidth: '860px' }}>
                 <div style={{ display: 'flex', alignItems: 'center', padding: '10px 16px', borderBottom: `1px solid ${C.borderSoft}`, fontSize: '10px', fontWeight: 700, color: C.text3, textTransform: 'uppercase', letterSpacing: '0.4px' }}>
@@ -467,6 +538,7 @@ function NewPortfolioPageContent() {
                 </div>
                 {positions.map(p => {
                   const lastLot = [...p.lots].sort((a, b) => new Date(b.created_at) - new Date(a.created_at))[0];
+                  const isLocked = p.lots.every(l => connectedPortfolioIds.has(l.portfolio_id));
                   return (
                     <div key={p.ticker} onClick={() => openInNewTab(`/stock/${p.ticker}`)}
                       style={{ display: 'flex', alignItems: 'center', padding: '12px 16px', borderTop: `1px solid ${C.borderSoft}`, cursor: 'pointer' }}>
@@ -494,22 +566,30 @@ function NewPortfolioPageContent() {
                         {p.gain == null ? '—' : `${p.gain >= 0 ? '+' : ''}${fmtC(p.gain)} (${p.gainPct >= 0 ? '+' : ''}${p.gainPct.toFixed(1)}%)`}
                       </div>
                       <div style={{ width: '140px', textAlign: 'right', whiteSpace: 'nowrap' }} onClick={e => e.stopPropagation()}>
-                        <button type="button" onClick={() => setBuyTicker(p.ticker)} title="Comprar más acciones"
-                          style={{ fontSize: '10px', padding: '6px 10px', marginRight: '4px', borderRadius: '8px', border: 'none', background: C.lime, color: C.ink, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit' }}>
-                          Comprar
-                        </button>
-                        <button type="button" onClick={() => setSellPosition(p)} title="Vender acciones"
-                          style={{ fontSize: '10px', padding: '5px 9px', marginRight: '4px', borderRadius: '8px', border: `1px solid ${C.border}`, background: 'transparent', color: C.text2, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit' }}>
-                          Vender
-                        </button>
-                        <button type="button" onClick={() => setEditLot(lastLot)} title={`Editar última entrada: ${lastLot.shares} acc. @ ${lastLot.cost_basis} ${lastLot.cost_basis_currency} el ${lastLot.purchase_date}`}
-                          style={{ background: 'none', border: 'none', color: C.text3, cursor: 'pointer', fontSize: '13px', marginLeft: '2px' }}>
-                          ✎
-                        </button>
-                        <button type="button" onClick={() => removePosition(p.ticker)} title={`Eliminar toda la posición de ${p.ticker}`}
-                          style={{ background: 'none', border: 'none', color: C.text3, cursor: 'pointer', fontSize: '13px', marginLeft: '8px' }}>
-                          ✕
-                        </button>
+                        {isLocked ? (
+                          <span style={{ fontSize: '10px', fontWeight: 700, color: C.text3 }} title="Esta posición se sincroniza desde Trading 212 y no se puede editar a mano.">
+                            🔌 T212
+                          </span>
+                        ) : (
+                          <>
+                            <button type="button" onClick={() => setBuyTicker(p.ticker)} title="Comprar más acciones"
+                              style={{ fontSize: '10px', padding: '6px 10px', marginRight: '4px', borderRadius: '8px', border: 'none', background: C.lime, color: C.ink, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit' }}>
+                              Comprar
+                            </button>
+                            <button type="button" onClick={() => setSellPosition(p)} title="Vender acciones"
+                              style={{ fontSize: '10px', padding: '5px 9px', marginRight: '4px', borderRadius: '8px', border: `1px solid ${C.border}`, background: 'transparent', color: C.text2, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit' }}>
+                              Vender
+                            </button>
+                            <button type="button" onClick={() => setEditLot(lastLot)} title={`Editar última entrada: ${lastLot.shares} acc. @ ${lastLot.cost_basis} ${lastLot.cost_basis_currency} el ${lastLot.purchase_date}`}
+                              style={{ background: 'none', border: 'none', color: C.text3, cursor: 'pointer', fontSize: '13px', marginLeft: '2px' }}>
+                              ✎
+                            </button>
+                            <button type="button" onClick={() => removePosition(p.ticker)} title={`Eliminar toda la posición de ${p.ticker}`}
+                              style={{ background: 'none', border: 'none', color: C.text3, cursor: 'pointer', fontSize: '13px', marginLeft: '8px' }}>
+                              ✕
+                            </button>
+                          </>
+                        )}
                       </div>
                     </div>
                   );
@@ -523,6 +603,7 @@ function NewPortfolioPageContent() {
         {showCashModal && <CashModal portfolioId={selectedPortfolioId} portfolios={portfolios} transactions={selectedPortfolioId === 'all' ? allCashTransactions : allCashTransactions.filter(t => t.portfolio_id === selectedPortfolioId)} onClose={() => setShowCashModal(false)} onAdded={() => { load(); }} />}
         {editLot && <AddHoldingModal onClose={() => setEditLot(null)} onAdded={() => { setEditLot(null); load(); }} editLot={editLot} portfolioId={selectedPortfolioId} portfolios={portfolios} />}
         {sellPosition && <SellModal position={sellPosition} onClose={() => setSellPosition(null)} onSold={() => { setSellPosition(null); load(); }} portfolioId={selectedPortfolioId} />}
+        {connectTarget && <ConnectTrading212Modal portfolio={connectTarget} onClose={() => setConnectTarget(null)} onConnected={() => { setConnectTarget(null); loadPortfolios(); load(); }} />}
       </div>
     </div>
   );
