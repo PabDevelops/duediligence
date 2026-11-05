@@ -26,7 +26,7 @@ export default function ActivityFeed({ activity }) {
       <div style={{ fontSize: '11px', fontWeight: 700, color: C.text3, letterSpacing: '0.8px', marginBottom: '12px', textTransform: 'uppercase' }}>
         Actividad reciente
       </div>
-      <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '2px', maxHeight: '460px', overflowY: 'auto' }}>
         {activity.map(item => {
           const icon = item.type === 'dividend' ? ICONS.dividend : (ICONS[item.action] || '⚪');
           const amountStr = item.amount != null
