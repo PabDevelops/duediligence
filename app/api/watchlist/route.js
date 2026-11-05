@@ -49,7 +49,10 @@ export async function GET(request) {
     .eq('user_id', userId)
     .order('created_at', { ascending: false });
 
-  if (watchlistError) console.error('GET /api/watchlist:', watchlistError);
+  if (watchlistError) {
+    console.error('GET /api/watchlist:', watchlistError);
+    return Response.json({ error: 'No se pudo cargar el seguimiento.' }, { status: 500 });
+  }
   watchlistData = watchlistData || [];
 
   // Portfolio holdings are synced into the watchlist once, at the moment a holding is actually
@@ -150,13 +153,22 @@ export async function PATCH(request) {
   const userId = await getUserId();
   if (!userId) return Response.json({ error: 'Not authenticated' }, { status: 401 });
 
-  const { ticker, pie } = await request.json();
-  if (!ticker) return Response.json({ error: 'Ticker required' }, { status: 400 });
+  const body = await request.json().catch(() => null);
+  const { ticker, pie } = body || {};
+  if (typeof ticker !== 'string' || !ticker.trim()) return Response.json({ error: 'Ticker required' }, { status: 400 });
+  if (pie !== null && typeof pie !== 'string') return Response.json({ error: 'Pie required' }, { status: 400 });
 
-  await supabase.from('watchlists')
-    .update({ pie: pie ? pie.trim() || null : null })
+  const { data, error } = await supabase.from('watchlists')
+    .update({ pie: pie || null })
     .eq('user_id', userId)
-    .eq('ticker', ticker.toUpperCase());
+    .eq('ticker', ticker.trim().toUpperCase())
+    .select('ticker');
+
+  if (error) {
+    console.error('PATCH /api/watchlist:', error);
+    return Response.json({ error: 'No se pudo mover la empresa.' }, { status: 500 });
+  }
+  if (!data?.length) return Response.json({ error: 'La empresa ya no está en seguimiento.' }, { status: 404 });
 
   return Response.json({ success: true });
 }
@@ -200,6 +212,10 @@ export async function DELETE(request) {
 
   const { ticker } = await request.json();
   if (!ticker) return Response.json({ error: 'Ticker required' }, { status: 400 });
-  await supabase.from('watchlists').delete().eq('user_id', userId).eq('ticker', ticker.toUpperCase());
+  const { error } = await supabase.from('watchlists').delete().eq('user_id', userId).eq('ticker', ticker.toUpperCase());
+  if (error) {
+    console.error('DELETE /api/watchlist:', error);
+    return Response.json({ error: 'No se pudo quitar la empresa de seguimiento.' }, { status: 500 });
+  }
   return Response.json({ success: true });
 }
