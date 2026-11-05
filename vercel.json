@@ -1,4 +1,9 @@
 {
+  "git": {
+    "deploymentEnabled": {
+      "feat/watchlist-baskets": false
+    }
+  },
   "crons": [
     { "path": "/api/admin/seed-earnings-calendar", "schedule": "0 3 * * *" },
     { "path": "/api/admin/seed-tickers", "schedule": "30 6 * * *" },
