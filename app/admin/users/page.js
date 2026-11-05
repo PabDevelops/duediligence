@@ -5,7 +5,7 @@ import { useUser } from '../../components/AuthProvider';
 import { NEW_COLORS as C, VERDICT_BADGE } from '../../components/new/theme';
 
 const REASON_LABEL = {
-  manual: 'Pro a mano', active: 'Suscripción activa', trialing: 'Suscripción en trial (Stripe)',
+  manual: 'Pro a mano', manual_trial: 'Prueba a mano', active: 'Suscripción activa', trialing: 'Suscripción en trial (Stripe)',
   trial: 'Periodo de prueba', grandfathered: 'Gratis (anterior al trial)', none: 'Sin acceso Pro',
 };
 
@@ -26,6 +26,14 @@ function Shell({ children }) {
 function formatDate(iso) {
   if (!iso) return '—';
   return new Date(iso).toLocaleDateString('es-ES', { year: 'numeric', month: 'short', day: 'numeric' });
+}
+
+// Module-level, not inside the component — Date.now() is impure, and the React Compiler lint
+// (react-hooks/purity) flags any impure call syntactically reachable from a component's render
+// body, even one only ever invoked from a click handler. Same reasoning as trading212/page.js's
+// module-level statusFor(), which calls Date.now() internally without tripping the same rule.
+function daysFromNow(days) {
+  return new Date(Date.now() + days * 24 * 60 * 60 * 1000).toISOString();
 }
 
 export default function AdminUsersPage() {
@@ -60,14 +68,15 @@ export default function AdminUsersPage() {
     }
   };
 
-  const toggleOverride = async (user) => {
-    const next = !(user.subscription?.manual_override === true);
+  // manual_override_until: omit/null for a permanent comp, an ISO date for a timed trial that
+  // expires on its own (app/api/admin/users/route.js's GET lazily clears it once it's past).
+  const setOverride = async (user, manual_override, manual_override_until = null) => {
     setPendingId(user.id);
     try {
       const res = await fetch('/api/admin/users', {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ user_id: user.id, manual_override: next }),
+        body: JSON.stringify({ user_id: user.id, manual_override, manual_override_until }),
       });
       const d = await res.json();
       if (d.error) { setError(d.error); return; }
@@ -78,6 +87,7 @@ export default function AdminUsersPage() {
       setPendingId(null);
     }
   };
+  const give30DayTrial = (user) => setOverride(user, true, daysFromNow(30));
 
   if (!isLoaded || isAdmin === null) {
     return <Shell><div style={{ fontSize: '13px', color: C.text3 }}>Cargando…</div></Shell>;
@@ -117,7 +127,10 @@ export default function AdminUsersPage() {
       <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
         {users.map(u => {
           const badge = VERDICT_BADGE[u.isPro ? 'good' : 'bad'];
-          const overridden = u.subscription?.manual_override === true;
+          // Derived from `reason` (the server's effectiveStatus()), not the raw
+          // subscription.manual_override — a lapsed timed trial still has manual_override=true
+          // in the row until the lazy cleanup catches up, but reason already reflects reality.
+          const overridden = u.reason === 'manual' || u.reason === 'manual_trial';
           return (
             <div key={u.id} style={{ background: C.surface, border: `1px solid ${C.border}`, borderRadius: '16px', padding: '18px 20px', boxSizing: 'border-box', display: 'flex', flexDirection: 'column', gap: '10px' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '10px' }}>
@@ -143,17 +156,47 @@ export default function AdminUsersPage() {
                 {!u.subscription?.status && !u.subscription?.stripe_customer_id && <span>Sin historial de Stripe.</span>}
               </div>
 
-              <div>
-                <button
-                  type="button" onClick={() => toggleOverride(u)} disabled={pendingId === u.id}
-                  style={{
-                    height: '34px', padding: '0 16px', borderRadius: '10px', fontWeight: 700, fontSize: '12px', fontFamily: 'inherit',
-                    cursor: pendingId === u.id ? 'default' : 'pointer', opacity: pendingId === u.id ? 0.6 : 1,
-                    border: overridden ? 'none' : `1px solid ${C.ink}`, background: overridden ? C.red : 'transparent', color: overridden ? '#fff' : C.ink,
-                  }}
-                >
-                  {pendingId === u.id ? '…' : overridden ? 'Quitar Pro a mano' : 'Dar Pro a mano'}
-                </button>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap' }}>
+                {overridden ? (
+                  <>
+                    <button
+                      type="button" onClick={() => setOverride(u, false)} disabled={pendingId === u.id}
+                      style={{
+                        height: '34px', padding: '0 16px', borderRadius: '10px', fontWeight: 700, fontSize: '12px', fontFamily: 'inherit',
+                        cursor: pendingId === u.id ? 'default' : 'pointer', opacity: pendingId === u.id ? 0.6 : 1,
+                        border: 'none', background: C.red, color: '#fff',
+                      }}
+                    >
+                      {pendingId === u.id ? '…' : 'Quitar Pro a mano'}
+                    </button>
+                    <span style={{ fontSize: '12px', color: C.text3 }}>
+                      {u.subscription?.manual_override_until ? `Hasta ${formatDate(u.subscription.manual_override_until)}` : 'Permanente'}
+                    </span>
+                  </>
+                ) : (
+                  <>
+                    <button
+                      type="button" onClick={() => give30DayTrial(u)} disabled={pendingId === u.id}
+                      style={{
+                        height: '34px', padding: '0 16px', borderRadius: '10px', fontWeight: 700, fontSize: '12px', fontFamily: 'inherit',
+                        cursor: pendingId === u.id ? 'default' : 'pointer', opacity: pendingId === u.id ? 0.6 : 1,
+                        border: 'none', background: C.lime, color: C.ink,
+                      }}
+                    >
+                      {pendingId === u.id ? '…' : 'Dar prueba 30 días'}
+                    </button>
+                    <button
+                      type="button" onClick={() => setOverride(u, true)} disabled={pendingId === u.id}
+                      style={{
+                        height: '34px', padding: '0 16px', borderRadius: '10px', fontWeight: 700, fontSize: '12px', fontFamily: 'inherit',
+                        cursor: pendingId === u.id ? 'default' : 'pointer', opacity: pendingId === u.id ? 0.6 : 1,
+                        border: `1px solid ${C.ink}`, background: 'transparent', color: C.ink,
+                      }}
+                    >
+                      {pendingId === u.id ? '…' : 'Dar Pro permanente'}
+                    </button>
+                  </>
+                )}
               </div>
             </div>
           );
