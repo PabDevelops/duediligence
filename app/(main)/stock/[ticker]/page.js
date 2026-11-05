@@ -204,11 +204,12 @@ function NewStockPageContent({ params }) {
   const qualityScore = quality?.score ?? null;
   // "92/100" implies a precision the model doesn't have — quality.sensitivity already proves
   // that by recomputing the score under 4 weightings of its 9 components (same mechanism as
-  // Potencial). Shown as the word, widened into a range only when a different reasonable
-  // weighting actually lands on a different word; the number stays available in the data for
-  // sorting/filtering elsewhere, it's just not the headline here.
+  // Potencial). Shown as a tier letter (S+/S/A/B/C/D/F — more immediately recognizable than a
+  // bespoke word), widened into a range only when a different reasonable weighting actually
+  // lands on a different tier; the number stays available in the data for sorting/filtering
+  // elsewhere, it's just not the headline here.
   const qualityRange = quality?.sensitivity?.labelRange;
-  const qualityText = qualityScore == null ? null : qualityRange ? `${qualityRange.low} a ${qualityRange.high.replace(/^Calidad /, '')}` : quality.label;
+  const qualityText = qualityScore == null ? null : qualityRange ? `${qualityRange.low}–${qualityRange.high}` : quality.label;
 
   // Lets AI crawlers and answer engines identify which company this page is about without
   // having to parse the rendered layout — schema.org Corporation, not a rating/review type, so
@@ -265,8 +266,8 @@ function NewStockPageContent({ params }) {
               <div aria-hidden="true" style={{ width: '64px', height: '8px', borderRadius: '20px', background: C.borderSoft, overflow: 'hidden', marginLeft: 'auto', marginBottom: '6px' }}>
                 <div style={{ width: `${qualityScore}%`, height: '100%', borderRadius: '20px', background: C.lime }} />
               </div>
-              <div style={{ fontSize: '15px', fontWeight: 800, lineHeight: 1.25 }}>{qualityText}</div>
-              {qualityRange && <div style={{ fontSize: '10px', color: C.text3, marginTop: '2px' }}>Cambia según cómo se pondere</div>}
+              <div style={{ fontSize: '24px', fontWeight: 800, lineHeight: 1.1 }}>{qualityText}</div>
+              {qualityRange && <div style={{ fontSize: '10px', color: C.text3, marginTop: '4px' }}>Cambia según cómo se pondere</div>}
             </div>
           )}
         </div>
