@@ -1,7 +1,8 @@
 {
   "git": {
     "deploymentEnabled": {
-      "feat/watchlist-baskets": false
+      "feat/watchlist-baskets": false,
+      "main": false
     }
   },
   "crons": [
