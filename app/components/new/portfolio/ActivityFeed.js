@@ -45,6 +45,16 @@ export default function ActivityFeed({ activity }) {
                     {item.price != null ? ` @ ${formatCurrency(item.price, CURRENCY_SYMBOLS[item.currency] || '$')}` : ''}
                   </div>
                 )}
+                {/* Only ever present on a sell (Trading 212 computes it from the position's real
+                    cost basis) — the actual realized gain/loss, not just the sale proceeds shown
+                    on the right. In the account's own base currency, which can differ from the
+                    instrument's own currency shown above. */}
+                {item.realized_pl != null && (
+                  <div style={{ fontSize: '11px', fontWeight: 700, color: item.realized_pl >= 0 ? C.green : C.red }}>
+                    {item.realized_pl >= 0 ? '+' : ''}
+                    {formatCurrency(item.realized_pl, CURRENCY_SYMBOLS[item.realized_pl_currency] || (item.realized_pl_currency ? `${item.realized_pl_currency} ` : ''))} realizado
+                  </div>
+                )}
               </div>
               {amountStr && (
                 <div style={{ fontSize: '12px', fontWeight: 700, color: item.action === 'SELL' || item.type === 'dividend' ? C.green : C.ink }}>

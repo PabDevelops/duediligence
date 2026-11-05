@@ -14,7 +14,7 @@ export async function GET(request) {
 
   let query = supabase
     .from('portfolio_activity')
-    .select('id, portfolio_id, type, ticker, action, quantity, price, amount, currency, occurred_at')
+    .select('id, portfolio_id, type, ticker, action, quantity, price, amount, currency, realized_pl, realized_pl_currency, occurred_at')
     .eq('user_id', userId)
     .order('occurred_at', { ascending: false })
     .limit(FEED_LIMIT);
