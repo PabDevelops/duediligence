@@ -1,3 +1,4 @@
+import { sanitizeFinancialData } from '../../../lib/financialIntegrity.js';
 import { getUserId } from '../../../lib/auth';
 import { supabase } from '../../../lib/supabase';
 import { checkIsPro } from '../../../lib/isPro';
@@ -21,7 +22,7 @@ async function lookupGuestTickers(tickersParam) {
   if (tickers.length === 0) return Response.json({ tickers: [] });
 
   const { data: cacheData } = await supabase.from('stock_cache').select('ticker, data').in('ticker', tickers);
-  const byTicker = Object.fromEntries((cacheData || []).map(row => [row.ticker, row.data]));
+  const byTicker = Object.fromEntries((cacheData || []).map(row => [row.ticker, sanitizeFinancialData(row.data)]));
 
   const fullTickers = tickers.filter(t => byTicker[t]).map(t => ({
     ...byTicker[t],
@@ -73,7 +74,7 @@ export async function GET(request) {
       .select('ticker, data')
       .in('ticker', tickers);
 
-    const byTicker = Object.fromEntries((cacheData || []).map(row => [row.ticker, row.data]));
+    const byTicker = Object.fromEntries((cacheData || []).map(row => [row.ticker, sanitizeFinancialData(row.data)]));
 
     const fullTickers = watchlistData.map(d => ({
       ...(byTicker[d.ticker] || {}),

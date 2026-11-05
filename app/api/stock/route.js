@@ -1,3 +1,4 @@
+import { sanitizeFinancialData, samePeriod, joinPeriods, cashFlowLessCapex, sumFourQuarters, resolveFxRate, validPeriod } from '../../../lib/financialIntegrity.js';
 import { supabase } from '../../../lib/supabase.js';
 import { getYahooAuth, fetchYahooAnalystTarget, fetchYahooDescription } from '../../../lib/yahooFinance.js';
 import { translateDescription } from '../../../lib/translateDescription.js';
@@ -158,16 +159,17 @@ const YAHOO_TS_TYPES_QUARTERLY = YAHOO_TS_TYPES.split(',').map(t => t.replace(/^
 // Reads a fundamentals-timeseries response for the first candidate type with data,
 // returning up to the 6 most recent years in the same { year, val } shape as buildHistory().
 function tsSeries(tsJson, ...candidateTypes) {
-  const results = tsJson?.timeseries?.result || [];
   for (const type of candidateTypes) {
-    const entry = results.find(r => r.meta?.type?.[0] === type);
-    const arr = entry?.[type];
-    if (arr && arr.some(x => x?.reportedValue?.raw != null)) {
-      return arr
-        .filter(x => x?.reportedValue?.raw != null)
-        .map(x => ({ year: x.asOfDate.slice(0, 4), val: x.reportedValue.raw }))
-        .slice(-6);
-    }
+    const entry=(tsJson?.timeseries?.result||[]).find(r=>r.meta?.type?.[0]===type);
+    const arr=entry?.[type];
+    if(!arr?.some(x=>x?.reportedValue?.raw!=null))continue;
+    return arr.filter(x=>x?.reportedValue?.raw!=null).map(x=>({
+      year:x.asOfDate?.slice(0,4),val:x.reportedValue.raw,
+      basis:type.startsWith('quarterly')?'Q':'FY',periodEnd:x.asOfDate,
+      // Yahoo commonly omits the start. Preserve that absence; never invent fiscal dates.
+      periodStart:x.startDate || null,currency:x.currencyCode || null,
+      scope:'provider-unspecified',source:'Yahoo Finance',unit:type.includes('Shares')?'shares':'currency',
+    })).sort((a,b)=>(a.periodEnd||'').localeCompare(b.periodEnd||'')).slice(-6);
   }
   return [];
 }
@@ -177,13 +179,7 @@ function tsSeries(tsJson, ...candidateTypes) {
 // a negative (cash outflow); Math.abs guards against a source that instead reports it positive.
 // Only returns years present in both series — a year missing capex data shouldn't silently
 // pass its full operating cash flow through as if no capex had been spent.
-function ocfMinusCapex(ocfSeries, capexSeries) {
-  const capexByYear = {};
-  capexSeries.forEach(c => { capexByYear[c.year] = c.val; });
-  return ocfSeries
-    .filter(o => capexByYear[o.year] != null)
-    .map(o => ({ year: o.year, val: o.val - Math.abs(capexByYear[o.year]) }));
-}
+function ocfMinusCapex(ocfSeries, capexSeries) { return cashFlowLessCapex(ocfSeries, capexSeries); }
 
 // A single-year share-count jump landing within a few percent of a clean split ratio (2x, 3x,
 // 4x, 5x, 10x, 15x, 20x, 25x, 30x, 40x — forward splits — or their inverses for reverse splits)
@@ -318,7 +314,7 @@ function computeDerivedFinancials(h) {
   const netDebt = (effectiveDebtVal ?? 0) - (cashVal ?? 0);
 
   const marginHistory = h.revHistory.map((r, i) => {
-    const oi = h.oiHistory[i];
+    const oi = h.oiHistory.find(o=>samePeriod(r,o));
     if (!oi || !r.val) return { year: r.year, margin: null };
     return { year: r.year, margin: +((oi.val / r.val) * 100).toFixed(1) };
   });
@@ -326,7 +322,7 @@ function computeDerivedFinancials(h) {
   const shareDilution = computeShareDilutionPct(h.sharesHistory);
 
   const epsHistory = h.niHistory.map((ni, i) => {
-    const sh = h.sharesHistory[i];
+    const sh = h.sharesHistory.find(sh=>samePeriod(ni,sh));
     if (!ni || !sh || !sh.val) return null;
     return { year: ni.year, eps: +(ni.val / sh.val).toFixed(2) };
   }).filter(Boolean);
@@ -356,12 +352,7 @@ function computeDerivedFinancials(h) {
 // compared directly against a full year's would always read as a ~75% drop, so income-
 // statement/cash-flow ("flow") figures need to be put on a TTM basis before comparing across
 // periods. Balance-sheet figures are already point-in-time and don't need this.
-function ttmSum(arr) {
-  if (arr.length < 4) return null;
-  const last4 = arr.slice(-4);
-  if (last4.some(x => x.val == null)) return null;
-  return last4.reduce((s, x) => s + x.val, 0);
-}
+function ttmSum(arr) { return sumFourQuarters(arr); }
 
 function dropLastPoint(arr) {
   return arr.length ? arr.slice(0, -1) : arr;
@@ -374,12 +365,7 @@ function dropLastPoint(arr) {
 // series are the same length (both sourced from the same tsSeries() call, same chronological
 // order), so each index really is the same reported quarter in both — otherwise it's left
 // empty rather than risk pairing the wrong quarters together.
-function ocfMinusCapexQuarterly(ocfSeries, capexSeries) {
-  if (ocfSeries.length !== capexSeries.length) return [];
-  return ocfSeries
-    .map((o, i) => (o.val != null && capexSeries[i]?.val != null ? { year: o.year, val: o.val - Math.abs(capexSeries[i].val) } : null))
-    .filter(Boolean);
-}
+function ocfMinusCapexQuarterly(ocfSeries, capexSeries) { return cashFlowLessCapex(ocfSeries, capexSeries); }
 
 const YAHOO_FLOW_KEYS = [
   'revHistory', 'niHistory', 'oiHistory', 'fcfHistory', 'ocfHistory', 'gpHistory', 'rdHistory',
@@ -416,19 +402,7 @@ function buildQuarterlySnapshot(quarterlyHistories, quartersBack) {
 // e.g. NVO's DKK-denominated FCF gets divided by USD share count in the DCF, inflating
 // fair value ~6-7x (observed: $801 "fair value" vs a $49 quote). No crumb needed, same
 // unauthenticated chart endpoint as fetchYahooQuote.
-async function fetchFxRate(from, to) {
-  if (!from || !to || from === to) return 1;
-  try {
-    const res = await fetch(`https://query1.finance.yahoo.com/v8/finance/chart/${from}${to}=X`, {
-      headers: { 'User-Agent': 'Mozilla/5.0' },
-    });
-    const data = await res.json();
-    const rate = data?.chart?.result?.[0]?.meta?.regularMarketPrice;
-    return typeof rate === 'number' && rate > 0 ? rate : 1;
-  } catch {
-    return 1;
-  }
-}
+async function fetchFxRate(from, to) { return resolveFxRate(from, to); }
 
 // Yahoo Finance's quoteSummary + fundamentals-timeseries endpoints (unofficial, needs the
 // crumb/cookie above). Returns null if Yahoo has no usable financial statement data at all,
@@ -469,6 +443,7 @@ async function fetchYahooFundamentals(ticker) {
     const financialCurrency = fin.financialCurrency || null;
     const quoteCurrency = (summary.currency === 'GBp' ? 'GBP' : summary.currency) || null;
     const fx = await fetchFxRate(financialCurrency, quoteCurrency);
+    if (fx == null) return null;
 
     // Helper: convert Yahoo balanceSheetHistory / cashFlowStatementHistory entries to
     // the same { year, val } shape used by tsSeries(), as a fallback when the
@@ -489,23 +464,17 @@ async function fetchYahooFundamentals(ticker) {
       .filter(s => s[key]?.raw != null)
       .map(s => ({ year: new Date(s.endDate.raw * 1000).getFullYear().toString(), val: s[key].raw }));
 
-    // True free cash flow (OCF - capex), not operating cash flow alone. Prefer Yahoo's own
-    // annualFreeCashFlow when it's populated; otherwise join OCF and capex by year via
-    // ocfMinusCapex; only fall all the way back to raw OCF (still technically mislabeled, but
-    // better than nothing) when capex data isn't available at all for this ticker. Previously
-    // this field defaulted straight to annualOperatingCashFlow with capex never subtracted —
-    // every DCF valuation (which discounts this number directly) was discounting operating
-    // cash flow, overstating true free cash flow by the full capex spend every single year.
+    // FCF requires both operating cash flow and CAPEX for the same exact period.
     const capexSeries = tsSeries(ts, 'annualCapitalExpenditure').length ? tsSeries(ts, 'annualCapitalExpenditure') : cfSeries('capitalExpenditures');
     const ocfSeries = tsSeries(ts, 'annualOperatingCashFlow');
-    const fcfDirect = tsSeries(ts, 'annualFreeCashFlow');
+    // Provider FCF is not accepted without OCF/CAPEX reconciliation.
     const fcfDerived = ocfMinusCapex(ocfSeries, capexSeries);
 
     const histories = {
       revHistory: tsSeries(ts, 'annualTotalRevenue'),
       niHistory: tsSeries(ts, 'annualNetIncomeCommonStockholders', 'annualNetIncome'),
       oiHistory: tsSeries(ts, 'annualOperatingIncome'),
-      fcfHistory: fcfDirect.length ? fcfDirect : (fcfDerived.length ? fcfDerived : ocfSeries),
+      fcfHistory: fcfDerived,
       // Genuine operating cash flow, kept separate from fcfHistory above — the Financials tab's
       // "Operating Cash Flow" row displays this, and it should never silently become free cash
       // flow (or vice versa) just because one of them happened to be easier to source.
@@ -547,11 +516,11 @@ async function fetchYahooFundamentals(ticker) {
     // Also fill FCF from operating CF - capex if the timeseries FCF is missing
     if (!histories.fcfHistory.length && cfStatements.length) {
       histories.fcfHistory = cfStatements
-        .filter(s => s.totalCashFromOperatingActivities?.raw != null)
+        .filter(s => s.totalCashFromOperatingActivities?.raw != null && s.capitalExpenditures?.raw != null)
         .map(s => {
           const ocf = s.totalCashFromOperatingActivities.raw;
-          const capex = s.capitalExpenditures?.raw ?? 0;
-          return { year: new Date(s.endDate.raw * 1000).getFullYear().toString(), val: ocf + capex };
+          const capex = s.capitalExpenditures.raw;
+          return { year: new Date(s.endDate.raw * 1000).getFullYear().toString(), val: ocf - Math.abs(capex) };
         });
     }
     if (!histories.ocfHistory.length && cfStatements.length) {
@@ -562,19 +531,7 @@ async function fetchYahooFundamentals(ticker) {
     // has no data, synthesize single-point entries from the current-period values in
     // financialData / defaultKeyStatistics. Do this BEFORE the null-guard so tickers
     // that only have quoteSummary data still produce a usable result.
-    const thisYear = new Date().getFullYear().toString();
-    const fill1 = (history, val) => {
-      if (history.length === 0 && val != null) return [{ year: thisYear, val }];
-      return history;
-    };
-    histories.revHistory     = fill1(histories.revHistory,     num(fin.totalRevenue));
-    histories.niHistory      = fill1(histories.niHistory,      num(fin.netIncomeToCommon) ?? num(keyStats.netIncomeToCommon));
-    histories.gpHistory      = fill1(histories.gpHistory,      num(fin.grossProfits));
-    histories.oiHistory      = fill1(histories.oiHistory,      num(fin.ebit));
-    histories.fcfHistory     = fill1(histories.fcfHistory,     num(fin.freeCashflow));
-    histories.debtHistory    = fill1(histories.debtHistory,    num(fin.totalDebt));
-    histories.cashHistory    = fill1(histories.cashHistory,    num(fin.totalCash));
-
+    // QuoteSummary aggregates have no exact fiscal window. Keep them out of annual arrays.
     // Convert every monetary (non-share-count) history from statement currency to quote
     // currency now, before anything downstream (WACC, DCF, per-share ratios) divides these
     // by USD-denominated shares/market cap. Must run before the book-value equity fallback
@@ -590,7 +547,7 @@ async function fetchYahooFundamentals(ticker) {
     ];
     if (fx !== 1) {
       for (const key of MONETARY_HISTORY_KEYS) {
-        histories[key] = histories[key].map(pt => ({ ...pt, val: pt.val * fx }));
+        histories[key] = histories[key].filter(pt=>!pt.currency||pt.currency===financialCurrency).map(pt => ({ ...pt, val: pt.val * fx, originalCurrency:pt.currency||financialCurrency,currency:quoteCurrency,fxRate:fx }));
       }
     }
 
@@ -714,7 +671,13 @@ async function fetchYahooFundamentals(ticker) {
       if (analystTarget != null) analystTarget /= 100;
     }
 
+    const financialPeriods = {};
+    for(const [hist,field] of Object.entries({revHistory:'revVal',niHistory:'niVal',oiHistory:'oiVal',fcfHistory:'fcfVal',ocfHistory:'operatingCFVal',capexHistory:'capexVal',daHistory:'daVal',assetsHistory:'assetsVal',equityHistory:'equityVal',cashHistory:'cashVal',debtHistory:'debtVal',ebtHistory:'ebtVal',taxHistory:'taxVal',currentLiabilitiesHistory:'currentLiabilitiesVal'})) {
+      const pt=histories[hist]?.at(-1);
+      if(pt)financialPeriods[field]={...pt,currency:quoteCurrency,originalCurrency:financialCurrency,fxRate:fx};
+    }
     return {
+      financialPeriods,
       sector: profile.sector || null,
       industry: profile.industry || null,
       description: profile.longBusinessSummary || null,
@@ -998,16 +961,8 @@ function recomputePriceRatios(data, newPrice) {
   return out;
 }
 
-function normalizeStockData(data) {
-  if (!data) return data;
-  if (data.equityVal != null && (data.debtToEquity == null || data.debtVal == null)) {
-    const debtVal = data.debtVal ?? 0;
-    const debtToEquity = data.debtToEquity ?? +(debtVal / data.equityVal).toFixed(2);
-    const netDebt = (debtVal ?? 0) - (data.cashVal ?? 0);
-    return { ...data, debtVal, debtToEquity, netDebt };
-  }
-  return data;
-}
+function normalizeStockData(data) { return sanitizeFinancialData(data); }
+function stockResponse(data, options) { return Response.json(sanitizeFinancialData(data), options); }
 
 export const dynamic = 'force-dynamic';
 
@@ -1016,7 +971,7 @@ export async function GET(request) {
   const ticker = searchParams.get('ticker')?.toUpperCase();
 
   if (!ticker) {
-    return Response.json({ error: 'Ticker requerido' }, { status: 400 });
+    return stockResponse({ error: 'Ticker requerido' }, { status: 400 });
   }
 
   // Only the forced path is worth rate limiting — it bypasses the 24h cache entirely and
@@ -1025,7 +980,7 @@ export async function GET(request) {
   // IP, not ticker, so one visitor can't just rotate tickers to dodge it.
   if (searchParams.get('refresh') === 'true') {
     const { ok } = rateLimit(`stock-refresh:${getClientIp(request)}`, { limit: 10, windowMs: 60_000 });
-    if (!ok) return Response.json({ error: 'Demasiadas actualizaciones seguidas — espera un momento.' }, { status: 429 });
+    if (!ok) return stockResponse({ error: 'Demasiadas actualizaciones seguidas — espera un momento.' }, { status: 429 });
   }
 
   const riskFreeRate = await fetchRiskFreeRate();
@@ -1091,9 +1046,9 @@ export async function GET(request) {
         const priceUpdatedAt = new Date().toISOString();
         const updatedData = { ...priorCachedData, ...freshPriceData };
         supabase.from('stock_cache').upsert({ ticker, data: updatedData, updated_at: priceUpdatedAt }).then(() => {}).catch(() => {});
-        return Response.json({ ...updatedData, cached: true, priceUpdated: true, updatedAt: priceUpdatedAt });
+        return stockResponse({ ...updatedData, cached: true, priceUpdated: true, updatedAt: priceUpdatedAt });
       }
-      return Response.json({ ...priorCachedData, cached: true, updatedAt: priorCachedUpdatedAt });
+      return stockResponse({ ...priorCachedData, cached: true, updatedAt: priorCachedUpdatedAt });
     }
 
     const forceRefresh = searchParams.get('refresh') === 'true';
@@ -1138,12 +1093,12 @@ export async function GET(request) {
       // down. Backfilling this one field is not worth re-running the whole pipeline for, so it
       // no longer gates isComplete; missing rows get it filled in the background instead (below).
       const missingInsiderData = cached.data?.cik != null && !('insiderOwnershipPct' in (cached.data || {}));
-      const isComplete = validFinCount >= 2 || isEtf;
+      const isComplete = validFinCount >= 2 || isEtf || cached.data?.financialIntegrity?.version === 1;
       if (isFinancialsCacheFresh(cached.data, hoursOld) && (cached.data?.marketCap != null || isEtf) && isComplete) {
         if (missingInsiderData) backfillInsiderOwnership(cached.data.cik, ticker, cached.data.sharesOutstanding);
         const minsOld = hoursOld * 60;
         if (minsOld < 2) {
-          return Response.json({ ...normData, cached: true, updatedAt: cached.updated_at });
+          return stockResponse({ ...normData, cached: true, updatedAt: cached.updated_at });
         } else {
           // Cache is valid for heavy financials, but update the stock price in real-time
           try {
@@ -1180,12 +1135,12 @@ export async function GET(request) {
                 .upsert({ ticker, data: updatedData, updated_at: priceUpdatedAt })
                 .then(() => {})
                 .catch(() => {});
-              return Response.json({ ...updatedData, cached: true, priceUpdated: true, updatedAt: priceUpdatedAt });
+              return stockResponse({ ...updatedData, cached: true, priceUpdated: true, updatedAt: priceUpdatedAt });
             }
           } catch (err) {
             console.error('Error doing fast price update:', err);
           }
-          return Response.json({ ...normData, cached: true, updatedAt: cached.updated_at });
+          return stockResponse({ ...normData, cached: true, updatedAt: cached.updated_at });
         }
       }
     }
@@ -1220,7 +1175,7 @@ export async function GET(request) {
         await supabase.from('stock_cache_locks').update({ locked_at: new Date().toISOString() }).eq('ticker', ticker);
         lockAcquired = true;
       } else if (priorCachedData) {
-        return Response.json({ ...normalizeStockData(priorCachedData), cached: true, stale: true, updatedAt: priorCachedUpdatedAt });
+        return stockResponse({ ...normalizeStockData(priorCachedData), cached: true, stale: true, updatedAt: priorCachedUpdatedAt });
       }
       // No cached fallback (brand-new ticker requested concurrently) — fall through and fetch
       // anyway rather than returning nothing.
@@ -1239,7 +1194,7 @@ export async function GET(request) {
         fetchYahooQuote(ticker).catch(() => null),
         fetchYahooFundamentals(ticker).catch(() => null),
       ]);
-      if (!yh) return Response.json({ error: 'Ticker no encontrado' }, { status: 404 });
+      if (!yh) return stockResponse({ error: 'Ticker no encontrado' }, { status: 404 });
 
       const empty = {
         cik: null, sector: null, industry: null, description: null,
@@ -1282,10 +1237,10 @@ export async function GET(request) {
       await ensureSpanishDescription(result, priorCachedData);
 
       try {
-        await supabase.from('stock_cache').upsert({ ticker, data: result, updated_at: fetchedAt });
+        await supabase.from('stock_cache').upsert({ ticker, data: sanitizeFinancialData(result), updated_at: fetchedAt });
       } catch (e) {}
 
-      return Response.json({ ...result, updatedAt: fetchedAt });
+      return stockResponse({ ...result, updatedAt: fetchedAt });
     }
 
     let hasSecFacts = false;
@@ -1338,7 +1293,7 @@ export async function GET(request) {
           fetchYahooQuote(ticker).catch(() => null),
           fetchYahooFundamentals(ticker).catch(() => null),
         ]);
-        if (!yh) return Response.json({ error: 'Ticker no encontrado' }, { status: 404 });
+        if (!yh) return stockResponse({ error: 'Ticker no encontrado' }, { status: 404 });
 
         const empty = {
           cik: null, sector: null, industry: null, description: null,
@@ -1380,10 +1335,10 @@ export async function GET(request) {
         await ensureSpanishDescription(yhResult, priorCachedData);
 
         try {
-          await supabase.from('stock_cache').upsert({ ticker, data: yhResult, updated_at: fetchedAt });
+          await supabase.from('stock_cache').upsert({ ticker, data: sanitizeFinancialData(yhResult), updated_at: fetchedAt });
         } catch (e) {}
 
-        return Response.json({ ...yhResult, updatedAt: fetchedAt });
+        return stockResponse({ ...yhResult, updatedAt: fetchedAt });
       }
 
       const m = fhBasic?.metric || {};
@@ -1575,11 +1530,11 @@ export async function GET(request) {
       const isEtfFallback = result.sector === 'ETF' || result.industry === 'ETF';
       if (valCountFallback >= 2 || (isEtfFallback && result.currentPrice != null)) {
         try {
-          await supabase.from('stock_cache').upsert({ ticker, data: result, updated_at: fetchedAt });
+          await supabase.from('stock_cache').upsert({ ticker, data: sanitizeFinancialData(result), updated_at: fetchedAt });
         } catch (e) {}
       }
 
-      return Response.json({ ...result, updatedAt: fetchedAt });
+      return stockResponse({ ...result, updatedAt: fetchedAt });
     }
 
     const usgaap = facts.facts?.['us-gaap'] || {};
@@ -1620,14 +1575,15 @@ export async function GET(request) {
       for (const key of keys) {
         const metric = usgaap[key];
         if (!metric) continue;
-        const units = metric.units?.USD || metric.units?.EUR || metric.units?.shares || metric.units?.pure;
+        const unitName = ['USD','EUR','shares','pure'].find(u=>metric.units?.[u]);
+        const units = unitName ? metric.units[unitName].map(u=>({...u,currency:['USD','EUR'].includes(unitName)?unitName:null,unit:unitName})) : null;
         if (!units) continue;
         const annual = units.filter(u => {
           const isForm = ['10-K', '20-F', '10-K/A', '20-F/A'].includes(u.form);
           if (!isForm) return false;
           if (isFlow && u.start && u.end) {
             const days = (new Date(u.end) - new Date(u.start)) / (1000 * 60 * 60 * 24);
-            if (days < 300 && u.fp !== 'FY') return false;
+            if (days < 350 || days > 380) return false;
           }
           return true;
         }).sort((a, b) => b.end.localeCompare(a.end));
@@ -1664,7 +1620,8 @@ export async function GET(request) {
       for (const key of keys) {
         const metric = usgaap[key];
         if (!metric) continue;
-        const units = metric.units?.USD || metric.units?.EUR || metric.units?.shares || metric.units?.pure;
+        const unitName = ['USD','EUR','shares','pure'].find(u=>metric.units?.[u]);
+        const units = unitName ? metric.units[unitName].map(u=>({...u,currency:['USD','EUR'].includes(unitName)?unitName:null,unit:unitName})) : null;
         if (!units) continue;
         const periods = units
           .filter(u => ['10-K', '20-F', '10-K/A', '20-F/A', '10-Q', '10-Q/A'].includes(u.form) && u.end)
@@ -1702,7 +1659,8 @@ export async function GET(request) {
       for (const key of keys) {
         const metric = usgaap[key];
         if (!metric) continue;
-        const units = metric.units?.USD || metric.units?.EUR || metric.units?.shares || metric.units?.pure;
+        const unitName = ['USD','EUR','shares','pure'].find(u=>metric.units?.[u]);
+        const units = unitName ? metric.units[unitName].map(u=>({...u,currency:['USD','EUR'].includes(unitName)?unitName:null,unit:unitName})) : null;
         if (!units) continue;
         const periods = units
           .filter(u => ['10-K', '20-F', '10-K/A', '20-F/A', '10-Q', '10-Q/A'].includes(u.form) && u.end)
@@ -1727,7 +1685,8 @@ export async function GET(request) {
       for (const key of keys) {
         const metric = usgaap[key];
         if (!metric) continue;
-        const units = metric.units?.USD || metric.units?.EUR || metric.units?.shares || metric.units?.pure;
+        const unitName = ['USD','EUR','shares','pure'].find(u=>metric.units?.[u]);
+        const units = unitName ? metric.units[unitName].map(u=>({...u,currency:['USD','EUR'].includes(unitName)?unitName:null,unit:unitName})) : null;
         if (!units) continue;
         const annual = units
           .filter(u => ['10-K', '20-F', '10-K/A', '20-F/A'].includes(u.form))
@@ -1755,7 +1714,8 @@ export async function GET(request) {
       for (const key of keys) {
         const metric = usgaap[key];
         if (!metric) continue;
-        const units = metric.units?.USD || metric.units?.EUR || metric.units?.shares || metric.units?.pure;
+        const unitName = ['USD','EUR','shares','pure'].find(u=>metric.units?.[u]);
+        const units = unitName ? metric.units[unitName].map(u=>({...u,currency:['USD','EUR'].includes(unitName)?unitName:null,unit:unitName})) : null;
         if (!units) continue;
         const periods = units
           .filter(u => ['10-K', '20-F', '10-K/A', '20-F/A', '10-Q', '10-Q/A'].includes(u.form) && u.start && u.end)
@@ -1799,7 +1759,7 @@ export async function GET(request) {
     const resolveYtd = (keys) => {
       const periods = getMetricAllPeriods(keys);
       if (!periods || !periods.length) return null;
-      const fy = periods.find(u => ['10-K', '20-F', '10-K/A', '20-F/A'].includes(u.form) && daysBetween(u.start, u.end) >= 300);
+      const fy = periods.find(u => ['10-K', '20-F', '10-K/A', '20-F/A'].includes(u.form) && daysBetween(u.start, u.end) >= 349 && daysBetween(u.start, u.end) <= 379);
       if (!fy) return { periods, fy: null, curYtd: null, priorYtd: null, prevQtd: null, prevQtdPriorYear: null };
 
       const findYtdMatch = (target) => target ? (periods.find(u => u.form.startsWith('10-Q')
@@ -1808,8 +1768,9 @@ export async function GET(request) {
 
       const candidates = periods.filter(u => u.form.startsWith('10-Q') && new Date(u.end) > new Date(fy.end) && daysBetween(u.start, u.end) < 300);
       const maxEnd = candidates.reduce((max, u) => (!max || u.end > max) ? u.end : max, null);
-      const curYtd = candidates.filter(u => u.end === maxEnd).sort((a, b) => a.start.localeCompare(b.start))[0] || null;
-      const priorYtd = findYtdMatch(curYtd);
+      let curYtd = candidates.filter(u => u.end === maxEnd).sort((a, b) => a.start.localeCompare(b.start))[0] || null;
+      let priorYtd = findYtdMatch(curYtd);
+      if(curYtd && (curYtd.start!==new Date(Date.parse(fy.end)+86400000).toISOString().slice(0,10)||priorYtd?.start!==fy.start||curYtd.currency!==fy.currency||priorYtd.currency!==fy.currency)) {curYtd=null;priorYtd=null;}
 
       // Same-fiscal-year cumulative fact ending just before curYtd — "YTD through the previous
       // quarter." Sharing curYtd.start (within a few days) is what tells it apart from a
@@ -1849,7 +1810,7 @@ export async function GET(request) {
     const ttmVal = (keys) => {
       const r = resolveYtd(keys);
       if (!r) return null;
-      if (!r.fy) return r.periods[0]?.val ?? null;
+      if (!r.fy) return null;
       if (!r.curYtd || !r.priorYtd) return r.fy.val;
       return r.fy.val - r.priorYtd.val + r.curYtd.val;
     };
@@ -1864,7 +1825,9 @@ export async function GET(request) {
       const r = resolveYtd(keys);
       if (!r?.fy) return null;
       const isTtm = !!(r.curYtd && r.priorYtd);
-      return { basis: isTtm ? 'TTM' : 'FY', periodEnd: isTtm ? r.curYtd.end : r.fy.end };
+      const start = isTtm ? new Date(Date.parse(r.priorYtd.end)+86400000).toISOString().slice(0,10) : r.fy.start;
+      const p={ basis:isTtm?'TTM':'FY',periodStart:start,periodEnd:isTtm?r.curYtd.end:r.fy.end,currency:r.fy.currency,scope:'consolidated',source:'SEC EDGAR' };
+      return validPeriod(p) ? p : null;
     };
 
     // YoY growth off the freshest comparable period (this interim YTD vs the same YTD window
@@ -1971,38 +1934,22 @@ export async function GET(request) {
   if (!arr) return [];
   const seen = new Set();
   const deduped = arr.filter(r => {
-    const y = r.end.slice(0, 4);
+    const y = [r.start || '',r.end,r.currency,r.unit].join('|');
     if (seen.has(y)) return false;
     seen.add(y);
     return true;
   });
   return deduped.slice(0, 6).reverse().map(r => {
-    const val = isShares && r.val < 1e6 ? r.val * 1e6 : r.val;
-    return { year: r.end.slice(0, 4), val };
+    const val = r.val; // SEC companyfacts values are already expressed in their declared unit.
+    return { year:r.end.slice(0,4),val,basis:r.start?'FY':'instant',periodStart:r.start||null,periodEnd:r.end,currency:r.currency||'USD',unit:r.unit,scope:'consolidated',source:'SEC EDGAR',publicationDate:r.filed };
   });
 };
 
-    // SEC's own tag only carries operating cash flow — FCF is OCF minus CapEx, matched by
-    // fiscal period end so a year missing a capex filing doesn't get double-counted from
-    // a different year. Missing capex for a *specific* period defaults to 0 (no PP&E
-    // purchases reported) — true for plenty of asset-light filers. But zero capex matched
-    // across EVERY period (capexByEnd empty despite having cash-flow data) is a different
-    // signal: almost certainly a filer reporting capex under a tag not in getMetric()'s list
-    // above (e.g. PaymentsToAcquireProductiveAssets — Kohl's, Macy's), not a company that
-    // truly spends nothing. Only in that all-missing case, fall back to Yahoo's own capex
-    // figures instead of silently overstating FCF by the full capex spend for every year.
-    const capexByEnd = new Map((capex || []).map(u => [u.end, u.val]));
-    if (capexByEnd.size === 0 && (cashFlows || []).length > 0) {
-      const yhCapexFallback = await fetchYahooFundamentals(ticker).catch(() => null);
-      (yhCapexFallback?.capexHistory || []).forEach(pt => {
-        const match = (cashFlows || []).find(u => u.end.slice(0, 4) === pt.year);
-        // Yahoo's capex sign varies by source field; SEC's tag (and capexByEnd everywhere
-        // else) is a positive spend amount — normalize with Math.abs(), same convention
-        // ocfMinusCapex() above already uses for the same reason.
-        if (match) capexByEnd.set(match.end, Math.abs(pt.val));
-      });
-    }
-    const freeCashFlows = (cashFlows || []).map(u => ({ ...u, val: u.val - (capexByEnd.get(u.end) ?? 0) }));
+    // Missing CAPEX is unknown. No cross-provider/year-only matching.
+    const freeCashFlows = (cashFlows || []).flatMap(o => {
+      const c=(capex||[]).find(c=>c.start===o.start&&c.end===o.end&&c.currency===o.currency);
+      return c ? [{...o,val:o.val-Math.abs(c.val)}] : [];
+    });
 
     // Income-statement scalars: rolled forward from the last 10-K to the freshest 10-Q via
     // ttmVal (same technique as the cash-flow figures below), so a same-day-filed 10-Q is
@@ -2152,7 +2099,7 @@ export async function GET(request) {
     const equityHistory = buildHistory(equity);
 
     const marginHistory = revHistory.map((r, i) => {
-      const oi = oiHistory[i];
+      const oi = oiHistory.find(o=>samePeriod(r,o));
       if (!oi || !r.val) return { year: r.year, margin: null };
       return { year: r.year, margin: +((oi.val / r.val) * 100).toFixed(1) };
     });
@@ -2363,7 +2310,7 @@ export async function GET(request) {
     };
 
     const epsHistory = niHistory.map((ni, i) => {
-      const sh = sharesHistory[i];
+      const sh = sharesHistory.find(sh=>samePeriod(ni,sh));
       if (!ni || !sh || !sh.val) return null;
       return { year: ni.year, eps: +(ni.val / sh.val).toFixed(2) };
     }).filter(Boolean);
@@ -2556,6 +2503,29 @@ export async function GET(request) {
     }
     await ensureSpanishDescription(result, priorCachedData);
 
+    result.financialPeriods = { ...result.financialPeriods };
+    result.currency = result.currency || 'USD'; // This branch reads SEC USD facts; other currencies are rejected below.
+    const scalarHistories = { revVal:revHistory,niVal:niHistory,oiVal:oiHistory,fcfVal:fcfHistory,
+      assetsVal:buildHistory(assets),equityVal:buildHistory(equity),debtVal:buildHistory(debt),cashVal:buildHistory(cash),
+      currentAssetsVal:currentAssetsHistory,currentLiabilitiesVal:currentLiabilitiesHistory,daVal:daHistory,
+      capexVal:capexHistory,operatingCFVal:operatingCFHistory,ebtVal:buildHistory(ebt),taxVal:buildHistory(tax),
+      sharesBasicVal:buildHistory(sharesBasic),sharesDilutedVal:buildHistory(sharesDiluted) };
+    // Match by value only within the selected latest statement; never search old years by value.
+    for(const [field,hist] of Object.entries(scalarHistories)) {
+      const latest=hist.at(-1);
+      if(latest && result[field]===latest.val)result.financialPeriods[field]=latest;
+    }
+    for(const [field,keys] of Object.entries({niVal:['NetIncomeLoss'],ebtVal:['IncomeLossFromContinuingOperationsBeforeIncomeTaxesExtraordinaryItemsNoncontrollingInterest','IncomeLossFromContinuingOperationsBeforeIncomeTaxesMinorityInterestAndIncomeLossFromEquityMethodInvestments'],taxVal:['IncomeTaxExpenseBenefit'],operatingCFVal:['NetCashProvidedByUsedInOperatingActivities'],capexVal:['PaymentsToAcquirePropertyPlantAndEquipment','CapitalExpenditureDiscontinuedOperations','PaymentsForProceedsFromProductiveAssets','PaymentsToAcquireProductiveAssets']})) {
+      if(result[field]===ttmVal(keys))result.financialPeriods[field]=flowPeriod(keys);
+    }
+    result.financialPeriods.revVal=financialPeriods.rev;
+    result.financialPeriods.oiVal=financialPeriods.oi;
+    if(samePeriod(result.financialPeriods.operatingCFVal,result.financialPeriods.capexVal))result.financialPeriods.fcfVal=result.financialPeriods.operatingCFVal;
+    // Instant metadata must describe the selected freshest fact, not the annual fallback.
+    for(const [field,keys] of Object.entries({assetsVal:['Assets'],cashVal:['CashAndCashEquivalentsAtCarryingValue','CashCashEquivalentsRestrictedCashAndRestrictedCashEquivalents'],currentLiabilitiesVal:['LiabilitiesCurrent'],currentAssetsVal:['AssetsCurrent']})) {
+      const fact=latestInstant(keys);
+      if(fact && result[field]===fact.val)result.financialPeriods[field]={basis:'instant',periodEnd:fact.end,currency:fact.currency,scope:'consolidated',source:'SEC EDGAR'};
+    }
     result.isEtf = cachedIsEtf;
     const finalValidCount = [result.revVal, result.niVal, result.fcfVal, result.assetsVal, result.debtVal, result.cashVal].filter(v => v !== null).length;
     const isEtfSec = result.sector === 'ETF' || result.industry === 'ETF';
@@ -2563,15 +2533,15 @@ export async function GET(request) {
       try {
         await supabase
           .from('stock_cache')
-          .upsert({ ticker, data: result, updated_at: fetchedAt });
+          .upsert({ ticker, data: sanitizeFinancialData(result), updated_at: fetchedAt });
       } catch (e) {}
     }
 
-    return Response.json({ ...result, updatedAt: fetchedAt });
+    return stockResponse({ ...result, updatedAt: fetchedAt });
 
   } catch (e) {
     console.error(e);
-    return Response.json({ error: 'Error al conectar con las fuentes de datos' }, { status: 500 });
+    return stockResponse({ error: 'Error al conectar con las fuentes de datos' }, { status: 500 });
   } finally {
     if (lockAcquired) {
       try {

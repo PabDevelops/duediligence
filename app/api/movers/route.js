@@ -1,3 +1,4 @@
+import { sanitizeFinancialData } from '../../../lib/financialIntegrity.js';
 import { supabase } from '../../../lib/supabase';
 import { computeEasyMode } from '../../../lib/stockScoring';
 
@@ -25,12 +26,12 @@ async function loadMoversRows() {
   // what is otherwise a near-full-table scan.
   const { data: rows } = await supabase
     .from('stock_cache')
-    .select('ticker, updated_at, name:data->name, sector:data->sector, industry:data->industry, exchange:data->exchange, currentPrice:data->currentPrice, priceChangePct:data->priceChangePct, roic:data->roic, fcfYield:data->fcfYield, revGrowth:data->revGrowth, grossMargin:data->grossMargin, opMargin:data->opMargin, debtToEquity:data->debtToEquity, pfcf:data->pfcf, marketCap:data->marketCap, debtVal:data->debtVal, equityVal:data->equityVal, cashVal:data->cashVal, ebtVal:data->ebtVal, taxVal:data->taxVal, oiVal:data->oiVal, currentAssetsVal:data->currentAssetsVal, currentLiabilitiesVal:data->currentLiabilitiesVal, fcfVal:data->fcfVal, rdVal:data->rdVal, revVal:data->revVal, sbcVal:data->sbcVal, fcfHistory:data->fcfHistory, marginHistory:data->marginHistory, revHistory:data->revHistory')
+    .select('ticker, updated_at, data')
     .neq('ticker', 'INHD')
     .not('data->currentPrice', 'is', null)
     .not('data->priceChangePct', 'is', null);
 
-  moversRowsCache = rows || [];
+  moversRowsCache = (rows || []).map(row=>({...sanitizeFinancialData(row.data),ticker:row.ticker,updated_at:row.updated_at}));
   moversRowsCachedAt = Date.now();
   return moversRowsCache;
 }
