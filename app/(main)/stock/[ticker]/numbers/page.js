@@ -4,6 +4,7 @@ import Link from 'next/link';
 import NewNav from '../../../../components/new/NewNav';
 import { useStockData } from '../../../../../lib/hooks/useStockData';
 import { computeEasyMode } from '../../../../../lib/stockScoring';
+import { getCompanyHeaderScores } from '../../../../../lib/companyHeaderScores';
 import { isTierAdjusted } from '../../../../../lib/marketCap';
 import { formatCurrency } from '../../../../../lib/formatters';
 import { NEW_COLORS as C } from '../../../../components/new/theme';
@@ -23,12 +24,8 @@ const mult = (v) => v == null || v <= 0 ? null : v > NM_MULTIPLE ? 'N/M' : v.toF
 const money = (v, sym) => v == null ? null : formatCurrency(v, sym);
 const days = (v) => v == null ? null : `${v} días`;
 
-// Same 0-5 scale and the same >=4/>=3 breakpoints QualityBreakdown below already colors the
-// CBS/OPPO/GQS pillars with — reused here so a stat's color always means the same thing it
-// means in the headline quality note, instead of a second, invented "good/bad" scale. Only
-// wired to stats that genuinely have one of computeEasyMode's existing sector-aware
-// sub-scores behind them (see the `color:` entries in `sections` below) — a stat with no
-// score stays plain black rather than getting a color backed by nothing.
+// Preserve the existing per-metric colors. Only the three dimension scores below use
+// the calibrated policy; these financial statistics retain their original calculations.
 const scoreColor = (s) => s == null ? C.ink : s >= 4 ? C.green : s >= 3 ? C.ink : C.red;
 
 function Shell({ children }) {
@@ -68,30 +65,25 @@ function StatSection({ title, intro, stats }) {
   );
 }
 
-const QUALITY_PILLARS = [
-  { key: 'cbs', label: 'NEGOCIO (CORE)', explain: 'Qué tan sólido es el negocio hoy: rentabilidad, márgenes y si puede pagar sus deudas sin agobios.' },
-  { key: 'oppo', label: 'OPORTUNIDAD', explain: 'Qué tan barata o cara está la acción ahora mismo, comparando el precio con el dinero que realmente genera.' },
-  { key: 'gqs', label: 'CRECIMIENTO', explain: 'Qué tan rápido — y con qué calidad — está creciendo el negocio.' },
-];
-
-function QualityBreakdown({ easyMode }) {
+function QualityBreakdown({ easyMode, data }) {
   if (!easyMode) return null;
-  const scoreColor = (s) => s >= 4 ? C.green : s >= 3 ? C.ink : C.red;
+  const scores = getCompanyHeaderScores(easyMode, data);
+  const dimensionColors = { growth: '#226D3A', value: '#245FA6', quality: '#7440A1' };
   return (
     <div style={{ background: C.surface, border: `1px solid ${C.border}`, borderRadius: '20px', padding: '24px 26px', boxSizing: 'border-box' }}>
-      <h2 style={{ margin: '0 0 4px', fontSize: '15px', fontWeight: 800 }}>De qué se compone la nota de calidad</h2>
+      <h2 style={{ margin: '0 0 4px', fontSize: '15px', fontWeight: 800 }}>Growth, Value y Quality</h2>
       <div style={{ fontSize: '12px', color: C.text2, lineHeight: 1.5, marginBottom: '18px' }}>
-        La nota de 0 a 100 de la cabecera es la combinación de estas tres piezas, más un ajuste por ventaja competitiva (moat).
+        Tres puntuaciones independientes, sin nota global. La ventaja competitiva (moat) se muestra por separado y no se suma.
       </div>
       <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-        {QUALITY_PILLARS.map(p => (
-          <div key={p.key} style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
-            <div style={{ width: '42px', height: '42px', borderRadius: '12px', background: C.bg, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '15px', fontWeight: 800, color: scoreColor(easyMode[p.key]), flexShrink: 0 }}>
-              {Math.round(easyMode[p.key] * 20)}
+        {scores.map(p => (
+          <div key={p.id} style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+            <div style={{ width: '42px', height: '42px', borderRadius: '12px', background: C.bg, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '15px', fontWeight: 800, color: dimensionColors[p.id], flexShrink: 0 }}>
+              {p.tier ?? 'N/D'}
             </div>
             <div>
-              <div style={{ fontSize: '13px', fontWeight: 700 }}>{p.label}</div>
-              <div style={{ fontSize: '12px', color: C.text2, lineHeight: 1.5 }}>{p.explain}</div>
+              <div style={{ fontSize: '13px', fontWeight: 700 }}>{p.name}</div>
+              <div style={{ fontSize: '12px', color: C.text2, lineHeight: 1.5 }}>{p.description}</div>
             </div>
           </div>
         ))}
@@ -279,7 +271,7 @@ function NewStockNumbersContent({ params }) {
         </div>
       </div>
 
-      <QualityBreakdown easyMode={easyMode} />
+      <QualityBreakdown easyMode={easyMode} data={data} />
       <RangeBar52W data={data} sym={sym} />
 
       {sections.map(sec => <StatSection key={sec.title} title={sec.title} intro={sec.intro} stats={sec.stats} />)}

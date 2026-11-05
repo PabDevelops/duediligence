@@ -196,8 +196,8 @@ function NewStockPageContent({ params }) {
 
   const price = data.currentPrice;
   const sym = data.currency === 'EUR' ? '€' : data.currency === 'GBP' ? '£' : '$';
-  // Reuse the existing Numbers sub-scores in the header and the two score-colored
-  // "Lo esencial" stats. The V2 verdict, questions, scenarios and projections stay unchanged.
+  // Legacy metric colors and revenue-history input stay unchanged. The header has its
+  // own scoring policy; V2 verdicts, questions, scenarios and projections are untouched.
   const easyMode = computeEasyMode(data, hasFundamentals(data));
   const companyName = (data.name || ticker).split(' ')[0];
   const verdict = engineVerdict(entryProjection.engine, companyName);
@@ -255,7 +255,7 @@ function NewStockPageContent({ params }) {
               </div>
             )}
           </div>
-          <CompanyScoreCards easyMode={easyMode} data={data} />
+          <CompanyScoreCards easyMode={easyMode} data={data} analysis={entryProjection.engine} />
         </div>
       </div>
 

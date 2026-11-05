@@ -8,8 +8,8 @@ const DIMENSION_COLORS = {
   quality: '#7440A1',
 };
 
-export default function CompanyScoreCards({ easyMode, data }) {
-  const scores = getCompanyHeaderScores(easyMode, data);
+export default function CompanyScoreCards({ easyMode, data, analysis }) {
+  const scores = getCompanyHeaderScores(easyMode, data, analysis);
   return (
     <section aria-label="Puntuaciones independientes de la empresa" style={{
       display: 'flex', gap: '22px', flex: '0 1 auto', minWidth: 0,
