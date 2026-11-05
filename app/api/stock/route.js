@@ -1854,6 +1854,19 @@ export async function GET(request) {
       return r.fy.val - r.priorYtd.val + r.curYtd.val;
     };
 
+    // Which actual basis backs a ttmVal() scalar — resolveYtd already knows this internally
+    // (curYtd+priorYtd present means a genuine TTM roll; falling back to r.fy.val alone means
+    // it's really just the last fiscal year), but ttmVal only ever returns the number, not which
+    // one it is. Exposed per-field below (financialPeriods) so lib/engine/input.js's provenance
+    // can say which basis a field actually uses instead of the fixed "TTM o último año fiscal
+    // (no distinguible)" hedge every flow field got regardless of what was actually knowable.
+    const flowPeriod = (keys) => {
+      const r = resolveYtd(keys);
+      if (!r?.fy) return null;
+      const isTtm = !!(r.curYtd && r.priorYtd);
+      return { basis: isTtm ? 'TTM' : 'FY', periodEnd: isTtm ? r.curYtd.end : r.fy.end };
+    };
+
     // YoY growth off the freshest comparable period (this interim YTD vs the same YTD window
     // last year) — reflects a new 10-Q the same day it lands, instead of an annual-vs-annual
     // comparison that only updates once a year at the next 10-K.
@@ -2009,6 +2022,20 @@ export async function GET(request) {
     const fcfVal = (operatingCFValTTM != null && capexValTTM != null)
       ? operatingCFValTTM - capexValTTM
       : latest(freeCashFlows);
+    // Per-field period basis (TTM vs. FY) for whichever scalars lib/engine/input.js's provenance
+    // tracks with a period — mirrors the preference list each ?? latest(...) fallback above
+    // actually used, so this never claims a sharper basis than the value itself has. fcf's period
+    // follows the OCF leg of fcfVal's TTM subtraction when that path was used (capexValTTM's own
+    // period isn't cross-checked against it yet — a separate, still-open gap); the annual
+    // latest(freeCashFlows) fallback is always a plain FY figure, dated off that array's own
+    // newest entry rather than re-deriving it.
+    const financialPeriods = {
+      rev: flowPeriod(['RevenueFromContractWithCustomerExcludingAssessedTax','Revenues','SalesRevenueNet','RevenueFromContractWithCustomerIncludingAssessedTax']),
+      oi: flowPeriod(['OperatingIncomeLoss', 'IncomeLossFromContinuingOperationsBeforeIncomeTaxesExtraordinaryItemsNoncontrollingInterest']),
+      fcf: (operatingCFValTTM != null && capexValTTM != null)
+        ? flowPeriod(['NetCashProvidedByUsedInOperatingActivities'])
+        : (fcfVal != null ? { basis: 'FY', periodEnd: freeCashFlows?.[0]?.end ?? null } : null),
+    };
     // Balance-sheet scalars: widened to the freshest 10-Q balance via latestInstant (see its
     // comment above), not just the last 10-K — same freshness gap as the income-statement
     // scalars above, but simpler to close since instant facts have no discrete-vs-cumulative
@@ -2377,6 +2404,7 @@ export async function GET(request) {
     const result = {
       riskFreeRate,
       lastFilingDate,
+      financialPeriods,
       name: cleanCompanyName(company.title),
       ticker,
       cik,
