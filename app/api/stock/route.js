@@ -1597,6 +1597,25 @@ export async function GET(request) {
     }
     const recencyAnchor = newestFyEnd('NetIncomeLoss') || newestFyEnd('Assets');
 
+    // The actual SEC filing-submission date (`.filed`) behind the most recent reporting period —
+    // not the period end (recencyAnchor above) and never this server's own fetch timestamp.
+    // lib/engine/validation.js's STALE_FILING check (warning at 150+ days) needs exactly this
+    // signal; confirmed it was never wired up — `result` below never set lastFilingDate, so in
+    // production every ticker only ever got the weaker, uninformative FILING_DATE_UNKNOWN info
+    // note, regardless of how old the company's actual filings were. Looks across several
+    // widely-reported tags, not just NetIncomeLoss/Assets, since a filer can omit any one of them
+    // in a given period, and across every unit currency (not just USD) for the same reason
+    // non-US filers already get elsewhere in this file. Takes the filing date of whichever
+    // report(s) cover the single newest period end, rather than the single most recently *filed*
+    // fact on its own, so a late-filed amendment of an old period can't masquerade as fresh news.
+    const CORE_FILING_TAGS = ['NetIncomeLoss', 'Assets', 'Revenues', 'RevenueFromContractWithCustomerExcludingAssessedTax', 'OperatingIncomeLoss'];
+    const corePeriods = CORE_FILING_TAGS.flatMap((tag) => Object.values(usgaap[tag]?.units || {}).flat())
+      .filter((u) => ['10-K', '10-K/A', '10-Q', '10-Q/A', '20-F', '20-F/A'].includes(u.form) && u.end && u.filed);
+    const latestPeriodEnd = corePeriods.reduce((max, u) => (!max || u.end > max) ? u.end : max, null);
+    const lastFilingDate = latestPeriodEnd
+      ? corePeriods.filter((u) => u.end === latestPeriodEnd).reduce((max, u) => (!max || u.filed > max) ? u.filed : max, null)
+      : null;
+
     const getMetric = (keys, isFlow = true) => {
       for (const key of keys) {
         const metric = usgaap[key];
@@ -2357,6 +2376,7 @@ export async function GET(request) {
 
     const result = {
       riskFreeRate,
+      lastFilingDate,
       name: cleanCompanyName(company.title),
       ticker,
       cik,
