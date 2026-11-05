@@ -1,0 +1,33 @@
+name: Watchlist baskets checks
+
+on:
+  push:
+    branches: [feat/watchlist-baskets]
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      NEXT_TELEMETRY_DISABLED: '1'
+      NEXT_PUBLIC_SUPABASE_URL: https://watchlist-test.supabase.co
+      NEXT_PUBLIC_SUPABASE_ANON_KEY: test-anon-key
+      SUPABASE_SERVICE_ROLE_KEY: test-service-role-key
+      STRIPE_SECRET_KEY: sk_test_placeholder
+      RESEND_API_KEY: re_test_placeholder
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - run: npm ci --no-audit --no-fund
+      - run: npm test
+      - name: Lint changed JavaScript
+        run: npx eslint 'app/(main)/watchlist/page.js' app/components/new/WatchlistBaskets.js app/api/watchlist/route.js app/api/watchlist/baskets/route.js app/api/watchlist/route.test.js lib/watchlistBaskets.js
+      - run: npm run build
