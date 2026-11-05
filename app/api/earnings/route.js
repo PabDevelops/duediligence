@@ -1,7 +1,7 @@
 import { sanitizeFinancialData } from '../../../lib/financialIntegrity.js';
 import { fetchNasdaqEarningsRange } from '../../../lib/nasdaqEarnings';
 import { supabase } from '../../../lib/supabase';
-import { computeEasyMode } from '../../../lib/stockScoring';
+import { computeEasyMode } from '../../../lib/financialCalculations';
 
 const FH_KEY = process.env.FINNHUB_API_KEY;
 

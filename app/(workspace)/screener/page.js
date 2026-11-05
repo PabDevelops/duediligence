@@ -690,7 +690,7 @@ export default function WorkspaceScreener() {
                       {s.ticker}
                     </td>
                     <td style={{ padding: '10px 14px', color: 'var(--ws-text-2)', fontWeight: 600, maxWidth: '180px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                      {s.name}
+                      {s.name}{s.financialIntegrity?.status==='provisional'&&<span title={s.financialIntegrity.warning} style={{marginLeft:'6px',fontSize:'10px'}}>Provisional</span>}
                     </td>
                     <td style={{ padding: '10px 14px', color: 'var(--ws-text-3)' }}>
                       {s.sector || '—'}

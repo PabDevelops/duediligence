@@ -1,3 +1,5 @@
+import { recoverYahooPeriods, recoverSecPeriods } from '../../../lib/financialPeriodRecovery.js';
+import { joinAnnualEvidence } from '../../../lib/financialDataPolicy.js';
 import { splitAdjustedShares, computeShareDilutionPct, computeDerivedFinancials } from '../../../lib/financialStatements.js';
 import { sanitizeFinancialData, samePeriod, joinPeriods, cashFlowLessCapex, sumFourQuarters, resolveFxRate, validPeriod, selectLatestFacts, HISTORY_FIELDS } from '../../../lib/financialIntegrity.js';
 import { supabase } from '../../../lib/supabase.js';
@@ -164,11 +166,11 @@ function tsSeries(tsJson, ...candidateTypes) {
     const entry=(tsJson?.timeseries?.result||[]).find(r=>r.meta?.type?.[0]===type);
     const arr=entry?.[type];
     if(!arr?.some(x=>x?.reportedValue?.raw!=null))continue;
-    return arr.filter(x=>x?.reportedValue?.raw!=null).map(x=>({
+    return arr.filter(x=>x?.reportedValue?.raw!=null && (type.startsWith('annual')?x.periodType==='12M':x.periodType==='3M')).map(x=>({
       year:x.asOfDate?.slice(0,4),val:x.reportedValue.raw,
       basis:type.startsWith('quarterly')?'Q':'FY',periodEnd:x.asOfDate,
       // Yahoo commonly omits the start. Preserve that absence; never invent fiscal dates.
-      periodStart:x.startDate || null,currency:x.currencyCode || null,
+      durationMonths:x.periodType==='12M'?12:null,periodStart:x.startDate || null,currency:x.currencyCode || null,
       scope:'provider-unspecified',source:'Yahoo Finance',unit:type.includes('Shares')?'shares':'currency',
     })).sort((a,b)=>(a.periodEnd||'').localeCompare(b.periodEnd||'')).slice(-6);
   }
@@ -180,7 +182,7 @@ function tsSeries(tsJson, ...candidateTypes) {
 // a negative (cash outflow); Math.abs guards against a source that instead reports it positive.
 // Only returns years present in both series — a year missing capex data shouldn't silently
 // pass its full operating cash flow through as if no capex had been spent.
-function ocfMinusCapex(ocfSeries, capexSeries) { return cashFlowLessCapex(ocfSeries, capexSeries); }
+function ocfMinusCapex(ocfSeries, capexSeries) { return joinAnnualEvidence(ocfSeries,capexSeries).map(([o,c])=>({...o,val:o.val-Math.abs(c.val),derivation:'OCF-minus-absolute-CAPEX'})); }
 
 // A single-year share-count jump landing within a few percent of a clean split ratio (2x, 3x,
 // 4x, 5x, 10x, 15x, 20x, 25x, 30x, 40x — forward splits — or their inverses for reverse splits)
@@ -521,7 +523,8 @@ async function fetchYahooFundamentals(ticker) {
       const pt=histories[hist]?.at(-1);
       if(pt)financialPeriods[field]={...pt,currency:quoteCurrency,originalCurrency:financialCurrency,fxRate:fx};
     }
-    return {
+    return recoverYahooPeriods({
+      currency:quoteCurrency,
       financialPeriods,
       sector: profile.sector || null,
       industry: profile.industry || null,
@@ -584,7 +587,7 @@ async function fetchYahooFundamentals(ticker) {
       analystTarget,
       operatingCFVal: histories.ocfHistory.length ? histories.ocfHistory[histories.ocfHistory.length - 1].val : null,
       prevQuarter: quarterlyPrevQuarter,
-    };
+    }, ts);
   } catch (e) {
     return null;
   }
@@ -938,7 +941,7 @@ export async function GET(request) {
       // down. Backfilling this one field is not worth re-running the whole pipeline for, so it
       // no longer gates isComplete; missing rows get it filled in the background instead (below).
       const missingInsiderData = cached.data?.cik != null && !('insiderOwnershipPct' in (cached.data || {}));
-      const isComplete = validFinCount >= 2 || isEtf || cached.data?.financialIntegrity?.version === 1;
+      const isComplete = validFinCount >= 2 || isEtf || cached.data?.financialIntegrity?.version === 2;
       if (isFinancialsCacheFresh(cached.data, hoursOld) && (cached.data?.marketCap != null || isEtf) && isComplete) {
         if (missingInsiderData) backfillInsiderOwnership(cached.data.cik, ticker, cached.data.sharesOutstanding);
         const minsOld = hoursOld * 60;
@@ -2373,6 +2376,7 @@ export async function GET(request) {
       if(fact && result[field]===fact.val)result.financialPeriods[field]={basis:'instant',periodEnd:fact.end,currency:fact.currency,scope:'consolidated',source:'SEC EDGAR'};
     }
     result.isEtf = cachedIsEtf;
+    Object.assign(result,recoverSecPeriods(result,facts));
     const finalValidCount = [result.revVal, result.niVal, result.fcfVal, result.assetsVal, result.debtVal, result.cashVal].filter(v => v !== null).length;
     const isEtfSec = result.sector === 'ETF' || result.industry === 'ETF';
     if (finalValidCount >= 2 || (isEtfSec && result.currentPrice != null)) {

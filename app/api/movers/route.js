@@ -1,6 +1,6 @@
 import { sanitizeFinancialData } from '../../../lib/financialIntegrity.js';
 import { supabase } from '../../../lib/supabase';
-import { computeEasyMode } from '../../../lib/stockScoring';
+import { computeEasyMode } from '../../../lib/financialCalculations';
 
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;

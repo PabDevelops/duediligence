@@ -1,9 +1,10 @@
 'use client';
+import FinancialDataNotice from '../../../../components/new/FinancialDataNotice';
 import { use, Suspense } from 'react';
 import Link from 'next/link';
 import NewNav from '../../../../components/new/NewNav';
 import { useStockData } from '../../../../../lib/hooks/useStockData';
-import { computeEasyMode } from '../../../../../lib/stockScoring';
+import { computeEasyMode } from '../../../../../lib/financialCalculations';
 import { isTierAdjusted } from '../../../../../lib/marketCap';
 import { formatCurrency } from '../../../../../lib/formatters';
 import { NEW_COLORS as C } from '../../../../components/new/theme';
@@ -266,6 +267,7 @@ function NewStockNumbersContent({ params }) {
 
   return (
     <Shell>
+      <FinancialDataNotice data={data} />
       <Link href={`/stock/${ticker}`} style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', fontSize: '13px', fontWeight: 700, color: C.text2, textDecoration: 'none', width: 'fit-content' }}>
         <svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg>
         Volver a {data.name || ticker}

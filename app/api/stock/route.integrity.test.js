@@ -25,10 +25,10 @@ describe('stock endpoint integrity across cache and SEC',()=>{
   expect(d.revHistory.length).toBeGreaterThan(1);expect(d.fcfHistory.length).toBeGreaterThan(1);
   for(const pt of d.fcfHistory)expect(pt.derivation).toBe('OCF-minus-absolute-CAPEX');
   if(process.env.BULLTRACE_REPORT_DIR){mkdirSync(process.env.BULLTRACE_REPORT_DIR,{recursive:true});writeFileSync(join(process.env.BULLTRACE_REPORT_DIR,'AAPL-sec-replay.json'),JSON.stringify(d,null,2));}
-  expect(d.financialIntegrity.version).toBe(1);expect(state.writes.length).toBeGreaterThan(0);
+  expect(d.financialIntegrity.version).toBe(2);expect(state.writes.length).toBeGreaterThan(0);
  });
  it('sanitizes existing caches without refetching repeatedly after validation',async()=>{
- state.cached={updated_at:new Date().toISOString(),data:{ticker:'LLOY.L',currency:'GBP',currentPrice:.9694,marketCap:1e9,description:'Lloyds',revVal:null,pe:9.694,eps:.1,financialIntegrity:{version:1,issues:[],rejected:{}}}};
- const r=await GET(new Request('https://local.test/api/stock?ticker=LLOY.L'));const d=await r.json();expect(r.status).toBe(200);expect(d.currency).toBe('GBP');expect(d.currentPrice).toBe(.9694);expect(d.pe).toBeNull();expect(d.cached).toBe(true);
+ state.cached={updated_at:new Date().toISOString(),data:{ticker:'LLOY.L',currency:'GBP',currentPrice:.9694,marketCap:1e9,description:'Lloyds',revVal:null,pe:9.694,eps:.1,financialIntegrity:{version:2,issues:[],rejected:{}}}};
+ const r=await GET(new Request('https://local.test/api/stock?ticker=LLOY.L'));const d=await r.json();expect(r.status).toBe(200);expect(d.currency).toBe('GBP');expect(d.currentPrice).toBe(.9694);expect(d.pe).toBe(9.694);expect(d.financialIntegrity.status).toBe('provisional');expect(d.cached).toBe(true);
  });
 });

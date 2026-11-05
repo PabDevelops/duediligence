@@ -1,3 +1,7 @@
+# Historical strict-policy notes
+
+Runtime policy in this document is superseded by [provisional-financial-data.md](provisional-financial-data.md). The local official-document administrative workflow remains strict and isolated.
+
 # Financial integrity and Spanish official-report comparison
 
 This change validates inputs. Valuation/scoring/DCF/scenario arithmetic and sector rules are unchanged. `lib/engine/input.js` changes provenance labels only. Three statement helpers and their split helper moved from the stock route to `lib/financialStatements.js` so the offline importer reuses the existing arithmetic.
