@@ -2,7 +2,7 @@
   "git": {
     "deploymentEnabled": {
       "feat/watchlist-baskets": false,
-      "main": false
+      "main": true
     }
   },
   "crons": [
@@ -13,3 +13,4 @@
     { "path": "/api/admin/sync-trading212", "schedule": "15 7 * * *" }
   ]
 }
+
