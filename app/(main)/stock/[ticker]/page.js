@@ -330,14 +330,13 @@ function NewStockPageContent({ params }) {
           digging into" shouldn't have to wade through WACC/EV-EBITDA/discount rates to get
           there; someone who wants that depth can tap through for it. */}
       {entryProjection.maxEntryPrice != null && entryProjection.cagr5y != null && price != null && (() => {
-        // Measured against maxEntryPrice (the 15%/yr-hurdle price shown two columns over in this
-        // same card), not engine.entry.marginOfSafety (measured against fairValueToday, a WACC-
-        // discounted and therefore always-higher number this card never shows). Using the hidden
-        // fairValueToday number here could show a green "con margen de seguridad" badge while the
-        // price sat visibly above "Precio máximo de entrada" right next to it — confirmed
-        // confusing against real data (a $11.17 price above a $7.23 max entry still read as
-        // +71% margin of safety). This way the badge and the three numbers always tell one story.
-        const mos = entryProjection.maxEntryPrice > 0 ? (entryProjection.maxEntryPrice - price) / entryProjection.maxEntryPrice : null;
+        // Margen de seguridad vs. fairValueToday (what the business is worth today per the
+        // central scenario) — same metric the deep-dive page (EngineV2Panel.js) shows, now with
+        // its own "Valor razonable hoy" column right here too instead of only on that separate
+        // page, so the +71%-style number is never shown without the figure it's measured
+        // against. maxEntryPrice (the stricter 15%/yr-hurdle price) stays as its own column —
+        // a genuinely different, more conservative bar, not a replacement for this one.
+        const mos = entryProjection.marginOfSafety;
         const tier = mos == null ? 'caution' : mos >= 0.10 ? 'good' : mos >= -0.10 ? 'caution' : 'bad';
         const priceBadge = VERDICT_BADGE[tier];
         const priceLabel = tier === 'good' ? 'Con margen de seguridad' : tier === 'caution' ? 'En su precio justo' : 'Por encima de lo recomendado';
@@ -370,17 +369,24 @@ function NewStockPageContent({ params }) {
                 <div style={{ fontSize: '12px', color: C.text2, marginBottom: '4px' }}>Precio actual</div>
                 <div style={{ fontSize: '20px', fontWeight: 800 }}>{formatCurrency(price, sym)}</div>
               </div>
-              <div>
-                <div style={{ fontSize: '12px', color: C.text2, marginBottom: '4px' }}>Precio máximo de entrada</div>
-                <div style={{ fontSize: '20px', fontWeight: 800 }}>{formatCurrency(entryProjection.maxEntryPrice, sym)}</div>
-                <div style={{ fontSize: '11px', color: C.text3, marginTop: '2px' }}>para exigir un 15%/año</div>
-              </div>
+              {entryProjection.fairValueToday != null && (
+                <div>
+                  <div style={{ fontSize: '12px', color: C.text2, marginBottom: '4px' }}>Valor razonable hoy</div>
+                  <div style={{ fontSize: '20px', fontWeight: 800 }}>{formatCurrency(entryProjection.fairValueToday, sym)}</div>
+                  <div style={{ fontSize: '11px', color: C.text3, marginTop: '2px' }}>lo que valdría hoy según el escenario central</div>
+                </div>
+              )}
               <div>
                 <div style={{ fontSize: '12px', color: C.text2, marginBottom: '4px' }}>Margen de seguridad</div>
                 <div style={{ fontSize: '20px', fontWeight: 800, color: mos == null ? C.ink : mos >= 0 ? C.green : C.red }}>
                   {mos == null ? 'N/D' : `${mos >= 0 ? '+' : ''}${(mos * 100).toFixed(0)}%`}
                 </div>
-                <div style={{ fontSize: '11px', color: C.text3, marginTop: '2px' }}>frente al precio máximo de entrada</div>
+                <div style={{ fontSize: '11px', color: C.text3, marginTop: '2px' }}>frente al valor razonable hoy</div>
+              </div>
+              <div>
+                <div style={{ fontSize: '12px', color: C.text2, marginBottom: '4px' }}>Precio máximo de entrada</div>
+                <div style={{ fontSize: '20px', fontWeight: 800 }}>{formatCurrency(entryProjection.maxEntryPrice, sym)}</div>
+                <div style={{ fontSize: '11px', color: C.text3, marginTop: '2px' }}>para exigir un 15%/año</div>
               </div>
               <div>
                 <div style={{ fontSize: '12px', color: C.text2, marginBottom: '4px' }}>Rentabilidad anual esperada</div>
