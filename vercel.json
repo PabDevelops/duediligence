@@ -2,6 +2,7 @@
   "git": {
     "deploymentEnabled": {
       "feat/watchlist-baskets": false,
+      "fix/staging-screener-payload": false,
       "main": true
     }
   },

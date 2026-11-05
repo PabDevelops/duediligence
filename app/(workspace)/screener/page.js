@@ -7,6 +7,7 @@ import { fmt, fmtP, fmtN } from '../../../lib/formatters';
 import { openInNewTab } from '../../../lib/openInNewTab';
 import { getCapTier, CAP_TIERS } from '../../../lib/marketCap';
 import { normalizeExchange, EXCHANGE_GROUP_LABELS, US_EXCHANGE_GROUPS } from '../../../lib/exchanges';
+import { SCREENER_PROVISIONAL_WARNING } from '../../../lib/screenerView';
 
 // Intl.DisplayNames turns the ISO-3166 alpha-2 codes stock_cache stores (US, JP, GB...) into
 // readable names for the country filter, with zero maintenance as new countries show up.
@@ -690,7 +691,7 @@ export default function WorkspaceScreener() {
                       {s.ticker}
                     </td>
                     <td style={{ padding: '10px 14px', color: 'var(--ws-text-2)', fontWeight: 600, maxWidth: '180px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                      {s.name}{s.financialIntegrity?.status==='provisional'&&<span title={s.financialIntegrity.warning} style={{marginLeft:'6px',fontSize:'10px'}}>Provisional</span>}
+                      {s.name}{s.financialIntegrity?.status==='provisional'&&<span title={s.financialIntegrity.warning || SCREENER_PROVISIONAL_WARNING} style={{marginLeft:'6px',fontSize:'10px'}}>Provisional</span>}
                     </td>
                     <td style={{ padding: '10px 14px', color: 'var(--ws-text-3)' }}>
                       {s.sector || '—'}
