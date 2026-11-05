@@ -13,6 +13,7 @@ import { computeEasyMode } from '../../../../lib/stockScoring';
 import { engineVerdict, engineInvestigateQuestions } from '../../../../lib/verdict';
 import { formatCurrency, formatTimeAgo } from '../../../../lib/formatters';
 import { NEW_COLORS as C, VERDICT_BADGE } from '../../../components/new/theme';
+import CompanyScoreCards from '../../../components/new/CompanyScoreCards';
 
 // Same good/caution/bad colors as the overall VERDICT_BADGE dot, reused per-dimension; gray
 // ('unknown') only when that dimension genuinely has no score to read, never a guessed color.
@@ -195,10 +196,8 @@ function NewStockPageContent({ params }) {
 
   const price = data.currentPrice;
   const sym = data.currency === 'EUR' ? '€' : data.currency === 'GBP' ? '£' : '$';
-  // computeEasyMode/easyMode only remain for the two score-colored "Lo esencial" stats further
-  // down (Ingresos/ROIC) — the verdict card, investigate questions and headline quality score
-  // all read the V2 engine (entryProjection.engine) now, so the whole page narrates one model
-  // instead of two disagreeing ones for the same ticker.
+  // Reuse the existing Numbers sub-scores in the header and the two score-colored
+  // "Lo esencial" stats. The V2 verdict, questions, scenarios and projections stay unchanged.
   const easyMode = computeEasyMode(data, hasFundamentals(data));
   const companyName = (data.name || ticker).split(' ')[0];
   const verdict = engineVerdict(entryProjection.engine, companyName);
@@ -206,15 +205,6 @@ function NewStockPageContent({ params }) {
   const investigateQs = engineInvestigateQuestions(entryProjection.engine);
   const quality = entryProjection.engine?.quality ?? null;
   const qualityScore = quality?.score ?? null;
-  // "92/100" implies a precision the model doesn't have — quality.sensitivity already proves
-  // that by recomputing the score under 4 weightings of its 9 components (same mechanism as
-  // Potencial). Shown as a single tier letter (S+/S/A/B/C/D/F — more immediately recognizable
-  // than a bespoke word) from the base weighting; a two-letter range like "D–B" tested as more
-  // confusing than informative, so when a different reasonable weighting lands on a different
-  // tier we keep the single base letter and just flag it with a small note instead. The number
-  // stays available in the data for sorting/filtering elsewhere, it's just not the headline here.
-  const qualityRange = quality?.sensitivity?.labelRange;
-  const qualityText = qualityScore == null ? null : quality.label;
 
   // Lets AI crawlers and answer engines identify which company this page is about without
   // having to parse the rendered layout — schema.org Corporation, not a rating/review type, so
@@ -256,7 +246,7 @@ function NewStockPageContent({ params }) {
             <div style={{ fontSize: '13px', color: C.text2, fontWeight: 600 }}>{ticker}{data.exchange ? ` · ${data.exchange}` : ''}</div>
           </div>
         </div>
-        <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: '26px', flexWrap: 'wrap', flex: '1 1 240px' }}>
+        <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: '26px', flexWrap: 'wrap', flex: '1 1 240px', minWidth: 0 }}>
           <div style={{ textAlign: 'right' }}>
             <div style={{ fontSize: '26px', fontWeight: 800 }}>{price != null ? formatCurrency(price, sym) : 'N/D'}</div>
             {data.priceChangePct != null && (
@@ -265,16 +255,7 @@ function NewStockPageContent({ params }) {
               </div>
             )}
           </div>
-          {qualityScore != null && (
-            <div style={{ textAlign: 'right', maxWidth: '170px' }}>
-              <div style={{ fontSize: '11px', fontWeight: 700, color: C.text3, letterSpacing: '0.02em', marginBottom: '6px' }}>NOTA DE CALIDAD</div>
-              <div aria-hidden="true" style={{ width: '64px', height: '8px', borderRadius: '20px', background: C.borderSoft, overflow: 'hidden', marginLeft: 'auto', marginBottom: '6px' }}>
-                <div style={{ width: `${qualityScore}%`, height: '100%', borderRadius: '20px', background: C.lime }} />
-              </div>
-              <div style={{ fontSize: '24px', fontWeight: 800, lineHeight: 1.1 }}>{qualityText}</div>
-              {qualityRange && <div style={{ fontSize: '10px', color: C.text3, marginTop: '4px' }}>Cambia según cómo se pondere</div>}
-            </div>
-          )}
+          <CompanyScoreCards easyMode={easyMode} data={data} />
         </div>
       </div>
 
