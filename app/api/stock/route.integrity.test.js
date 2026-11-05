@@ -1,3 +1,5 @@
+import {writeFileSync,mkdirSync} from 'node:fs';
+import {join} from 'node:path';
 import {describe,it,expect,vi,beforeEach} from 'vitest';
 import facts from '../../../lib/__fixtures__/aapl-companyfacts-integrity.json';
 const state=vi.hoisted(()=>({cached:null,writes:[]}));
@@ -22,6 +24,7 @@ describe('stock endpoint integrity across cache and SEC',()=>{
   expect(d.financialPeriods.revVal.periodStart).toMatch(/^\d{4}-\d{2}-\d{2}$/);
   expect(d.revHistory.length).toBeGreaterThan(1);expect(d.fcfHistory.length).toBeGreaterThan(1);
   for(const pt of d.fcfHistory)expect(pt.derivation).toBe('OCF-minus-absolute-CAPEX');
+  if(process.env.BULLTRACE_REPORT_DIR){mkdirSync(process.env.BULLTRACE_REPORT_DIR,{recursive:true});writeFileSync(join(process.env.BULLTRACE_REPORT_DIR,'AAPL-sec-replay.json'),JSON.stringify(d,null,2));}
   expect(d.financialIntegrity.version).toBe(1);expect(state.writes.length).toBeGreaterThan(0);
  });
  it('sanitizes existing caches without refetching repeatedly after validation',async()=>{
