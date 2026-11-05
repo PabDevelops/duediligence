@@ -6,7 +6,20 @@
 
 import { NEW_COLORS as C, VERDICT_BADGE, TIER_COLORS } from '../../new/theme';
 import { formatCurrency } from '../../../../lib/formatters';
-import { TIER_LABELS, TIER_NAMES, TIER_DESCRIPTIONS } from '../../../../lib/engine/tierScale';
+import { TIER_LABELS, TIER_NAMES, TIER_DESCRIPTIONS, tierForScore } from '../../../../lib/engine/tierScale';
+
+// lib/engine/quality.js's `components` are keyed by the same names as QUALITY_WEIGHTS — no
+// human-readable title attached there (just a score + a detail sentence that already reads fine
+// on its own), so the title lives here, UI-side, rather than threaded through the engine.
+const QUALITY_COMPONENT_LABEL = {
+  returns: 'Rentabilidad (ROIC)', operatingMargin: 'Margen operativo', grossMargin: 'Margen bruto',
+  fcfGeneration: 'Generación de caja libre', cashConversion: 'Conversión a caja',
+  marginStability: 'Estabilidad de márgenes', balance: 'Balance', reinvestment: 'Reinversión',
+  capitalEvolution: 'Evolución del capital',
+};
+const SIGNAL_DOT_COLOR = { mejora: C.green, empeora: C.red, neutral: C.text3, 'N/D': C.text3 };
+const RISK_STATUS_DOT_COLOR = { confirmed: C.red, potential: '#C98A1F', none_detected: C.green, not_evaluable: C.text3 };
+const RISK_STATUS_TEXT = { confirmed: 'riesgo confirmado', potential: 'riesgo potencial', none_detected: 'no detectado', not_evaluable: 'no evaluable' };
 
 const card = { background: C.surface, border: `1px solid ${C.border}`, borderRadius: '20px', padding: '22px 26px', boxSizing: 'border-box', display: 'flex', flexDirection: 'column', gap: '14px', color: C.ink };
 const eyebrow = { fontSize: '11px', fontWeight: 700, color: C.text3, letterSpacing: '0.02em' };
@@ -93,6 +106,42 @@ function TierLegend() {
         </div>
       </div>
     </details>
+  );
+}
+
+// Per-metric row with its own 0-100 score (quality components, valuation methods) — a mini bar
+// instead of plain "87/100 · texto" stacked lines, same visual language as the tier cards above
+// (bar + color from the shared tier ramp). Reused across blocks instead of each one formatting
+// its metrics differently.
+function MetricBar({ label, score, detail }) {
+  const color = score == null ? C.text3 : TIER_COLORS[tierForScore(score)];
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', gap: '8px' }}>
+        <span style={{ fontSize: '12px', fontWeight: 700, color: C.ink }}>{label}</span>
+        <span style={{ fontSize: '11px', fontWeight: 700, color }}>{score == null ? 'N/D' : `${score}/100`}</span>
+      </div>
+      <div aria-hidden="true" style={{ height: '6px', borderRadius: '20px', background: C.borderSoft, overflow: 'hidden' }}>
+        <div style={{ width: `${score ?? 0}%`, height: '100%', background: color }} />
+      </div>
+      {detail && <div style={{ fontSize: '11px', color: C.text2, lineHeight: 1.4 }}>{detail}</div>}
+    </div>
+  );
+}
+
+// Per-metric row for a categorical (not 0-100) signal — momentum indicators (mejora/empeora/
+// neutral) and risk items (confirmed/potential/none_detected/not_evaluable): a colored dot next
+// to the label instead of a bar, since there's no score to fill one with.
+function MetricDot({ label, dotColor, statusText, detail }) {
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: '7px' }}>
+        <span aria-hidden="true" style={{ width: '8px', height: '8px', borderRadius: '50%', background: dotColor, flexShrink: 0 }} />
+        <span style={{ fontSize: '12px', fontWeight: 700, color: C.ink }}>{label}</span>
+        {statusText && <span style={{ fontSize: '11px', color: C.text2 }}>· {statusText}</span>}
+      </div>
+      {detail && <div style={{ fontSize: '11px', color: C.text2, lineHeight: 1.4, marginLeft: '15px' }}>{detail}</div>}
+    </div>
   );
 }
 
@@ -231,27 +280,43 @@ export default function EngineV2Panel({ engine, sym = '$' }) {
         <TierLegend />
 
         <Block block={explanations.quality} defaultOpen={false} extra={quality.score != null && (
-          <div style={{ fontSize: '12px', color: C.text2, display: 'flex', flexDirection: 'column', gap: '3px' }}>
-            {Object.entries(quality.components).map(([k, v]) => <div key={k}>{v.score}/100 · {v.detail}</div>)}
-            {quality.notes.map((n, i) => <div key={i}>{n}</div>)}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+            {Object.entries(quality.components).map(([k, v]) => (
+              <MetricBar key={k} label={QUALITY_COMPONENT_LABEL[k] ?? k} score={v.score} detail={v.detail} />
+            ))}
+            {quality.notes.length > 0 && (
+              <div style={{ fontSize: '12px', color: C.text2, display: 'flex', flexDirection: 'column', gap: '3px', paddingTop: '4px', borderTop: `1px solid ${C.borderSoft}` }}>
+                {quality.notes.map((n, i) => <div key={i}>{n}</div>)}
+              </div>
+            )}
           </div>
         )} />
         <Block block={explanations.momentum} extra={(
-          <div style={{ fontSize: '12px', color: C.text2, display: 'flex', flexDirection: 'column', gap: '3px' }}>
-            <div>Base de comparación: {momentum.basis}.</div>
-            {momentum.indicators.map((i) => <div key={i.id}>{i.label}: {i.reading}</div>)}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+            <div style={{ fontSize: '11px', color: C.text3 }}>Base de comparación: {momentum.basis}.</div>
+            {momentum.indicators.map((i) => (
+              <MetricDot key={i.id} label={i.label} dotColor={SIGNAL_DOT_COLOR[i.reading]} statusText={i.reading} />
+            ))}
           </div>
         )} />
         <Block block={explanations.valuation} extra={(
-          <div style={{ fontSize: '12px', color: C.text2, display: 'flex', flexDirection: 'column', gap: '3px' }}>
-            {valuation.methods.map((m) => <div key={m.id}>{m.label}: {String(m.value).replace('.', ',')}x · rango orientativo del sector {m.band.map((b) => String(Math.round(b * 10) / 10).replace('.', ',')).join(' / ')}x</div>)}
-            {valuation.discarded.length > 0 && <div>No se usan: {valuation.discarded.map((d) => `${d.label} (${d.reason})`).join('; ')}</div>}
-            <div>{valuation.historicalValuation.note}</div>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+            {valuation.methods.map((m) => (
+              <MetricBar key={m.id} label={m.label} score={m.score} detail={`${String(m.value).replace('.', ',')}x · rango orientativo del sector ${m.band.map((b) => String(Math.round(b * 10) / 10).replace('.', ',')).join(' / ')}x`} />
+            ))}
+            {(valuation.discarded.length > 0 || valuation.historicalValuation.note) && (
+              <div style={{ fontSize: '12px', color: C.text2, display: 'flex', flexDirection: 'column', gap: '3px', paddingTop: '4px', borderTop: `1px solid ${C.borderSoft}` }}>
+                {valuation.discarded.length > 0 && <div>No se usan: {valuation.discarded.map((d) => `${d.label} (${d.reason})`).join('; ')}</div>}
+                <div>{valuation.historicalValuation.note}</div>
+              </div>
+            )}
           </div>
         )} />
         <Block block={explanations.risk} extra={(
-          <div style={{ fontSize: '12px', color: C.text2, display: 'flex', flexDirection: 'column', gap: '3px' }}>
-            {risk.items.map((i) => <div key={i.id}><strong>{i.label}:</strong> {{ confirmed: 'riesgo confirmado', potential: 'riesgo potencial', none_detected: 'no detectado', not_evaluable: 'no evaluable' }[i.status]}. {i.evidence}</div>)}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+            {risk.items.map((i) => (
+              <MetricDot key={i.id} label={i.label} dotColor={RISK_STATUS_DOT_COLOR[i.status]} statusText={RISK_STATUS_TEXT[i.status]} detail={i.evidence} />
+            ))}
           </div>
         )} />
       </div>
