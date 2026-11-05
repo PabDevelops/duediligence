@@ -4,8 +4,9 @@
 // then collapsible blocks that answer "what am I seeing / why does it matter / is it good or
 // bad here / what to look at next". Uses the cream/lime palette of the stock page.
 
-import { NEW_COLORS as C, VERDICT_BADGE } from '../../new/theme';
+import { NEW_COLORS as C, VERDICT_BADGE, TIER_COLORS } from '../../new/theme';
 import { formatCurrency } from '../../../../lib/formatters';
+import { TIER_LABELS, TIER_NAMES, TIER_DESCRIPTIONS } from '../../../../lib/engine/tierScale';
 
 const card = { background: C.surface, border: `1px solid ${C.border}`, borderRadius: '20px', padding: '22px 26px', boxSizing: 'border-box', display: 'flex', flexDirection: 'column', gap: '14px', color: C.ink };
 const eyebrow = { fontSize: '11px', fontWeight: 700, color: C.text3, letterSpacing: '0.02em' };
@@ -14,50 +15,84 @@ const body = { fontSize: '13px', color: '#45413A', lineHeight: 1.6 };
 const pct = (v, d = 1) => (v == null ? 'N/D' : `${(v * 100).toFixed(d).replace('.', ',')}%`);
 const signed = (v, d = 1) => (v == null ? 'N/D' : `${v >= 0 ? '+' : ''}${(v * 100).toFixed(d).replace('.', ',')}%`);
 
-function tierFor(score, invert = false) {
-  if (score == null) return null;
-  const s = invert ? 100 - score : score;
-  return s >= 65 ? 'good' : s >= 40 ? 'caution' : 'bad';
-}
-
-function Dimension({ title, score, label, note, invert }) {
-  const tier = tierFor(score, invert);
-  const color = tier ? VERDICT_BADGE[tier].dot : C.border;
+// Shared tier-letter card for Calidad/Valoración/Potencial — all three recompute their score
+// under alternate weightings (lib/engine/quality.js, valuation.js, potential.js) and widen into
+// a range when a different reasonable weighting lands on a different tier, same mechanism in all
+// three. A bare "67/100" implied a precision the model doesn't have; the letter (and the range
+// when there's one) is the headline instead — the number stays in the data for sorting/filtering
+// elsewhere. `tier` is a real tier letter or null (never the engine's own "No concluyente"
+// string literal — callers normalize that at the call site).
+function TierDimension({ title, tier, range, reasonNull }) {
+  if (tier == null) {
+    return (
+      <div style={{ background: C.bg, borderRadius: '14px', padding: '12px 14px', display: 'flex', flexDirection: 'column', gap: '6px', minWidth: 0 }}>
+        <div style={eyebrow}>{title.toUpperCase()}</div>
+        <div style={{ fontSize: '15px', fontWeight: 800, color: C.text3 }}>No concluyente</div>
+        <div style={{ fontSize: '11px', color: C.text2, lineHeight: 1.4 }}>{reasonNull}</div>
+      </div>
+    );
+  }
+  const display = range ? `${range.low}–${range.high}` : tier;
   return (
     <div style={{ background: C.bg, borderRadius: '14px', padding: '12px 14px', display: 'flex', flexDirection: 'column', gap: '6px', minWidth: 0 }}>
       <div style={eyebrow}>{title.toUpperCase()}</div>
-      <div style={{ display: 'flex', alignItems: 'baseline', gap: '6px' }}>
-        <span style={{ fontSize: '20px', fontWeight: 800, color: score == null ? C.text3 : C.ink }}>{score == null ? 'N/D' : score}</span>
-        {score != null && <span style={{ fontSize: '11px', color: C.text3 }}>/100</span>}
+      <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+        <span aria-hidden="true" style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', minWidth: '30px', height: '30px', padding: '0 6px', borderRadius: '8px', background: TIER_COLORS[tier], color: '#fff', fontSize: '14px', fontWeight: 800, flexShrink: 0 }}>{display}</span>
+        {!range && <span style={{ fontSize: '12px', fontWeight: 700, color: C.ink, lineHeight: 1.3 }}>{TIER_NAMES[tier]}</span>}
       </div>
-      <div aria-hidden="true" style={{ height: '6px', borderRadius: '20px', background: C.borderSoft, overflow: 'hidden' }}>
-        <div style={{ width: `${score ?? 0}%`, height: '100%', background: color }} />
-      </div>
-      <div style={{ fontSize: '11px', color: C.text2, lineHeight: 1.4 }}>{label}</div>
-      {note && <div style={{ fontSize: '10px', color: C.text3, lineHeight: 1.4 }}>{note}</div>}
+      {range && <div style={{ fontSize: '11px', color: C.text2, lineHeight: 1.4 }}>Cambia según cómo se pondere; no lo tomes como una cifra única.</div>}
     </div>
   );
 }
 
-// Potencial shows the word (and a range when a different reasonable weighting lands on a
-// different word) instead of the bare 0-100 number: "67" implies a precision the model doesn't
-// have — potential.sensitivity already proves that by recomputing the score under 4 weight sets,
-// it just wasn't shown. The number stays in the data (still usable to sort/filter stocks
-// elsewhere), it just isn't the headline here.
-function rangeText(range) {
-  return `${range.low} a ${range.high.replace(/^Potencial /, '')}`;
+// Riesgo's own scale runs the opposite way (higher level = worse), so its tier has no natural
+// weight-set range the way the other three do — just the letter, plus the same confirmed/
+// posible/no evaluable counts this block already showed before the tier existed.
+function RiskDimension({ risk }) {
+  return (
+    <div style={{ background: C.bg, borderRadius: '14px', padding: '12px 14px', display: 'flex', flexDirection: 'column', gap: '6px' }}>
+      <div style={eyebrow}>RIESGO</div>
+      {risk.tier == null ? (
+        <div style={{ fontSize: '15px', fontWeight: 800, color: C.text3 }}>No concluyente</div>
+      ) : (
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+          <span aria-hidden="true" style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', minWidth: '30px', height: '30px', padding: '0 6px', borderRadius: '8px', background: TIER_COLORS[risk.tier], color: '#fff', fontSize: '14px', fontWeight: 800, flexShrink: 0 }}>{risk.tier}</span>
+          <span style={{ fontSize: '12px', fontWeight: 700, color: C.ink, lineHeight: 1.3 }}>{TIER_NAMES[risk.tier]}</span>
+        </div>
+      )}
+      <div style={{ fontSize: '11px', color: C.text2, lineHeight: 1.4 }}>{risk.counts.confirmed} {risk.counts.confirmed === 1 ? 'confirmado' : 'confirmados'}, {risk.counts.potential} {risk.counts.potential === 1 ? 'posible' : 'posibles'}, {risk.counts.notEvaluable} no {risk.counts.notEvaluable === 1 ? 'evaluable' : 'evaluables'}</div>
+    </div>
+  );
 }
 
-function PotentialDimension({ potential }) {
-  const text = potential.score == null ? 'No concluyente' : potential.sensitivity?.labelRange ? rangeText(potential.sensitivity.labelRange) : potential.label;
+// Explainer for the shared tier scale — same letters/names/descriptions everywhere one shows up
+// (Calidad, Valoración, Riesgo, Potencial), collapsed by default so it doesn't compete with the
+// actual numbers for attention.
+function TierLegend() {
   return (
-    <div style={{ background: C.bg, borderRadius: '14px', padding: '12px 14px', display: 'flex', flexDirection: 'column', gap: '6px', minWidth: 0 }}>
-      <div style={eyebrow}>POTENCIAL</div>
-      <div style={{ fontSize: '15px', fontWeight: 800, lineHeight: 1.2 }}>{text}</div>
-      {potential.score == null
-        ? <div style={{ fontSize: '11px', color: C.text2, lineHeight: 1.4 }}>{potential.reason}</div>
-        : potential.sensitivity?.labelRange && <div style={{ fontSize: '11px', color: C.text2, lineHeight: 1.4 }}>Cambia según cómo se pondere; no lo tomes como una cifra única.</div>}
-    </div>
+    <details style={{ borderTop: `1px solid ${C.borderSoft}`, paddingTop: '10px' }}>
+      <summary style={{ cursor: 'pointer', fontSize: '12px', fontWeight: 700, color: C.text2, listStyle: 'none', display: 'flex', justifyContent: 'space-between', gap: '8px' }}>
+        <span>Escala de calificación · Bulltrace</span><span aria-hidden="true" style={{ color: C.text3 }}>+</span>
+      </summary>
+      <div style={{ marginTop: '10px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
+        {[...TIER_LABELS].reverse().map((t) => (
+          <div key={t} style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+            <span aria-hidden="true" style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', minWidth: '30px', height: '30px', padding: '0 6px', borderRadius: '8px', background: TIER_COLORS[t], color: '#fff', fontSize: '14px', fontWeight: 800, flexShrink: 0 }}>{t}</span>
+            <div>
+              <div style={{ fontSize: '12px', fontWeight: 700, color: C.ink }}>{TIER_NAMES[t]}</div>
+              <div style={{ fontSize: '11px', color: C.text2 }}>{TIER_DESCRIPTIONS[t]}</div>
+            </div>
+          </div>
+        ))}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+          <span aria-hidden="true" style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', minWidth: '30px', height: '30px', padding: '0 6px', borderRadius: '8px', background: C.border, color: C.text3, fontSize: '11px', fontWeight: 800, flexShrink: 0 }}>—</span>
+          <div>
+            <div style={{ fontSize: '12px', fontWeight: 700, color: C.ink }}>No evaluable</div>
+            <div style={{ fontSize: '11px', color: C.text2 }}>No hay datos suficientes para calcular esta nota.</div>
+          </div>
+        </div>
+      </div>
+    </details>
   );
 }
 
@@ -180,23 +215,20 @@ export default function EngineV2Panel({ engine, sym = '$' }) {
           </div>
         </div>
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', gap: '10px' }}>
-          <Dimension title="Calidad" score={quality.score} label={quality.score == null ? 'No concluyente' : 'Del negocio, sin mirar el precio'} note={quality.score == null ? quality.reasonNull : null} />
+          <TierDimension title="Calidad" tier={quality.score != null ? quality.label : null} range={quality.sensitivity?.labelRange} reasonNull={quality.reasonNull} />
           <div style={{ background: C.bg, borderRadius: '14px', padding: '12px 14px', display: 'flex', flexDirection: 'column', gap: '6px' }}>
             <div style={eyebrow}>CRECIMIENTO</div>
             <div style={{ fontSize: '15px', fontWeight: 800, lineHeight: 1.2 }}>{momentum.label}</div>
             <div style={{ fontSize: '11px', color: C.text2, lineHeight: 1.4 }}>{momentum.status === 'insufficient' ? momentum.reason : `${momentum.positives} ${momentum.positives === 1 ? 'señal a favor' : 'señales a favor'}, ${momentum.negatives} en contra`}</div>
           </div>
-          <Dimension title="Valoración" score={valuation.score} label={valuation.label} note={valuation.score == null ? valuation.reasonNull : (valuation.confidence === 'baja' ? 'Confianza baja: pocos métodos aplicables' : null)} />
-          <div style={{ background: C.bg, borderRadius: '14px', padding: '12px 14px', display: 'flex', flexDirection: 'column', gap: '6px' }}>
-            <div style={eyebrow}>RIESGO</div>
-            <div style={{ fontSize: '15px', fontWeight: 800, lineHeight: 1.2 }}>{risk.label}</div>
-            <div style={{ fontSize: '11px', color: C.text2, lineHeight: 1.4 }}>{risk.counts.confirmed} {risk.counts.confirmed === 1 ? 'confirmado' : 'confirmados'}, {risk.counts.potential} {risk.counts.potential === 1 ? 'posible' : 'posibles'}, {risk.counts.notEvaluable} no {risk.counts.notEvaluable === 1 ? 'evaluable' : 'evaluables'}</div>
-          </div>
-          <PotentialDimension potential={potential} />
+          <TierDimension title="Valoración" tier={valuation.tier} range={valuation.sensitivity?.tierRange} reasonNull={valuation.reasonNull} />
+          <RiskDimension risk={risk} />
+          <TierDimension title="Potencial" tier={potential.score != null ? potential.label : null} range={potential.sensitivity?.labelRange} reasonNull={potential.reason} />
         </div>
         {potential.pattern && <div style={{ ...body, background: C.bg, borderRadius: '12px', padding: '10px 12px' }}>{potential.pattern.text}</div>}
         {potential.caps?.length > 0 && <div style={{ fontSize: '12px', color: C.text2 }}>{potential.caps.join(' ')}</div>}
         <div style={{ fontSize: '11px', color: C.text3 }}>{potential.notAdvice ?? 'Las puntuaciones no son recomendaciones de compra ni de venta.'}</div>
+        <TierLegend />
 
         <Block block={explanations.quality} defaultOpen={false} extra={quality.score != null && (
           <div style={{ fontSize: '12px', color: C.text2, display: 'flex', flexDirection: 'column', gap: '3px' }}>
