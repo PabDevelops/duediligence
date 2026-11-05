@@ -3,7 +3,8 @@ import { use, Suspense, useState, useEffect } from 'react';
 import Link from 'next/link';
 import NewNav from '../../../../components/new/NewNav';
 import { computeETFQualityScore } from '../../../../../lib/etfQuality';
-import { NEW_COLORS as C } from '../../../../components/new/theme';
+import { NEW_COLORS as C, TIER_COLORS } from '../../../../components/new/theme';
+import { tierForScore } from '../../../../../lib/engine/tierScale';
 
 const dateLabel = (d) => {
   if (!d || d === 'N/A') return null;
@@ -50,8 +51,10 @@ function QualityBreakdown({ composite, factors }) {
           </div>
         ))}
         <div style={{ display: 'flex', alignItems: 'center', gap: '16px', paddingTop: '4px', borderTop: `1px solid ${C.borderSoft}` }}>
-          <div style={{ width: '42px', height: '42px', borderRadius: '12px', background: C.lime, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '14px', fontWeight: 800, color: C.ink, flexShrink: 0 }}>
-            {composite != null ? Math.round(composite) : 'N/D'}
+          {/* Tier letter, not the bare composite number — same scale as a stock's Calidad
+              (lib/engine/tierScale.js), so the same letter means the same thing everywhere. */}
+          <div style={{ width: '42px', height: '42px', borderRadius: '12px', background: composite != null ? TIER_COLORS[tierForScore(composite)] : C.bg, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '14px', fontWeight: 800, color: composite != null ? '#fff' : C.text3, flexShrink: 0 }}>
+            {composite != null ? tierForScore(composite) : 'N/D'}
           </div>
           <div>
             <div style={{ fontSize: '13px', fontWeight: 700 }}>NOTA FINAL</div>
