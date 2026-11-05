@@ -14,6 +14,10 @@ import { engineVerdict, engineInvestigateQuestions } from '../../../../lib/verdi
 import { formatCurrency, formatTimeAgo } from '../../../../lib/formatters';
 import { NEW_COLORS as C, VERDICT_BADGE } from '../../../components/new/theme';
 
+// Same good/caution/bad colors as the overall VERDICT_BADGE dot, reused per-dimension; gray
+// ('unknown') only when that dimension genuinely has no score to read, never a guessed color.
+const DIMENSION_DOT = { good: VERDICT_BADGE.good.dot, caution: VERDICT_BADGE.caution.dot, bad: VERDICT_BADGE.bad.dot, unknown: C.text3 };
+
 const hasFundamentals = (d) => d.revVal != null || d.niVal != null || d.marketCap != null
   || d.roic != null || d.grossMargin != null || (d.revHistory?.length ?? 0) > 0;
 
@@ -290,18 +294,21 @@ function NewStockPageContent({ params }) {
           </div>
           {verdict.pattern?.text && <div style={{ fontSize: '13px', color: C.text2, lineHeight: 1.5 }}>{verdict.pattern.text}</div>}
           <div style={{ display: 'flex', flexDirection: 'column', gap: '14px', fontSize: '14px', lineHeight: 1.6, color: '#45413A' }}>
-            <div>
-              <div style={{ fontSize: '11px', fontWeight: 700, color: C.text3, letterSpacing: '0.02em', marginBottom: '5px' }}>CALIDAD DEL NEGOCIO</div>
-              {verdict.dimensions.quality}
-            </div>
-            <div>
-              <div style={{ fontSize: '11px', fontWeight: 700, color: C.text3, letterSpacing: '0.02em', marginBottom: '5px' }}>VALORACIÓN</div>
-              {verdict.dimensions.valuation}
-            </div>
-            <div>
-              <div style={{ fontSize: '11px', fontWeight: 700, color: C.text3, letterSpacing: '0.02em', marginBottom: '5px' }}>RIESGOS</div>
-              {verdict.dimensions.risks}
-            </div>
+            {[
+              { key: 'quality', title: 'CALIDAD DEL NEGOCIO', text: verdict.dimensions.quality },
+              { key: 'valuation', title: 'VALORACIÓN', text: verdict.dimensions.valuation },
+              { key: 'risks', title: 'RIESGOS', text: verdict.dimensions.risks },
+            ].map(({ key, title, text }) => (
+              <div key={key}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '5px' }}>
+                  {/* Semáforo por dimensión: verde/ámbar/rojo (gris si no hay datos) para ver de un
+                      vistazo qué va bien y qué conviene investigar, antes de leer el texto. */}
+                  <span aria-hidden="true" style={{ width: '8px', height: '8px', borderRadius: '50%', background: DIMENSION_DOT[verdict.dimensionLevels?.[key]] ?? C.text3, flexShrink: 0 }} />
+                  <div style={{ fontSize: '11px', fontWeight: 700, color: C.text3, letterSpacing: '0.02em' }}>{title}</div>
+                </div>
+                {text}
+              </div>
+            ))}
           </div>
           <div style={{ fontSize: '12px', color: C.text3, paddingTop: '10px', borderTop: `1px solid ${C.borderSoft}` }}>
             Esto no es consejo de inversión, es un punto de partida — investiga más antes de decidir.
