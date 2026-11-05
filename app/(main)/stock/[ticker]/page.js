@@ -330,7 +330,14 @@ function NewStockPageContent({ params }) {
           digging into" shouldn't have to wade through WACC/EV-EBITDA/discount rates to get
           there; someone who wants that depth can tap through for it. */}
       {entryProjection.maxEntryPrice != null && entryProjection.cagr5y != null && price != null && (() => {
-        const mos = entryProjection.marginOfSafety;
+        // Measured against maxEntryPrice (the 15%/yr-hurdle price shown two columns over in this
+        // same card), not engine.entry.marginOfSafety (measured against fairValueToday, a WACC-
+        // discounted and therefore always-higher number this card never shows). Using the hidden
+        // fairValueToday number here could show a green "con margen de seguridad" badge while the
+        // price sat visibly above "Precio máximo de entrada" right next to it — confirmed
+        // confusing against real data (a $11.17 price above a $7.23 max entry still read as
+        // +71% margin of safety). This way the badge and the three numbers always tell one story.
+        const mos = entryProjection.maxEntryPrice > 0 ? (entryProjection.maxEntryPrice - price) / entryProjection.maxEntryPrice : null;
         const tier = mos == null ? 'caution' : mos >= 0.10 ? 'good' : mos >= -0.10 ? 'caution' : 'bad';
         const priceBadge = VERDICT_BADGE[tier];
         const priceLabel = tier === 'good' ? 'Con margen de seguridad' : tier === 'caution' ? 'En su precio justo' : 'Por encima de lo recomendado';
@@ -373,6 +380,7 @@ function NewStockPageContent({ params }) {
                 <div style={{ fontSize: '20px', fontWeight: 800, color: mos == null ? C.ink : mos >= 0 ? C.green : C.red }}>
                   {mos == null ? 'N/D' : `${mos >= 0 ? '+' : ''}${(mos * 100).toFixed(0)}%`}
                 </div>
+                <div style={{ fontSize: '11px', color: C.text3, marginTop: '2px' }}>frente al precio máximo de entrada</div>
               </div>
               <div>
                 <div style={{ fontSize: '12px', color: C.text2, marginBottom: '4px' }}>Rentabilidad anual esperada</div>
