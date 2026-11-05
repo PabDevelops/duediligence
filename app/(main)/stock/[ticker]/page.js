@@ -204,12 +204,13 @@ function NewStockPageContent({ params }) {
   const qualityScore = quality?.score ?? null;
   // "92/100" implies a precision the model doesn't have — quality.sensitivity already proves
   // that by recomputing the score under 4 weightings of its 9 components (same mechanism as
-  // Potencial). Shown as a tier letter (S+/S/A/B/C/D/F — more immediately recognizable than a
-  // bespoke word), widened into a range only when a different reasonable weighting actually
-  // lands on a different tier; the number stays available in the data for sorting/filtering
-  // elsewhere, it's just not the headline here.
+  // Potencial). Shown as a single tier letter (S+/S/A/B/C/D/F — more immediately recognizable
+  // than a bespoke word) from the base weighting; a two-letter range like "D–B" tested as more
+  // confusing than informative, so when a different reasonable weighting lands on a different
+  // tier we keep the single base letter and just flag it with a small note instead. The number
+  // stays available in the data for sorting/filtering elsewhere, it's just not the headline here.
   const qualityRange = quality?.sensitivity?.labelRange;
-  const qualityText = qualityScore == null ? null : qualityRange ? `${qualityRange.low}–${qualityRange.high}` : quality.label;
+  const qualityText = qualityScore == null ? null : quality.label;
 
   // Lets AI crawlers and answer engines identify which company this page is about without
   // having to parse the rendered layout — schema.org Corporation, not a rating/review type, so
