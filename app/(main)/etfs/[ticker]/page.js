@@ -216,13 +216,13 @@ function NewEtfPageContent({ params }) {
           </div>
           {quality.composite != null && (
             <div style={{ textAlign: 'right' }}>
+              {/* Same tier-letter treatment as a stock's "NOTA DE CALIDAD" (lib/engine/
+                  tierScale.js) — a bare "73/100" reads as more precise than this really is. */}
               <div style={{ fontSize: '11px', fontWeight: 700, color: C.text3, letterSpacing: '0.02em', marginBottom: '6px' }}>NOTA DE CALIDAD</div>
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: '8px' }}>
-                <div aria-hidden="true" style={{ width: '52px', height: '8px', borderRadius: '20px', background: C.borderSoft, overflow: 'hidden' }}>
-                  <div style={{ width: `${quality.composite}%`, height: '100%', borderRadius: '20px', background: C.lime }} />
-                </div>
-                <span style={{ fontSize: '16px', fontWeight: 800 }}>{Math.round(quality.composite)}</span>
+              <div aria-hidden="true" style={{ width: '52px', height: '8px', borderRadius: '20px', background: C.borderSoft, overflow: 'hidden', marginLeft: 'auto', marginBottom: '6px' }}>
+                <div style={{ width: `${quality.composite}%`, height: '100%', borderRadius: '20px', background: C.lime }} />
               </div>
+              <div style={{ fontSize: '24px', fontWeight: 800, lineHeight: 1.1 }}>{quality.tier}</div>
             </div>
           )}
         </div>
