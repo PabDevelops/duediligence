@@ -22,3 +22,10 @@ export const VERDICT_BADGE = {
   caution: { bg: '#FBEFD9', dot: '#C98A1F', text: '#8A5E12' },
   bad: { bg: '#F8DFDA', dot: '#C14A3C', text: '#9A3A2F' },
 };
+
+// Solid badge color per tier letter (lib/engine/tierScale.js) — a red-to-green ramp, ordered
+// worst (F) to best (S+), used for the letter chip wherever a tier is shown (Calidad, Valoración,
+// Riesgo, Potencial) so the same letter always reads with the same color across the app.
+export const TIER_COLORS = {
+  F: '#C14A3C', D: '#D97F3D', C: '#C98A1F', B: '#9BAF3A', A: '#5FA83C', S: '#2E8B47', 'S+': '#1F7A4C',
+};
