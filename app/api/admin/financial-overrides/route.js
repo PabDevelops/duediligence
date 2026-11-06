@@ -1,7 +1,7 @@
 import {checkIsAdmin} from '../../../../lib/isAdmin';
 import {getUserId} from '../../../../lib/auth';
 import {supabase} from '../../../../lib/supabase';
-import {validateFinancialOverride,cleanOverrideMetadata} from '../../../../lib/financialOverrides';
+import {validateFinancialOverride,cleanOverrideMetadata,financialOverrideStorageTarget} from '../../../../lib/financialOverrides';
 import {financialOverridesEnabled,loadFinancialOverrides,invalidateFinancialOverrideCache} from '../../../../lib/financialOverrideStore';
 import {invalidateScreenerCache} from '../../../../lib/screenerData';
 export const dynamic='force-dynamic';
@@ -17,7 +17,9 @@ export async function POST(request){
   if(!financialOverridesEnabled())return Response.json({error:'La edición no está activada.'},{status:503});
   const origin=request.headers.get('origin');
   if(origin&&origin!==new URL(request.url).origin)return Response.json({error:'Origen no autorizado.'},{status:403});
-  const body=await request.json().catch(()=>null),error=validateFinancialOverride(body);
+  const body=await request.json().catch(()=>null);
+  if(body&&!body.reset)body.target=financialOverrideStorageTarget(body.target,body.metadata);
+  const error=validateFinancialOverride(body);
   if(error)return Response.json({error},{status:400});
   const userId=await getUserId();if(!userId)return Response.json({error:'Sesión caducada.'},{status:401});
   const {data,error:dbError}=await supabase.rpc('set_financial_override',{
