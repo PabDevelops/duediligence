@@ -21,6 +21,7 @@
       "feat/manual-sbc-history": false,
       "fix/annual-fcf-sbc-valuation": false,
       "fix/quality-compatible-cash-flow": false,
+      "feat/manual-statement-history": false,
       "main": true
     }
   },
