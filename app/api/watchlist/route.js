@@ -95,6 +95,7 @@ export async function POST(request) {
 
   const { ticker, pie } = await request.json();
   if (!ticker) return Response.json({ error: 'Ticker required' }, { status: 400 });
+  if (pie !== undefined && pie !== null && typeof pie !== 'string') return Response.json({ error: 'Pie must be a name or null' }, { status: 400 });
 
   const upperTicker = ticker.toUpperCase();
 
@@ -127,7 +128,7 @@ export async function POST(request) {
   // upsert against an already-watched ticker leave its existing list assignment alone
   // instead of silently resetting it to General.
   const row = { user_id: userId, ticker: upperTicker };
-  if (pie !== undefined) row.pie = pie ? pie.trim() || null : null;
+  if (pie !== undefined) row.pie = typeof pie === 'string' && pie.trim() ? pie : null;
 
   // watchlists' primary key is the surrogate `id` column, not (user_id, ticker) — without
   // onConflict naming the real unique constraint (watchlists_user_id_ticker_key), upsert()

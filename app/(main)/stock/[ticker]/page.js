@@ -7,16 +7,15 @@ import Link from 'next/link';
 import NewNav from '../../../components/new/NewNav';
 import StockLogo from '../../../components/workspace/StockLogo';
 import StockChart from '../../../components/StockChart';
-import { useUser } from '../../../components/AuthProvider';
 import { useStockData } from '../../../../lib/hooks/useStockData';
 import { useEntryPriceProjection } from '../../../../lib/hooks/useEntryPriceProjection';
-import { isInGuestWatchlist, addToGuestWatchlist, removeFromGuestWatchlist } from '../../../../lib/guestWatchlist';
 import { computeEasyMode } from '../../../../lib/financialCalculations';
 import { engineVerdict, engineInvestigateQuestions } from '../../../../lib/verdict';
 import { formatCurrency, formatTimeAgo } from '../../../../lib/formatters';
 import { NEW_COLORS as C, VERDICT_BADGE } from '../../../components/new/theme';
 import CompanyScoreCards from '../../../components/new/CompanyScoreCards';
 import StockQuickSearch from '../../../components/new/StockQuickSearch';
+import StockFollowButton from '../../../components/new/StockFollowButton';
 
 // Same good/caution/bad colors as the overall VERDICT_BADGE dot, reused per-dimension; gray
 // ('unknown') only when that dimension genuinely has no score to read, never a guessed color.
@@ -90,11 +89,8 @@ function NewStockPageContent({ params }) {
   const { ticker: rawTicker } = use(params);
   const ticker = rawTicker.toUpperCase();
   const router = useRouter();
-  const { isSignedIn, isLoaded } = useUser();
   const { data, error, loading, refreshing, refetch } = useStockData(ticker);
 
-  const [following, setFollowing] = useState(false);
-  const [followError, setFollowError] = useState('');
   const [chartRange, setChartRange] = useState('1m');
   const [insiderTrades, setInsiderTrades] = useState(null);
   const [showAllInsiders, setShowAllInsiders] = useState(false);
@@ -120,15 +116,7 @@ function NewStockPageContent({ params }) {
     return () => { active = false; };
   }, [data, ticker, router]);
 
-  useEffect(() => {
-    if (!isLoaded) return;
-    if (!isSignedIn) { setFollowing(isInGuestWatchlist(ticker)); return; }
-    let active = true;
-    fetch('/api/watchlist').then(r => r.json()).then(d => {
-      if (active) setFollowing((d.tickers || []).some(t => t.ticker === ticker));
-    }).catch(() => {});
-    return () => { active = false; };
-  }, [isLoaded, isSignedIn, ticker]);
+
 
   useEffect(() => {
     let active = true;
@@ -161,25 +149,7 @@ function NewStockPageContent({ params }) {
     return () => { active = false; };
   }, [ticker]);
 
-  const toggleFollow = async () => {
-    const next = !following;
-    setFollowing(next);
-    setFollowError('');
-    if (!isSignedIn) {
-      if (next) addToGuestWatchlist(ticker); else removeFromGuestWatchlist(ticker);
-      return;
-    }
-    const res = next
-      ? await fetch('/api/watchlist', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ ticker }) })
-      : await fetch('/api/watchlist', { method: 'DELETE', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ ticker }) });
-    // The optimistic toggle above is wrong if the request actually failed — revert so the
-    // button reflects what's really saved instead of silently drifting from it.
-    if (!res.ok) {
-      setFollowing(!next);
-      const body = await res.json().catch(() => ({}));
-      if (body.error) setFollowError(body.error);
-    }
-  };
+
 
   // Five-dimension analysis and 5-year fundamental scenarios (lib/engine). Called ahead of the
   // loading/error early returns below, since it's a hook, and it tolerates `data` being null.
@@ -232,15 +202,7 @@ function NewStockPageContent({ params }) {
           Volver
         </Link>
         <Link href={`/stock/${ticker}/analisis`} style={{ fontSize: '13px', fontWeight: 700, color: C.ink, textDecoration: 'none' }}>Análisis completo →</Link>
-        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '6px' }}>
-          <button type="button" onClick={toggleFollow} style={{
-            height: '36px', padding: '0 16px', borderRadius: '12px', fontWeight: 700, fontSize: '12px', fontFamily: 'inherit', cursor: 'pointer',
-            border: following ? 'none' : `1px solid ${C.ink}`, background: following ? C.lime : 'transparent', color: C.ink,
-          }}>
-            {following ? '✓ Siguiendo' : '+ Seguir'}
-          </button>
-          {followError && <div style={{ fontSize: '11px', color: C.red, maxWidth: '220px', textAlign: 'right' }}>{followError}</div>}
-        </div>
+        <StockFollowButton ticker={ticker} />
       </div>
 
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '16px' }}>
