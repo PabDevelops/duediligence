@@ -58,7 +58,7 @@ export function EditableFinancialValue({target,label,children,point,showStoredVa
   const stored=manual?.value==null?'N/D':`${manual.value.toLocaleString('es-ES',{maximumSignificantDigits:17})}${['revGrowth','epsCagr','grossMargin','opMargin','netMargin','roe','roa','roic','dividendYield','insiderOwnershipPct'].includes(manual.field)?' %':isRatioField(manual.field)?'':manual.period?.unit==='shares'?' acciones':` ${manual.period?.currency||'moneda sin documentar'}`}`;
   const value=<>{manual&&!nested&&(showStoredValue||isRatioField(manual.field))?stored:children}{manual&&!nested&&<small style={{display:'block',fontSize:11,color:'#726C5E',whiteSpace:'normal',maxWidth:280}}>
     Manual guardado: {stored} · {manual.period?.basis||'sin verificar'}{manual.period?.periodEnd?` · ${formatFiscalDateInput(manual.period.periodEnd)}`:''}
-    <span style={{display:'block'}}>{manual.value==null?'Sin valor numérico: se conserva N/D.':manual.manualCalculation?`Utilizado como entrada manual · no verificado automáticamente. ${manual.reason||''}`:excluded?`No utilizado en cálculos: ${manual.reason||state?.reason||'Periodo no compatible con el modelo.'}`:'Disponible para cálculos compatibles · provisional'}</span>
+    <span style={{display:'block'}}>{manual.value==null?'Sin valor numérico: se conserva N/D.':manual.quarterlyHistory?`Histórico trimestral independiente de FY/TTM. ${manual.reason||'No se anualiza automáticamente.'}`:manual.manualCalculation?`Utilizado como entrada manual · no verificado automáticamente. ${manual.reason||''}`:excluded?`No utilizado en cálculos: ${manual.reason||state?.reason||'Periodo no compatible con el modelo.'}`:'Disponible para cálculos compatibles · provisional'}</span>
   </small>}</>;
   const primary=!editor?.admin||!overrideTarget(target)?value:<button type="button" title={`Corregir ${label}`} aria-label={`Corregir ${label}`}
     onClick={()=>editor.open({target:manual?.appliedToCurrent?manual.target:target,label,point})} style={{font:'inherit',color:'inherit',background:'none',border:0,padding:'4px 0',cursor:'pointer',textAlign:'right',textDecoration:'underline dotted',textUnderlineOffset:4}}>{value}</button>;
@@ -82,7 +82,7 @@ function CorrectionDialog({ticker,selected,data,current,rows,onSaved,onClose}){
   const [exercise,setExercise]=useState(t.year||'');
   const [cashInputs,setCashInputs]=useState({operatingCF:initial.fcfInputs?.operatingCF??'',capex:initial.fcfInputs?.capex??''});
   const [value,setValue]=useState(raw==null?'':String(raw)),[factor,setFactor]=useState('1');
-  const [metadata,setMetadata]=useState({basis:initial.basis||'unknown',currency:initial.currency||'',scope:initial.scope||'provider-unspecified',periodStart:initial.periodStart||'',periodEnd:initial.periodEnd||'',sourceUrl:initial.sourceReference||initial.sourceUrl||'',note:current?.active?initial.note||'':'',returnBasis:initial.returnBasis||initial.roaBasis||{annualized:null,denominator:''}});
+  const [metadata,setMetadata]=useState({basis:initial.basis||'unknown',fiscalQuarter:initial.fiscalQuarter||t.quarter||'',currency:initial.currency||'',scope:initial.scope||'provider-unspecified',periodStart:initial.periodStart||'',periodEnd:initial.periodEnd||'',sourceUrl:initial.sourceReference||initial.sourceUrl||'',note:current?.active?initial.note||'':'',returnBasis:initial.returnBasis||initial.roaBasis||{annualized:null,denominator:''}});
   const [dateInputs,setDateInputs]=useState({periodStart:formatFiscalDateInput(initial.periodStart),periodEnd:formatFiscalDateInput(initial.periodEnd),assetsStartDate:formatFiscalDateInput((initial.returnBasis||initial.roaBasis)?.assetsStartDate),assetsEndDate:formatFiscalDateInput((initial.returnBasis||initial.roaBasis)?.assetsEndDate)});
   const partialReturn=['roa','roe'].includes(t.field)&&['H1','Q'].includes(metadata.basis);
   const [busy,setBusy]=useState(false),[error,setError]=useState('');
@@ -106,8 +106,10 @@ function CorrectionDialog({ticker,selected,data,current,rows,onSaved,onClose}){
       finalMetadata.fcfInputs=parsed;
     }
     const year=exercise||(/^\d{4}-\d{2}-\d{2}$/.test(periodEnd)?periodEnd.slice(0,4):'');
+    if(!reset&&selected.newHistory&&metadata.basis==='Q'&&!/^\d{4}$/.test(exercise)){setError('Indica el ejercicio fiscal del trimestre; no se deduce del cierre.');setBusy(false);return;}
     if(selected.newHistory&&!/^\d{4}$/.test(year)){setError('Indica el ejercicio o una fecha de cierre completa para identificar el registro histórico.');setBusy(false);return;}
-    const storageTarget=selected.newHistory?`history:${selected.newHistory}:${year}`:reset?selected.target:financialOverrideStorageTarget(selected.target,finalMetadata);
+    if(!reset&&t.history&&finalMetadata.basis==='Q'&&!/^Q[1-4]$/.test(finalMetadata.fiscalQuarter)){setError('Selecciona el trimestre fiscal para identificar el histórico.');setBusy(false);return;}
+    const storageTarget=reset?selected.target:financialOverrideStorageTarget(selected.newHistory?`history:${selected.newHistory}:${year}`:selected.target,finalMetadata);
     if(selected.newHistory&&rows.some(r=>r.target===storageTarget&&r.active)){setError('Ya existe una corrección para ese ejercicio. Edítala desde su fila en la tabla.');setBusy(false);return;}
     const expectedId=rows.find(r=>r.target===storageTarget)?.id||0;
     try{
@@ -129,7 +131,9 @@ function CorrectionDialog({ticker,selected,data,current,rows,onSaved,onClose}){
 
 
       <label>Periodo<select value={metadata.basis} onChange={e=>change('basis',e.target.value)} disabled={busy}>{[['unknown','Sin verificar'],['FY','Ejercicio completo (FY)'],['TTM','Últimos 12 meses (TTM)'],['H1','Semestre (H1)'],['Q','Trimestre (Q)'],['instant','Balance a una fecha']].map(([v,n])=><option key={v} value={v}>{n}</option>)}</select></label>
-      {selected.newHistory&&<label>Ejercicio (opcional si indicas el cierre)<input inputMode="numeric" maxLength={4} placeholder="AAAA" value={exercise} onChange={e=>setExercise(e.target.value)} disabled={busy}/></label>}
+      {selected.newHistory&&<label>{metadata.basis==='Q'?'Ejercicio fiscal del trimestre':'Ejercicio (opcional si indicas el cierre)'}<input inputMode="numeric" maxLength={4} placeholder="AAAA" value={exercise} onChange={e=>setExercise(e.target.value)} disabled={busy}/></label>}
+      {t.history&&metadata.basis==='Q'&&<label>Trimestre fiscal<select disabled={busy||!!t.quarterHistory} value={metadata.fiscalQuarter} onChange={e=>change('fiscalQuarter',e.target.value)}><option value="">Selecciona Q1–Q4</option>{['Q1','Q2','Q3','Q4'].map(q=><option key={q}>{q}</option>)}</select></label>}
+      {t.quarterHistory&&<small>Registro {t.quarter} FY{t.year}, independiente del histórico anual. Conserva el periodo real; no se anualiza.</small>}
 
       {['opMargin','netMargin','grossMargin'].includes(t.field)&&['Q','H1'].includes(metadata.basis)&&<p role="status" style={{fontSize:12,margin:0}}>Se mostrará como margen manual provisional de este periodo. No sustituirá un margen anual o TTM en las notas y valoraciones.</p>}
       <div style={{display:'flex',gap:12,flexWrap:'wrap'}}><label style={{flex:'1 1 150px'}}>Desde (opcional)<input type="text" inputMode="numeric" placeholder="DD/MM/AAAA" value={dateInputs.periodStart} onChange={e=>setDateInputs(p=>({...p,periodStart:e.target.value}))} disabled={busy}/></label><label style={{flex:'1 1 150px'}}>Hasta / fecha (opcional)<input type="text" inputMode="numeric" placeholder="DD/MM/AAAA" value={dateInputs.periodEnd} onChange={e=>setDateInputs(p=>({...p,periodEnd:e.target.value}))} disabled={busy}/></label></div>
