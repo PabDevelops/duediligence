@@ -1,4 +1,5 @@
 import { selectStatementFacts, selectFlowSeries, ANNUAL_FORMS } from '../../../lib/secFactSelection.js';
+import { corroboratedCashEquivalents, annualFcfEvidence } from '../../../lib/secCoverageRecovery.js';
 import { recoverYahooPeriods, recoverSecPeriods } from '../../../lib/financialPeriodRecovery.js';
 import { joinAnnualEvidence } from '../../../lib/financialDataPolicy.js';
 import { splitAdjustedShares, computeShareDilutionPct, computeDerivedFinancials } from '../../../lib/financialStatements.js';
@@ -1415,7 +1416,7 @@ export async function GET(request) {
     // fact on its own, so a late-filed amendment of an old period can't masquerade as fresh news.
     const CORE_FILING_TAGS = ['NetIncomeLoss', 'Assets', 'Revenues', 'RevenueFromContractWithCustomerExcludingAssessedTax', 'OperatingIncomeLoss'];
     const corePeriods = CORE_FILING_TAGS.flatMap((tag) => Object.values(usgaap[tag]?.units || {}).flat())
-      .filter((u) => ['10-K', '10-K/A', '10-Q', '10-Q/A', '20-F', '20-F/A'].includes(u.form) && u.end && u.filed);
+      .filter((u) => ['10-K', '10-K/A', '10-Q', '10-Q/A', '20-F', '20-F/A'].includes(u.form) && u.end && u.filed && u.end <= u.filed);
     const latestPeriodEnd = corePeriods.reduce((max, u) => (!max || u.end > max) ? u.end : max, null);
     const lastFilingDate = latestPeriodEnd
       ? corePeriods.filter((u) => u.end === latestPeriodEnd).reduce((max, u) => (!max || u.filed > max) ? u.filed : max, null)
@@ -1426,7 +1427,7 @@ export async function GET(request) {
         const metric = usgaap[key];
         if (!metric) continue;
         const unitName = ['USD','EUR','shares','pure'].find(u=>metric.units?.[u]);
-        const units = unitName ? selectStatementFacts(metric.units[unitName].map(u=>({...u,currency:['USD','EUR'].includes(unitName)?unitName:null,unit:unitName})), ANNUAL_FORMS) : null;
+        const units = unitName ? selectStatementFacts(metric.units[unitName].map(u=>({...u,tag:key,currency:['USD','EUR'].includes(unitName)?unitName:null,unit:unitName})), ANNUAL_FORMS) : null;
         if (!units) continue;
         const annual = units.filter(u => {
           const isForm = ['10-K', '20-F', '10-K/A', '20-F/A'].includes(u.form);
@@ -1798,20 +1799,19 @@ export async function GET(request) {
     const operatingCFValTTM = ttmVal(['NetCashProvidedByUsedInOperatingActivities']);
     const capexValTTM = ttmVal(['PaymentsToAcquirePropertyPlantAndEquipment', 'CapitalExpenditureDiscontinuedOperations', 'PaymentsForProceedsFromProductiveAssets', 'PaymentsToAcquireProductiveAssets']);
     const operatingCFVal = operatingCFValTTM ?? latest(cashFlows);
-    const fcfVal = (operatingCFValTTM != null && capexValTTM != null)
-      ? operatingCFValTTM - capexValTTM
+    const compatibleCurrentCashFlows = samePeriod(flowPeriod(['NetCashProvidedByUsedInOperatingActivities']),
+      flowPeriod(['PaymentsToAcquirePropertyPlantAndEquipment', 'CapitalExpenditureDiscontinuedOperations', 'PaymentsForProceedsFromProductiveAssets', 'PaymentsToAcquireProductiveAssets']));
+    const fcfVal = (operatingCFValTTM != null && capexValTTM != null && compatibleCurrentCashFlows)
+      ? operatingCFValTTM - Math.abs(capexValTTM)
       : latest(freeCashFlows);
     // Per-field period basis (TTM vs. FY) for whichever scalars lib/engine/input.js's provenance
     // tracks with a period — mirrors the preference list each ?? latest(...) fallback above
-    // actually used, so this never claims a sharper basis than the value itself has. fcf's period
-    // follows the OCF leg of fcfVal's TTM subtraction when that path was used (capexValTTM's own
-    // period isn't cross-checked against it yet — a separate, still-open gap); the annual
-    // latest(freeCashFlows) fallback is always a plain FY figure, dated off that array's own
-    // newest entry rather than re-deriving it.
+    // actually used. FCF uses TTM only when both legs match; a complete annual
+    // fallback retains its own inputs, independently of the latest OCF and CAPEX.
     const financialPeriods = {
       rev: flowPeriod(['RevenueFromContractWithCustomerExcludingAssessedTax','Revenues','SalesRevenueNet','RevenueFromContractWithCustomerIncludingAssessedTax']),
       oi: flowPeriod(['OperatingIncomeLoss', 'IncomeLossFromContinuingOperationsBeforeIncomeTaxesExtraordinaryItemsNoncontrollingInterest']),
-      fcf: (operatingCFValTTM != null && capexValTTM != null)
+      fcf: (operatingCFValTTM != null && capexValTTM != null && compatibleCurrentCashFlows)
         ? flowPeriod(['NetCashProvidedByUsedInOperatingActivities'])
         : (fcfVal != null ? { basis: 'FY', periodEnd: freeCashFlows?.[0]?.end ?? null } : null),
     };
@@ -1839,9 +1839,10 @@ export async function GET(request) {
     // short-term-investments figure that's a year stale (or vice versa).
     const cashNarrowInstant = instantSeries(['CashAndCashEquivalentsAtCarryingValue']);
     const shortTermInvestmentsInstantByEnd = new Map((instantSeries(['ShortTermInvestments', 'MarketableSecuritiesCurrent', 'AvailableForSaleSecuritiesCurrent']) || []).map(u => [u.end, u.val]));
+    const corroboratedCash = corroboratedCashEquivalents(usgaap)[0];
     const cashVal = cashNarrowInstant
       ? cashNarrowInstant[0].val + (shortTermInvestmentsInstantByEnd.get(cashNarrowInstant[0].end) ?? 0)
-      : (instantSeries(['CashCashEquivalentsAndShortTermInvestments'])?.[0]?.val ?? latest(cash));
+      : (instantSeries(['CashCashEquivalentsAndShortTermInvestments'])?.[0]?.val ?? corroboratedCash?.val ?? latest(cash));
     const sharesVal = latestInstant(['CommonStockSharesOutstanding','WeightedAverageNumberOfSharesOutstandingBasic'])?.val ?? latest(shares);
     const rdVal    = ttmVal(['ResearchAndDevelopmentExpense']) ?? latest(rd);
     const cogsVal  = ttmVal(['CostOfRevenue','CostOfGoodsAndServicesSold']) ?? latest(cogs);
@@ -2361,6 +2362,16 @@ export async function GET(request) {
     }
     result.isEtf = cachedIsEtf;
     Object.assign(result,recoverSecPeriods(result,facts));
+    if (!compatibleCurrentCashFlows && result.fcfVal != null) {
+      const selected = freeCashFlows?.[0];
+      const o = cashFlows?.find(p => p.start === selected?.start && p.end === selected?.end && p.currency === selected?.currency);
+      const c = (capex || []).find(c => c.start === o?.start && c.end === o?.end && c.currency === o?.currency);
+      const evidence = annualFcfEvidence(o, c);
+      if (evidence) result.financialPeriods.fcfVal = evidence;
+    }
+    if (!cashNarrowInstant && corroboratedCash && result.cashVal === corroboratedCash.val) {
+      result.financialPeriods.cashVal = { basis:'instant',periodEnd:corroboratedCash.end,currency:'USD',scope:'consolidated',source:'SEC EDGAR',tag:corroboratedCash.tag,accession:corroboratedCash.accn };
+    }
     const finalValidCount = [result.revVal, result.niVal, result.fcfVal, result.assetsVal, result.debtVal, result.cashVal].filter(v => v !== null).length;
     const isEtfSec = result.sector === 'ETF' || result.industry === 'ETF';
     if (finalValidCount >= 2 || (isEtfSec && result.currentPrice != null)) {

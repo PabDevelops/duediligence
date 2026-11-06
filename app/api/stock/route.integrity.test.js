@@ -3,6 +3,9 @@ import {join} from 'node:path';
 import {describe,it,expect,vi,beforeEach} from 'vitest';
 import facts from '../../../lib/__fixtures__/aapl-companyfacts-integrity.json';
 import flywFacts from '../../../lib/__fixtures__/flyw-companyfacts-selection.json';
+import budaFacts from '../../../lib/__fixtures__/buda-companyfacts-coverage.json';
+import onenFacts from '../../../lib/__fixtures__/onen-companyfacts-coverage.json';
+import {analyzeStock} from '../../../lib/engine';
 const state=vi.hoisted(()=>({cached:null,writes:[],sourceFacts:null}));
 vi.mock('../../../lib/supabase.js',()=>({supabase:{from:()=>{const q={select:()=>q,eq:()=>q,insert:async()=>({error:null}),single:async()=>({data:state.cached}),update:()=>q,maybeSingle:async()=>({data:null}),delete:()=>q,then:r=>Promise.resolve({}).then(r),upsert:async row=>{state.writes.push(row);return {}}};return q}}}));
 vi.mock('../../../lib/yahooFinance.js',()=>({getYahooAuth:async()=>null,fetchYahooAnalystTarget:async()=>null,fetchYahooDescription:async()=>null}));
@@ -12,10 +15,10 @@ vi.mock('../../../lib/dataAnomalies.js',()=>({flagDataAnomaly:async()=>{}}));
 import {GET} from './route.js';
 describe('stock endpoint integrity across cache and SEC',()=>{
  beforeEach(()=>{state.cached=null;state.writes=[];state.sourceFacts=facts;vi.stubGlobal('fetch',vi.fn(async url=>{
-  url=String(url);let d={};if(url.includes('company_tickers'))d={0:{ticker:'AAPL',cik_str:320193,title:'Apple Inc.'},1:{ticker:'FLYW',cik_str:1580560,title:'Flywire Corporation'}};
+  url=String(url);let d={};if(url.includes('company_tickers'))d={0:{ticker:'AAPL',cik_str:320193,title:'Apple Inc.'},1:{ticker:'FLYW',cik_str:1580560,title:'Flywire Corporation'},2:{ticker:'BUDA',cik_str:2079720,title:'Buda Juice Inc.'},3:{ticker:'ONEN',cik_str:1846416,title:'ONE Nuclear Energy Inc.'}};
   else if(url.includes('companyfacts'))d=state.sourceFacts;
-  else if(url.includes('/stock/profile2'))d={name:'Apple Inc.',finnhubIndustry:'Technology',currency:'USD',shareOutstanding:14600};
-  else if(url.includes('/quote?'))d={c:343.93,pc:340};
+  else if(url.includes('/stock/profile2'))d=state.sourceFacts===budaFacts?{name:'Buda Juice Inc.',finnhubIndustry:'Beverages',currency:'USD',shareOutstanding:12.567}:{name:'Apple Inc.',finnhubIndustry:'Technology',currency:'USD',shareOutstanding:14600};
+  else if(url.includes('/quote?'))d=state.sourceFacts===budaFacts?{c:6.55,pc:6.55}:{c:343.93,pc:340};
   else if(url.includes('/calendar/'))d={earningsCalendar:[]};
   return {ok:true,status:200,json:async()=>d};
  }));});
@@ -27,6 +30,32 @@ describe('stock endpoint integrity across cache and SEC',()=>{
   for(const pt of d.fcfHistory)expect(pt.derivation).toBe('OCF-minus-absolute-CAPEX');
   if(process.env.BULLTRACE_REPORT_DIR){mkdirSync(process.env.BULLTRACE_REPORT_DIR,{recursive:true});writeFileSync(join(process.env.BULLTRACE_REPORT_DIR,'AAPL-sec-replay.json'),JSON.stringify(d,null,2));}
   expect(d.financialIntegrity.version).toBe(2);expect(state.writes.length).toBeGreaterThan(0);
+ });
+ it('recovers BUDA annual FCF independently of fresher incompatible TTM components',async()=>{
+  state.sourceFacts=budaFacts;
+  const r=await GET(new Request('https://local.test/api/stock?ticker=BUDA'));const d=await r.json();
+  expect(r.status).toBe(200);expect(d.fcfVal).toBe(2904000);
+  expect(d.operatingCFVal).toBe(2257000);expect(d.capexVal).toBe(325000);
+  expect(d.financialPeriods.fcfVal).toMatchObject({basis:'FY',periodStart:'2025-01-01',periodEnd:'2025-12-31'});
+  expect(d.financialPeriods.fcfVal.cashFlowInputs.operatingCF.val).toBe(3150000);
+  expect(d.financialPeriods.fcfVal.cashFlowInputs.capex.val).toBe(246000);
+  expect(d.financialPeriods.fcfVal.cashFlowInputs.capex.tag).toBe('PaymentsToAcquirePropertyPlantAndEquipment');
+  expect(d.cashVal).toBe(18819000);expect(d.financialPeriods.cashVal.periodEnd).toBe('2026-06-30');
+  expect(d.financialIntegrity.fields.fcfVal.status).toBe('verified');
+  expect(d.financialIntegrity.calculations.dcf.status).toBe('blocked');
+  const analysis=analyzeStock(d,{now:'2026-11-06'});
+  expect(analysis.quality.components.fcfGeneration).toBeUndefined();
+  expect(analysis.quality.components.cashConversion).toBeUndefined();
+  expect(d.pfcf).toBeCloseTo(28.3,1);
+  if(process.env.BULLTRACE_REPORT_DIR)writeFileSync(join(process.env.BULLTRACE_REPORT_DIR,'BUDA-sec-replay.json'),JSON.stringify(d,null,2));
+ });
+ it('rejects future-dated ONEN balance facts without inventing post-merger financials',async()=>{
+  state.sourceFacts=onenFacts;
+  const r=await GET(new Request('https://local.test/api/stock?ticker=ONEN'));const d=await r.json();
+  expect(r.status).toBe(200);expect(d.lastFilingDate).toBe('2026-08-12');
+  expect(d.equityVal).not.toBe(-10084981);
+  expect(d.revVal).toBeNull();expect(d.fcfVal).toBeNull();
+  if(process.env.BULLTRACE_REPORT_DIR)writeFileSync(join(process.env.BULLTRACE_REPORT_DIR,'ONEN-sec-replay.json'),JSON.stringify(d,null,2));
  });
  it('sanitizes existing caches without refetching repeatedly after validation',async()=>{
  state.cached={updated_at:new Date().toISOString(),data:{ticker:'LLOY.L',currency:'GBP',currentPrice:.9694,marketCap:1e9,description:'Lloyds',revVal:null,pe:9.694,eps:.1,financialIntegrity:{version:2,issues:[],rejected:{}}}};
