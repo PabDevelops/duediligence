@@ -8,6 +8,7 @@
       "fix/sec-filing-tag-selection": false,
       "fix/search-same-tab": false,
       "feat/stock-follow-basket": false,
+      "feat/indicative-header-scores": false,
       "main": true
     }
   },

@@ -58,11 +58,12 @@ export function QualityBreakdown({ easyMode, data, analysis }) {
         {scores.map(p => (
           <div key={p.id} style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
             <div style={{ width: '42px', height: '42px', borderRadius: '12px', background: C.bg, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '15px', fontWeight: 800, color: dimensionColors[p.id], flexShrink: 0 }}>
-              {p.tier ?? 'N/D'}
+              {p.tier ?? p.indicative?.tier ?? 'N/D'}
             </div>
             <div>
               <div style={{ fontSize: '13px', fontWeight: 700 }}>{p.name}</div>
-              <details style={{ fontSize: '12px', color: C.text2, lineHeight: 1.5 }}><summary style={{ cursor: 'pointer' }}>Por qué tiene esta nota</summary>{p.description}</details>
+              {p.indicative && <div style={{ fontSize: '12px', color: C.text2 }}>Orientativa · {Math.round(p.coverage * 100)}% cobertura · confianza baja</div>}
+              <details style={{ fontSize: '12px', color: C.text2, lineHeight: 1.5 }}><summary style={{ cursor: 'pointer' }}>Por qué tiene esta nota</summary>{p.indicative ? `${p.indicative.description} ${p.description}` : p.description}</details>
             </div>
           </div>
         ))}
