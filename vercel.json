@@ -14,6 +14,7 @@
       "fix/admin-fiscal-date-input": false,
       "fix/period-specific-roa": false,
       "fix/manual-storage-independent": false,
+      "fix/comparable-manual-periods": false,
       "main": true
     }
   },

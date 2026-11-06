@@ -44,14 +44,15 @@ export function EditableFinancialValue({target,label,children,point,showStoredVa
   </small>}</>;
   const primary=!editor?.admin||!overrideTarget(target)?value:<button type="button" title={`Corregir ${label}`} aria-label={`Corregir ${label}`}
     onClick={()=>editor.open({target,label,point})} style={{font:'inherit',color:'inherit',background:'none',border:0,padding:'4px 0',cursor:'pointer',textAlign:'right',textDecoration:'underline dotted',textUnderlineOffset:4}}>{value}</button>;
-  const independent=target==='roa'?(editor?.data?.reportedIndicators||[]).filter(r=>r.field==='roa'):[];
+  const independent=['roa','roe'].includes(target)?(editor?.data?.reportedIndicators||[]).filter(r=>r.field===target):[];
   return <>{primary}{independent.map(r=><div key={r.target} style={{fontSize:12,marginTop:8,fontWeight:400,maxWidth:300}}>
-    <EditableFinancialValue target={r.target} label={`ROA ${r.period.basis} ${formatFiscalDateInput(r.period.periodEnd)}`}>
-      ROA {r.period.basis}: {r.value==null?'N/D':`${r.value.toLocaleString('es-ES')} %`}
+    <EditableFinancialValue target={r.target} label={`${r.field.toUpperCase()} ${r.period.basis} ${formatFiscalDateInput(r.period.periodEnd)}`}>
+      {r.field.toUpperCase()} {r.period.basis}: {r.value==null?'N/D':`${r.value.toLocaleString('es-ES')} %`}
     </EditableFinancialValue>
-    <small style={{display:'block'}}>Manual · {formatFiscalDateInput(r.period.periodStart)||'inicio sin documentar'}–{formatFiscalDateInput(r.period.periodEnd)||'fin sin documentar'} · {r.period.roaBasis?.annualized===false?'no anualizado':r.period.roaBasis?.annualized===true?'anualizado':'anualización sin documentar'}</small>
-    <small style={{display:'block'}}>Activos medios: {formatFiscalDateInput(r.period.roaBasis?.assetsStartDate)||'fecha sin documentar'}–{formatFiscalDateInput(r.period.roaBasis?.assetsEndDate)||'fecha sin documentar'} · {r.period.currency||'moneda sin documentar'} · {r.period.scope==='consolidated'?'consolidado':r.period.scope==='standalone'?'sociedad individual':'perímetro sin verificar'}</small>
-    <small style={{display:'block'}}>Pendiente de contraste · excluido de notas y valoraciones. {r.reason}</small>
+    <small style={{display:'block'}}>Manual · {formatFiscalDateInput(r.period.periodStart)||'inicio sin documentar'}–{formatFiscalDateInput(r.period.periodEnd)||'fin sin documentar'} · {(r.period.returnBasis||r.period.roaBasis)?.annualized===false?'no anualizado':(r.period.returnBasis||r.period.roaBasis)?.annualized===true?'anualizado':'anualización sin documentar'}</small>
+    <small style={{display:'block'}}>{r.field==='roe'?'Patrimonio medio':'Activos medios'}: {formatFiscalDateInput((r.period.returnBasis||r.period.roaBasis)?.assetsStartDate)||'fecha sin documentar'}–{formatFiscalDateInput((r.period.returnBasis||r.period.roaBasis)?.assetsEndDate)||'fecha sin documentar'} · {r.period.currency||'moneda sin documentar'} · {r.period.scope==='consolidated'?'consolidado':r.period.scope==='standalone'?'sociedad individual':'perímetro sin verificar'}</small>
+    <small style={{display:'block'}}>{r.status==='period-comparable'?'Contrastado para este periodo':'Pendiente de contraste'}. {r.reason}</small>
+    {r.periodCalculation&&<details><summary>Ver cálculo del periodo</summary>Beneficio: {r.periodCalculation.netIncome.toLocaleString('es-ES')} {r.periodCalculation.currency}; denominador medio: {r.periodCalculation.meanBalance.toLocaleString('es-ES')}. Resultado contrastado: {r.periodCalculation.calculatedValue} %. Sin anualizar. Perímetro de los componentes: {r.periodCalculation.scope==='consolidated'?'consolidado':'sociedad individual'}.</details>}
     {r.period.sourceUrl&&<a href={r.period.sourceUrl} target="_blank" rel="noopener noreferrer" style={{fontSize:11}}>Fuente</a>}
   </div>)}</>;
 }
@@ -61,9 +62,9 @@ function CorrectionDialog({ticker,selected,data,current,rows,onSaved,onClose}){
   const initial=current?.active?current.metadata:original;
   const raw=current?.active?current.value:selected.point?(t.history==='epsHistory'?selected.point.eps:selected.point.val):data[t.field];
   const [value,setValue]=useState(raw==null?'':String(raw)),[factor,setFactor]=useState('1');
-  const [metadata,setMetadata]=useState({basis:initial.basis||'unknown',currency:initial.currency||'',scope:initial.scope||'provider-unspecified',periodStart:initial.periodStart||'',periodEnd:initial.periodEnd||'',sourceUrl:initial.sourceReference||initial.sourceUrl||'',note:current?.active?initial.note||'':'',roaBasis:initial.roaBasis||{annualized:false,denominator:''}});
-  const [dateInputs,setDateInputs]=useState({periodStart:formatFiscalDateInput(initial.periodStart),periodEnd:formatFiscalDateInput(initial.periodEnd),assetsStartDate:formatFiscalDateInput(initial.roaBasis?.assetsStartDate),assetsEndDate:formatFiscalDateInput(initial.roaBasis?.assetsEndDate)});
-  const partialRoa=t.field==='roa'&&['H1','Q'].includes(metadata.basis);
+  const [metadata,setMetadata]=useState({basis:initial.basis||'unknown',currency:initial.currency||'',scope:initial.scope||'provider-unspecified',periodStart:initial.periodStart||'',periodEnd:initial.periodEnd||'',sourceUrl:initial.sourceReference||initial.sourceUrl||'',note:current?.active?initial.note||'':'',returnBasis:initial.returnBasis||initial.roaBasis||{annualized:null,denominator:''}});
+  const [dateInputs,setDateInputs]=useState({periodStart:formatFiscalDateInput(initial.periodStart),periodEnd:formatFiscalDateInput(initial.periodEnd),assetsStartDate:formatFiscalDateInput((initial.returnBasis||initial.roaBasis)?.assetsStartDate),assetsEndDate:formatFiscalDateInput((initial.returnBasis||initial.roaBasis)?.assetsEndDate)});
+  const partialReturn=['roa','roe'].includes(t.field)&&['H1','Q'].includes(metadata.basis);
   const [busy,setBusy]=useState(false),[error,setError]=useState('');
   useEffect(()=>{ref.current?.showModal();},[]);
   const change=(key,val)=>setMetadata(prev=>({...prev,[key]:val}));
@@ -74,7 +75,7 @@ function CorrectionDialog({ticker,selected,data,current,rows,onSaved,onClose}){
     if(!reset&&normalized&&!Number.isFinite(Number(normalized)*Number(factor))){setError('El importe es demasiado grande.');setBusy(false);return;}
     const documentedDate=text=>parseFiscalDateInput(text)??text.trim();
     const periodStart=documentedDate(dateInputs.periodStart),periodEnd=documentedDate(dateInputs.periodEnd);
-    const finalMetadata={...metadata,periodStart,periodEnd,...(partialRoa?{roaBasis:{...metadata.roaBasis,assetsStartDate:documentedDate(dateInputs.assetsStartDate),assetsEndDate:documentedDate(dateInputs.assetsEndDate)}}:{})};
+    const finalMetadata={...metadata,periodStart,periodEnd,...(partialReturn?{returnBasis:{...metadata.returnBasis,assetsStartDate:documentedDate(dateInputs.assetsStartDate),assetsEndDate:documentedDate(dateInputs.assetsEndDate)}}:{})};
     const storageTarget=reset?selected.target:financialOverrideStorageTarget(selected.target,finalMetadata);
     const expectedId=rows.find(r=>r.target===storageTarget)?.id||0;
     try{
@@ -86,27 +87,34 @@ function CorrectionDialog({ticker,selected,data,current,rows,onSaved,onClose}){
   return <dialog ref={ref} onCancel={e=>{e.preventDefault();if(!busy)onClose();}} aria-labelledby="correction-title" style={{width:'min(520px,calc(100% - 32px))',maxHeight:'90vh',overflowY:'auto',border:'1px solid #ECE1C9',borderRadius:18,padding:24,color:'#1C1B18',background:'#FAF7F0'}}>
     <style>{`dialog::backdrop{background:rgba(28,27,24,.4)}.correction-form label{display:flex;flex-direction:column;gap:5px;font-size:12px}.correction-form input,.correction-form select,.correction-form textarea{padding:9px;border:1px solid #D8CEBA;border-radius:8px;background:white;color:#1C1B18;width:100%;box-sizing:border-box;font:inherit}.correction-form button{padding:10px;border:1px solid #D8CEBA;border-radius:8px;cursor:pointer}.correction-form button:disabled{opacity:.6;cursor:wait}`}</style>
     <h2 id="correction-title" style={{fontSize:18,marginTop:0}}>Corregir {selected.label}</h2>
-    <p style={{fontSize:12}}>Se guardará para todos y persistirá al actualizar el proveedor. La documentación es opcional. Las comprobaciones deciden si el dato puede usarse en cálculos; no impiden guardarlo.</p>
+    <p style={{fontSize:12}}>Se guarda para todos. Los datos no comparables quedan fuera de los cálculos; puedes guardarlos igualmente.</p>
     {t.year&&<p style={{fontSize:12}}>Ejercicio histórico: <strong>{t.year}</strong>.</p>}
-    <p style={{fontSize:12}}>{['revGrowth','epsCagr','grossMargin','opMargin','netMargin','roe','roa','roic','dividendYield','insiderOwnershipPct'].includes(t.field)?'Porcentaje en puntos: 10 significa 10%.':ratio?'Ratio o medida sin moneda.':t.field.toLowerCase().includes('shares')?'Número de acciones.':'Importe contable en la moneda indicada.'} Introduce el dato original, sin redondearlo al formato de la pantalla.</p>
-    {current?.active&&<p style={{fontSize:12}}>{t.indicatorPeriod?'Ya existe un dato de este periodo. Retirarlo conserva su historial y no modifica el ROA principal.':'Ya existe una corrección manual. «Restaurar proveedor» volverá al dato automático actual.'}</p>}
+    <p style={{fontSize:12}}>{['revGrowth','epsCagr','grossMargin','opMargin','netMargin','roe','roa','roic','dividendYield','insiderOwnershipPct'].includes(t.field)?'Porcentaje: 10 significa 10%.':ratio?'Ratio o medida sin moneda.':t.field.toLowerCase().includes('shares')?'Número de acciones.':'Importe en unidades completas, salvo que elijas otras unidades en detalles.'}</p>
+    {current?.active&&<p style={{fontSize:12}}>Corrección permanente. Puedes editarla o {t.indicatorPeriod?'retirar este periodo':'restaurar el proveedor'}.</p>}
     <form className="correction-form" onSubmit={e=>{e.preventDefault();save(false);}} style={{display:'grid',gap:12}}>
       <label>Valor (vacío guarda N/D)<input autoFocus inputMode="decimal" value={value} onChange={e=>setValue(e.target.value)} disabled={busy}/></label>
-      {!ratio&&<label>Unidades introducidas<select value={factor} onChange={e=>setFactor(e.target.value)} disabled={busy}><option value="1">Unidades completas</option><option value="1000">Miles</option><option value="1000000">Millones</option></select></label>}
-      <label>Moneda (opcional)<select value={metadata.currency} onChange={e=>change('currency',e.target.value)} disabled={busy}><option value="">Sin documentar</option>{[...new Set([metadata.currency,'EUR','USD','GBP','GBp','CHF','CAD','AUD','JPY','CNY'])].filter(Boolean).map(c=><option key={c}>{c}</option>)}</select></label>
+
+
       <label>Periodo<select value={metadata.basis} onChange={e=>change('basis',e.target.value)} disabled={busy}>{[['unknown','Sin verificar'],['FY','Ejercicio completo (FY)'],['TTM','Últimos 12 meses (TTM)'],['H1','Semestre (H1)'],['Q','Trimestre (Q)'],['instant','Balance a una fecha']].map(([v,n])=><option key={v} value={v}>{n}</option>)}</select></label>
-      {partialRoa&&<fieldset style={{border:'1px solid #D8CEBA',borderRadius:8,padding:12,display:'grid',gap:10}}>
-        <legend>ROA independiente del periodo</legend>
-        <p style={{fontSize:12,margin:0}}>No anualizado. Se conservará aparte del ROA principal y no entrará en notas ni valoraciones. Pendiente de contraste de sus componentes.</p>
-        <label>Base del denominador<select value={metadata.roaBasis.denominator} disabled={busy} onChange={e=>change('roaBasis',{...metadata.roaBasis,denominator:e.target.value})}><option value="">Selecciona la base real</option><option value="average-assets">Media de activos de apertura y cierre</option></select></label>
-        {['assetsStartDate','assetsEndDate'].map((key,i)=><label key={key}>{i===0?'Activos al cierre anterior al inicio':'Activos al cierre del periodo'}<input type="text" inputMode="numeric" placeholder="DD/MM/AAAA" value={dateInputs[key]} onChange={e=>setDateInputs(p=>({...p,[key]:e.target.value}))} disabled={busy}/></label>)}
-      </fieldset>}
+
       {['opMargin','netMargin','grossMargin'].includes(t.field)&&['Q','H1'].includes(metadata.basis)&&<p role="status" style={{fontSize:12,margin:0}}>Se mostrará como margen manual provisional de este periodo. No sustituirá un margen anual o TTM en las notas y valoraciones.</p>}
       <div style={{display:'flex',gap:12,flexWrap:'wrap'}}><label style={{flex:'1 1 150px'}}>Desde (opcional)<input type="text" inputMode="numeric" placeholder="DD/MM/AAAA" value={dateInputs.periodStart} onChange={e=>setDateInputs(p=>({...p,periodStart:e.target.value}))} disabled={busy}/></label><label style={{flex:'1 1 150px'}}>Hasta / fecha (opcional)<input type="text" inputMode="numeric" placeholder="DD/MM/AAAA" value={dateInputs.periodEnd} onChange={e=>setDateInputs(p=>({...p,periodEnd:e.target.value}))} disabled={busy}/></label></div>
       <small style={{fontSize:11,color:'#726C5E'}}>Fechas en día/mes/año. También puedes escribir 30062026, sin barras.</small>
-      <label>Perímetro<select value={metadata.scope} onChange={e=>change('scope',e.target.value)} disabled={busy}><option value="provider-unspecified">Sin verificar</option><option value="consolidated">Grupo consolidado</option><option value="standalone">Sociedad individual</option></select></label>
+
+      <label>Moneda (opcional)<select value={metadata.currency} onChange={e=>change('currency',e.target.value)} disabled={busy}><option value="">Sin documentar</option>{[...new Set([metadata.currency,'EUR','USD','GBP','GBp','CHF','CAD','AUD','JPY','CNY'])].filter(Boolean).map(c=><option key={c}>{c}</option>)}</select></label>
       <label>Fuente o enlace (opcional)<input type="text" maxLength={2048} value={metadata.sourceUrl} onChange={e=>change('sourceUrl',e.target.value)} disabled={busy}/></label>
       <label>Justificación (opcional)<textarea maxLength={1000} rows={2} value={metadata.note} onChange={e=>change('note',e.target.value)} disabled={busy}/></label>
+      <details><summary>Detalles opcionales: unidades, perímetro y método</summary><div style={{display:'grid',gap:12,marginTop:12}}>
+      {!ratio&&<label>Unidades introducidas<select value={factor} onChange={e=>setFactor(e.target.value)} disabled={busy}><option value="1">Unidades completas</option><option value="1000">Miles</option><option value="1000000">Millones</option></select></label>}
+      <label>Perímetro<select value={metadata.scope} onChange={e=>change('scope',e.target.value)} disabled={busy}><option value="provider-unspecified">Sin verificar</option><option value="consolidated">Grupo consolidado</option><option value="standalone">Sociedad individual</option></select></label>
+      {partialReturn&&<fieldset style={{border:'1px solid #D8CEBA',borderRadius:8,padding:12,display:'grid',gap:10}}>
+        <legend>{t.field.toUpperCase()} del periodo</legend>
+        <p style={{fontSize:12,margin:0}}>Se contrasta con los componentes del mismo periodo. No sustituye el rendimiento anual/TTM ni se anualiza automáticamente.</p>
+        <label>Anualización documentada<select disabled={busy} value={metadata.returnBasis.annualized==null?'unknown':String(metadata.returnBasis.annualized)} onChange={e=>change('returnBasis',{...metadata.returnBasis,annualized:e.target.value==='unknown'?null:e.target.value==='true'})}><option value="unknown">Sin documentar</option><option value="false">No anualizado</option><option value="true">Anualizado en la fuente (pendiente de validar)</option></select></label>
+        <label>Base del denominador<select value={metadata.returnBasis.denominator} disabled={busy} onChange={e=>change('returnBasis',{...metadata.returnBasis,denominator:e.target.value})}><option value="">Selecciona la base real</option><option value={t.field==='roe'?'average-equity':'average-assets'}>Media de apertura y cierre</option></select></label>
+        {['assetsStartDate','assetsEndDate'].map((key,i)=><label key={key}>{i===0?'Denominador al cierre anterior al inicio':'Denominador al cierre del periodo'}<input type="text" inputMode="numeric" placeholder="DD/MM/AAAA" value={dateInputs[key]} onChange={e=>setDateInputs(p=>({...p,[key]:e.target.value}))} disabled={busy}/></label>)}
+      </fieldset>}
+      </div></details>
       {error&&<p role="alert" style={{color:'#9A3A2F',fontSize:12}}>{error}</p>}
       <div style={{display:'flex',gap:8,flexWrap:'wrap'}}><button disabled={busy} type="submit" style={{background:'#C7FF38',fontWeight:700}}>{busy?'Guardando…':'Guardar para todos'}</button><button disabled={busy} type="button" onClick={onClose}>Cancelar</button>{current?.active&&<button disabled={busy} type="button" onClick={()=>save(true)}>{t.indicatorPeriod?'Retirar dato de este periodo':'Restaurar proveedor'}</button>}</div>
     </form>
