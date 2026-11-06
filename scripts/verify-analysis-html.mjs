@@ -13,7 +13,6 @@ try {
   const page = await context.newPage();
   await page.setContent(html);
   const summary = page.locator('#resumen');
-  const text = await summary.innerText();
   assert(!html.includes('Cargando análisis de'));
   for (const name of ['GROWTH','VALUE','QUALITY']) assert((await summary.textContent()).includes(name));
   const reasons = summary.locator('summary').filter({hasText:'Por qué tiene esta nota'});
@@ -32,7 +31,7 @@ try {
   const before = await summary.textContent();
   console.log(`${ticker}: HTTP 200; three grades, explanations and weighted components in HTML without scripts`);
   await context.close();
-  const liveContext = await browser.newContext();
+  const liveContext = await browser.newContext({locale:process.env.BROWSER_LOCALE || 'es-ES'});
   const live = await liveContext.newPage();
   const hydrationErrors=[];
   live.on('pageerror',e=>hydrationErrors.push(e.message));
