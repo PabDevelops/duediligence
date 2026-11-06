@@ -7,6 +7,7 @@
 import { NEW_COLORS as C, VERDICT_BADGE, TIER_COLORS } from '../../new/theme';
 import { priceRelativeValue } from '../../../../lib/currencyPresentation';
 import { formatCurrency } from '../../../../lib/formatters';
+import {formatFiscalDateInput} from '../../../../lib/fiscalDateInput';
 import { TIER_LABELS, TIER_NAMES, TIER_DESCRIPTIONS, tierForScore } from '../../../../lib/engine/tierScale';
 
 // lib/engine/quality.js's `components` are keyed by the same names as QUALITY_WEIGHTS — no
@@ -309,6 +310,7 @@ export default function EngineV2Panel({ engine, sym = '$', section = 'all' }) {
       {(section === 'all' || section === 'valoracion') && <div style={card}>
         <Block block={explanations.valuation} extra={(
           <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+            {valuation.cashFlowBasis?.status==='matched'&&<p style={{fontSize:12,color:C.text2,margin:0}}>P/FCF después de SBC: {valuation.cashFlowBasis.basis} · {formatFiscalDateInput(valuation.cashFlowBasis.periodStart)}–{formatFiscalDateInput(valuation.cashFlowBasis.periodEnd)}. FCF: {valuation.cashFlowBasis.fcf.toLocaleString('es-ES')} {valuation.cashFlowBasis.currency}; SBC: {valuation.cashFlowBasis.sbc.toLocaleString('es-ES')} {valuation.cashFlowBasis.currency}. Esta base anual no sustituye las cifras H1 más recientes.</p>}
             {valuation.methods.map((m) => (
               <MetricBar key={m.id} label={m.label} score={m.score} detail={`${String(m.value).replace('.', ',')}x · rango orientativo del sector ${m.band.map((b) => String(Math.round(b * 10) / 10).replace('.', ',')).join(' / ')}x`} />
             ))}

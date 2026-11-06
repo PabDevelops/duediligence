@@ -19,6 +19,7 @@
       "fix/legacy-period-return": false,
       "feat/manual-fcf-history": false,
       "feat/manual-sbc-history": false,
+      "fix/annual-fcf-sbc-valuation": false,
       "main": true
     }
   },

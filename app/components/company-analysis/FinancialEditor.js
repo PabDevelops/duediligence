@@ -46,16 +46,16 @@ export function FinancialEditorSession({ticker,data,onSaved,auth,children}){
   </EditorContext.Provider>;
 }
 export function EditableFinancialValue({target,label,children,point,showStoredValue=false,nested=false}){
-  const editor=useContext(EditorContext),manual=editor?.data?.manualCorrections?.find(r=>r.target===target);
+  const editor=useContext(EditorContext),manual=editor?.data?.manualCorrections?.find(r=>r.target===target||r.appliedToCurrent&&r.field===target);
   const state=manual&&!target.startsWith('history:')&&editor?.data?.financialIntegrity?.fields?.[manual.field];
   const excluded=manual?.modelExcluded||state?.status==='blocked'||state?.modelExcluded;
   const stored=manual?.value==null?'N/D':`${manual.value.toLocaleString('es-ES',{maximumSignificantDigits:17})}${['revGrowth','epsCagr','grossMargin','opMargin','netMargin','roe','roa','roic','dividendYield','insiderOwnershipPct'].includes(manual.field)?' %':isRatioField(manual.field)?'':manual.period?.unit==='shares'?' acciones':` ${manual.period?.currency||'moneda sin documentar'}`}`;
   const value=<>{manual&&!nested&&(showStoredValue||isRatioField(manual.field))?stored:children}{manual&&!nested&&<small style={{display:'block',fontSize:11,color:'#726C5E',whiteSpace:'normal',maxWidth:280}}>
     Manual guardado: {stored} · {manual.period?.basis||'sin verificar'}{manual.period?.periodEnd?` · ${formatFiscalDateInput(manual.period.periodEnd)}`:''}
-    <span style={{display:'block'}}>{excluded?`No utilizado en cálculos: ${manual.reason||state?.reason||'Periodo no compatible con el modelo.'}`:'Disponible para cálculos compatibles · provisional'}</span>
+    <span style={{display:'block'}}>{manual.value==null?'Sin valor numérico: se conserva N/D.':manual.manualCalculation?`Utilizado como entrada manual · no verificado automáticamente. ${manual.reason||''}`:excluded?`No utilizado en cálculos: ${manual.reason||state?.reason||'Periodo no compatible con el modelo.'}`:'Disponible para cálculos compatibles · provisional'}</span>
   </small>}</>;
   const primary=!editor?.admin||!overrideTarget(target)?value:<button type="button" title={`Corregir ${label}`} aria-label={`Corregir ${label}`}
-    onClick={()=>editor.open({target,label,point})} style={{font:'inherit',color:'inherit',background:'none',border:0,padding:'4px 0',cursor:'pointer',textAlign:'right',textDecoration:'underline dotted',textUnderlineOffset:4}}>{value}</button>;
+    onClick={()=>editor.open({target:manual?.appliedToCurrent?manual.target:target,label,point})} style={{font:'inherit',color:'inherit',background:'none',border:0,padding:'4px 0',cursor:'pointer',textAlign:'right',textDecoration:'underline dotted',textUnderlineOffset:4}}>{value}</button>;
   const independent=!nested&&['roa','roe'].includes(target)?(editor?.data?.reportedIndicators||[]).filter(r=>r.field===target):[];
   return <>{primary}{independent.map(r=><div key={r.target} style={{fontSize:12,marginTop:8,fontWeight:400,maxWidth:300}}>
     <EditableFinancialValue nested target={r.target} label={`${r.field.toUpperCase()} ${r.period.basis} ${formatFiscalDateInput(r.period.periodEnd)}`}>
@@ -63,7 +63,7 @@ export function EditableFinancialValue({target,label,children,point,showStoredVa
     </EditableFinancialValue>
     <small style={{display:'block'}}>Manual · {formatFiscalDateInput(r.period.periodStart)||'inicio sin documentar'}–{formatFiscalDateInput(r.period.periodEnd)||'fin sin documentar'} · {(r.period.returnBasis||r.period.roaBasis)?.annualized===false?'no anualizado':(r.period.returnBasis||r.period.roaBasis)?.annualized===true?'anualizado':'anualización sin documentar'}</small>
     <small style={{display:'block'}}>{r.field==='roe'?'Patrimonio medio':'Activos medios'}: {formatFiscalDateInput((r.period.returnBasis||r.period.roaBasis)?.assetsStartDate)||'fecha sin documentar'}–{formatFiscalDateInput((r.period.returnBasis||r.period.roaBasis)?.assetsEndDate)||'fecha sin documentar'} · {r.period.currency||'moneda sin documentar'} · {r.period.scope==='consolidated'?'consolidado':r.period.scope==='standalone'?'sociedad individual':'perímetro sin verificar'}</small>
-    <small style={{display:'block'}}>{r.status==='period-comparable'?'Contrastado para este periodo':'Pendiente de contraste'}. {r.reason}</small>
+    <small style={{display:'block'}}>{editor?.data?.manualCorrections?.some(m=>m.target===r.target&&(m.appliedToCurrent||m.manualCalculation))?'Entrada manual utilizada. Las discrepancias del contraste son advertencias; no se anualiza automáticamente.':`${r.status==='period-comparable'?'Contrastado para este periodo':'Pendiente de contraste'}. Registro independiente del indicador principal. ${r.reason}`}</small>
     {r.periodCalculation&&<details><summary>Ver cálculo del periodo</summary>Beneficio: {r.periodCalculation.netIncome.toLocaleString('es-ES')} {r.periodCalculation.currency}; denominador medio: {r.periodCalculation.meanBalance.toLocaleString('es-ES')}. Resultado contrastado: {r.periodCalculation.calculatedValue} %. Sin anualizar. Perímetro de los componentes: {r.periodCalculation.scope==='consolidated'?'consolidado':'sociedad individual'}.</details>}
     {r.period.sourceUrl&&<a href={r.period.sourceUrl} target="_blank" rel="noopener noreferrer" style={{fontSize:11}}>Fuente</a>}
   </div>)}</>;
