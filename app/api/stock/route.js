@@ -1,7 +1,8 @@
+import { selectStatementFacts, selectFlowSeries, ANNUAL_FORMS } from '../../../lib/secFactSelection.js';
 import { recoverYahooPeriods, recoverSecPeriods } from '../../../lib/financialPeriodRecovery.js';
 import { joinAnnualEvidence } from '../../../lib/financialDataPolicy.js';
 import { splitAdjustedShares, computeShareDilutionPct, computeDerivedFinancials } from '../../../lib/financialStatements.js';
-import { sanitizeFinancialData, samePeriod, joinPeriods, cashFlowLessCapex, sumFourQuarters, resolveFxRate, validPeriod, selectLatestFacts, HISTORY_FIELDS } from '../../../lib/financialIntegrity.js';
+import { sanitizeFinancialData, samePeriod, joinPeriods, cashFlowLessCapex, sumFourQuarters, resolveFxRate, validPeriod, HISTORY_FIELDS } from '../../../lib/financialIntegrity.js';
 import { supabase } from '../../../lib/supabase.js';
 import { getYahooAuth, fetchYahooAnalystTarget, fetchYahooDescription } from '../../../lib/yahooFinance.js';
 import { translateDescription } from '../../../lib/translateDescription.js';
@@ -1425,7 +1426,7 @@ export async function GET(request) {
         const metric = usgaap[key];
         if (!metric) continue;
         const unitName = ['USD','EUR','shares','pure'].find(u=>metric.units?.[u]);
-        const units = unitName ? selectLatestFacts(metric.units[unitName].map(u=>({...u,currency:['USD','EUR'].includes(unitName)?unitName:null,unit:unitName}))) : null;
+        const units = unitName ? selectStatementFacts(metric.units[unitName].map(u=>({...u,currency:['USD','EUR'].includes(unitName)?unitName:null,unit:unitName})), ANNUAL_FORMS) : null;
         if (!units) continue;
         const annual = units.filter(u => {
           const isForm = ['10-K', '20-F', '10-K/A', '20-F/A'].includes(u.form);
@@ -1470,7 +1471,7 @@ export async function GET(request) {
         const metric = usgaap[key];
         if (!metric) continue;
         const unitName = ['USD','EUR','shares','pure'].find(u=>metric.units?.[u]);
-        const units = unitName ? selectLatestFacts(metric.units[unitName].map(u=>({...u,currency:['USD','EUR'].includes(unitName)?unitName:null,unit:unitName}))) : null;
+        const units = unitName ? selectStatementFacts(metric.units[unitName].map(u=>({...u,currency:['USD','EUR'].includes(unitName)?unitName:null,unit:unitName}))) : null;
         if (!units) continue;
         const periods = units
           .filter(u => ['10-K', '20-F', '10-K/A', '20-F/A', '10-Q', '10-Q/A'].includes(u.form) && u.end)
@@ -1509,7 +1510,7 @@ export async function GET(request) {
         const metric = usgaap[key];
         if (!metric) continue;
         const unitName = ['USD','EUR','shares','pure'].find(u=>metric.units?.[u]);
-        const units = unitName ? selectLatestFacts(metric.units[unitName].map(u=>({...u,currency:['USD','EUR'].includes(unitName)?unitName:null,unit:unitName}))) : null;
+        const units = unitName ? selectStatementFacts(metric.units[unitName].map(u=>({...u,currency:['USD','EUR'].includes(unitName)?unitName:null,unit:unitName}))) : null;
         if (!units) continue;
         const periods = units
           .filter(u => ['10-K', '20-F', '10-K/A', '20-F/A', '10-Q', '10-Q/A'].includes(u.form) && u.end)
@@ -1535,7 +1536,7 @@ export async function GET(request) {
         const metric = usgaap[key];
         if (!metric) continue;
         const unitName = ['USD','EUR','shares','pure'].find(u=>metric.units?.[u]);
-        const units = unitName ? selectLatestFacts(metric.units[unitName].map(u=>({...u,currency:['USD','EUR'].includes(unitName)?unitName:null,unit:unitName}))) : null;
+        const units = unitName ? selectStatementFacts(metric.units[unitName].map(u=>({...u,currency:['USD','EUR'].includes(unitName)?unitName:null,unit:unitName})), ANNUAL_FORMS) : null;
         if (!units) continue;
         const annual = units
           .filter(u => ['10-K', '20-F', '10-K/A', '20-F/A'].includes(u.form))
@@ -1559,25 +1560,7 @@ export async function GET(request) {
     // and the tag was never used again post-merger, so without this guard ttmVal served that
     // five-year-old shell loss as the "TTM" figure, flipping ROIC/opMargin negative for a
     // company whose real operating income is ~+$200M).
-    const getMetricAllPeriods = (keys) => {
-      for (const key of keys) {
-        const metric = usgaap[key];
-        if (!metric) continue;
-        const unitName = ['USD','EUR','shares','pure'].find(u=>metric.units?.[u]);
-        const units = unitName ? selectLatestFacts(metric.units[unitName].map(u=>({...u,currency:['USD','EUR'].includes(unitName)?unitName:null,unit:unitName}))) : null;
-        if (!units) continue;
-        const periods = units
-          .filter(u => ['10-K', '20-F', '10-K/A', '20-F/A', '10-Q', '10-Q/A'].includes(u.form) && u.start && u.end)
-          .sort((a, b) => b.end.localeCompare(a.end)||(b.filed||'').localeCompare(a.filed||''));
-        if (periods.length === 0) continue;
-        if (recencyAnchor) {
-          const gapYears = (new Date(recencyAnchor) - new Date(periods[0].end)) / (1000 * 60 * 60 * 24 * 365.25);
-          if (gapYears > 3) continue;
-        }
-        return periods;
-      }
-      return null;
-    };
+    const getMetricAllPeriods = (keys) => selectFlowSeries(usgaap, keys, recencyAnchor);
 
     const daysBetween = (a, b) => Math.abs(new Date(a) - new Date(b)) / (1000 * 60 * 60 * 24);
     const oneYearBefore = (d) => { const nd = new Date(d); nd.setFullYear(nd.getFullYear() - 1); return nd; };

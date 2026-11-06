@@ -2,7 +2,8 @@ import {writeFileSync,mkdirSync} from 'node:fs';
 import {join} from 'node:path';
 import {describe,it,expect,vi,beforeEach} from 'vitest';
 import facts from '../../../lib/__fixtures__/aapl-companyfacts-integrity.json';
-const state=vi.hoisted(()=>({cached:null,writes:[]}));
+import flywFacts from '../../../lib/__fixtures__/flyw-companyfacts-selection.json';
+const state=vi.hoisted(()=>({cached:null,writes:[],sourceFacts:null}));
 vi.mock('../../../lib/supabase.js',()=>({supabase:{from:()=>{const q={select:()=>q,eq:()=>q,insert:async()=>({error:null}),single:async()=>({data:state.cached}),update:()=>q,maybeSingle:async()=>({data:null}),delete:()=>q,then:r=>Promise.resolve({}).then(r),upsert:async row=>{state.writes.push(row);return {}}};return q}}}));
 vi.mock('../../../lib/yahooFinance.js',()=>({getYahooAuth:async()=>null,fetchYahooAnalystTarget:async()=>null,fetchYahooDescription:async()=>null}));
 vi.mock('../../../lib/translateDescription.js',()=>({translateDescription:async x=>x}));
@@ -10,9 +11,9 @@ vi.mock('../../../lib/secInsiders.js',()=>({fetchForm4Transactions:async()=>[],c
 vi.mock('../../../lib/dataAnomalies.js',()=>({flagDataAnomaly:async()=>{}}));
 import {GET} from './route.js';
 describe('stock endpoint integrity across cache and SEC',()=>{
- beforeEach(()=>{state.cached=null;state.writes=[];vi.stubGlobal('fetch',vi.fn(async url=>{
-  url=String(url);let d={};if(url.includes('company_tickers'))d={0:{ticker:'AAPL',cik_str:320193,title:'Apple Inc.'}};
-  else if(url.includes('companyfacts'))d=facts;
+ beforeEach(()=>{state.cached=null;state.writes=[];state.sourceFacts=facts;vi.stubGlobal('fetch',vi.fn(async url=>{
+  url=String(url);let d={};if(url.includes('company_tickers'))d={0:{ticker:'AAPL',cik_str:320193,title:'Apple Inc.'},1:{ticker:'FLYW',cik_str:1580560,title:'Flywire Corporation'}};
+  else if(url.includes('companyfacts'))d=state.sourceFacts;
   else if(url.includes('/stock/profile2'))d={name:'Apple Inc.',finnhubIndustry:'Technology',currency:'USD',shareOutstanding:14600};
   else if(url.includes('/quote?'))d={c:343.93,pc:340};
   else if(url.includes('/calendar/'))d={earningsCalendar:[]};
@@ -38,6 +39,19 @@ describe('stock endpoint integrity across cache and SEC',()=>{
   const d=await (await GET(new Request('https://local.test/api/stock?ticker=ARLO'))).json();
   expect(d.currency).toBe('USD');expect(d.currentPrice).toBe(14.75);expect(d.cached).toBe(true);
   expect(fetch.mock.calls.some(([url])=>String(url).includes('companyfacts'))).toBe(false);
+ });
+
+ it('recovers period-compatible FLYW revenue, earnings and operating margin from actual SEC facts',async()=>{
+  state.sourceFacts=flywFacts;
+  const r=await GET(new Request('https://local.test/api/stock?ticker=FLYW'));const d=await r.json();
+  expect(r.status).toBe(200);expect(d.revVal).toBe(763700000);expect(d.oiVal).toBe(59806000);
+  expect(d.niVal).toBe(78947000);expect(d.opMargin).toBeCloseTo(7.8,1);
+  for(const field of ['revVal','oiVal','niVal']){
+    expect(d.financialPeriods[field]).toMatchObject({basis:'TTM',periodStart:'2025-10-01',periodEnd:'2026-09-30',currency:'USD'});
+  }
+  expect(d.roic).toBeNull();expect(d.financialPeriods.ebtVal.periodEnd).toBe('2026-06-30');
+  expect(d.financialIntegrity.fields.roic.status).toBe('blocked');
+  if(process.env.BULLTRACE_REPORT_DIR){mkdirSync(process.env.BULLTRACE_REPORT_DIR,{recursive:true});writeFileSync(join(process.env.BULLTRACE_REPORT_DIR,'FLYW-sec-replay.json'),JSON.stringify(d,null,2));}
  });
 
 });
