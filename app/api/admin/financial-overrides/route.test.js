@@ -31,6 +31,17 @@ describe('admin financial corrections access and writes',()=>{
  it('returns conflicts without silently overwriting a concurrent correction',async()=>{
   state.error={code:'40001'};expect((await POST(request())).status).toBe(409);
  });
+ it('stores a partial ROA under a distinct fiscal key, preserving the principal and other periods',async()=>{
+  const m={basis:'H1',periodStart:'2026-01-01',periodEnd:'2026-06-30',currency:'USD',scope:'consolidated',note:'ROA H1 no anualizado',roaBasis:{annualized:false,denominator:'average-assets',assetsStartDate:'2025-12-31',assetsEndDate:'2026-06-30'}};
+  expect((await POST(request({...body(),target:'roa',value:3.5,metadata:m}))).status).toBe(200);
+  expect(supabase.rpc).toHaveBeenCalledWith('set_financial_override',expect.objectContaining({p_target:'period:roa:H1:2026-06-30',p_value:3.5,p_metadata:expect.objectContaining({basis:'H1',roaBasis:m.roaBasis})}));
+  expect((await POST(request({...body(),target:'roa',metadata:{...m,roaBasis:{...m.roaBasis,annualized:true}}}))).status).toBe(400);
+  expect(supabase.rpc).toHaveBeenCalledTimes(1);
+ });
+ it('resets only the chosen independent period with its own concurrency version',async()=>{
+  expect((await POST(request({ticker:'TEST',target:'period:roa:H1:2026-06-30',reset:true,expectedId:12}))).status).toBe(200);
+  expect(supabase.rpc).toHaveBeenCalledWith('set_financial_override',expect.objectContaining({p_target:'period:roa:H1:2026-06-30',p_active:false,p_expected_id:12}));
+ });
  it('restores the provider by appending an inactive revision, not deleting history',async()=>{
   expect((await POST(request({ticker:'TEST',target:'rdVal',reset:true,expectedId:12}))).status).toBe(200);
   expect(supabase.rpc).toHaveBeenCalledWith('set_financial_override',expect.objectContaining({p_value:null,p_active:false,p_expected_id:12}));

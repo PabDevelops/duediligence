@@ -12,6 +12,7 @@
       "fix/sec-small-cap-coverage": false,
       "feat/admin-financial-editing": false,
       "fix/admin-fiscal-date-input": false,
+      "fix/period-specific-roa": false,
       "main": true
     }
   },

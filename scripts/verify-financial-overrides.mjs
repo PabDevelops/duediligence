@@ -18,6 +18,16 @@ const history=await db.query('select count(*)::int as n from public.financial_ov
 try{await db.exec('delete from public.financial_override_revisions');assert.fail('delete allowed');}catch(e){check(e.code==='42501');}
 await db.exec('reset role;set role anon');
 try{await write(50,true,0);assert.fail('anon RPC allowed');}catch(e){check(e.code==='42501');}
+await db.exec('reset role;set role service_role');
+const independent=async(target,value,active,id)=> (await db.query('select public.set_financial_override($1,$2,$3,$4,$5,$6,$7) as id',['TEST',target,value,{basis:target.includes(':H1:')?'H1':'Q',roaBasis:{annualized:false,denominator:'average-assets',assetsStartDate:'2025-12-31',assetsEndDate:'2026-06-30'}},active,'11111111-1111-1111-1111-111111111111',id])).rows[0].id;
+const h1='period:roa:H1:2026-06-30',q='period:roa:Q:2026-06-30';
+const h1id=await independent(h1,3.5,true,0);await independent(q,2,true,0);
+current=await db.query('select target,value,metadata from public.current_financial_overrides where active');
+check(current.rows.length===2&&current.rows.some(r=>r.target===h1&&r.value===3.5&&r.metadata.roaBasis.annualized===false));
+try{await independent(h1,4,true,0);assert.fail('period conflict accepted');}catch(e){check(e.code==='40001');}
+await independent(h1,null,false,h1id);
+current=await db.query('select target from public.current_financial_overrides where active');check(current.rows.length===1&&current.rows[0].target===q);
+const retained=await db.query('select count(*)::int as n from public.financial_override_revisions where target=$1',[h1]);check(retained.rows[0].n===2);
 await db.close();console.log(JSON.stringify({database:'PGlite in-memory PostgreSQL',migration:'passed',checks,hostedChanges:0}));
 
 

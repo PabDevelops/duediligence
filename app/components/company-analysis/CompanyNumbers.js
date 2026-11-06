@@ -37,7 +37,7 @@ export function StatSection({ title, intro, stats }) {
               <div style={{ fontSize: '13px', fontWeight: 700, marginBottom: '3px' }}>{s.label}</div>
               <details style={{ fontSize: '12px', color: C.text2, lineHeight: 1.5 }}><summary style={{ cursor: 'pointer' }}>¿Qué significa?</summary>{s.explain}</details>
             </div>
-            <div style={{ fontSize: '17px', fontWeight: 800, whiteSpace: 'nowrap', flexShrink: 0, color: s.color ?? C.ink }}><EditableFinancialValue target={s.editField} label={s.editLabel||s.label} point={s.editPoint}>{s.value ?? 'N/D'}</EditableFinancialValue></div>
+            <div style={{ fontSize: '17px', fontWeight: 800, whiteSpace: s.editField==='roa'?'normal':'nowrap', flexShrink: s.editField==='roa'?1:0, minWidth:0, textAlign:s.editField==='roa'?'right':undefined, color: s.color ?? C.ink }}><EditableFinancialValue target={s.editField} label={s.editLabel||s.label} point={s.editPoint}>{s.value ?? 'N/D'}</EditableFinancialValue></div>
           </div>
         ))}
       </div>
