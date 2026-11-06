@@ -16,6 +16,7 @@
       "fix/manual-storage-independent": false,
       "fix/comparable-manual-periods": false,
       "fix/legacy-period-return": false,
+      "feat/manual-fcf-history": false,
       "main": true
     }
   },

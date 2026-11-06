@@ -4,6 +4,11 @@ import {useUser} from '../AuthProvider';
 import {financialOverrideStorageTarget,isRatioField,overrideTarget} from '../../../lib/financialOverrides';
 import {formatFiscalDateInput,parseFiscalDateInput} from '../../../lib/fiscalDateInput';
 const EditorContext=createContext(null);
+export function AddHistoricalFcf(){
+  const editor=useContext(EditorContext);
+  if(!editor?.admin)return null;
+  return <button type="button" onClick={()=>editor.open({target:'add:fcfHistory',newHistory:'fcfHistory',label:'FCF histórico',point:{basis:'FY'}})} style={{padding:'8px 12px',margin:'10px 0',border:'1px solid #D8CEBA',borderRadius:8,background:'#FAF7F0',color:'#1C1B18',cursor:'pointer'}}>Añadir FCF histórico</button>;
+}
 export function FinancialEditorProvider({children,...props}){
   const auth=useUser();
   return <FinancialEditorSession key={`${props.ticker}:${auth.user?.id||'guest'}`} {...props} auth={auth}>{children}</FinancialEditorSession>;
@@ -35,7 +40,7 @@ export function FinancialEditorSession({ticker,data,onSaved,auth,children}){
 }
 export function EditableFinancialValue({target,label,children,point,showStoredValue=false,nested=false}){
   const editor=useContext(EditorContext),manual=editor?.data?.manualCorrections?.find(r=>r.target===target);
-  const state=manual&&editor?.data?.financialIntegrity?.fields?.[manual.field];
+  const state=manual&&!target.startsWith('history:')&&editor?.data?.financialIntegrity?.fields?.[manual.field];
   const excluded=manual?.modelExcluded||state?.status==='blocked'||state?.modelExcluded;
   const stored=manual?.value==null?'N/D':`${manual.value.toLocaleString('es-ES',{maximumSignificantDigits:17})}${['revGrowth','epsCagr','grossMargin','opMargin','netMargin','roe','roa','roic','dividendYield','insiderOwnershipPct'].includes(manual.field)?' %':isRatioField(manual.field)?'':manual.period?.unit==='shares'?' acciones':` ${manual.period?.currency||'moneda sin documentar'}`}`;
   const value=<>{manual&&!nested&&(showStoredValue||isRatioField(manual.field))?stored:children}{manual&&!nested&&<small style={{display:'block',fontSize:11,color:'#726C5E',whiteSpace:'normal',maxWidth:280}}>
@@ -57,10 +62,12 @@ export function EditableFinancialValue({target,label,children,point,showStoredVa
   </div>)}</>;
 }
 function CorrectionDialog({ticker,selected,data,current,rows,onSaved,onClose}){
-  const ref=useRef(null),t=overrideTarget(selected.target),ratio=isRatioField(t.field);
+  const ref=useRef(null),t=selected.newHistory?{history:selected.newHistory,field:'fcfVal'}:overrideTarget(selected.target),ratio=isRatioField(t.field);
   const original=selected.point||data.financialPeriods?.[t.field]||{};
   const initial=current?.active?current.metadata:original;
-  const raw=current?.active?current.value:selected.point?(t.history==='epsHistory'?selected.point.eps:selected.point.val):data[t.field];
+  const raw=selected.newHistory?null:current?.active?current.value:selected.point?(t.history==='epsHistory'?selected.point.eps:selected.point.val):data[t.field];
+  const [exercise,setExercise]=useState(t.year||'');
+  const [cashInputs,setCashInputs]=useState({operatingCF:initial.fcfInputs?.operatingCF??'',capex:initial.fcfInputs?.capex??''});
   const [value,setValue]=useState(raw==null?'':String(raw)),[factor,setFactor]=useState('1');
   const [metadata,setMetadata]=useState({basis:initial.basis||'unknown',currency:initial.currency||'',scope:initial.scope||'provider-unspecified',periodStart:initial.periodStart||'',periodEnd:initial.periodEnd||'',sourceUrl:initial.sourceReference||initial.sourceUrl||'',note:current?.active?initial.note||'':'',returnBasis:initial.returnBasis||initial.roaBasis||{annualized:null,denominator:''}});
   const [dateInputs,setDateInputs]=useState({periodStart:formatFiscalDateInput(initial.periodStart),periodEnd:formatFiscalDateInput(initial.periodEnd),assetsStartDate:formatFiscalDateInput((initial.returnBasis||initial.roaBasis)?.assetsStartDate),assetsEndDate:formatFiscalDateInput((initial.returnBasis||initial.roaBasis)?.assetsEndDate)});
@@ -76,7 +83,19 @@ function CorrectionDialog({ticker,selected,data,current,rows,onSaved,onClose}){
     const documentedDate=text=>parseFiscalDateInput(text)??text.trim();
     const periodStart=documentedDate(dateInputs.periodStart),periodEnd=documentedDate(dateInputs.periodEnd);
     const finalMetadata={...metadata,periodStart,periodEnd,...(partialReturn?{returnBasis:{...metadata.returnBasis,assetsStartDate:documentedDate(dateInputs.assetsStartDate),assetsEndDate:documentedDate(dateInputs.assetsEndDate)}}:{})};
-    const storageTarget=reset?selected.target:financialOverrideStorageTarget(selected.target,finalMetadata);
+    if(!reset&&t.history==='fcfHistory'){
+      const parsed={};
+      for(const key of ['operatingCF','capex']){
+        const text=String(cashInputs[key]).trim().replace(',','.');
+        if(text&&!/^[+-]?(?:\d+(?:\.\d*)?|\.\d+)(?:e[+-]?\d+)?$/i.test(text)){setError('OCF y CAPEX deben ser números, o quedar vacíos.');setBusy(false);return;}
+        parsed[key]=text?Number(text)*Number(factor):null;
+      }
+      finalMetadata.fcfInputs=parsed;
+    }
+    const year=exercise||(/^\d{4}-\d{2}-\d{2}$/.test(periodEnd)?periodEnd.slice(0,4):'');
+    if(selected.newHistory&&!/^\d{4}$/.test(year)){setError('Indica el ejercicio o una fecha de cierre completa para identificar el registro histórico.');setBusy(false);return;}
+    const storageTarget=selected.newHistory?`history:fcfHistory:${year}`:reset?selected.target:financialOverrideStorageTarget(selected.target,finalMetadata);
+    if(selected.newHistory&&rows.some(r=>r.target===storageTarget&&r.active)){setError('Ya existe una corrección para ese ejercicio. Edítala desde su fila en la tabla.');setBusy(false);return;}
     const expectedId=rows.find(r=>r.target===storageTarget)?.id||0;
     try{
       const response=await fetch('/api/admin/financial-overrides',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({ticker,target:storageTarget,expectedId,reset,value:normalized?Number(normalized)*Number(factor):null,metadata:finalMetadata})});
@@ -96,6 +115,7 @@ function CorrectionDialog({ticker,selected,data,current,rows,onSaved,onClose}){
 
 
       <label>Periodo<select value={metadata.basis} onChange={e=>change('basis',e.target.value)} disabled={busy}>{[['unknown','Sin verificar'],['FY','Ejercicio completo (FY)'],['TTM','Últimos 12 meses (TTM)'],['H1','Semestre (H1)'],['Q','Trimestre (Q)'],['instant','Balance a una fecha']].map(([v,n])=><option key={v} value={v}>{n}</option>)}</select></label>
+      {selected.newHistory&&<label>Ejercicio (opcional si indicas el cierre)<input inputMode="numeric" maxLength={4} placeholder="AAAA" value={exercise} onChange={e=>setExercise(e.target.value)} disabled={busy}/></label>}
 
       {['opMargin','netMargin','grossMargin'].includes(t.field)&&['Q','H1'].includes(metadata.basis)&&<p role="status" style={{fontSize:12,margin:0}}>Se mostrará como margen manual provisional de este periodo. No sustituirá un margen anual o TTM en las notas y valoraciones.</p>}
       <div style={{display:'flex',gap:12,flexWrap:'wrap'}}><label style={{flex:'1 1 150px'}}>Desde (opcional)<input type="text" inputMode="numeric" placeholder="DD/MM/AAAA" value={dateInputs.periodStart} onChange={e=>setDateInputs(p=>({...p,periodStart:e.target.value}))} disabled={busy}/></label><label style={{flex:'1 1 150px'}}>Hasta / fecha (opcional)<input type="text" inputMode="numeric" placeholder="DD/MM/AAAA" value={dateInputs.periodEnd} onChange={e=>setDateInputs(p=>({...p,periodEnd:e.target.value}))} disabled={busy}/></label></div>
@@ -107,6 +127,7 @@ function CorrectionDialog({ticker,selected,data,current,rows,onSaved,onClose}){
       <details><summary>Detalles opcionales: unidades, perímetro y método</summary><div style={{display:'grid',gap:12,marginTop:12}}>
       {!ratio&&<label>Unidades introducidas<select value={factor} onChange={e=>setFactor(e.target.value)} disabled={busy}><option value="1">Unidades completas</option><option value="1000">Miles</option><option value="1000000">Millones</option></select></label>}
       <label>Perímetro<select value={metadata.scope} onChange={e=>change('scope',e.target.value)} disabled={busy}><option value="provider-unspecified">Sin verificar</option><option value="consolidated">Grupo consolidado</option><option value="standalone">Sociedad individual</option></select></label>
+      {t.history==='fcfHistory'&&<fieldset style={{border:'1px solid #D8CEBA',borderRadius:8,padding:12,display:'grid',gap:10}}><legend>Componentes de FCF (opcionales)</legend><p style={{fontSize:12,margin:0}}>OCF y CAPEX del mismo periodo, moneda y perímetro. Usa las mismas unidades seleccionadas para el FCF. Si faltan, se intentará contrastar con el histórico disponible; puedes guardar igualmente.</p>{[['operatingCF','OCF del ejercicio'],['capex','CAPEX del ejercicio']].map(([key,label])=><label key={key}>{label}<input inputMode="decimal" value={cashInputs[key]} onChange={e=>setCashInputs(p=>({...p,[key]:e.target.value}))} disabled={busy}/></label>)}</fieldset>}
       {partialReturn&&<fieldset style={{border:'1px solid #D8CEBA',borderRadius:8,padding:12,display:'grid',gap:10}}>
         <legend>{t.field.toUpperCase()} del periodo</legend>
         <p style={{fontSize:12,margin:0}}>Se contrasta con los componentes del mismo periodo. No sustituye el rendimiento anual/TTM ni se anualiza automáticamente.</p>
