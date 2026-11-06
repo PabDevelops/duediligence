@@ -1,4 +1,5 @@
 'use client';
+import { currencySymbol } from '../../../../lib/currencyPresentation';
 import { useState, useEffect, useMemo, useRef } from 'react';
 import { ComposedChart, Area, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, ReferenceLine } from 'recharts';
 import {
@@ -23,8 +24,7 @@ const HORIZONS = [
   { key: '10y', label: '10Y', years: 10, stepsPerYear: 52 },
 ];
 
-const CURRENCY_SYMBOLS = { USD: '$', EUR: '€', GBP: '£', JPY: '¥', CNY: '¥', CHF: 'CHF ', CAD: 'C$', AUD: 'A$', HKD: 'HK$', INR: '₹', KRW: '₩', SEK: 'kr', NOK: 'kr', DKK: 'kr' };
-const curSym = (code) => !code || code === 'USD' ? '$' : (CURRENCY_SYMBOLS[code] || `${code} `);
+const curSym = currencySymbol;
 
 // Relative offset from today ("+3mo", "+2y6mo") instead of an absolute calendar date —
 // keeps the chart's x-axis pure/deterministic from the same inputs on every render.

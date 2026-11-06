@@ -1,4 +1,5 @@
 'use client';
+import { currencySymbol } from '../../../lib/currencyPresentation';
 import { useState, useEffect, useCallback, useRef } from 'react';
 import Link from 'next/link';
 import NewNav from '../../components/new/NewNav';
@@ -34,7 +35,7 @@ function WatchlistRow({ item, onRemove, basketNames, onMove, busy, signedIn, can
   const verdict = easyMode ? stockVerdict(easyMode, companyName) : null;
   const badge = verdict ? VERDICT_BADGE[verdict.tier] : null;
   const changeColor = item.priceChangePct == null ? C.text2 : item.priceChangePct >= 0 ? C.green : C.red;
-  const sym = item.currency === 'EUR' ? '€' : item.currency === 'GBP' ? '£' : '$';
+  const sym = currencySymbol(item.currency);
 
   return (
     <div style={{ borderBottom: `1px solid ${C.borderSoft}` }}>

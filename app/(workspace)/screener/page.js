@@ -3,10 +3,11 @@ import { useState, useEffect, useRef, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import { useUser } from '../../components/AuthProvider';
 import Sparkline from '../../components/Sparkline';
-import { fmt, fmtP, fmtN } from '../../../lib/formatters';
+import { formatCurrency, formatPrice, fmtP, fmtN } from '../../../lib/formatters';
 import { openInNewTab } from '../../../lib/openInNewTab';
 import { getCapTier, CAP_TIERS } from '../../../lib/marketCap';
 import { normalizeExchange, EXCHANGE_GROUP_LABELS, US_EXCHANGE_GROUPS } from '../../../lib/exchanges';
+import { currencySymbol } from '../../../lib/currencyPresentation';
 import { SCREENER_PROVISIONAL_WARNING } from '../../../lib/screenerView';
 
 // Intl.DisplayNames turns the ISO-3166 alpha-2 codes stock_cache stores (US, JP, GB...) into
@@ -697,10 +698,10 @@ export default function WorkspaceScreener() {
                       {s.sector || '—'}
                     </td>
                     <td style={{ padding: '10px 14px', textAlign: 'right', fontWeight: 600 }}>
-                      {s.currentPrice ? `$${s.currentPrice.toFixed(2)}` : '—'}
+                      {formatPrice(s.currentPrice, s.currency || null)}
                     </td>
                     <td style={{ padding: '10px 14px', textAlign: 'right', fontWeight: 600 }}>
-                      {fmt(s.marketCap)}
+                      {formatCurrency(s.marketCap, currencySymbol(s.currency))}
                     </td>
                     <td style={{ padding: '10px 14px', textAlign: 'right', fontWeight: 700, color: s.pe && s.pe < 20 ? 'var(--ws-accent)' : 'var(--ws-text)' }}>
                       {fmtN(s.pe)}
