@@ -945,13 +945,13 @@ export async function GET(request) {
       if (isFinancialsCacheFresh(cached.data, hoursOld) && (cached.data?.marketCap != null || isEtf) && isComplete) {
         if (missingInsiderData) backfillInsiderOwnership(cached.data.cik, ticker, cached.data.sharesOutstanding);
         const minsOld = hoursOld * 60;
-        if (minsOld < 2) {
+        if (minsOld < 2 && normData.currency) {
           return stockResponse({ ...normData, cached: true, updatedAt: cached.updated_at });
         } else {
           // Cache is valid for heavy financials, but update the stock price in real-time
           try {
             let freshPriceData = null;
-            if (ticker.includes('.')) {
+            if (ticker.includes('.') || !normData.currency) {
               freshPriceData = await fetchYahooQuote(ticker).catch(() => null);
             } else {
               const fhRes = await fetch(`https://finnhub.io/api/v1/quote?symbol=${ticker}&token=${FH_KEY}`);
@@ -971,6 +971,7 @@ export async function GET(request) {
               const priceUpdatedAt = new Date().toISOString();
               const updatedData = normalizeStockData({
                 ...cached.data,
+                currency: cached.data.currency || freshPriceData.currency || null,
                 currentPrice: freshPriceData.currentPrice,
                 priceChange: freshPriceData.priceChange,
                 priceChangePct: freshPriceData.priceChangePct,
