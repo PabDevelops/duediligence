@@ -1,7 +1,7 @@
 'use client';
 import {createContext,useContext,useEffect,useRef,useState} from 'react';
 import {useUser} from '../AuthProvider';
-import {isRatioField,overrideTarget} from '../../../lib/financialOverrides';
+import {applyFinancialOverrides,cleanOverrideMetadata,isRatioField,overrideTarget,validateFinancialOverride} from '../../../lib/financialOverrides';
 import {formatFiscalDateInput,parseFiscalDateInput} from '../../../lib/fiscalDateInput';
 const EditorContext=createContext(null);
 export function FinancialEditorProvider({children,...props}){
@@ -35,7 +35,8 @@ export function FinancialEditorSession({ticker,data,onSaved,auth,children}){
 }
 export function EditableFinancialValue({target,label,children,point}){
   const editor=useContext(EditorContext),manual=editor?.data?.manualCorrections?.find(r=>r.target===target);
-  const value=<>{children}{manual&&<small style={{display:'block',fontSize:10,color:'#726C5E'}}>Manual{editor?.data?.financialIntegrity?.fields?.[manual.field]?.status==='blocked'?' · incompatible':''}</small>}</>;
+  const state=manual&&editor?.data?.financialIntegrity?.fields?.[manual.field];
+  const value=<>{children}{manual&&<small title={state?.reason} style={{display:'block',fontSize:10,color:'#726C5E'}}>Manual · {manual.period?.basis||'sin verificar'}{manual.period?.periodEnd?` · ${formatFiscalDateInput(manual.period.periodEnd)}`:''}{state?.status==='blocked'?' · incompatible':' · provisional'}{state?.modelExcluded?' · solo este periodo':''}</small>}</>;
   if(!editor?.admin||!overrideTarget(target))return value;
   return <button type="button" title={`Corregir ${label}`} aria-label={`Corregir ${label}`}
     onClick={()=>editor.open({target,label,point})} style={{font:'inherit',color:'inherit',background:'none',border:0,padding:'4px 0',cursor:'pointer',textAlign:'right',textDecoration:'underline dotted',textUnderlineOffset:4}}>{value}</button>;
@@ -59,6 +60,14 @@ function CorrectionDialog({ticker,selected,data,current,onSaved,onClose}){
     const periodStart=metadata.basis==='instant'?'':parseFiscalDateInput(dateInputs.periodStart);
     const periodEnd=parseFiscalDateInput(dateInputs.periodEnd);
     if(!reset&&(periodStart===null||periodEnd===null)){setError('Introduce las fechas como DD/MM/AAAA, por ejemplo 30/06/2026.');setBusy(false);return;}
+    if(!reset&&normalized){
+      const candidate={ticker,target:selected.target,expectedId:current?.id||0,value:Number(normalized)*Number(factor),active:true,metadata:cleanOverrideMetadata({...metadata,periodStart,periodEnd},selected.target)};
+      const invalid=validateFinancialOverride(candidate);
+      if(invalid){setError(invalid);setBusy(false);return;}
+      const preview=applyFinancialOverrides(data,[candidate]);
+      const field=preview.financialIntegrity?.fields?.[t.field];
+      if(!t.history&&field?.status==='blocked'){setError(`No se puede utilizar esta corrección: ${field.reason} Revisa el periodo, la moneda y las partidas relacionadas.`);setBusy(false);return;}
+    }
     try{
       const response=await fetch('/api/admin/financial-overrides',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({ticker,target:selected.target,expectedId:current?.id||0,reset,value:normalized?Number(normalized)*Number(factor):null,metadata:{...metadata,periodStart,periodEnd}})});
       const json=await response.json();if(!response.ok)throw new Error(json.error||'No se pudo guardar.');
@@ -77,6 +86,7 @@ function CorrectionDialog({ticker,selected,data,current,onSaved,onClose}){
       {!ratio&&<label>Unidades introducidas<select value={factor} onChange={e=>setFactor(e.target.value)} disabled={busy}><option value="1">Unidades completas</option><option value="1000">Miles</option><option value="1000000">Millones</option></select></label>}
       <label>Moneda<select value={metadata.currency} onChange={e=>change('currency',e.target.value)} disabled={busy}>{[...new Set([metadata.currency,'EUR','USD','GBP','GBp','CHF','CAD','AUD','JPY','CNY'])].map(c=><option key={c}>{c}</option>)}</select></label>
       <label>Periodo<select value={metadata.basis} onChange={e=>change('basis',e.target.value)} disabled={busy}>{[['unknown','Sin verificar'],['FY','Ejercicio completo (FY)'],['TTM','Últimos 12 meses (TTM)'],['H1','Semestre (H1)'],['Q','Trimestre (Q)'],['instant','Balance a una fecha']].map(([v,n])=><option key={v} value={v}>{n}</option>)}</select></label>
+      {['opMargin','netMargin','grossMargin'].includes(t.field)&&['Q','H1'].includes(metadata.basis)&&<p role="status" style={{fontSize:12,margin:0}}>Se mostrará como margen manual provisional de este periodo. No sustituirá un margen anual o TTM en las notas y valoraciones.</p>}
       <div style={{display:'flex',gap:12,flexWrap:'wrap'}}><label style={{flex:'1 1 150px'}}>Desde<input type="text" inputMode="numeric" placeholder="DD/MM/AAAA" value={dateInputs.periodStart} onChange={e=>setDateInputs(p=>({...p,periodStart:e.target.value}))} disabled={busy||metadata.basis==='instant'}/></label><label style={{flex:'1 1 150px'}}>Hasta / fecha<input type="text" inputMode="numeric" placeholder="DD/MM/AAAA" value={dateInputs.periodEnd} onChange={e=>setDateInputs(p=>({...p,periodEnd:e.target.value}))} disabled={busy}/></label></div>
       <small style={{fontSize:11,color:'#726C5E'}}>Fechas en día/mes/año. También puedes escribir 30062026, sin barras.</small>
       <label>Perímetro<select value={metadata.scope} onChange={e=>change('scope',e.target.value)} disabled={busy}><option value="provider-unspecified">Sin verificar</option><option value="consolidated">Grupo consolidado</option><option value="standalone">Sociedad individual</option></select></label>
