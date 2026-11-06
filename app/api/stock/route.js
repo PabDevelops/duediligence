@@ -12,6 +12,7 @@ import { cleanCompanyName } from '../../../lib/secTickers.js';
 import { flagDataAnomaly } from '../../../lib/dataAnomalies.js';
 import { normalizeSector } from '../../../lib/sectorMapping.js';
 import { rateLimit, getClientIp } from '../../../lib/rateLimit.js';
+import { applyStoredFinancialOverrides } from '../../../lib/financialOverrideStore.js';
 
 const FH_KEY = process.env.FINNHUB_API_KEY;
 const AV_KEY = process.env.ALPHA_VANTAGE_API_KEY;
@@ -812,7 +813,10 @@ function recomputePriceRatios(data, newPrice) {
 }
 
 function normalizeStockData(data) { return sanitizeFinancialData(data); }
-function stockResponse(data, options) { return Response.json(sanitizeFinancialData(data), options); }
+async function stockResponse(data, options) {
+  try{return Response.json(await applyStoredFinancialOverrides(sanitizeFinancialData(data)), options);}
+  catch{return Response.json({error:'No se pudieron cargar las correcciones financieras. Inténtalo de nuevo.'},{status:503});}
+}
 
 export const dynamic = 'force-dynamic';
 

@@ -1,11 +1,12 @@
 import { financialText } from '../../../lib/currencyPresentation';
 import { NEW_COLORS as C } from '../new/theme';
 import { STATEMENTS, periodLabel, statementRows, growthPoints } from '../../../lib/analysisPresentation';
+import {EditableFinancialValue} from './FinancialEditor';
 function Table({
   records,
   label
 }) {
-  return <div className="analysis-table-scroll" tabIndex={0} role="region" aria-label={label}><table className="analysis-table"><caption>{label} · importes en unidades, sin multiplicador implícito</caption><thead><tr>{['Partida', 'Importe / moneda', 'Periodo fiscal', 'Fuente / perímetro', 'Estado'].map(h => <th key={h} scope="col">{h}</th>)}</tr></thead><tbody>{records.map(row => <tr key={row.key}><th scope="row">{row.label}</th><td>{row.value}</td><td>{row.period}</td><td>{row.source}<br />{row.scope}</td><td>{row.status}{row.reason && <><br />{row.reason}</>}</td></tr>)}</tbody></table></div>;
+  return <div className="analysis-table-scroll" tabIndex={0} role="region" aria-label={label}><table className="analysis-table"><caption>{label} · importes en unidades, sin multiplicador implícito</caption><thead><tr>{['Partida', 'Importe / moneda', 'Periodo fiscal', 'Fuente / perímetro', 'Estado'].map(h => <th key={h} scope="col">{h}</th>)}</tr></thead><tbody>{records.map(row => <tr key={row.key}><th scope="row">{row.label}</th><td><EditableFinancialValue target={row.editTarget} label={row.editLabel||row.label} point={row.point}>{row.value}</EditableFinancialValue></td><td>{row.period}</td><td>{row.source}<br />{row.scope}</td><td>{row.status}{row.reason && <><br />{row.reason}</>}</td></tr>)}</tbody></table></div>;
 }
 export default function FinancialStatements({
   data

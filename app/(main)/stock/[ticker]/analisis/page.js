@@ -4,6 +4,8 @@ import { use, Suspense, useMemo } from 'react';
 import Link from 'next/link';
 import NewNav from '../../../../components/new/NewNav';
 import FinancialDataNotice from '../../../../components/new/FinancialDataNotice';
+import FinancialCoverageBadge from '../../../../components/new/FinancialCoverageBadge';
+import {FinancialEditorProvider} from '../../../../components/company-analysis/FinancialEditor';
 import EngineV2Panel from '../../../../components/workspace/stock/EngineV2Panel';
 import { QualityBreakdown, RangeBar52W, StatSection, numberSections, hasFundamentals } from '../../../../components/company-analysis/CompanyNumbers';
 import FinancialStatements, { GrowthHistory } from '../../../../components/company-analysis/FinancialStatements';
@@ -35,6 +37,7 @@ function AnalysisContent({
     error,
     loading,
     refetch,
+    reload,
     refreshing
   } = useStockData(ticker);
   const projection = useEntryPriceProjection({
@@ -50,7 +53,7 @@ function AnalysisContent({
   const block = section => engine ? <EngineV2Panel engine={engine} sym={sym} section={section} /> : <p>Análisis N/D: faltan datos para evaluar esta dimensión.</p>;
   const metrics = indices => indices.map(i => stats[i] ? <StatSection key={stats[i].title} {...stats[i]} /> : null);
   const signals = engine?.signals?.signals || [];
-  return <Shell>
+  return <FinancialEditorProvider ticker={ticker} data={data} onSaved={reload}><Shell>
     <Link href={`/stock/${ticker}`} style={{
       color: 'inherit',
       fontSize: 13,
@@ -70,6 +73,7 @@ function AnalysisContent({
       }}>Del negocio a sus cifras, riesgos y valoración. Despliega «¿Qué significa?» para ver las explicaciones o accede directamente a los estados financieros.</p><p style={{
         fontSize: 11
       }}>Cotización y escenarios: {data.currency || 'moneda N/D'}. Los importes contables identifican su moneda y periodo. No se realizan conversiones nuevas.</p></header>
+    <FinancialCoverageBadge data={data} easyMode={easyMode} analysis={projection.engine}/>
     <nav className="analysis-nav" aria-label="Secciones del análisis completo">{sections.map(([id, label]) => <a key={id} href={`#${id}`}>{label}</a>)}</nav>
     <section className="analysis-section" id="resumen" aria-labelledby="resumen-title"><h2 id="resumen-title">Resumen</h2><QualityBreakdown easyMode={easyMode} data={data} analysis={projection.engine} /><FinancialDataNotice data={data} /><div className="analysis-summary-columns">{[['Fortalezas', 'positive'], ['Debilidades y advertencias', 'negative']].map(([title, type]) => <article className="analysis-card" key={type}><h3>{title}</h3>{signals.some(s => s.type === type) ? <ul>{signals.filter(s => s.type === type).map(s => <li key={s.id}><a href="#crecimiento" style={{
                 color: 'inherit'
@@ -88,5 +92,5 @@ function AnalysisContent({
       cursor: 'pointer',
       background: '#fff'
     }}>{refreshing ? 'Actualizando…' : '↻ Actualizar datos'}</button>
-  </Shell>;
+  </Shell></FinancialEditorProvider>;
 }

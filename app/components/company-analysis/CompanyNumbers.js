@@ -3,6 +3,7 @@ import { getCompanyHeaderScores } from '../../../lib/companyHeaderScores';
 import { isTierAdjusted } from '../../../lib/marketCap';
 import { formatCurrency } from '../../../lib/formatters';
 import { NEW_COLORS as C } from '../new/theme';
+import { EditableFinancialValue } from './FinancialEditor';
 export const hasFundamentals = (d) => d.revVal != null || d.niVal != null || d.marketCap != null
   || d.roic != null || d.grossMargin != null || (d.revHistory?.length ?? 0) > 0;
 
@@ -36,7 +37,7 @@ export function StatSection({ title, intro, stats }) {
               <div style={{ fontSize: '13px', fontWeight: 700, marginBottom: '3px' }}>{s.label}</div>
               <details style={{ fontSize: '12px', color: C.text2, lineHeight: 1.5 }}><summary style={{ cursor: 'pointer' }}>¿Qué significa?</summary>{s.explain}</details>
             </div>
-            <div style={{ fontSize: '17px', fontWeight: 800, whiteSpace: 'nowrap', flexShrink: 0, color: s.color ?? C.ink }}>{s.value ?? 'N/D'}</div>
+            <div style={{ fontSize: '17px', fontWeight: 800, whiteSpace: 'nowrap', flexShrink: 0, color: s.color ?? C.ink }}><EditableFinancialValue target={s.editField} label={s.editLabel||s.label} point={s.editPoint}>{s.value ?? 'N/D'}</EditableFinancialValue></div>
           </div>
         ))}
       </div>
@@ -218,5 +219,16 @@ export function numberSections(data, easyMode, ticker, sym) {
     });
   }
 
-  return sections;
+  const editFields={
+    'Capitalización bursátil':'sharesOutstanding','P/E — precio / beneficio':'pe','P/FCF — precio / caja libre':'fcfVal',
+    'EV/EBITDA':'evEbitda','P/B — precio / valor contable':'priceToBook','Rentabilidad por FCF':'fcfVal','Rentabilidad por dividendo':'dividendYield',
+    'Ingresos (interanual)':'revGrowth','Beneficio por acción, crecimiento medio':'epsCagr','I+D sobre ingresos':'rdVal','Pago en acciones sobre ingresos':'sbcVal',
+    'Margen bruto':'grossMargin','Margen operativo':'opMargin','Margen neto':'netMargin','ROE — retorno sobre el capital':'roe','ROA — retorno sobre activos':'roa','ROIC — retorno sobre el capital invertido':'roic',
+    'Activos totales':'assetsVal','Pasivos totales':'totalLiabilitiesVal','Patrimonio neto':'equityVal','Deuda neta':'debtVal','Caja disponible':'cashVal','Deuda a largo plazo':'debtVal','Deuda / capital (D/E)':'debtToEquity','Ratio corriente':'currentAssetsVal',
+    'Ciclo de conversión de caja':'ccc','Rotación de inventario':'inventoryTurnover','Días de cobro (DSO)':'dso','Días de inventario (DIO)':'dio','Días de pago (DPO)':'dpo',
+    'Beneficio por acción (BPA)':'eps','Acciones en circulación':'sharesOutstanding','Beta':'beta','Colchón de caja':'cashVal','Participación de insiders':'insiderOwnershipPct',
+    'Dilución histórica':data.sharesHistory?.at(-1)?.year?`history:sharesHistory:${data.sharesHistory.at(-1).year}`:null,
+  };
+  const labels={rdVal:'I+D (importe contable)',sbcVal:'Remuneración en acciones (importe contable)',fcfVal:'Flujo de caja libre (importe contable)',currentAssetsVal:'Activos corrientes (base del ratio)',debtVal:'Deuda (base del cálculo)',sharesOutstanding:'Acciones en circulación'};
+  return sections.map(section=>({...section,stats:section.stats.map(stat=>({...stat,editField:editFields[stat.label],editLabel:labels[editFields[stat.label]],editPoint:stat.label==='Dilución histórica'?data.sharesHistory?.at(-1):undefined}))}));
 }

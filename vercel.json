@@ -10,6 +10,7 @@
       "feat/stock-follow-basket": false,
       "feat/indicative-header-scores": false,
       "fix/sec-small-cap-coverage": false,
+      "feat/admin-financial-editing": false,
       "main": true
     }
   },
