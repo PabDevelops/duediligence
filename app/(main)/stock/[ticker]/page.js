@@ -1,6 +1,7 @@
 'use client';
 import { currencySymbol, priceRelativeValue } from '../../../../lib/currencyPresentation';
 import FinancialDataNotice from '../../../components/new/FinancialDataNotice';
+import FinancialCoverageBadge from '../../../components/new/FinancialCoverageBadge';
 import { use, Suspense, useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
@@ -225,6 +226,7 @@ function NewStockPageContent({ params }) {
           <CompanyScoreCards easyMode={easyMode} data={data} analysis={entryProjection.engine} />
         </div>
       </div>
+      <FinancialCoverageBadge data={data} easyMode={easyMode} analysis={entryProjection.engine}/>
 
       {nextEarnings && (
         <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '12px', color: C.text2, background: C.surface, border: `1px solid ${C.border}`, borderRadius: '12px', padding: '10px 16px', width: 'fit-content', boxSizing: 'border-box' }}>
