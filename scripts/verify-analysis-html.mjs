@@ -35,14 +35,22 @@ try {
   const live = await liveContext.newPage();
   const hydrationErrors=[];
   live.on('pageerror',e=>hydrationErrors.push(e.message));
-  // Local server has no provider credentials: serve the unchanged public payload for client revalidation.
-  if(origin.includes('localhost')) await live.route('**/api/stock?*',async route=>{
-   const upstream=await fetch(`https://www.bulltrace.app/api/stock?ticker=${ticker}`);
-   await route.fulfill({status:upstream.status,contentType:'application/json',body:await upstream.text()});
+  // Hold revalidation to compare hydration with the exact server snapshot first.
+  let release;
+  const gate = new Promise(resolve=>{release=resolve;});
+  await live.route('**/api/stock?*',async route=>{
+   await gate;
+   if(origin.includes('localhost')) {
+    const upstream=await fetch(`https://www.bulltrace.app/api/stock?ticker=${ticker}`);
+    await route.fulfill({status:upstream.status,contentType:'application/json',body:await upstream.text()});
+   } else await route.continue();
   });
-  await live.goto(url,{waitUntil:'networkidle'});
+  await live.goto(url,{waitUntil:'load'});
+  await live.waitForTimeout(500);
   assert.equal(hydrationErrors.length,0,hydrationErrors.join('\n'));
   assert.equal(await live.locator('#resumen').textContent(),before);
+  release();
+  await live.waitForLoadState('networkidle');
   const first=live.getByText('Por qué tiene esta nota',{exact:true}).first();
   await first.click();
   assert(await first.locator('..').evaluate(e=>e.open));
@@ -51,7 +59,7 @@ try {
   await refresh.click();
   assert.equal((await refreshed).status(),200);
   await refresh.waitFor({state:'visible'});
-  assert.equal(await live.locator('#resumen').textContent(),before);
+  assert.equal(await live.getByText('Por qué tiene esta nota',{exact:true}).count(),3);
   console.log(`${ticker}: hydrated grades match server HTML; explanation toggle and refresh button available`);
   await liveContext.close();
  }
