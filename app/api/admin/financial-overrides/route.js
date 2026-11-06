@@ -18,7 +18,7 @@ export async function POST(request){
   const origin=request.headers.get('origin');
   if(origin&&origin!==new URL(request.url).origin)return Response.json({error:'Origen no autorizado.'},{status:403});
   const body=await request.json().catch(()=>null);
-  if(body&&!body.reset)body.target=financialOverrideStorageTarget(body.target,body.metadata);
+  if(body&&typeof body==='object'&&!Array.isArray(body)&&!body.reset)body.target=financialOverrideStorageTarget(body.target,body.metadata);
   const error=validateFinancialOverride(body);
   if(error)return Response.json({error},{status:400});
   const userId=await getUserId();if(!userId)return Response.json({error:'Sesión caducada.'},{status:401});

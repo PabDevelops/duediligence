@@ -35,12 +35,20 @@ describe('admin financial corrections access and writes',()=>{
   const m={basis:'H1',periodStart:'2026-01-01',periodEnd:'2026-06-30',currency:'USD',scope:'consolidated',note:'ROA H1 no anualizado',roaBasis:{annualized:false,denominator:'average-assets',assetsStartDate:'2025-12-31',assetsEndDate:'2026-06-30'}};
   expect((await POST(request({...body(),target:'roa',value:3.5,metadata:m}))).status).toBe(200);
   expect(supabase.rpc).toHaveBeenCalledWith('set_financial_override',expect.objectContaining({p_target:'period:roa:H1:2026-06-30',p_value:3.5,p_metadata:expect.objectContaining({basis:'H1',roaBasis:m.roaBasis})}));
-  expect((await POST(request({...body(),target:'roa',metadata:{...m,roaBasis:{...m.roaBasis,annualized:true}}}))).status).toBe(400);
-  expect(supabase.rpc).toHaveBeenCalledTimes(1);
+  expect((await POST(request({...body(),target:'roa',metadata:{...m,roaBasis:{...m.roaBasis,annualized:true}}}))).status).toBe(200);
+  expect(supabase.rpc).toHaveBeenCalledTimes(2);
  });
  it('resets only the chosen independent period with its own concurrency version',async()=>{
   expect((await POST(request({ticker:'TEST',target:'period:roa:H1:2026-06-30',reset:true,expectedId:12}))).status).toBe(200);
   expect(supabase.rpc).toHaveBeenCalledWith('set_financial_override',expect.objectContaining({p_target:'period:roa:H1:2026-06-30',p_active:false,p_expected_id:12}));
+ });
+ it.each([undefined,null,{}, {basis:'FY',periodStart:'30',periodEnd:'',currency:'',scope:'',note:''}])('accepts optional and incomplete documentation without a financial preflight (%j)',async m=>{
+  expect((await POST(request({...body(),target:'roe',value:30,metadata:m}))).status).toBe(200);
+  expect(supabase.rpc).toHaveBeenCalledWith('set_financial_override',expect.objectContaining({p_value:30,p_metadata:expect.objectContaining({storageFirst:true})}));
+ });
+ it('returns a validation error for malformed JSON values without touching storage',async()=>{
+  for(const data of ['text',123,[],{...body(),value:'12'}, {...body(),value:1e19}])expect((await POST(request(data))).status).toBe(400);
+  expect(supabase.rpc).not.toHaveBeenCalled();
  });
  it('restores the provider by appending an inactive revision, not deleting history',async()=>{
   expect((await POST(request({ticker:'TEST',target:'rdVal',reset:true,expectedId:12}))).status).toBe(200);

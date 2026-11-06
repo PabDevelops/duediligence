@@ -37,7 +37,7 @@ export function StatSection({ title, intro, stats }) {
               <div style={{ fontSize: '13px', fontWeight: 700, marginBottom: '3px' }}>{s.label}</div>
               <details style={{ fontSize: '12px', color: C.text2, lineHeight: 1.5 }}><summary style={{ cursor: 'pointer' }}>¿Qué significa?</summary>{s.explain}</details>
             </div>
-            <div style={{ fontSize: '17px', fontWeight: 800, whiteSpace: s.editField==='roa'?'normal':'nowrap', flexShrink: s.editField==='roa'?1:0, minWidth:0, textAlign:s.editField==='roa'?'right':undefined, color: s.color ?? C.ink }}><EditableFinancialValue target={s.editField} label={s.editLabel||s.label} point={s.editPoint}>{s.value ?? 'N/D'}</EditableFinancialValue></div>
+            <div style={{ fontSize: '17px', fontWeight: 800, whiteSpace: s.manual||s.editField==='roa'?'normal':'nowrap', flexShrink: s.manual||s.editField==='roa'?1:0, minWidth:0, textAlign:s.manual||s.editField==='roa'?'right':undefined, color: s.color ?? C.ink }}><EditableFinancialValue target={s.editField} label={s.editLabel||s.label} point={s.editPoint}>{s.value ?? 'N/D'}</EditableFinancialValue></div>
           </div>
         ))}
       </div>
@@ -230,5 +230,5 @@ export function numberSections(data, easyMode, ticker, sym) {
     'Dilución histórica':data.sharesHistory?.at(-1)?.year?`history:sharesHistory:${data.sharesHistory.at(-1).year}`:null,
   };
   const labels={rdVal:'I+D (importe contable)',sbcVal:'Remuneración en acciones (importe contable)',fcfVal:'Flujo de caja libre (importe contable)',currentAssetsVal:'Activos corrientes (base del ratio)',debtVal:'Deuda (base del cálculo)',sharesOutstanding:'Acciones en circulación'};
-  return sections.map(section=>({...section,stats:section.stats.map(stat=>({...stat,editField:editFields[stat.label],editLabel:labels[editFields[stat.label]],editPoint:stat.label==='Dilución histórica'?data.sharesHistory?.at(-1):undefined}))}));
+  return sections.map(section=>({...section,stats:section.stats.map(stat=>({...stat,editField:editFields[stat.label],manual:data.manualCorrections?.some(r=>r.target===editFields[stat.label]),editLabel:labels[editFields[stat.label]],editPoint:stat.label==='Dilución histórica'?data.sharesHistory?.at(-1):undefined}))}));
 }
