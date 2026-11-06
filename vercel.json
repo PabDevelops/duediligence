@@ -9,6 +9,7 @@
       "fix/search-same-tab": false,
       "feat/stock-follow-basket": false,
       "feat/indicative-header-scores": false,
+      "fix/sec-small-cap-coverage": false,
       "main": true
     }
   },
