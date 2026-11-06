@@ -23,6 +23,7 @@
       "fix/quality-compatible-cash-flow": false,
       "feat/manual-statement-history": false,
       "feat/manual-quarterly-history": false,
+      "fix/coverage-badge-average": false,
       "main": true
     }
   },
