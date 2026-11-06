@@ -5,7 +5,7 @@ import NewNav from '../../components/new/NewNav';
 import StockLogo from '../../components/workspace/StockLogo';
 import { useUser } from '../../components/AuthProvider';
 import { getGuestWatchlist, addToGuestWatchlist, removeFromGuestWatchlist, GUEST_WATCHLIST_LIMIT } from '../../../lib/guestWatchlist';
-import { computeEasyMode } from '../../../lib/stockScoring';
+import { computeEasyMode } from '../../../lib/financialCalculations';
 import { stockVerdict } from '../../../lib/verdict';
 import { formatCurrency } from '../../../lib/formatters';
 import { NEW_COLORS as C, VERDICT_BADGE } from '../../components/new/theme';
@@ -43,7 +43,7 @@ function WatchlistRow({ item, onRemove, basketNames, onMove, busy, signedIn, can
         <StockLogo ticker={item.ticker} name={item.name} size={38} />
         <div style={{ minWidth: 0, flex: '1 1 auto' }}>
           <div style={{ fontSize: '14px', fontWeight: 700, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{item.name || item.ticker}</div>
-          <div style={{ fontSize: '12px', color: C.text2, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{item.ticker}</div>
+          <div style={{ fontSize: '12px', color: C.text2, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{item.ticker}{item.financialIntegrity?.status==='provisional'&&<span style={{marginLeft:'6px',fontSize:'10px'}}>· Provisional</span>}</div>
         </div>
         {badge && (
           <div className="new-watchlist-badge" style={{ alignItems: 'center', gap: '6px', padding: '5px 12px', borderRadius: '20px', background: badge.bg, flexShrink: 0, marginLeft: '8px' }}>

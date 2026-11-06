@@ -14,12 +14,13 @@ export default function CompanyScoreCards({ easyMode, data, analysis }) {
     <section aria-label="Puntuaciones independientes de la empresa" style={{
       display: 'flex', gap: '22px', flex: '0 1 auto', minWidth: 0,
     }}>
-      {scores.map(({ id, name, tier, description }) => (
+      {scores.map(({ id, name, tier, description, status }) => (
         <article key={id} aria-label={name} title={description} style={{
           minWidth: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px',
         }}>
           <h2 style={{ margin: 0, fontSize: '9px', fontWeight: 700, letterSpacing: '0.02em', color: C.text2 }}>{name}</h2>
           <div style={{ fontSize: '26px', fontWeight: 800, lineHeight: 1.1, color: DIMENSION_COLORS[id] }}>{tier ?? 'N/D'}</div>
+          {status === 'provisional' && <span style={{fontSize:'9px',color:C.text2}}>Provisional</span>}
         </article>
       ))}
     </section>

@@ -1,4 +1,5 @@
 'use client';
+import FinancialDataNotice from '../../../components/new/FinancialDataNotice';
 import { use, Suspense, useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
@@ -9,7 +10,7 @@ import { useUser } from '../../../components/AuthProvider';
 import { useStockData } from '../../../../lib/hooks/useStockData';
 import { useEntryPriceProjection } from '../../../../lib/hooks/useEntryPriceProjection';
 import { isInGuestWatchlist, addToGuestWatchlist, removeFromGuestWatchlist } from '../../../../lib/guestWatchlist';
-import { computeEasyMode } from '../../../../lib/stockScoring';
+import { computeEasyMode } from '../../../../lib/financialCalculations';
 import { engineVerdict, engineInvestigateQuestions } from '../../../../lib/verdict';
 import { formatCurrency, formatTimeAgo } from '../../../../lib/formatters';
 import { NEW_COLORS as C, VERDICT_BADGE } from '../../../components/new/theme';
@@ -221,6 +222,7 @@ function NewStockPageContent({ params }) {
 
   return (
     <Shell>
+      <FinancialDataNotice data={data} />
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(stockJsonLd) }} />
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '12px' }}>
         <Link href="/home" style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', fontSize: '13px', fontWeight: 700, color: C.text2, textDecoration: 'none', width: 'fit-content' }}>

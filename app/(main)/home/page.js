@@ -7,7 +7,7 @@ import StockLogo from '../../components/workspace/StockLogo';
 import { useUser } from '../../components/AuthProvider';
 import { useTickerSearch } from '../../../lib/hooks/useTickerSearch';
 import { getGuestWatchlist } from '../../../lib/guestWatchlist';
-import { computeEasyMode } from '../../../lib/stockScoring';
+import { computeEasyMode } from '../../../lib/financialCalculations';
 import { stockVerdict } from '../../../lib/verdict';
 import { formatCurrency } from '../../../lib/formatters';
 import { toScore100, scoreTier } from '../../../lib/scoreScale';
@@ -74,7 +74,7 @@ function WatchlistCard({ item }) {
         <StockLogo ticker={item.ticker} name={item.name} size={32} />
         <div style={{ minWidth: 0 }}>
           <div style={{ fontSize: '14px', fontWeight: 700, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{item.name || item.ticker}</div>
-          <div style={{ fontSize: '12px', color: C.text2 }}>{item.ticker}</div>
+          <div style={{ fontSize: '12px', color: C.text2 }}>{item.ticker}{item.financialIntegrity?.status==='provisional'&&<span style={{marginLeft:'6px',fontSize:'10px'}}>· Provisional</span>}</div>
         </div>
       </div>
       <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between' }}>
