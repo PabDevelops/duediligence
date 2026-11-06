@@ -15,6 +15,7 @@
       "fix/period-specific-roa": false,
       "fix/manual-storage-independent": false,
       "fix/comparable-manual-periods": false,
+      "fix/legacy-period-return": false,
       "main": true
     }
   },

@@ -33,20 +33,20 @@ export function FinancialEditorSession({ticker,data,onSaved,auth,children}){
       rows={rows} current={rows.find(r=>r.target===selected.target)} onSaved={saved} onClose={()=>setSelected(null)}/>}
   </EditorContext.Provider>;
 }
-export function EditableFinancialValue({target,label,children,point,showStoredValue=false}){
+export function EditableFinancialValue({target,label,children,point,showStoredValue=false,nested=false}){
   const editor=useContext(EditorContext),manual=editor?.data?.manualCorrections?.find(r=>r.target===target);
   const state=manual&&editor?.data?.financialIntegrity?.fields?.[manual.field];
   const excluded=manual?.modelExcluded||state?.status==='blocked'||state?.modelExcluded;
   const stored=manual?.value==null?'N/D':`${manual.value.toLocaleString('es-ES',{maximumSignificantDigits:17})}${['revGrowth','epsCagr','grossMargin','opMargin','netMargin','roe','roa','roic','dividendYield','insiderOwnershipPct'].includes(manual.field)?' %':isRatioField(manual.field)?'':manual.period?.unit==='shares'?' acciones':` ${manual.period?.currency||'moneda sin documentar'}`}`;
-  const value=<>{manual&&(showStoredValue||isRatioField(manual.field))?stored:children}{manual&&<small style={{display:'block',fontSize:11,color:'#726C5E',whiteSpace:'normal',maxWidth:280}}>
+  const value=<>{manual&&!nested&&(showStoredValue||isRatioField(manual.field))?stored:children}{manual&&!nested&&<small style={{display:'block',fontSize:11,color:'#726C5E',whiteSpace:'normal',maxWidth:280}}>
     Manual guardado: {stored} · {manual.period?.basis||'sin verificar'}{manual.period?.periodEnd?` · ${formatFiscalDateInput(manual.period.periodEnd)}`:''}
     <span style={{display:'block'}}>{excluded?`No utilizado en cálculos: ${manual.reason||state?.reason||'Periodo no compatible con el modelo.'}`:'Disponible para cálculos compatibles · provisional'}</span>
   </small>}</>;
   const primary=!editor?.admin||!overrideTarget(target)?value:<button type="button" title={`Corregir ${label}`} aria-label={`Corregir ${label}`}
     onClick={()=>editor.open({target,label,point})} style={{font:'inherit',color:'inherit',background:'none',border:0,padding:'4px 0',cursor:'pointer',textAlign:'right',textDecoration:'underline dotted',textUnderlineOffset:4}}>{value}</button>;
-  const independent=['roa','roe'].includes(target)?(editor?.data?.reportedIndicators||[]).filter(r=>r.field===target):[];
+  const independent=!nested&&['roa','roe'].includes(target)?(editor?.data?.reportedIndicators||[]).filter(r=>r.field===target):[];
   return <>{primary}{independent.map(r=><div key={r.target} style={{fontSize:12,marginTop:8,fontWeight:400,maxWidth:300}}>
-    <EditableFinancialValue target={r.target} label={`${r.field.toUpperCase()} ${r.period.basis} ${formatFiscalDateInput(r.period.periodEnd)}`}>
+    <EditableFinancialValue nested target={r.target} label={`${r.field.toUpperCase()} ${r.period.basis} ${formatFiscalDateInput(r.period.periodEnd)}`}>
       {r.field.toUpperCase()} {r.period.basis}: {r.value==null?'N/D':`${r.value.toLocaleString('es-ES')} %`}
     </EditableFinancialValue>
     <small style={{display:'block'}}>Manual · {formatFiscalDateInput(r.period.periodStart)||'inicio sin documentar'}–{formatFiscalDateInput(r.period.periodEnd)||'fin sin documentar'} · {(r.period.returnBasis||r.period.roaBasis)?.annualized===false?'no anualizado':(r.period.returnBasis||r.period.roaBasis)?.annualized===true?'anualizado':'anualización sin documentar'}</small>
