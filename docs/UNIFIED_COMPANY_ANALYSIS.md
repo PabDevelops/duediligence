@@ -30,7 +30,7 @@ Fecha: 6 de noviembre de 2026. Base: main `9f329351756759ac374b5e580797a37dcfcd2
 | Ruta antigua | HTTP 307 y navegación efectiva a la sección Estados financieros |
 | Carga y error | Carga visible con respuesta retrasada; error comprensible con Reintentar y Volver al inicio |
 | Ficha principal | Aviso justo antes de Actualizar; letras Growth/Value/Quality sin el rótulo Provisional |
-| Screener, 11.232 filas sintéticas sobre fixture AAPL | Antes 3.257.430 bytes; después con EUR 3.448.374 bytes; inferior a 4.500.000 sin compresión |
+| Screener, 11.232 filas sintéticas sobre fixture AAPL | Tras validar el fixture: antes 3.774.102 bytes; después con EUR 3.965.046 bytes; inferior a 4.500.000 sin compresión |
 
 Los datos de UI son respuestas públicas capturadas de `/api/stock` el 6/11/2026 para ALC.MC, SAP.DE y AAPL y el fixture de integridad existente para BYTE.MC, pasado por el validador actual. Un proxy local de solo lectura sirvió esos datos al build real, sin cambiar endpoints de la aplicación. También sirvió las respuestas de metadatos del layout existente. No se pulsaron acciones de escritura ni sincronización. La combinación elimina el segundo montaje/carga al saltar entre las dos páginas antiguas; los metadatos SSR y la revalidación existentes se mantienen.
 
