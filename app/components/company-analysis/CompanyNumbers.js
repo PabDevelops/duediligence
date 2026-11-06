@@ -1,5 +1,6 @@
 import { currencySymbol, financialAmount } from '../../../lib/currencyPresentation';
 import { getCompanyHeaderScores } from '../../../lib/companyHeaderScores';
+import { scoreCoverageDetails } from '../../../lib/scoreCoverageDetails';
 import { isTierAdjusted } from '../../../lib/marketCap';
 import { formatCurrency } from '../../../lib/formatters';
 import { NEW_COLORS as C } from '../new/theme';
@@ -35,6 +36,7 @@ export function StatSection({ title, intro, stats }) {
           <div key={s.label} style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', gap: '16px', paddingBottom: '14px', borderBottom: `1px solid ${C.borderSoft}` }}>
             <div style={{ minWidth: 0 }}>
               <div style={{ fontSize: '13px', fontWeight: 700, marginBottom: '3px' }}>{s.label}</div>
+              {s.periodNote && <div style={{ fontSize: '11px', color: C.text2 }}>{s.periodNote}</div>}
               <details style={{ fontSize: '12px', color: C.text2, lineHeight: 1.5 }}><summary style={{ cursor: 'pointer' }}>¿Qué significa?</summary>{s.explain}</details>
             </div>
             <div style={{ fontSize: '17px', fontWeight: 800, whiteSpace: s.manual||s.editField==='roa'?'normal':'nowrap', flexShrink: s.manual||s.editField==='roa'?1:0, minWidth:0, textAlign:s.manual||s.editField==='roa'?'right':undefined, color: s.color ?? C.ink }}><EditableFinancialValue target={s.editField} label={s.editLabel||s.label} point={s.editPoint}>{s.value ?? 'N/D'}</EditableFinancialValue></div>
@@ -61,10 +63,27 @@ export function QualityBreakdown({ easyMode, data, analysis }) {
             <div style={{ width: '42px', height: '42px', borderRadius: '12px', background: C.bg, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '15px', fontWeight: 800, color: dimensionColors[p.id], flexShrink: 0 }}>
               {p.tier ?? p.indicative?.tier ?? 'N/D'}
             </div>
-            <div>
+            <div style={{ minWidth: 0, flex: 1 }}>
               <div style={{ fontSize: '13px', fontWeight: 700 }}>{p.name}</div>
               {p.indicative && <div style={{ fontSize: '12px', color: C.text2 }}>Orientativa · {Math.round(p.coverage * 100)}% cobertura · confianza baja</div>}
               <details style={{ fontSize: '12px', color: C.text2, lineHeight: 1.5 }}><summary style={{ cursor: 'pointer' }}>Por qué tiene esta nota</summary>{p.indicative ? `${p.indicative.description} ${p.description}` : p.description}</details>
+              <details style={{ fontSize: '12px', color: C.text2, lineHeight: 1.5, marginTop: '8px' }}>
+                <summary style={{ cursor: 'pointer', fontWeight: 700 }}>Componentes y datos necesarios · {Math.round(p.coverage * 100)}% de cobertura</summary>
+                <p>La cobertura mide los componentes disponibles, no su verificación. Los periodos no documentados se indican expresamente. Las entradas manuales mantienen sus advertencias.</p>
+                {scoreCoverageDetails(p, data, analysis).map(component => (
+                  <div key={component.id} style={{ borderTop: `1px solid ${C.borderSoft}`, padding: '12px 0', overflowWrap: 'anywhere' }}>
+                    <strong>{component.label}</strong>
+                    <div>{component.status} · peso {Math.round(component.weight * 100)}%{component.score != null ? ` · ${Math.round(component.score)}/100` : ''}</div>
+                    <div>{component.reason}</div>
+                    <div><strong>Periodo:</strong> {component.periodUsed}</div>
+                    {component.warnings.map(warning=><div key={warning}><strong>Advertencia:</strong> {warning}</div>)}
+                    {component.action && <div style={{ marginTop: '4px' }}><strong>Qué necesitas:</strong> {component.action}</div>}
+                    <details style={{ marginTop: '4px' }}><summary>Entradas y periodos disponibles{component.score == null ? ' (no utilizados)' : ''}</summary>
+                      {component.inputs.map(input => <div key={input.field}>{input.label}: {input.available ? input.period : 'N/D'}{component.score != null && !input.available ? ' · esta alternativa no se ha utilizado' : ''}</div>)}
+                    </details>
+                  </div>
+                ))}
+              </details>
             </div>
           </div>
         ))}
@@ -112,13 +131,16 @@ export function RangeBar52W({ data, sym }) {
   );
 }
 
-export function numberSections(data, easyMode, ticker, sym) {
+export function numberSections(data, easyMode, ticker, sym, analysis) {
   const accounting = field => {
     const amount = financialAmount(data[field], data.financialPeriods?.[field] || data.financialIntegrity?.fields?.[field]?.period, data);
     return amount.value == null ? null : formatCurrency(amount.value, currencySymbol(amount.currency));
   };
-  const truePfcf = easyMode?.truePfcf ?? data.pfcf;
-  const trueFcfYield = easyMode?.trueFcfYield ?? data.fcfYield;
+  const annualCash=analysis?.valuation?.cashFlowBasis?.status==='matched'?analysis.valuation.cashFlowBasis:null;
+  const truePfcf = annualCash ? analysis.valuation.multiples?.pfcf : easyMode?.truePfcf ?? data.pfcf;
+  const trueFcfYield = annualCash ? analysis.valuation.multiples?.fcfYield==null?null:analysis.valuation.multiples.fcfYield*100 : easyMode?.trueFcfYield ?? data.fcfYield;
+  const cashPeriodNote=annualCash?`${annualCash.basis} · ${annualCash.periodStart.split('-').reverse().join('/')}–${annualCash.periodEnd.split('-').reverse().join('/')} · ${annualCash.currency} · después de SBC`:null;
+  const cashPoint=annualCash?(data.fcfHistory||[]).find(p=>p.periodStart===annualCash.periodStart&&p.periodEnd===annualCash.periodEnd&&p.basis===annualCash.basis):null;
   const currentRatio = data.currentAssetsVal && data.currentLiabilitiesVal ? data.currentAssetsVal / data.currentLiabilitiesVal : null;
   const capitalDiscipline = isTierAdjusted(easyMode?.capTier?.id);
   const cashRunway = data.fcfVal != null && data.fcfVal >= 0 ? 'No quema caja' : easyMode?.cashRunwayYears != null ? `${easyMode.cashRunwayYears.toFixed(1)} años` : null;
@@ -230,5 +252,9 @@ export function numberSections(data, easyMode, ticker, sym) {
     'Dilución histórica':data.sharesHistory?.at(-1)?.year?`history:sharesHistory:${data.sharesHistory.at(-1).year}`:null,
   };
   const labels={rdVal:'I+D (importe contable)',sbcVal:'Remuneración en acciones (importe contable)',fcfVal:'Flujo de caja libre (importe contable)',currentAssetsVal:'Activos corrientes (base del ratio)',debtVal:'Deuda (base del cálculo)',sharesOutstanding:'Acciones en circulación'};
-  return sections.map(section=>({...section,stats:section.stats.map(stat=>({...stat,editField:editFields[stat.label],manual:data.manualCorrections?.some(r=>r.target===editFields[stat.label]),editLabel:labels[editFields[stat.label]],editPoint:stat.label==='Dilución histórica'?data.sharesHistory?.at(-1):undefined}))}));
+  return sections.map(section=>({...section,stats:section.stats.map(stat=>{
+    const cashStat=['P/FCF — precio / caja libre','Rentabilidad por FCF'].includes(stat.label);
+    const target=cashStat&&cashPoint?.year?`history:fcfHistory:${cashPoint.year}`:editFields[stat.label];
+    return {...stat,editField:target,manual:data.manualCorrections?.some(r=>r.target===target),editLabel:labels[editFields[stat.label]],editPoint:cashStat?cashPoint:stat.label==='Dilución histórica'?data.sharesHistory?.at(-1):undefined,periodNote:cashStat?cashPeriodNote:null};
+  })}));
 }

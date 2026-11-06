@@ -49,7 +49,7 @@ function AnalysisContent({
   if (loading) return <Shell><p role="status">Cargando análisis de {ticker}…</p></Shell>;
   if (!data || error) return <Shell><h1>Análisis completo</h1><p role="alert">No encontramos {ticker}. Comprueba el ticker o inténtalo de nuevo.</p><button onClick={refetch}>Reintentar</button><Link href="/">Volver al inicio</Link></Shell>;
   const sym = currencySymbol(data.currency);
-  const stats = numberSections(data, easyMode, ticker, sym);
+  const stats = numberSections(data, easyMode, ticker, sym, projection.engine);
   const block = section => engine ? <EngineV2Panel engine={engine} sym={sym} section={section} /> : <p>Análisis N/D: faltan datos para evaluar esta dimensión.</p>;
   const metrics = indices => indices.map(i => stats[i] ? <StatSection key={stats[i].title} {...stats[i]} /> : null);
   const signals = engine?.signals?.signals || [];
