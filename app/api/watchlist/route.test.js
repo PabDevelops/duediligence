@@ -72,6 +72,18 @@ describe('existing watchlist compatibility', () => {
     expect(upsert.upsert.mock.calls[0][0]).toEqual({ user_id: 'user-a', ticker: 'NEW', pie: 'Growth' });
   });
 
+  it('keeps the exact name when adding to an existing legacy basket', async () => {
+    const upsert = query({ error: null });
+    mocks.from.mockReturnValueOnce(query({ data: null })).mockReturnValueOnce(query({ count: 2 })).mockReturnValueOnce(upsert).mockReturnValueOnce(query({ count: 3 }));
+    expect((await POST(request({ ticker: 'NEW', pie: ' Legacy ' }))).status).toBe(200);
+    expect(upsert.upsert.mock.calls[0][0]).toEqual({ user_id: 'user-a', ticker: 'NEW', pie: ' Legacy ' });
+  });
+
+  it('rejects a non-name basket before touching stored user data', async () => {
+    expect((await POST(request({ ticker: 'NEW', pie: { user_id: 'other-user' } }))).status).toBe(400);
+    expect(mocks.from).not.toHaveBeenCalled();
+  });
+
   it.each(['Growth', 'General', ' Legacy ', null])('moves a ticker without rewriting any other tracking field: %s', async pie => {
     const update = query({ data: [{ ticker: 'AAA' }], error: null });
     mocks.from.mockReturnValue(update);
