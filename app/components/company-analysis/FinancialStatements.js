@@ -1,7 +1,7 @@
 import { financialText } from '../../../lib/currencyPresentation';
 import { NEW_COLORS as C } from '../new/theme';
 import { STATEMENTS, periodLabel, statementRows, growthPoints } from '../../../lib/analysisPresentation';
-import {AddHistoricalFcf,EditableFinancialValue} from './FinancialEditor';
+import {AddHistoricalFcf,AddHistoricalSbc,EditableFinancialValue} from './FinancialEditor';
 function Table({
   records,
   label
@@ -14,7 +14,7 @@ export default function FinancialStatements({
   return <><p style={{
       color: C.text2,
       fontSize: 13
-    }}>Se muestran todas las partidas disponibles en BullTrace. N/D significa que la fuente no aporta un dato utilizable. FY, H1, Q y TTM se conservan por separado; las filas no se emparejan por posición ni se suman. En móvil puedes deslizar las tablas horizontalmente.</p>{STATEMENTS.map(([title, fields]) => <article className="analysis-card" key={title}><h3>{title}</h3><Table label={`${title}: cifras actuales`} records={statementRows(data, fields, false)} /><details><summary>Ver histórico completo de {title.toLowerCase()}</summary>{title==='Flujos de caja'&&<AddHistoricalFcf/>}{statementRows(data, fields, true).length ? <Table label={`${title}: histórico`} records={statementRows(data, fields, true)} /> : <p>Histórico N/D: no hay series disponibles para estas partidas.</p>}</details></article>)}</>;
+    }}>Se muestran todas las partidas disponibles en BullTrace. N/D significa que la fuente no aporta un dato utilizable. FY, H1, Q y TTM se conservan por separado; las filas no se emparejan por posición ni se suman. En móvil puedes deslizar las tablas horizontalmente.</p>{STATEMENTS.map(([title, fields]) => <article className="analysis-card" key={title}><h3>{title}</h3><Table label={`${title}: cifras actuales`} records={statementRows(data, fields, false)} /><details><summary>Ver histórico completo de {title.toLowerCase()}</summary>{title==='Flujos de caja'&&<div style={{display:'flex',gap:8,flexWrap:'wrap'}}><AddHistoricalFcf/><AddHistoricalSbc/></div>}{statementRows(data, fields, true).length ? <Table label={`${title}: histórico`} records={statementRows(data, fields, true)} /> : <p>Histórico N/D: no hay series disponibles para estas partidas.</p>}</details></article>)}</>;
 }
 export function GrowthHistory({
   data

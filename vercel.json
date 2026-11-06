@@ -18,6 +18,7 @@
       "fix/comparable-manual-periods": false,
       "fix/legacy-period-return": false,
       "feat/manual-fcf-history": false,
+      "feat/manual-sbc-history": false,
       "main": true
     }
   },
