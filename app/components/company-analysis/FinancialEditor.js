@@ -2,12 +2,19 @@
 import {createContext,useContext,useEffect,useRef,useState} from 'react';
 import {useUser} from '../AuthProvider';
 import {financialOverrideStorageTarget,isRatioField,overrideTarget} from '../../../lib/financialOverrides';
+import {HISTORY_FIELDS} from '../../../lib/financialIntegrity';
 import {formatFiscalDateInput,parseFiscalDateInput} from '../../../lib/fiscalDateInput';
 const EditorContext=createContext(null);
 export function AddHistoricalFcf(){
+  return <AddHistoricalValue history="fcfHistory" label="FCF histórico"/>;
+}
+export function AddHistoricalSbc(){
+  return <AddHistoricalValue history="sbcHistory" label="SBC histórico"/>;
+}
+function AddHistoricalValue({history,label}){
   const editor=useContext(EditorContext);
   if(!editor?.admin)return null;
-  return <button type="button" onClick={()=>editor.open({target:'add:fcfHistory',newHistory:'fcfHistory',label:'FCF histórico',point:{basis:'FY'}})} style={{padding:'8px 12px',margin:'10px 0',border:'1px solid #D8CEBA',borderRadius:8,background:'#FAF7F0',color:'#1C1B18',cursor:'pointer'}}>Añadir FCF histórico</button>;
+  return <button type="button" onClick={()=>editor.open({target:`add:${history}`,newHistory:history,label,point:{basis:'FY'}})} style={{padding:'8px 12px',margin:'10px 0',border:'1px solid #D8CEBA',borderRadius:8,background:'#FAF7F0',color:'#1C1B18',cursor:'pointer'}}>Añadir {label}</button>;
 }
 export function FinancialEditorProvider({children,...props}){
   const auth=useUser();
@@ -62,7 +69,7 @@ export function EditableFinancialValue({target,label,children,point,showStoredVa
   </div>)}</>;
 }
 function CorrectionDialog({ticker,selected,data,current,rows,onSaved,onClose}){
-  const ref=useRef(null),t=selected.newHistory?{history:selected.newHistory,field:'fcfVal'}:overrideTarget(selected.target),ratio=isRatioField(t.field);
+  const ref=useRef(null),t=selected.newHistory?{history:selected.newHistory,field:HISTORY_FIELDS[selected.newHistory]}:overrideTarget(selected.target),ratio=isRatioField(t.field);
   const original=selected.point||data.financialPeriods?.[t.field]||{};
   const initial=current?.active?current.metadata:original;
   const raw=selected.newHistory?null:current?.active?current.value:selected.point?(t.history==='epsHistory'?selected.point.eps:selected.point.val):data[t.field];
@@ -94,7 +101,7 @@ function CorrectionDialog({ticker,selected,data,current,rows,onSaved,onClose}){
     }
     const year=exercise||(/^\d{4}-\d{2}-\d{2}$/.test(periodEnd)?periodEnd.slice(0,4):'');
     if(selected.newHistory&&!/^\d{4}$/.test(year)){setError('Indica el ejercicio o una fecha de cierre completa para identificar el registro histórico.');setBusy(false);return;}
-    const storageTarget=selected.newHistory?`history:fcfHistory:${year}`:reset?selected.target:financialOverrideStorageTarget(selected.target,finalMetadata);
+    const storageTarget=selected.newHistory?`history:${selected.newHistory}:${year}`:reset?selected.target:financialOverrideStorageTarget(selected.target,finalMetadata);
     if(selected.newHistory&&rows.some(r=>r.target===storageTarget&&r.active)){setError('Ya existe una corrección para ese ejercicio. Edítala desde su fila en la tabla.');setBusy(false);return;}
     const expectedId=rows.find(r=>r.target===storageTarget)?.id||0;
     try{
@@ -112,6 +119,7 @@ function CorrectionDialog({ticker,selected,data,current,rows,onSaved,onClose}){
     {current?.active&&<p style={{fontSize:12}}>Corrección permanente. Puedes editarla o {t.indicatorPeriod?'retirar este periodo':'restaurar el proveedor'}.</p>}
     <form className="correction-form" onSubmit={e=>{e.preventDefault();save(false);}} style={{display:'grid',gap:12}}>
       <label>Valor (vacío guarda N/D)<input autoFocus inputMode="decimal" value={value} onChange={e=>setValue(e.target.value)} disabled={busy}/></label>
+      {t.history==='sbcHistory'&&<small>SBC es el importe de remuneración en acciones, no un porcentaje sobre ingresos.</small>}
 
 
       <label>Periodo<select value={metadata.basis} onChange={e=>change('basis',e.target.value)} disabled={busy}>{[['unknown','Sin verificar'],['FY','Ejercicio completo (FY)'],['TTM','Últimos 12 meses (TTM)'],['H1','Semestre (H1)'],['Q','Trimestre (Q)'],['instant','Balance a una fecha']].map(([v,n])=><option key={v} value={v}>{n}</option>)}</select></label>
