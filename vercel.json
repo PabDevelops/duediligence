@@ -2,6 +2,7 @@
   "git": {
     "deploymentEnabled": {
       "feat/watchlist-baskets": false,
+      "fix/integrate-financial-integrity": false,
       "main": true
     }
   },

@@ -13,7 +13,7 @@ export async function generateMetadata({ params }) {
       };
     }
 
-    const descSnippet = `Análisis fundamental de ${data.name} (${t}). Estados financieros verificados de la SEC, valoración intrínseca y nota de calidad.`;
+    const descSnippet = `Análisis fundamental de ${data.name} (${t}). Datos de proveedores y cifras provisionales identificadas. Valoración y nota de calidad.`;
 
     const ogDesc = [
       data.pe ? `P/E ${data.pe.toFixed(1)}` : null,
@@ -22,10 +22,10 @@ export async function generateMetadata({ params }) {
     ].filter(Boolean).join(' · ');
 
     return {
-      title: `${data.name} (${t}) — Análisis y datos de la SEC | Bulltrace`,
+      title: `${data.name} (${t}) — Análisis fundamental | Bulltrace`,
       description: descSnippet,
       openGraph: {
-        title: `${data.name} (${t}) — Análisis y datos de la SEC | Bulltrace`,
+        title: `${data.name} (${t}) — Análisis fundamental | Bulltrace`,
         description: ogDesc ? `${ogDesc} · ${descSnippet}` : descSnippet,
         url: `https://bulltrace.app/stock/${t}`,
         siteName: 'Bulltrace',
@@ -34,7 +34,7 @@ export async function generateMetadata({ params }) {
       },
       twitter: {
         card: 'summary_large_image',
-        title: `${data.name} (${t}) — Análisis y datos de la SEC | Bulltrace`,
+        title: `${data.name} (${t}) — Análisis fundamental | Bulltrace`,
         description: ogDesc ? `${ogDesc} · ${descSnippet}` : descSnippet,
         images: ['https://bulltrace.app/og-image.png'],
       },

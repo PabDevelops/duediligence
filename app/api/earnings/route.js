@@ -1,6 +1,7 @@
+import { sanitizeFinancialData } from '../../../lib/financialIntegrity.js';
 import { fetchNasdaqEarningsRange } from '../../../lib/nasdaqEarnings';
 import { supabase } from '../../../lib/supabase';
-import { computeEasyMode } from '../../../lib/stockScoring';
+import { computeEasyMode } from '../../../lib/financialCalculations';
 
 const FH_KEY = process.env.FINNHUB_API_KEY;
 
@@ -257,7 +258,7 @@ export async function GET(req) {
     chunkResults.forEach(({ data }) => {
       if (!data) return;
       data.forEach(row => {
-        const d = row.data || {};
+        const d = sanitizeFinancialData(row.data || {});
         // Same hasFundamentals check the stock page itself uses (page.js's own
         // computeEasyMode call), so a ticker with too little data to score gets a null
         // qualityScore100 here exactly like it would show "N/A" there.
