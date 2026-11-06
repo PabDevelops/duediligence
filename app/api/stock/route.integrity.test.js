@@ -44,8 +44,12 @@ describe('stock endpoint integrity across cache and SEC',()=>{
   expect(d.financialIntegrity.fields.fcfVal.status).toBe('verified');
   expect(d.financialIntegrity.calculations.dcf.status).toBe('blocked');
   const analysis=analyzeStock(d,{now:'2026-11-06'});
-  expect(analysis.quality.components.fcfGeneration).toBeUndefined();
-  expect(analysis.quality.components.cashConversion).toBeUndefined();
+  expect(analysis.quality.cashFlowInputs.fcfGeneration).toMatchObject({status:'matched',period:{basis:'FY',periodStart:'2025-01-01',periodEnd:'2025-12-31'}});
+  expect(analysis.quality.cashFlowInputs.fcfGeneration.financialPeriods.revVal).toMatchObject({basis:'FY',periodStart:'2025-01-01',periodEnd:'2025-12-31'});
+  expect(analysis.quality.components.fcfGeneration.score).toBeGreaterThanOrEqual(0);
+  expect(analysis.quality.cashFlowInputs.cashConversion).toMatchObject({status:'matched',period:{basis:'FY',periodStart:'2025-01-01',periodEnd:'2025-12-31'}});
+  expect(analysis.quality.cashFlowInputs.cashConversion.financialPeriods.niVal).toMatchObject({basis:'FY',periodStart:'2025-01-01',periodEnd:'2025-12-31'});
+  expect(analysis.quality.components.cashConversion.score).toBeGreaterThanOrEqual(0);
   expect(d.pfcf).toBeCloseTo(28.3,1);
   if(process.env.BULLTRACE_REPORT_DIR)writeFileSync(join(process.env.BULLTRACE_REPORT_DIR,'BUDA-sec-replay.json'),JSON.stringify(d,null,2));
  });
