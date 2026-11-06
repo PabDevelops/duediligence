@@ -5,7 +5,7 @@ import {historicalStatementFields,prepareStatementHistory,saveStatementHistory} 
 export default function StatementHistoryEditor({ticker,statement,rows,data,onSaved,onClose}){
   const ref=useRef(null),completed=useRef(new Map()),fields=historicalStatementFields(statement),balance=statement==='Balance';
   const [year,setYear]=useState(''),[values,setValues]=useState({}),[factor,setFactor]=useState('1');
-  const [metadata,setMetadata]=useState({periodStart:'',periodEnd:'',currency:data.currency||'',scope:'provider-unspecified',sourceUrl:'',note:''});
+  const [metadata,setMetadata]=useState({historyBasis:'FY',fiscalQuarter:'',periodStart:'',periodEnd:'',currency:data.currency||'',scope:'provider-unspecified',sourceUrl:'',note:''});
   const [busy,setBusy]=useState(false),[error,setError]=useState(''),[progress,setProgress]=useState('');
   useEffect(()=>{ref.current?.showModal();},[]);
   const change=(key,value)=>setMetadata(p=>({...p,[key]:value}));
@@ -30,8 +30,10 @@ export default function StatementHistoryEditor({ticker,statement,rows,data,onSav
     <p style={{fontSize:12}}>Solo se guardan las partidas que rellenes. Las vacías conservan sus valores; cero se guarda como cero. Las cifras se publican para todos y quedan en el historial. Puedes restaurar el proveedor desde cada fila.</p>
     <form className="statement-history-form" onSubmit={e=>{e.preventDefault();save();}} style={{display:'grid',gap:12}}>
       <fieldset disabled={busy} style={{border:0,padding:0,margin:0,display:'grid',gap:12,minWidth:0}}>
-        <label>Ejercicio (opcional si indicas el cierre)<input inputMode="numeric" maxLength={4} placeholder="AAAA" value={year} onChange={e=>setYear(e.target.value)}/></label>
-        <p style={{fontSize:12,margin:0}}>{balance?'Balance a una fecha: no requiere fecha Desde.':'Ejercicio completo (FY). No se convertirán semestres ni trimestres en años completos.'}</p>
+        <label>{metadata.historyBasis==='Q'?'Ejercicio fiscal del trimestre':'Ejercicio (opcional si indicas el cierre)'}<input inputMode="numeric" maxLength={4} placeholder="AAAA" value={year} onChange={e=>setYear(e.target.value)}/></label>
+        <label>Tipo de histórico<select value={metadata.historyBasis} onChange={e=>change('historyBasis',e.target.value)}><option value="FY">{balance?'Cierre anual':'Ejercicio completo (FY)'}</option><option value="Q">{balance?'Cierre trimestral':'Trimestre (Q)'}</option></select></label>
+        {metadata.historyBasis==='Q'&&<label>Trimestre fiscal<select value={metadata.fiscalQuarter} onChange={e=>change('fiscalQuarter',e.target.value)}><option value="">Selecciona Q1–Q4</option>{['Q1','Q2','Q3','Q4'].map(q=><option key={q}>{q}</option>)}</select></label>}
+        <p style={{fontSize:12,margin:0}}>{balance?'Balance a una fecha: no requiere fecha Desde.':metadata.historyBasis==='Q'?'Trimestre independiente. No se anualiza ni sustituye las cifras FY/TTM. Indica las fechas reales de ese trimestre, no las acumuladas de seis o nueve meses.':'Ejercicio completo (FY). No se convertirán semestres ni trimestres en años completos.'}</p>
         <div style={{display:'flex',gap:12,flexWrap:'wrap'}}>
           {!balance&&<label style={{flex:'1 1 160px'}}>Desde (opcional)<input inputMode="numeric" placeholder="DD/MM/AAAA" value={metadata.periodStart} onChange={e=>change('periodStart',e.target.value)}/></label>}
           <label style={{flex:'1 1 160px'}}>{balance?'Fecha de cierre (opcional)':'Hasta (opcional)'}<input inputMode="numeric" placeholder="DD/MM/AAAA" value={metadata.periodEnd} onChange={e=>change('periodEnd',e.target.value)}/></label>

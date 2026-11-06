@@ -22,6 +22,7 @@
       "fix/annual-fcf-sbc-valuation": false,
       "fix/quality-compatible-cash-flow": false,
       "feat/manual-statement-history": false,
+      "feat/manual-quarterly-history": false,
       "main": true
     }
   },
