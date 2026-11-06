@@ -4,7 +4,13 @@ import {useUser} from '../AuthProvider';
 import {financialOverrideStorageTarget,isRatioField,overrideTarget} from '../../../lib/financialOverrides';
 import {HISTORY_FIELDS} from '../../../lib/financialIntegrity';
 import {formatFiscalDateInput,parseFiscalDateInput} from '../../../lib/fiscalDateInput';
+import StatementHistoryEditor from './StatementHistoryEditor';
 const EditorContext=createContext(null);
+export function AddHistoricalStatement({statement}){
+  const editor=useContext(EditorContext);
+  if(!editor?.admin)return null;
+  return <button type="button" onClick={()=>editor.open({target:`add:statement:${statement}`,statement})} style={{padding:'8px 12px',margin:'10px 0',border:'1px solid #D8CEBA',borderRadius:8,background:'#FAF7F0',color:'#1C1B18',cursor:'pointer'}}>Añadir {statement==='Balance'?'balance histórico':'ejercicio de resultados'}</button>;
+}
 export function AddHistoricalFcf(){
   return <AddHistoricalValue history="fcfHistory" label="FCF histórico"/>;
 }
@@ -41,8 +47,8 @@ export function FinancialEditorSession({ticker,data,onSaved,auth,children}){
     {admin&&<p style={{fontSize:12,color:'#726C5E'}}>Administración: pulsa una cifra o N/D para corregirla. Los cambios se publican para todos y se conservan hasta que los restaures.</p>}
     {problem&&<p role="status" style={{fontSize:12}}>{problem}</p>}
     {children}
-    {selected&&<CorrectionDialog key={selected.target} ticker={ticker} selected={selected} data={data}
-      rows={rows} current={rows.find(r=>r.target===selected.target)} onSaved={saved} onClose={()=>setSelected(null)}/>}
+    {selected&&(selected.statement?<StatementHistoryEditor key={selected.target} ticker={ticker} statement={selected.statement} data={data} rows={rows} onSaved={saved} onClose={()=>setSelected(null)}/>:<CorrectionDialog key={selected.target} ticker={ticker} selected={selected} data={data}
+      rows={rows} current={rows.find(r=>r.target===selected.target)} onSaved={saved} onClose={()=>setSelected(null)}/>)}
   </EditorContext.Provider>;
 }
 export function EditableFinancialValue({target,label,children,point,showStoredValue=false,nested=false}){
