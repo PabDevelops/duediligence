@@ -24,6 +24,7 @@
       "feat/manual-statement-history": false,
       "feat/manual-quarterly-history": false,
       "fix/coverage-badge-average": false,
+      "feat/public-crawlable-summaries": false,
       "main": true
     }
   },
