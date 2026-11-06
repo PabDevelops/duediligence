@@ -12,6 +12,12 @@
       "fix/sec-small-cap-coverage": false,
       "feat/admin-financial-editing": false,
       "fix/stock-header-alignment": false,
+      "fix/admin-fiscal-date-input": false,
+      "fix/period-specific-roa": false,
+      "fix/manual-storage-independent": false,
+      "fix/comparable-manual-periods": false,
+      "fix/legacy-period-return": false,
+      "feat/manual-fcf-history": false,
       "main": true
     }
   },
