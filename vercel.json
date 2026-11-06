@@ -3,6 +3,7 @@
     "deploymentEnabled": {
       "feat/watchlist-baskets": false,
       "fix/integrate-financial-integrity": false,
+      "feat/unified-company-analysis": false,
       "main": true
     }
   },

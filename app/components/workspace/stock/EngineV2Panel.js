@@ -248,15 +248,14 @@ function Scenarios({ engine, sym }) {
   );
 }
 
-export default function EngineV2Panel({ engine, sym = '$' }) {
+export default function EngineV2Panel({ engine, sym = '$', section = 'all' }) {
   if (!engine) return null;
   const { quality, momentum, valuation, risk, potential, signals, validation, explanations } = engine;
   const nonInfo = validation.issues.filter((i) => i.severity !== 'info');
   const infos = validation.issues.filter((i) => i.severity === 'info');
-  const momentumScore = null;
   return (
     <>
-      <div style={card}>
+      {(section === 'all' || section === 'resumen') && <div style={card}>
         <div>
           <div style={eyebrow}>CINCO PREGUNTAS, CINCO RESPUESTAS SEPARADAS</div>
           <div style={{ fontSize: '12px', color: C.text2, marginTop: '4px' }}>
@@ -279,6 +278,9 @@ export default function EngineV2Panel({ engine, sym = '$' }) {
         <div style={{ fontSize: '11px', color: C.text3 }}>{potential.notAdvice ?? 'Las puntuaciones no son recomendaciones de compra ni de venta.'}</div>
         <TierLegend />
 
+      </div>}
+
+      {(section === 'all' || section === 'calidad') && <div style={card}>
         <Block block={explanations.quality} defaultOpen={false} extra={quality.score != null && (
           <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
             {Object.entries(quality.components).map(([k, v]) => (
@@ -291,6 +293,8 @@ export default function EngineV2Panel({ engine, sym = '$' }) {
             )}
           </div>
         )} />
+      </div>}
+      {(section === 'all' || section === 'crecimiento') && <div style={card}>
         <Block block={explanations.momentum} extra={(
           <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
             <div style={{ fontSize: '11px', color: C.text3 }}>Base de comparación: {momentum.basis}.</div>
@@ -299,6 +303,8 @@ export default function EngineV2Panel({ engine, sym = '$' }) {
             ))}
           </div>
         )} />
+      </div>}
+      {(section === 'all' || section === 'valoracion') && <div style={card}>
         <Block block={explanations.valuation} extra={(
           <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
             {valuation.methods.map((m) => (
@@ -312,6 +318,8 @@ export default function EngineV2Panel({ engine, sym = '$' }) {
             )}
           </div>
         )} />
+      </div>}
+      {(section === 'all' || section === 'riesgos') && <div style={card}>
         <Block block={explanations.risk} extra={(
           <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
             {risk.items.map((i) => (
@@ -319,15 +327,15 @@ export default function EngineV2Panel({ engine, sym = '$' }) {
             ))}
           </div>
         )} />
-      </div>
+      </div>}
 
-      <div style={card}>
+      {(section === 'all' || section === 'valoracion') && <div style={card}>
         <div style={eyebrow}>A 5 AÑOS VISTA (estimación fundamental, no una promesa)</div>
         <Scenarios engine={engine} sym={sym} />
         <Block block={explanations.scenarios} />
-      </div>
+      </div>}
 
-      {signals.signals.length > 0 && (
+      {(section === 'all' || section === 'crecimiento') && signals.signals.length > 0 && (
         <div style={card}>
           <div style={eyebrow}>SEÑALES FUNDAMENTALES RECIENTES</div>
           <div style={{ fontSize: '12px', color: C.text2 }}>{signals.note}</div>
@@ -351,7 +359,7 @@ export default function EngineV2Panel({ engine, sym = '$' }) {
         </div>
       )}
 
-      <div style={card}>
+      {(section === 'all' || section === 'fuentes') && <div style={card}>
         <div style={eyebrow}>FUENTES Y CALIDAD DE LOS DATOS</div>
         <div style={{ ...body, fontSize: '12px' }}>
           {engine.sources.financials}. {engine.sources.periodNote} {engine.sources.benchmarkNote}
@@ -371,7 +379,7 @@ export default function EngineV2Panel({ engine, sym = '$' }) {
           </details>
         )}
         <div style={{ fontSize: '11px', color: C.text3 }}>{engine.disclaimer}</div>
-      </div>
+      </div>}
     </>
   );
 }

@@ -1,4 +1,5 @@
 'use client';
+import { currencySymbol } from '../../../lib/currencyPresentation';
 import { useState, useEffect, useRef, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 import Link from 'next/link';
@@ -12,7 +13,7 @@ import { NEW_COLORS as C } from '../../components/new/theme';
 function ResultCard({ s, onClick }) {
   const change = s.priceChangePct;
   const positive = change != null && change >= 0;
-  const sym = s.currency === 'EUR' ? '€' : s.currency === 'GBP' ? '£' : '$';
+  const sym = currencySymbol(s.currency);
 
   return (
     <button

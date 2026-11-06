@@ -1,4 +1,5 @@
 'use client';
+import { currencySymbol } from '../../lib/currencyPresentation';
 import { useState, useEffect, useRef, useCallback } from 'react';
 import Link from 'next/link';
 import StockLogo from '../components/workspace/StockLogo';
@@ -38,7 +39,7 @@ function EntryPriceStat({ engine }) {
   const entry = engine?.entry;
   if (!entry || entry.maxEntryPrice == null || entry.cagr == null) return null;
   const { maxEntryPrice, cagr: cagr5y } = entry;
-  const sym = engine.currency === 'EUR' ? '€' : engine.currency === 'GBP' ? '£' : '$';
+  const sym = currencySymbol(engine.currency);
 
   return (
     <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '10px', marginTop: '12px', paddingTop: '12px', borderTop: '1px solid var(--ws-border)' }}>
@@ -201,7 +202,7 @@ export default function StartPage() {
                 <div style={{ fontSize: '12px', color: 'var(--ws-text-3)', display: 'flex', alignItems: 'center', gap: '6px' }}>
                   {result.data.currentPrice != null ? (
                     <>
-                      {formatCurrency(result.data.currentPrice, result.data.currency === 'EUR' ? '€' : result.data.currency === 'GBP' ? '£' : '$')}
+                      {formatCurrency(result.data.currentPrice, currencySymbol(result.data.currency))}
                       {result.data.priceChangePct != null && (
                         <span style={{ color: result.data.priceChangePct >= 0 ? 'var(--ws-accent)' : 'var(--ws-red)' }}>
                           {result.data.priceChangePct >= 0 ? '+' : ''}{result.data.priceChangePct.toFixed(2)}% hoy

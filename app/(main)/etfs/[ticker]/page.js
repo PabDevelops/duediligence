@@ -1,4 +1,5 @@
 'use client';
+import { currencySymbol } from '../../../../lib/currencyPresentation';
 import { use, Suspense, useState, useEffect } from 'react';
 import Link from 'next/link';
 import NewNav from '../../../components/new/NewNav';
@@ -164,7 +165,7 @@ function NewEtfPageContent({ params }) {
   }
 
   const price = priceData?.currentPrice;
-  const sym = priceData?.currency === 'EUR' ? '€' : priceData?.currency === 'GBP' ? '£' : '$';
+  const sym = currencySymbol(priceData?.currency);
   const quality = computeETFQualityScore(etf);
   const verdict = etfVerdict(etf);
   const badge = verdict ? VERDICT_BADGE[verdict.tier] : null;

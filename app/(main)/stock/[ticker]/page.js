@@ -1,4 +1,5 @@
 'use client';
+import { currencySymbol } from '../../../../lib/currencyPresentation';
 import FinancialDataNotice from '../../../components/new/FinancialDataNotice';
 import { use, Suspense, useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
@@ -196,7 +197,7 @@ function NewStockPageContent({ params }) {
   }
 
   const price = data.currentPrice;
-  const sym = data.currency === 'EUR' ? '€' : data.currency === 'GBP' ? '£' : '$';
+  const sym = currencySymbol(data.currency);
   // Legacy metric colors and revenue-history input stay unchanged. The header has its
   // own scoring policy; V2 verdicts, questions, scenarios and projections are untouched.
   const easyMode = computeEasyMode(data, hasFundamentals(data));
@@ -222,7 +223,6 @@ function NewStockPageContent({ params }) {
 
   return (
     <Shell>
-      <FinancialDataNotice data={data} />
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(stockJsonLd) }} />
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '12px' }}>
         <Link href="/home" style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', fontSize: '13px', fontWeight: 700, color: C.text2, textDecoration: 'none', width: 'fit-content' }}>
@@ -381,7 +381,7 @@ function NewStockPageContent({ params }) {
             </div>
 
             <Link href={`/stock/${ticker}/analisis`} style={{ fontSize: '12px', fontWeight: 700, color: C.ink, textDecoration: 'none', width: 'fit-content' }}>
-              Investigar a fondo →
+              Análisis completo →
             </Link>
           </div>
         );
@@ -450,7 +450,7 @@ function NewStockPageContent({ params }) {
                   <div style={{ fontSize: '12px', color: C.text2 }}>Valoración, crecimiento, rentabilidad y salud financiera — todas las estadísticas.</div>
                 </div>
               )}
-              <Link href={`/stock/${ticker}/numbers`} style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', fontSize: '12px', fontWeight: 700, color: C.ink, textDecoration: 'none', flexShrink: 0 }}>
+              <Link href={`/stock/${ticker}/analisis#estados-financieros`} style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', fontSize: '12px', fontWeight: 700, color: C.ink, textDecoration: 'none', flexShrink: 0 }}>
                 Ver más
                 <svg aria-hidden="true" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round"><polyline points="9 6 15 12 9 18"></polyline></svg>
               </Link>
@@ -545,12 +545,13 @@ function NewStockPageContent({ params }) {
           <Link href={`/stock/${ticker}/analisis`} style={{ fontSize: '12px', fontWeight: 700, color: C.ink, textDecoration: 'none', width: 'fit-content' }}>
             Ver el análisis completo (calidad, valoración, riesgo) →
           </Link>
-          <Link href={`/stock/${ticker}/numbers`} style={{ fontSize: '12px', fontWeight: 700, color: C.ink, textDecoration: 'none', width: 'fit-content' }}>
+          <Link href={`/stock/${ticker}/analisis#estados-financieros`} style={{ fontSize: '12px', fontWeight: 700, color: C.ink, textDecoration: 'none', width: 'fit-content' }}>
             Ver qué datos faltan y sus límites →
           </Link>
         </div>
       </div>
 
+      <FinancialDataNotice data={data} />
       <button type="button" onClick={refetch} disabled={refreshing} style={{
         padding: '12px', borderRadius: '12px', border: `1px solid ${C.border}`, background: C.surface,
         color: C.text2, fontFamily: 'inherit', fontSize: '12px', fontWeight: 700,

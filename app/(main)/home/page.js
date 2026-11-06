@@ -1,4 +1,5 @@
 'use client';
+import { currencySymbol } from '../../../lib/currencyPresentation';
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
@@ -79,7 +80,7 @@ function WatchlistCard({ item }) {
       </div>
       <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between' }}>
         <span style={{ fontSize: '17px', fontWeight: 700 }}>
-          {item.currentPrice != null ? formatCurrency(item.currentPrice, item.currency === 'EUR' ? '€' : item.currency === 'GBP' ? '£' : '$') : 'N/D'}
+          {item.currentPrice != null ? formatCurrency(item.currentPrice, currencySymbol(item.currency)) : 'N/D'}
         </span>
         {item.priceChangePct != null && (
           <span style={{ fontSize: '12px', fontWeight: 700, color: changeColor }}>
