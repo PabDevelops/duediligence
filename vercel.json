@@ -6,6 +6,7 @@
       "feat/unified-company-analysis": false,
       "fix/arlo-five-year-presentation": false,
       "fix/sec-filing-tag-selection": false,
+      "fix/search-same-tab": false,
       "main": true
     }
   },
