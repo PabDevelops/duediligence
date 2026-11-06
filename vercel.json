@@ -11,6 +11,7 @@
       "feat/indicative-header-scores": false,
       "fix/sec-small-cap-coverage": false,
       "feat/admin-financial-editing": false,
+      "fix/admin-fiscal-date-input": false,
       "main": true
     }
   },

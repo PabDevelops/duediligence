@@ -2,6 +2,7 @@
 import {createContext,useContext,useEffect,useRef,useState} from 'react';
 import {useUser} from '../AuthProvider';
 import {isRatioField,overrideTarget} from '../../../lib/financialOverrides';
+import {formatFiscalDateInput,parseFiscalDateInput} from '../../../lib/fiscalDateInput';
 const EditorContext=createContext(null);
 export function FinancialEditorProvider({children,...props}){
   const auth=useUser();
@@ -46,6 +47,7 @@ function CorrectionDialog({ticker,selected,data,current,onSaved,onClose}){
   const raw=current?.active?current.value:selected.point?(t.history==='epsHistory'?selected.point.eps:selected.point.val):data[t.field];
   const [value,setValue]=useState(raw==null?'':String(raw)),[factor,setFactor]=useState('1');
   const [metadata,setMetadata]=useState({basis:initial.basis||'unknown',currency:initial.currency||data.currency||'USD',scope:initial.scope||'provider-unspecified',periodStart:initial.periodStart||'',periodEnd:initial.periodEnd||'',sourceUrl:initial.sourceUrl||'',note:current?.active?initial.note||'':''});
+  const [dateInputs,setDateInputs]=useState({periodStart:formatFiscalDateInput(initial.periodStart),periodEnd:formatFiscalDateInput(initial.periodEnd)});
   const [busy,setBusy]=useState(false),[error,setError]=useState('');
   useEffect(()=>{ref.current?.showModal();},[]);
   const change=(key,val)=>setMetadata(prev=>({...prev,[key]:val}));
@@ -54,8 +56,11 @@ function CorrectionDialog({ticker,selected,data,current,onSaved,onClose}){
     const normalized=value.trim().replace(',','.');
     if(!reset&&normalized&&!/^[+-]?(?:\d+(?:\.\d*)?|\.\d+)(?:e[+-]?\d+)?$/i.test(normalized)){setError('Usa un número sin separadores de miles, por ejemplo 1250000 o 12,5.');setBusy(false);return;}
     if(!reset&&normalized&&!Number.isFinite(Number(normalized)*Number(factor))){setError('El importe es demasiado grande.');setBusy(false);return;}
+    const periodStart=metadata.basis==='instant'?'':parseFiscalDateInput(dateInputs.periodStart);
+    const periodEnd=parseFiscalDateInput(dateInputs.periodEnd);
+    if(!reset&&(periodStart===null||periodEnd===null)){setError('Introduce las fechas como DD/MM/AAAA, por ejemplo 30/06/2026.');setBusy(false);return;}
     try{
-      const response=await fetch('/api/admin/financial-overrides',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({ticker,target:selected.target,expectedId:current?.id||0,reset,value:normalized?Number(normalized)*Number(factor):null,metadata})});
+      const response=await fetch('/api/admin/financial-overrides',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({ticker,target:selected.target,expectedId:current?.id||0,reset,value:normalized?Number(normalized)*Number(factor):null,metadata:{...metadata,periodStart,periodEnd}})});
       const json=await response.json();if(!response.ok)throw new Error(json.error||'No se pudo guardar.');
       await onSaved();onClose();
     }catch(e){setError(e.message);}finally{setBusy(false);}
@@ -72,7 +77,8 @@ function CorrectionDialog({ticker,selected,data,current,onSaved,onClose}){
       {!ratio&&<label>Unidades introducidas<select value={factor} onChange={e=>setFactor(e.target.value)} disabled={busy}><option value="1">Unidades completas</option><option value="1000">Miles</option><option value="1000000">Millones</option></select></label>}
       <label>Moneda<select value={metadata.currency} onChange={e=>change('currency',e.target.value)} disabled={busy}>{[...new Set([metadata.currency,'EUR','USD','GBP','GBp','CHF','CAD','AUD','JPY','CNY'])].map(c=><option key={c}>{c}</option>)}</select></label>
       <label>Periodo<select value={metadata.basis} onChange={e=>change('basis',e.target.value)} disabled={busy}>{[['unknown','Sin verificar'],['FY','Ejercicio completo (FY)'],['TTM','Últimos 12 meses (TTM)'],['H1','Semestre (H1)'],['Q','Trimestre (Q)'],['instant','Balance a una fecha']].map(([v,n])=><option key={v} value={v}>{n}</option>)}</select></label>
-      <div style={{display:'flex',gap:12,flexWrap:'wrap'}}><label style={{flex:'1 1 150px'}}>Desde<input type="date" value={metadata.periodStart} onChange={e=>change('periodStart',e.target.value)} disabled={busy||metadata.basis==='instant'}/></label><label style={{flex:'1 1 150px'}}>Hasta / fecha<input type="date" value={metadata.periodEnd} onChange={e=>change('periodEnd',e.target.value)} disabled={busy}/></label></div>
+      <div style={{display:'flex',gap:12,flexWrap:'wrap'}}><label style={{flex:'1 1 150px'}}>Desde<input type="text" inputMode="numeric" placeholder="DD/MM/AAAA" value={dateInputs.periodStart} onChange={e=>setDateInputs(p=>({...p,periodStart:e.target.value}))} disabled={busy||metadata.basis==='instant'}/></label><label style={{flex:'1 1 150px'}}>Hasta / fecha<input type="text" inputMode="numeric" placeholder="DD/MM/AAAA" value={dateInputs.periodEnd} onChange={e=>setDateInputs(p=>({...p,periodEnd:e.target.value}))} disabled={busy}/></label></div>
+      <small style={{fontSize:11,color:'#726C5E'}}>Fechas en día/mes/año. También puedes escribir 30062026, sin barras.</small>
       <label>Perímetro<select value={metadata.scope} onChange={e=>change('scope',e.target.value)} disabled={busy}><option value="provider-unspecified">Sin verificar</option><option value="consolidated">Grupo consolidado</option><option value="standalone">Sociedad individual</option></select></label>
       <label>Fuente (enlace opcional)<input type="url" value={metadata.sourceUrl} onChange={e=>change('sourceUrl',e.target.value)} disabled={busy}/></label>
       <label>Justificación<textarea required minLength={3} maxLength={1000} rows={2} value={metadata.note} onChange={e=>change('note',e.target.value)} disabled={busy}/></label>
