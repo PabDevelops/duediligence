@@ -2,6 +2,7 @@
 import { currencySymbol, priceRelativeValue } from '../../../../lib/currencyPresentation';
 import FinancialDataNotice from '../../../components/new/FinancialDataNotice';
 import FinancialCoverageBadge from '../../../components/new/FinancialCoverageBadge';
+import './stock-header.css';
 import { use, Suspense, useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
@@ -206,27 +207,25 @@ function NewStockPageContent({ params }) {
         <StockFollowButton ticker={ticker} />
       </div>
 
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '16px' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '14px', minWidth: 0 }}>
+      <div className="stock-company-header">
+        <div className="stock-header-identity">
           <StockLogo ticker={ticker} name={data.name} size={52} />
           <div style={{ minWidth: 0 }}>
             <h1 style={{ margin: 0, fontSize: '22px', fontWeight: 800, letterSpacing: '-0.02em' }}>{data.name || ticker}</h1>
             <div style={{ fontSize: '13px', color: C.text2, fontWeight: 600 }}>{ticker}{data.exchange ? ` · ${data.exchange}` : ''}</div>
           </div>
         </div>
-        <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: '26px', flexWrap: 'wrap', flex: '1 1 240px', minWidth: 0 }}>
-          <div style={{ textAlign: 'right' }}>
+          <div className="stock-header-price">
             <div style={{ fontSize: '26px', fontWeight: 800 }}>{price != null ? formatCurrency(price, sym) : 'N/D'}</div>
             {data.priceChangePct != null && (
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: '6px', fontSize: '13px', fontWeight: 700, color: data.priceChangePct >= 0 ? C.green : C.red }}>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px', fontSize: '13px', fontWeight: 700, color: data.priceChangePct >= 0 ? C.green : C.red }}>
                 {data.priceChangePct >= 0 ? '+' : ''}{data.priceChangePct.toFixed(2)}% hoy
               </div>
             )}
           </div>
-          <CompanyScoreCards easyMode={easyMode} data={data} analysis={entryProjection.engine} />
-        </div>
+        <div className="stock-header-scores"><CompanyScoreCards easyMode={easyMode} data={data} analysis={entryProjection.engine} /></div>
+        <div className="stock-header-coverage"><FinancialCoverageBadge data={data} easyMode={easyMode} analysis={entryProjection.engine}/></div>
       </div>
-      <FinancialCoverageBadge data={data} easyMode={easyMode} analysis={entryProjection.engine}/>
 
       {nextEarnings && (
         <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '12px', color: C.text2, background: C.surface, border: `1px solid ${C.border}`, borderRadius: '12px', padding: '10px 16px', width: 'fit-content', boxSizing: 'border-box' }}>

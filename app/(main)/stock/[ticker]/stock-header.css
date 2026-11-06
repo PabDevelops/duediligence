@@ -1,0 +1,7 @@
+.stock-company-header{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));grid-template-areas:'identity price scores' '. . coverage';align-items:center;column-gap:16px;row-gap:4px}
+.stock-header-identity{grid-area:identity;display:flex;align-items:center;gap:14px;min-width:0;overflow-wrap:anywhere}
+.stock-header-price{grid-area:price;text-align:center;justify-self:center;min-width:0}
+.stock-header-scores{grid-area:scores;justify-self:end;min-width:0}
+.stock-header-coverage{grid-area:coverage;justify-self:end;display:flex;justify-content:center;min-width:160px;max-width:100%}
+.stock-header-coverage>details{max-width:100%}
+@media(max-width:640px){.stock-company-header{grid-template-columns:repeat(2,minmax(0,1fr));grid-template-areas:'identity identity' 'price scores' '. coverage';row-gap:10px}.stock-header-coverage{min-width:0;justify-self:stretch}.stock-header-scores{justify-self:center}}
