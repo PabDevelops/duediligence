@@ -11,6 +11,7 @@
       "feat/indicative-header-scores": false,
       "fix/sec-small-cap-coverage": false,
       "feat/admin-financial-editing": false,
+      "fix/stock-header-alignment": false,
       "fix/admin-fiscal-date-input": false,
       "fix/period-specific-roa": false,
       "fix/manual-storage-independent": false,
