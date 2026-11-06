@@ -1,12 +1,11 @@
 'use client';
 import { currencySymbol } from '../../../lib/currencyPresentation';
 import { useState, useEffect, useRef, Suspense } from 'react';
-import { useSearchParams } from 'next/navigation';
+import { useSearchParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import NewNav from '../../components/new/NewNav';
 import StockLogo from '../../components/workspace/StockLogo';
 import { useTickerSearch } from '../../../lib/hooks/useTickerSearch';
-import { openInNewTab } from '../../../lib/openInNewTab';
 import { formatCurrency } from '../../../lib/formatters';
 import { NEW_COLORS as C } from '../../components/new/theme';
 
@@ -70,6 +69,7 @@ function ResultCard({ s, onClick }) {
 }
 
 function SearchPageContent() {
+  const router = useRouter();
   const searchParams = useSearchParams();
   const initialQ = searchParams.get('q') || '';
   const [q, setQ] = useState(initialQ);
@@ -92,7 +92,7 @@ function SearchPageContent() {
     wasLoading.current = loading;
   }, [loading]);
 
-  const goToTicker = (ticker, isEtf = false) => openInNewTab(isEtf ? `/etfs/${ticker}` : `/stock/${ticker}`);
+  const goToTicker = (ticker, isEtf = false) => router.push(isEtf ? `/etfs/${ticker}` : `/stock/${ticker}`);
 
   const handleKeyDown = (e) => {
     if (e.key === 'Enter' && q.trim()) {

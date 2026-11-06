@@ -16,6 +16,7 @@ import { engineVerdict, engineInvestigateQuestions } from '../../../../lib/verdi
 import { formatCurrency, formatTimeAgo } from '../../../../lib/formatters';
 import { NEW_COLORS as C, VERDICT_BADGE } from '../../../components/new/theme';
 import CompanyScoreCards from '../../../components/new/CompanyScoreCards';
+import StockQuickSearch from '../../../components/new/StockQuickSearch';
 
 // Same good/caution/bad colors as the overall VERDICT_BADGE dot, reused per-dimension; gray
 // ('unknown') only when that dimension genuinely has no score to read, never a guessed color.
@@ -70,6 +71,7 @@ function Shell({ children }) {
     <div style={{ width: '100%', minHeight: '100vh', boxSizing: 'border-box', background: C.bg, color: C.ink, fontFamily: "'Plus Jakarta Sans', system-ui, sans-serif" }}>
       <div style={{ maxWidth: 'min(1200px, 92vw)', margin: '0 auto', padding: '32px 24px 96px', display: 'flex', flexDirection: 'column', gap: '28px', boxSizing: 'border-box' }}>
         <NewNav active="inicio" />
+        <StockQuickSearch />
         {children}
       </div>
     </div>
@@ -229,6 +231,7 @@ function NewStockPageContent({ params }) {
           <svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg>
           Volver
         </Link>
+        <Link href={`/stock/${ticker}/analisis`} style={{ fontSize: '13px', fontWeight: 700, color: C.ink, textDecoration: 'none' }}>Análisis completo →</Link>
         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '6px' }}>
           <button type="button" onClick={toggleFollow} style={{
             height: '36px', padding: '0 16px', borderRadius: '12px', fontWeight: 700, fontSize: '12px', fontFamily: 'inherit', cursor: 'pointer',
@@ -380,10 +383,6 @@ function NewStockPageContent({ params }) {
                 <div style={{ fontSize: '11px', color: C.text3, marginTop: '2px' }}>al año, en los próximos 5 años</div>
               </div>
             </div>
-
-            <Link href={`/stock/${ticker}/analisis`} style={{ fontSize: '12px', fontWeight: 700, color: C.ink, textDecoration: 'none', width: 'fit-content' }}>
-              Análisis completo →
-            </Link>
           </div>
         );
       })()}
