@@ -31,4 +31,13 @@ describe('stock endpoint integrity across cache and SEC',()=>{
  state.cached={updated_at:new Date().toISOString(),data:{ticker:'LLOY.L',currency:'GBP',currentPrice:.9694,marketCap:1e9,description:'Lloyds',revVal:null,pe:9.694,eps:.1,financialIntegrity:{version:2,issues:[],rejected:{}}}};
  const r=await GET(new Request('https://local.test/api/stock?ticker=LLOY.L'));const d=await r.json();expect(r.status).toBe(200);expect(d.currency).toBe('GBP');expect(d.currentPrice).toBe(.9694);expect(d.pe).toBe(9.694);expect(d.financialIntegrity.status).toBe('provisional');expect(d.cached).toBe(true);
  });
+ it('recovers missing cached quote currency from Yahoo without refreshing financials',async()=>{
+  state.cached={updated_at:new Date().toISOString(),data:{ticker:'ARLO',currentPrice:14.75,marketCap:1e9,description:'Arlo',financialIntegrity:{version:2,issues:[],rejected:{}}}};
+  const previous=global.fetch;
+  vi.stubGlobal('fetch',vi.fn(async (url,...args)=>String(url).includes('/chart/ARLO')?{ok:true,json:async()=>({chart:{result:[{meta:{currency:'USD',regularMarketPrice:14.75,chartPreviousClose:14.7}}]}})}:previous(url,...args)));
+  const d=await (await GET(new Request('https://local.test/api/stock?ticker=ARLO'))).json();
+  expect(d.currency).toBe('USD');expect(d.currentPrice).toBe(14.75);expect(d.cached).toBe(true);
+  expect(fetch.mock.calls.some(([url])=>String(url).includes('companyfacts'))).toBe(false);
+ });
+
 });

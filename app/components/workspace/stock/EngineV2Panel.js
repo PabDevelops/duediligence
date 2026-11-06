@@ -5,6 +5,7 @@
 // bad here / what to look at next". Uses the cream/lime palette of the stock page.
 
 import { NEW_COLORS as C, VERDICT_BADGE, TIER_COLORS } from '../../new/theme';
+import { priceRelativeValue } from '../../../../lib/currencyPresentation';
 import { formatCurrency } from '../../../../lib/formatters';
 import { TIER_LABELS, TIER_NAMES, TIER_DESCRIPTIONS, tierForScore } from '../../../../lib/engine/tierScale';
 
@@ -180,10 +181,11 @@ function Scenarios({ engine, sym }) {
   const price = engine.price;
   const c = s.scenarios.find((x) => x.key === 'central');
   const isBank = s.model === 'bank_justified_pb';
-  const mos = c.marginOfSafety;
+  const mos = priceRelativeValue(c.fairValueToday, price);
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
       <div style={{ fontSize: '12px', color: C.text2 }}>Método: <strong>{s.modelLabel}</strong>. {s.notProbabilities}</div>
+      {s.model === 'dcf' && <div style={{ fontSize: '12px', color: C.text2 }}>Los flujos se estiman desde EBIT, impuestos y reinversión (crecimiento / ROIC); no se utiliza el FCF normalizado como entrada de este escenario.</div>}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))', gap: '12px' }}>
         <div>
           <div style={eyebrow}>PRECIO ACTUAL</div>
@@ -196,8 +198,8 @@ function Scenarios({ engine, sym }) {
         </div>
         <div>
           <div style={eyebrow}>MARGEN DE SEGURIDAD</div>
-          <div style={{ fontSize: '20px', fontWeight: 800, color: mos == null ? C.ink : mos >= 0 ? C.green : C.red }}>{mos == null ? 'N/D' : signed(mos, 0)}</div>
-          <div style={{ fontSize: '11px', color: C.text3 }}>{mos == null ? 'sin valor razonable disponible' : mos >= 0 ? 'el precio está por debajo del valor razonable estimado' : 'el precio está por encima del valor razonable estimado'}</div>
+          <div style={{ fontSize: '20px', fontWeight: 800, color: mos == null ? C.ink : mos >= 0 ? C.green : C.red }}>{mos == null ? 'N/D' : signed(mos, 1)}</div>
+          <div style={{ fontSize: '11px', color: C.text3 }}>{mos == null ? 'sin valor razonable disponible' : mos >= 0 ? 'diferencia positiva respecto al precio actual' : 'diferencia negativa respecto al precio actual'}</div>
         </div>
         <div>
           <div style={eyebrow}>PRECIO MÁXIMO DE ENTRADA</div>
