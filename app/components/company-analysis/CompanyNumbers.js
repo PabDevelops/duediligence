@@ -65,6 +65,7 @@ export function QualityBreakdown({ easyMode, data, analysis }) {
             </div>
             <div style={{ minWidth: 0, flex: 1 }}>
               <div style={{ fontSize: '13px', fontWeight: 700 }}>{p.name}</div>
+              {p.interpretationLabel && <div style={{ fontSize: '12px', fontWeight: 700, color: C.text2 }}>{p.interpretationLabel}</div>}
               {p.indicative && <div style={{ fontSize: '12px', color: C.text2 }}>Orientativa · {Math.round(p.coverage * 100)}% cobertura · confianza baja</div>}
               <details style={{ fontSize: '12px', color: C.text2, lineHeight: 1.5 }}><summary style={{ cursor: 'pointer' }}>Por qué tiene esta nota</summary>{p.indicative ? `${p.indicative.description} ${p.description}` : p.description}</details>
               <details style={{ fontSize: '12px', color: C.text2, lineHeight: 1.5, marginTop: '8px' }}>
