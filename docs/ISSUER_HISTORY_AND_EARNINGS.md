@@ -46,7 +46,7 @@ Comparación ejecutada contra las librerías de `main` 82c62b0, con idénticos d
 | TYGO | Beneficio 12.502.000 USD; VALUE F/70 %, P/E excluido por perfil | Mismo beneficio y VALUE F/70 %; P/E contable ≈4,56x con la capitalización de la captura; P/E recurrente pendiente por efecto fiscal no aislado |
 | AAPL, Altia, Lloyds | Notas y valoraciones de referencia | Notas, coberturas, DCF y escenarios idénticos |
 
-816 pruebas superadas, 51 nuevas. Cubren entidades, pro formas, periodos mixtos, fuentes operativas legítimas, históricos FY/Q/TTM, correcciones persistentes, salida de vehículo sin fecha verificada, publicación futura, duplicados, periodos fiscales, monedas/unidades, ajustes positivos/negativos y ausencia de impuestos. Se verifica que informar de una IPO reciente no modifica puntuaciones ni escenarios.
+817 pruebas superadas, 52 nuevas. Cubren entidades, pro formas, periodos mixtos, fuentes operativas legítimas, históricos FY/Q/TTM, correcciones persistentes, salida de vehículo sin fecha verificada, publicación futura, duplicados, periodos fiscales, monedas/unidades, ajustes positivos/negativos y ausencia de impuestos. Se verifica que informar de una IPO reciente no modifica puntuaciones ni escenarios, y que el aviso caduca con la fecha actual aunque los estados financieros sean antiguos.
 
 Build completo correcto. ESLint correcto en los módulos nuevos/modificados, salvo dos errores preexistentes `set-state-in-effect` en la ficha principal, reproducidos también sobre `main`; con esa regla preexistente apartada, el archivo no añade errores. No se han cambiado esos efectos ajenos al trabajo.
 
