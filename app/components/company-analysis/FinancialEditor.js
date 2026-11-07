@@ -109,7 +109,8 @@ function CorrectionDialog({ticker,selected,data,current,rows,onSaved,onClose}){
     if(!reset&&selected.newHistory&&metadata.basis==='Q'&&!/^\d{4}$/.test(exercise)){setError('Indica el ejercicio fiscal del trimestre; no se deduce del cierre.');setBusy(false);return;}
     if(selected.newHistory&&!/^\d{4}$/.test(year)){setError('Indica el ejercicio o una fecha de cierre completa para identificar el registro histórico.');setBusy(false);return;}
     if(!reset&&t.history&&finalMetadata.basis==='Q'&&!/^Q[1-4]$/.test(finalMetadata.fiscalQuarter)){setError('Selecciona el trimestre fiscal para identificar el histórico.');setBusy(false);return;}
-    const storageTarget=reset?selected.target:financialOverrideStorageTarget(selected.newHistory?`history:${selected.newHistory}:${year}`:selected.target,finalMetadata);
+    let storageTarget;
+    try{storageTarget=reset?selected.target:financialOverrideStorageTarget(selected.newHistory?`history:${selected.newHistory}:${year}`:selected.target,finalMetadata);}catch(e){setError(e.message);setBusy(false);return;}
     if(selected.newHistory&&rows.some(r=>r.target===storageTarget&&r.active)){setError('Ya existe una corrección para ese ejercicio. Edítala desde su fila en la tabla.');setBusy(false);return;}
     const expectedId=rows.find(r=>r.target===storageTarget)?.id||0;
     try{
@@ -130,8 +131,9 @@ function CorrectionDialog({ticker,selected,data,current,rows,onSaved,onClose}){
       {t.history==='sbcHistory'&&<small>SBC es el importe de remuneración en acciones, no un porcentaje sobre ingresos.</small>}
 
 
-      <label>Periodo<select value={metadata.basis} onChange={e=>change('basis',e.target.value)} disabled={busy}>{[['unknown','Sin verificar'],['FY','Ejercicio completo (FY)'],['TTM','Últimos 12 meses (TTM)'],['H1','Semestre (H1)'],['Q','Trimestre (Q)'],['instant','Balance a una fecha']].map(([v,n])=><option key={v} value={v}>{n}</option>)}</select></label>
-      {selected.newHistory&&<label>{metadata.basis==='Q'?'Ejercicio fiscal del trimestre':'Ejercicio (opcional si indicas el cierre)'}<input inputMode="numeric" maxLength={4} placeholder="AAAA" value={exercise} onChange={e=>setExercise(e.target.value)} disabled={busy}/></label>}
+      <label>Periodo<select value={metadata.basis} onChange={e=>change('basis',e.target.value)} disabled={busy||!!t.ttmHistory}>{[['unknown','Sin verificar'],['FY','Ejercicio completo (FY)'],['TTM','Últimos 12 meses (TTM)'],['H1','Semestre (H1)'],['Q','Trimestre (Q)'],['instant','Balance a una fecha']].map(([v,n])=><option key={v} value={v}>{n}</option>)}</select></label>
+      {t.ttmHistory&&<small>TTM independiente por fecha de cierre. FY y Q se conservan en sus propias filas.</small>}
+      {selected.newHistory&&metadata.basis!=='TTM'&&<label>{metadata.basis==='Q'?'Ejercicio fiscal del trimestre':'Ejercicio (opcional si indicas el cierre)'}<input inputMode="numeric" maxLength={4} placeholder="AAAA" value={exercise} onChange={e=>setExercise(e.target.value)} disabled={busy}/></label>}
       {t.history&&metadata.basis==='Q'&&<label>Trimestre fiscal<select disabled={busy||!!t.quarterHistory} value={metadata.fiscalQuarter} onChange={e=>change('fiscalQuarter',e.target.value)}><option value="">Selecciona Q1–Q4</option>{['Q1','Q2','Q3','Q4'].map(q=><option key={q}>{q}</option>)}</select></label>}
       {t.quarterHistory&&<small>Registro {t.quarter} FY{t.year}, independiente del histórico anual. Conserva el periodo real; no se anualiza.</small>}
 

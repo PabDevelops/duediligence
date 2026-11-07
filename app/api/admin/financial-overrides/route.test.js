@@ -42,6 +42,19 @@ describe('admin financial corrections access and writes',()=>{
   expect((await POST(request({ticker:'TEST',target:'period:roa:H1:2026-06-30',reset:true,expectedId:12}))).status).toBe(200);
   expect(supabase.rpc).toHaveBeenCalledWith('set_financial_override',expect.objectContaining({p_target:'period:roa:H1:2026-06-30',p_active:false,p_expected_id:12}));
  });
+ it('stores TTM histories under a dated identity distinct from FY and Q',async()=>{
+  const m={basis:'TTM',periodStart:'2025-07-01',periodEnd:'2026-06-30',currency:'USD',scope:'consolidated'};
+  expect((await POST(request({...body(),target:'history:sbcHistory:2026',value:14707000,metadata:m}))).status).toBe(200);
+  expect(supabase.rpc).toHaveBeenCalledWith('set_financial_override',expect.objectContaining({p_target:'history:sbcHistory:TTM:2026-06-30',p_value:14707000,p_metadata:expect.objectContaining({basis:'TTM',periodEnd:'2026-06-30'})}));
+ });
+ it('returns a technical identity error when a new TTM has no closing date, without writing',async()=>{
+  const r=await POST(request({...body(),target:'history:niHistory:2026',metadata:{basis:'TTM'}}));
+  expect(r.status).toBe(400);expect((await r.json()).error).toContain('fecha de cierre');expect(supabase.rpc).not.toHaveBeenCalled();
+ });
+ it('restores a TTM identity with its own revision without modifying FY',async()=>{
+  expect((await POST(request({ticker:'TEST',target:'history:niHistory:TTM:2026-06-30',reset:true,expectedId:53}))).status).toBe(200);
+  expect(supabase.rpc).toHaveBeenCalledWith('set_financial_override',expect.objectContaining({p_target:'history:niHistory:TTM:2026-06-30',p_active:false,p_expected_id:53}));
+ });
  it.each([undefined,null,{}, {basis:'FY',periodStart:'30',periodEnd:'',currency:'',scope:'',note:''}])('accepts optional and incomplete documentation without a financial preflight (%j)',async m=>{
   expect((await POST(request({...body(),target:'roe',value:30,metadata:m}))).status).toBe(200);
   expect(supabase.rpc).toHaveBeenCalledWith('set_financial_override',expect.objectContaining({p_value:30,p_metadata:expect.objectContaining({storageFirst:true})}));
