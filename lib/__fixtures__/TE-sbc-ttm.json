@@ -1,0 +1,21 @@
+{
+  "id": 53,
+  "ticker": "TE",
+  "target": "history:sbcHistory:2026",
+  "value": 14707000,
+  "metadata": {
+    "note": "SBC TTM = FY2025 11.397.000 - H1 2025 5.220.000 + H1 2026 8.530.000 USD.",
+    "unit": "USD",
+    "basis": "TTM",
+    "scope": "consolidated",
+    "manual": true,
+    "source": "Corrección manual de administración",
+    "currency": "USD",
+    "periodEnd": "2026-06-30",
+    "sourceUrl": "https://www.sec.gov/Archives/edgar/data/1992243/000199224326000022/t1-20260630.htm",
+    "periodStart": "2025-07-01",
+    "storageFirst": true,
+    "sourceReference": "https://www.sec.gov/Archives/edgar/data/1992243/000199224326000022/t1-20260630.htm"
+  },
+  "active": true
+}
