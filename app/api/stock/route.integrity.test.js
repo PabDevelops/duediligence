@@ -56,7 +56,9 @@ describe('stock endpoint integrity across cache and SEC',()=>{
  it('rejects future-dated ONEN balance facts without inventing post-merger financials',async()=>{
   state.sourceFacts=onenFacts;
   const r=await GET(new Request('https://local.test/api/stock?ticker=ONEN'));const d=await r.json();
-  expect(r.status).toBe(200);expect(d.lastFilingDate).toBe('2026-08-12');
+  expect(r.status).toBe(200);expect(d.lastFilingDate).toBeNull();expect(d.predecessorLastFilingDate).toBe('2026-08-12');
+  expect(d.listingInfo).toMatchObject({type:'spac',date:'2026-09-24',transactionDate:'2026-09-23'});
+  expect(d.niVal).toBeNull();expect(d.niHistory).toEqual([]);
   expect(d.equityVal).not.toBe(-10084981);
   expect(d.revVal).toBeNull();expect(d.fcfVal).toBeNull();
   if(process.env.BULLTRACE_REPORT_DIR)writeFileSync(join(process.env.BULLTRACE_REPORT_DIR,'ONEN-sec-replay.json'),JSON.stringify(d,null,2));
