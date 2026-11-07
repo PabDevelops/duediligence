@@ -1,0 +1,2798 @@
+{
+  "pe": -24.51,
+  "cik": "0001855447",
+  "eps": -0.03,
+  "roa": 16,
+  "roe": 27.3,
+  "beta": 1.2956787,
+  "name": "TIGO ENERGY, INC.",
+  "roic": -6.5,
+  "daVal": 1357000,
+  "niVal": 12502000,
+  "oiVal": -3834000,
+  "rdVal": 9664000,
+  "ebtVal": 8757000,
+  "fcfVal": -7720000,
+  "revVal": 103537135000,
+  "sbcVal": 6304000,
+  "sector": "Industrials",
+  "taxVal": -3745000,
+  "ticker": "TYGO",
+  "cashVal": 16753000,
+  "debtVal": 2516000,
+  "capexVal": 1045000,
+  "currency": "USD",
+  "evEbitda": null,
+  "industry": "Electrical Equipment",
+  "opMargin": 0,
+  "assetsVal": 78261000,
+  "daHistory": [
+    {
+      "fp": "FY",
+      "fy": 2023,
+      "end": "2022-12-31",
+      "tag": "DepreciationDepletionAndAmortization",
+      "val": 562000,
+      "accn": "0000950170-24-034765",
+      "form": "10-K",
+      "unit": "USD",
+      "year": "2022",
+      "basis": "FY",
+      "filed": "2024-03-21",
+      "frame": "CY2022",
+      "scope": "consolidated",
+      "start": "2022-01-01",
+      "source": "SEC EDGAR companyfacts",
+      "currency": "USD",
+      "periodEnd": "2022-12-31",
+      "fiscalYear": "2022",
+      "periodStart": "2022-01-01",
+      "publicationDate": "2024-03-21",
+      "periodConfidence": "exact"
+    },
+    {
+      "fp": "FY",
+      "fy": 2024,
+      "end": "2023-12-31",
+      "tag": "DepreciationDepletionAndAmortization",
+      "val": 1106000,
+      "accn": "0000950170-25-042645",
+      "form": "10-K",
+      "unit": "USD",
+      "year": "2023",
+      "basis": "FY",
+      "filed": "2025-03-20",
+      "frame": "CY2023",
+      "scope": "consolidated",
+      "start": "2023-01-01",
+      "source": "SEC EDGAR companyfacts",
+      "currency": "USD",
+      "periodEnd": "2023-12-31",
+      "fiscalYear": "2023",
+      "periodStart": "2023-01-01",
+      "publicationDate": "2025-03-20",
+      "periodConfidence": "exact"
+    },
+    {
+      "fp": "FY",
+      "fy": 2025,
+      "end": "2024-12-31",
+      "tag": "DepreciationDepletionAndAmortization",
+      "val": 1219000,
+      "accn": "0001193125-26-115952",
+      "form": "10-K",
+      "unit": "USD",
+      "year": "2024",
+      "basis": "FY",
+      "filed": "2026-03-19",
+      "frame": "CY2024",
+      "scope": "consolidated",
+      "start": "2024-01-01",
+      "source": "SEC EDGAR companyfacts",
+      "currency": "USD",
+      "periodEnd": "2024-12-31",
+      "fiscalYear": "2024",
+      "periodStart": "2024-01-01",
+      "publicationDate": "2026-03-19",
+      "periodConfidence": "exact"
+    },
+    {
+      "fp": "FY",
+      "fy": 2025,
+      "end": "2025-12-31",
+      "tag": "DepreciationDepletionAndAmortization",
+      "val": 1266000,
+      "accn": "0001193125-26-115952",
+      "form": "10-K",
+      "unit": "USD",
+      "year": "2025",
+      "basis": "FY",
+      "filed": "2026-03-19",
+      "frame": "CY2025",
+      "scope": "consolidated",
+      "start": "2025-01-01",
+      "source": "SEC EDGAR companyfacts",
+      "currency": "USD",
+      "periodEnd": "2025-12-31",
+      "fiscalYear": "2025",
+      "periodStart": "2025-01-01",
+      "publicationDate": "2026-03-19",
+      "periodConfidence": "exact"
+    }
+  ],
+  "equityVal": 45814000,
+  "gpHistory": [
+    {
+      "val": 24771000,
+      "unit": "USD",
+      "year": "2022",
+      "basis": "FY",
+      "scope": "consolidated",
+      "source": "SEC EDGAR",
+      "currency": "USD",
+      "periodEnd": "2022-12-31",
+      "fiscalYear": "2022",
+      "periodStart": "2022-01-01",
+      "publicationDate": "2024-03-21",
+      "periodConfidence": "exact"
+    },
+    {
+      "val": 51309000,
+      "unit": "USD",
+      "year": "2023",
+      "basis": "FY",
+      "scope": "consolidated",
+      "source": "SEC EDGAR",
+      "currency": "USD",
+      "periodEnd": "2023-12-31",
+      "fiscalYear": "2023",
+      "periodStart": "2023-01-01",
+      "publicationDate": "2025-03-20",
+      "periodConfidence": "exact"
+    },
+    {
+      "val": -4156000,
+      "unit": "USD",
+      "year": "2024",
+      "basis": "FY",
+      "scope": "consolidated",
+      "source": "SEC EDGAR",
+      "currency": "USD",
+      "periodEnd": "2024-12-31",
+      "fiscalYear": "2024",
+      "periodStart": "2024-01-01",
+      "publicationDate": "2026-03-19",
+      "periodConfidence": "exact"
+    },
+    {
+      "val": 44351000,
+      "unit": "USD",
+      "year": "2025",
+      "basis": "FY",
+      "scope": "consolidated",
+      "source": "SEC EDGAR",
+      "currency": "USD",
+      "periodEnd": "2025-12-31",
+      "fiscalYear": "2025",
+      "periodStart": "2025-01-01",
+      "publicationDate": "2026-03-19",
+      "periodConfidence": "exact"
+    }
+  ],
+  "marketCap": 57024938.844,
+  "netMargin": 0,
+  "niHistory": [
+    {
+      "fp": "FY",
+      "fy": 2021,
+      "end": "2020-12-31",
+      "tag": "NetIncomeLoss",
+      "val": -1965,
+      "accn": "0001410578-22-000842",
+      "form": "10-K",
+      "unit": "USD",
+      "year": "2020",
+      "basis": "FY",
+      "filed": "2022-04-07",
+      "frame": "CY2020",
+      "scope": "consolidated",
+      "start": "2020-01-01",
+      "source": "SEC EDGAR companyfacts",
+      "currency": "USD",
+      "periodEnd": "2020-12-31",
+      "fiscalYear": "2020",
+      "periodStart": "2020-01-01",
+      "publicationDate": "2022-04-07",
+      "periodConfidence": "exact"
+    },
+    {
+      "fp": "FY",
+      "fy": 2022,
+      "end": "2021-12-31",
+      "tag": "NetIncomeLoss",
+      "val": -402542,
+      "accn": "0001410578-23-000564",
+      "form": "10-K",
+      "unit": "USD",
+      "year": "2021",
+      "basis": "FY",
+      "filed": "2023-03-31",
+      "frame": "CY2021",
+      "scope": "consolidated",
+      "start": "2021-01-01",
+      "source": "SEC EDGAR companyfacts",
+      "currency": "USD",
+      "periodEnd": "2021-12-31",
+      "fiscalYear": "2021",
+      "periodStart": "2021-01-01",
+      "publicationDate": "2023-03-31",
+      "periodConfidence": "exact"
+    },
+    {
+      "fp": "FY",
+      "fy": 2023,
+      "end": "2022-12-31",
+      "tag": "NetIncomeLoss",
+      "val": -7037000,
+      "accn": "0000950170-24-034765",
+      "form": "10-K",
+      "unit": "USD",
+      "year": "2022",
+      "basis": "FY",
+      "filed": "2024-03-21",
+      "frame": "CY2022",
+      "scope": "consolidated",
+      "start": "2022-01-01",
+      "source": "SEC EDGAR companyfacts",
+      "currency": "USD",
+      "periodEnd": "2022-12-31",
+      "fiscalYear": "2022",
+      "periodStart": "2022-01-01",
+      "publicationDate": "2024-03-21",
+      "periodConfidence": "exact"
+    },
+    {
+      "fp": "FY",
+      "fy": 2024,
+      "end": "2023-12-31",
+      "tag": "NetIncomeLoss",
+      "val": -984000,
+      "accn": "0000950170-25-042645",
+      "form": "10-K",
+      "unit": "USD",
+      "year": "2023",
+      "basis": "FY",
+      "filed": "2025-03-20",
+      "frame": "CY2023",
+      "scope": "consolidated",
+      "start": "2023-01-01",
+      "source": "SEC EDGAR companyfacts",
+      "currency": "USD",
+      "periodEnd": "2023-12-31",
+      "fiscalYear": "2023",
+      "periodStart": "2023-01-01",
+      "publicationDate": "2025-03-20",
+      "periodConfidence": "exact"
+    },
+    {
+      "fp": "FY",
+      "fy": 2025,
+      "end": "2024-12-31",
+      "tag": "NetIncomeLoss",
+      "val": -62746000,
+      "accn": "0001193125-26-115952",
+      "form": "10-K",
+      "unit": "USD",
+      "year": "2024",
+      "basis": "FY",
+      "filed": "2026-03-19",
+      "frame": "CY2024",
+      "scope": "consolidated",
+      "start": "2024-01-01",
+      "source": "SEC EDGAR companyfacts",
+      "currency": "USD",
+      "periodEnd": "2024-12-31",
+      "fiscalYear": "2024",
+      "periodStart": "2024-01-01",
+      "publicationDate": "2026-03-19",
+      "periodConfidence": "exact"
+    },
+    {
+      "fp": "FY",
+      "fy": 2025,
+      "end": "2025-12-31",
+      "tag": "NetIncomeLoss",
+      "val": -1880000,
+      "accn": "0001193125-26-115952",
+      "form": "10-K",
+      "unit": "USD",
+      "year": "2025",
+      "basis": "FY",
+      "filed": "2026-03-19",
+      "frame": "CY2025",
+      "scope": "consolidated",
+      "start": "2025-01-01",
+      "source": "SEC EDGAR companyfacts",
+      "currency": "USD",
+      "periodEnd": "2025-12-31",
+      "fiscalYear": "2025",
+      "periodStart": "2025-01-01",
+      "publicationDate": "2026-03-19",
+      "periodConfidence": "exact"
+    }
+  ],
+  "oiHistory": [
+    {
+      "fp": "FY",
+      "fy": 2021,
+      "end": "2020-12-31",
+      "tag": "OperatingIncomeLoss",
+      "val": -1965,
+      "accn": "0001410578-22-000842",
+      "form": "10-K",
+      "unit": "USD",
+      "year": "2020",
+      "basis": "FY",
+      "filed": "2022-04-07",
+      "frame": "CY2020",
+      "scope": "consolidated",
+      "start": "2020-01-01",
+      "source": "SEC EDGAR companyfacts",
+      "currency": "USD",
+      "periodEnd": "2020-12-31",
+      "fiscalYear": "2020",
+      "periodStart": "2020-01-01",
+      "publicationDate": "2022-04-07",
+      "periodConfidence": "exact"
+    },
+    {
+      "fp": "FY",
+      "fy": 2022,
+      "end": "2021-12-31",
+      "tag": "OperatingIncomeLoss",
+      "val": -415858,
+      "accn": "0001410578-23-000564",
+      "form": "10-K",
+      "unit": "USD",
+      "year": "2021",
+      "basis": "FY",
+      "filed": "2023-03-31",
+      "frame": "CY2021",
+      "scope": "consolidated",
+      "start": "2021-01-01",
+      "source": "SEC EDGAR companyfacts",
+      "currency": "USD",
+      "periodEnd": "2021-12-31",
+      "fiscalYear": "2021",
+      "periodStart": "2021-01-01",
+      "publicationDate": "2023-03-31",
+      "periodConfidence": "exact"
+    },
+    {
+      "fp": "FY",
+      "fy": 2023,
+      "end": "2022-12-31",
+      "tag": "OperatingIncomeLoss",
+      "val": -896000,
+      "accn": "0000950170-24-034765",
+      "form": "10-K",
+      "unit": "USD",
+      "year": "2022",
+      "basis": "FY",
+      "filed": "2024-03-21",
+      "frame": "CY2022",
+      "scope": "consolidated",
+      "start": "2022-01-01",
+      "source": "SEC EDGAR companyfacts",
+      "currency": "USD",
+      "periodEnd": "2022-12-31",
+      "fiscalYear": "2022",
+      "periodStart": "2022-01-01",
+      "publicationDate": "2024-03-21",
+      "periodConfidence": "exact"
+    },
+    {
+      "fp": "FY",
+      "fy": 2024,
+      "end": "2023-12-31",
+      "tag": "OperatingIncomeLoss",
+      "val": -8275000,
+      "accn": "0000950170-25-042645",
+      "form": "10-K",
+      "unit": "USD",
+      "year": "2023",
+      "basis": "FY",
+      "filed": "2025-03-20",
+      "frame": "CY2023",
+      "scope": "consolidated",
+      "start": "2023-01-01",
+      "source": "SEC EDGAR companyfacts",
+      "currency": "USD",
+      "periodEnd": "2023-12-31",
+      "fiscalYear": "2023",
+      "periodStart": "2023-01-01",
+      "publicationDate": "2025-03-20",
+      "periodConfidence": "exact"
+    },
+    {
+      "fp": "FY",
+      "fy": 2025,
+      "end": "2024-12-31",
+      "tag": "OperatingIncomeLoss",
+      "val": -51997000,
+      "accn": "0001193125-26-115952",
+      "form": "10-K",
+      "unit": "USD",
+      "year": "2024",
+      "basis": "FY",
+      "filed": "2026-03-19",
+      "frame": "CY2024",
+      "scope": "consolidated",
+      "start": "2024-01-01",
+      "source": "SEC EDGAR companyfacts",
+      "currency": "USD",
+      "periodEnd": "2024-12-31",
+      "fiscalYear": "2024",
+      "periodStart": "2024-01-01",
+      "publicationDate": "2026-03-19",
+      "periodConfidence": "exact"
+    },
+    {
+      "fp": "FY",
+      "fy": 2025,
+      "end": "2025-12-31",
+      "tag": "OperatingIncomeLoss",
+      "val": -4499000,
+      "accn": "0001193125-26-115952",
+      "form": "10-K",
+      "unit": "USD",
+      "year": "2025",
+      "basis": "FY",
+      "filed": "2026-03-19",
+      "frame": "CY2025",
+      "scope": "consolidated",
+      "start": "2025-01-01",
+      "source": "SEC EDGAR companyfacts",
+      "currency": "USD",
+      "periodEnd": "2025-12-31",
+      "fiscalYear": "2025",
+      "periodStart": "2025-01-01",
+      "publicationDate": "2026-03-19",
+      "periodConfidence": "exact"
+    }
+  ],
+  "revGrowth": 1.5,
+  "ebtHistory": [
+    {
+      "fp": "FY",
+      "fy": 2022,
+      "end": "2021-12-31",
+      "tag": "IncomeLossFromContinuingOperationsBeforeIncomeTaxesExtraordinaryItemsNoncontrollingInterest",
+      "val": -402542,
+      "accn": "0001410578-23-000564",
+      "form": "10-K",
+      "unit": "USD",
+      "year": "2021",
+      "basis": "FY",
+      "filed": "2023-03-31",
+      "frame": "CY2021",
+      "scope": "consolidated",
+      "start": "2021-01-01",
+      "source": "SEC EDGAR companyfacts",
+      "currency": "USD",
+      "periodEnd": "2021-12-31",
+      "fiscalYear": "2021",
+      "periodStart": "2021-01-01",
+      "publicationDate": "2023-03-31",
+      "periodConfidence": "exact"
+    },
+    {
+      "fp": "FY",
+      "fy": 2023,
+      "end": "2022-12-31",
+      "tag": "IncomeLossFromContinuingOperationsBeforeIncomeTaxesExtraordinaryItemsNoncontrollingInterest",
+      "val": -6966000,
+      "accn": "0000950170-24-034765",
+      "form": "10-K",
+      "unit": "USD",
+      "year": "2022",
+      "basis": "FY",
+      "filed": "2024-03-21",
+      "frame": "CY2022",
+      "scope": "consolidated",
+      "start": "2022-01-01",
+      "source": "SEC EDGAR companyfacts",
+      "currency": "USD",
+      "periodEnd": "2022-12-31",
+      "fiscalYear": "2022",
+      "periodStart": "2022-01-01",
+      "publicationDate": "2024-03-21",
+      "periodConfidence": "exact"
+    },
+    {
+      "fp": "FY",
+      "fy": 2024,
+      "end": "2023-12-31",
+      "tag": "IncomeLossFromContinuingOperationsBeforeIncomeTaxesExtraordinaryItemsNoncontrollingInterest",
+      "val": -846000,
+      "accn": "0000950170-25-042645",
+      "form": "10-K",
+      "unit": "USD",
+      "year": "2023",
+      "basis": "FY",
+      "filed": "2025-03-20",
+      "frame": "CY2023",
+      "scope": "consolidated",
+      "start": "2023-01-01",
+      "source": "SEC EDGAR companyfacts",
+      "currency": "USD",
+      "periodEnd": "2023-12-31",
+      "fiscalYear": "2023",
+      "periodStart": "2023-01-01",
+      "publicationDate": "2025-03-20",
+      "periodConfidence": "exact"
+    },
+    {
+      "fp": "FY",
+      "fy": 2025,
+      "end": "2024-12-31",
+      "tag": "IncomeLossFromContinuingOperationsBeforeIncomeTaxesExtraordinaryItemsNoncontrollingInterest",
+      "val": -62643000,
+      "accn": "0001193125-26-115952",
+      "form": "10-K",
+      "unit": "USD",
+      "year": "2024",
+      "basis": "FY",
+      "filed": "2026-03-19",
+      "frame": "CY2024",
+      "scope": "consolidated",
+      "start": "2024-01-01",
+      "source": "SEC EDGAR companyfacts",
+      "currency": "USD",
+      "periodEnd": "2024-12-31",
+      "fiscalYear": "2024",
+      "periodStart": "2024-01-01",
+      "publicationDate": "2026-03-19",
+      "periodConfidence": "exact"
+    },
+    {
+      "fp": "FY",
+      "fy": 2025,
+      "end": "2025-12-31",
+      "tag": "IncomeLossFromContinuingOperationsBeforeIncomeTaxesExtraordinaryItemsNoncontrollingInterest",
+      "val": -1277000,
+      "accn": "0001193125-26-115952",
+      "form": "10-K",
+      "unit": "USD",
+      "year": "2025",
+      "basis": "FY",
+      "filed": "2026-03-19",
+      "frame": "CY2025",
+      "scope": "consolidated",
+      "start": "2025-01-01",
+      "source": "SEC EDGAR companyfacts",
+      "currency": "USD",
+      "periodEnd": "2025-12-31",
+      "fiscalYear": "2025",
+      "periodStart": "2025-01-01",
+      "publicationDate": "2026-03-19",
+      "periodConfidence": "exact"
+    }
+  ],
+  "fcfHistory": [
+    {
+      "fp": "FY",
+      "fy": 2023,
+      "end": "2022-12-31",
+      "tag": "NetCashProvidedByUsedInOperatingActivities",
+      "val": -17619000,
+      "accn": "0000950170-24-034765",
+      "form": "10-K",
+      "unit": "USD",
+      "year": "2022",
+      "basis": "FY",
+      "filed": "2024-03-21",
+      "frame": "CY2022",
+      "scope": "consolidated",
+      "start": "2022-01-01",
+      "source": "SEC EDGAR companyfacts",
+      "currency": "USD",
+      "periodEnd": "2022-12-31",
+      "fiscalYear": "2022",
+      "periodStart": "2022-01-01",
+      "publicationDate": "2024-03-21",
+      "periodConfidence": "verified",
+      "derivation": "OCF-minus-absolute-CAPEX"
+    },
+    {
+      "fp": "FY",
+      "fy": 2024,
+      "end": "2023-12-31",
+      "tag": "NetCashProvidedByUsedInOperatingActivities",
+      "val": -39336000,
+      "accn": "0000950170-25-042645",
+      "form": "10-K",
+      "unit": "USD",
+      "year": "2023",
+      "basis": "FY",
+      "filed": "2025-03-20",
+      "frame": "CY2023",
+      "scope": "consolidated",
+      "start": "2023-01-01",
+      "source": "SEC EDGAR companyfacts",
+      "currency": "USD",
+      "periodEnd": "2023-12-31",
+      "fiscalYear": "2023",
+      "periodStart": "2023-01-01",
+      "publicationDate": "2025-03-20",
+      "periodConfidence": "verified",
+      "derivation": "OCF-minus-absolute-CAPEX"
+    },
+    {
+      "fp": "FY",
+      "fy": 2025,
+      "end": "2024-12-31",
+      "tag": "NetCashProvidedByUsedInOperatingActivities",
+      "val": -13640000,
+      "accn": "0001193125-26-115952",
+      "form": "10-K",
+      "unit": "USD",
+      "year": "2024",
+      "basis": "FY",
+      "filed": "2026-03-19",
+      "frame": "CY2024",
+      "scope": "consolidated",
+      "start": "2024-01-01",
+      "source": "SEC EDGAR companyfacts",
+      "currency": "USD",
+      "periodEnd": "2024-12-31",
+      "fiscalYear": "2024",
+      "periodStart": "2024-01-01",
+      "publicationDate": "2026-03-19",
+      "periodConfidence": "verified",
+      "derivation": "OCF-minus-absolute-CAPEX"
+    },
+    {
+      "fp": "FY",
+      "fy": 2025,
+      "end": "2025-12-31",
+      "tag": "NetCashProvidedByUsedInOperatingActivities",
+      "val": 9657000,
+      "accn": "0001193125-26-115952",
+      "form": "10-K",
+      "unit": "USD",
+      "year": "2025",
+      "basis": "FY",
+      "filed": "2026-03-19",
+      "frame": "CY2025",
+      "scope": "consolidated",
+      "start": "2025-01-01",
+      "source": "SEC EDGAR companyfacts",
+      "currency": "USD",
+      "periodEnd": "2025-12-31",
+      "fiscalYear": "2025",
+      "periodStart": "2025-01-01",
+      "publicationDate": "2026-03-19",
+      "periodConfidence": "verified",
+      "derivation": "OCF-minus-absolute-CAPEX"
+    }
+  ],
+  "revHistory": [
+    {
+      "fp": "FY",
+      "fy": 2023,
+      "end": "2022-12-31",
+      "tag": "RevenueFromContractWithCustomerExcludingAssessedTax",
+      "val": 81323000000,
+      "accn": "0000950170-24-034765",
+      "form": "10-K",
+      "unit": "USD",
+      "year": "2022",
+      "basis": "FY",
+      "filed": "2024-03-21",
+      "frame": "CY2022",
+      "scope": "consolidated",
+      "start": "2022-01-01",
+      "source": "SEC EDGAR companyfacts",
+      "currency": "USD",
+      "periodEnd": "2022-12-31",
+      "fiscalYear": "2022",
+      "periodStart": "2022-01-01",
+      "publicationDate": "2024-03-21",
+      "periodConfidence": "exact"
+    },
+    {
+      "fp": "FY",
+      "fy": 2024,
+      "end": "2023-12-31",
+      "tag": "RevenueFromContractWithCustomerExcludingAssessedTax",
+      "val": 145233000000,
+      "accn": "0000950170-25-042645",
+      "form": "10-K",
+      "unit": "USD",
+      "year": "2023",
+      "basis": "FY",
+      "filed": "2025-03-20",
+      "frame": "CY2023",
+      "scope": "consolidated",
+      "start": "2023-01-01",
+      "source": "SEC EDGAR companyfacts",
+      "currency": "USD",
+      "periodEnd": "2023-12-31",
+      "fiscalYear": "2023",
+      "periodStart": "2023-01-01",
+      "publicationDate": "2025-03-20",
+      "periodConfidence": "exact"
+    },
+    {
+      "fp": "FY",
+      "fy": 2025,
+      "end": "2024-12-31",
+      "tag": "RevenueFromContractWithCustomerExcludingAssessedTax",
+      "val": 54014000000,
+      "accn": "0001193125-26-115952",
+      "form": "10-K",
+      "unit": "USD",
+      "year": "2024",
+      "basis": "FY",
+      "filed": "2026-03-19",
+      "frame": "CY2024",
+      "scope": "consolidated",
+      "start": "2024-01-01",
+      "source": "SEC EDGAR companyfacts",
+      "currency": "USD",
+      "periodEnd": "2024-12-31",
+      "fiscalYear": "2024",
+      "periodStart": "2024-01-01",
+      "publicationDate": "2026-03-19",
+      "periodConfidence": "exact"
+    },
+    {
+      "fp": "FY",
+      "fy": 2025,
+      "end": "2025-12-31",
+      "tag": "RevenueFromContractWithCustomerExcludingAssessedTax",
+      "val": 103536000000,
+      "accn": "0001193125-26-115952",
+      "form": "10-K",
+      "unit": "USD",
+      "year": "2025",
+      "basis": "FY",
+      "filed": "2026-03-19",
+      "frame": "CY2025",
+      "scope": "consolidated",
+      "start": "2025-01-01",
+      "source": "SEC EDGAR companyfacts",
+      "currency": "USD",
+      "periodEnd": "2025-12-31",
+      "fiscalYear": "2025",
+      "periodStart": "2025-01-01",
+      "publicationDate": "2026-03-19",
+      "periodConfidence": "exact"
+    }
+  ],
+  "taxHistory": [
+    {
+      "fp": "FY",
+      "fy": 2023,
+      "end": "2022-12-31",
+      "tag": "IncomeTaxExpenseBenefit",
+      "val": 71000,
+      "accn": "0000950170-24-034765",
+      "form": "10-K",
+      "unit": "USD",
+      "year": "2022",
+      "basis": "FY",
+      "filed": "2024-03-21",
+      "frame": "CY2022",
+      "scope": "consolidated",
+      "start": "2022-01-01",
+      "source": "SEC EDGAR companyfacts",
+      "currency": "USD",
+      "periodEnd": "2022-12-31",
+      "fiscalYear": "2022",
+      "periodStart": "2022-01-01",
+      "publicationDate": "2024-03-21",
+      "periodConfidence": "exact"
+    },
+    {
+      "fp": "FY",
+      "fy": 2024,
+      "end": "2023-12-31",
+      "tag": "IncomeTaxExpenseBenefit",
+      "val": 138000,
+      "accn": "0000950170-25-042645",
+      "form": "10-K",
+      "unit": "USD",
+      "year": "2023",
+      "basis": "FY",
+      "filed": "2025-03-20",
+      "frame": "CY2023",
+      "scope": "consolidated",
+      "start": "2023-01-01",
+      "source": "SEC EDGAR companyfacts",
+      "currency": "USD",
+      "periodEnd": "2023-12-31",
+      "fiscalYear": "2023",
+      "periodStart": "2023-01-01",
+      "publicationDate": "2025-03-20",
+      "periodConfidence": "exact"
+    },
+    {
+      "fp": "FY",
+      "fy": 2025,
+      "end": "2024-12-31",
+      "tag": "IncomeTaxExpenseBenefit",
+      "val": 103000,
+      "accn": "0001193125-26-115952",
+      "form": "10-K",
+      "unit": "USD",
+      "year": "2024",
+      "basis": "FY",
+      "filed": "2026-03-19",
+      "frame": "CY2024",
+      "scope": "consolidated",
+      "start": "2024-01-01",
+      "source": "SEC EDGAR companyfacts",
+      "currency": "USD",
+      "periodEnd": "2024-12-31",
+      "fiscalYear": "2024",
+      "periodStart": "2024-01-01",
+      "publicationDate": "2026-03-19",
+      "periodConfidence": "exact"
+    },
+    {
+      "fp": "FY",
+      "fy": 2025,
+      "end": "2025-12-31",
+      "tag": "IncomeTaxExpenseBenefit",
+      "val": 603000,
+      "accn": "0001193125-26-115952",
+      "form": "10-K",
+      "unit": "USD",
+      "year": "2025",
+      "basis": "FY",
+      "filed": "2026-03-19",
+      "frame": "CY2025",
+      "scope": "consolidated",
+      "start": "2025-01-01",
+      "source": "SEC EDGAR companyfacts",
+      "currency": "USD",
+      "periodEnd": "2025-12-31",
+      "fiscalYear": "2025",
+      "periodStart": "2025-01-01",
+      "publicationDate": "2026-03-19",
+      "periodConfidence": "exact"
+    }
+  ],
+  "debtHistory": [
+    {
+      "val": 50000000,
+      "unit": "USD",
+      "year": "2023",
+      "basis": "instant",
+      "scope": "consolidated",
+      "source": "SEC EDGAR",
+      "currency": "USD",
+      "periodEnd": "2023-12-31",
+      "fiscalYear": "2023",
+      "periodStart": null,
+      "publicationDate": "2024-03-21",
+      "periodConfidence": "exact"
+    },
+    {
+      "val": 50000000,
+      "unit": "USD",
+      "year": "2024",
+      "basis": "instant",
+      "scope": "consolidated",
+      "source": "SEC EDGAR",
+      "currency": "USD",
+      "periodEnd": "2024-12-31",
+      "fiscalYear": "2024",
+      "periodStart": null,
+      "publicationDate": "2025-03-20",
+      "periodConfidence": "exact"
+    }
+  ],
+  "grossMargin": 0,
+  "interestVal": 11438000,
+  "priceToBook": 1.24,
+  "capexHistory": [
+    {
+      "fp": "FY",
+      "fy": 2023,
+      "end": "2022-12-31",
+      "tag": "PaymentsToAcquirePropertyPlantAndEquipment",
+      "val": 1147000,
+      "accn": "0000950170-24-034765",
+      "form": "10-K",
+      "unit": "USD",
+      "year": "2022",
+      "basis": "FY",
+      "filed": "2024-03-21",
+      "frame": "CY2022",
+      "scope": "consolidated",
+      "start": "2022-01-01",
+      "source": "SEC EDGAR companyfacts",
+      "currency": "USD",
+      "periodEnd": "2022-12-31",
+      "fiscalYear": "2022",
+      "periodStart": "2022-01-01",
+      "publicationDate": "2024-03-21",
+      "periodConfidence": "exact"
+    },
+    {
+      "fp": "FY",
+      "fy": 2024,
+      "end": "2023-12-31",
+      "tag": "PaymentsToAcquirePropertyPlantAndEquipment",
+      "val": 2114000,
+      "accn": "0000950170-25-042645",
+      "form": "10-K",
+      "unit": "USD",
+      "year": "2023",
+      "basis": "FY",
+      "filed": "2025-03-20",
+      "frame": "CY2023",
+      "scope": "consolidated",
+      "start": "2023-01-01",
+      "source": "SEC EDGAR companyfacts",
+      "currency": "USD",
+      "periodEnd": "2023-12-31",
+      "fiscalYear": "2023",
+      "periodStart": "2023-01-01",
+      "publicationDate": "2025-03-20",
+      "periodConfidence": "exact"
+    },
+    {
+      "fp": "FY",
+      "fy": 2025,
+      "end": "2024-12-31",
+      "tag": "PaymentsToAcquirePropertyPlantAndEquipment",
+      "val": 1286000,
+      "accn": "0001193125-26-115952",
+      "form": "10-K",
+      "unit": "USD",
+      "year": "2024",
+      "basis": "FY",
+      "filed": "2026-03-19",
+      "frame": "CY2024",
+      "scope": "consolidated",
+      "start": "2024-01-01",
+      "source": "SEC EDGAR companyfacts",
+      "currency": "USD",
+      "periodEnd": "2024-12-31",
+      "fiscalYear": "2024",
+      "periodStart": "2024-01-01",
+      "publicationDate": "2026-03-19",
+      "periodConfidence": "exact"
+    },
+    {
+      "fp": "FY",
+      "fy": 2025,
+      "end": "2025-12-31",
+      "tag": "PaymentsToAcquirePropertyPlantAndEquipment",
+      "val": 642000,
+      "accn": "0001193125-26-115952",
+      "form": "10-K",
+      "unit": "USD",
+      "year": "2025",
+      "basis": "FY",
+      "filed": "2026-03-19",
+      "frame": "CY2025",
+      "scope": "consolidated",
+      "start": "2025-01-01",
+      "source": "SEC EDGAR companyfacts",
+      "currency": "USD",
+      "periodEnd": "2025-12-31",
+      "fiscalYear": "2025",
+      "periodStart": "2025-01-01",
+      "publicationDate": "2026-03-19",
+      "periodConfidence": "exact"
+    }
+  ],
+  "currentPrice": 0.7352,
+  "riskFreeRate": 0.048369999999999996,
+  "assetsHistory": [],
+  "equityHistory": [
+    {
+      "fp": "FY",
+      "fy": 2022,
+      "end": "2020-12-31",
+      "tag": "StockholdersEquity",
+      "val": 21810,
+      "accn": "0001410578-23-000564",
+      "form": "10-K",
+      "unit": "USD",
+      "year": "2020",
+      "basis": "instant",
+      "filed": "2023-03-31",
+      "frame": "CY2020Q4I",
+      "scope": "consolidated",
+      "source": "SEC EDGAR companyfacts",
+      "currency": "USD",
+      "periodEnd": "2020-12-31",
+      "fiscalYear": "2020",
+      "periodStart": null,
+      "publicationDate": "2023-03-31",
+      "periodConfidence": "exact"
+    },
+    {
+      "fp": "FY",
+      "fy": 2023,
+      "end": "2021-12-31",
+      "tag": "StockholdersEquity",
+      "val": -49896000,
+      "accn": "0000950170-24-034765",
+      "form": "10-K",
+      "unit": "USD",
+      "year": "2021",
+      "basis": "instant",
+      "filed": "2024-03-21",
+      "frame": "CY2021Q4I",
+      "scope": "consolidated",
+      "source": "SEC EDGAR companyfacts",
+      "currency": "USD",
+      "periodEnd": "2021-12-31",
+      "fiscalYear": "2021",
+      "periodStart": null,
+      "publicationDate": "2024-03-21",
+      "periodConfidence": "exact"
+    },
+    {
+      "fp": "FY",
+      "fy": 2024,
+      "end": "2022-12-31",
+      "tag": "StockholdersEquity",
+      "val": -55692000,
+      "accn": "0000950170-25-042645",
+      "form": "10-K",
+      "unit": "USD",
+      "year": "2022",
+      "basis": "instant",
+      "filed": "2025-03-20",
+      "frame": "CY2022Q4I",
+      "scope": "consolidated",
+      "source": "SEC EDGAR companyfacts",
+      "currency": "USD",
+      "periodEnd": "2022-12-31",
+      "fiscalYear": "2022",
+      "periodStart": null,
+      "publicationDate": "2025-03-20",
+      "periodConfidence": "exact"
+    },
+    {
+      "fp": "FY",
+      "fy": 2025,
+      "end": "2023-12-31",
+      "tag": "StockholdersEquity",
+      "val": 62824000,
+      "accn": "0001193125-26-115952",
+      "form": "10-K",
+      "unit": "USD",
+      "year": "2023",
+      "basis": "instant",
+      "filed": "2026-03-19",
+      "frame": "CY2023Q4I",
+      "scope": "consolidated",
+      "source": "SEC EDGAR companyfacts",
+      "currency": "USD",
+      "periodEnd": "2023-12-31",
+      "fiscalYear": "2023",
+      "periodStart": null,
+      "publicationDate": "2026-03-19",
+      "periodConfidence": "exact"
+    },
+    {
+      "fp": "Q3",
+      "fy": 2026,
+      "end": "2024-12-31",
+      "tag": "StockholdersEquity",
+      "val": 8385000,
+      "accn": "0001855447-26-000010",
+      "form": "10-Q",
+      "unit": "USD",
+      "year": "2024",
+      "basis": "instant",
+      "filed": "2026-11-04",
+      "frame": "CY2024Q4I",
+      "scope": "consolidated",
+      "source": "SEC EDGAR companyfacts",
+      "currency": "USD",
+      "periodEnd": "2024-12-31",
+      "fiscalYear": "2024",
+      "periodStart": null,
+      "publicationDate": "2026-11-04",
+      "periodConfidence": "exact"
+    },
+    {
+      "fp": "Q3",
+      "fy": 2026,
+      "end": "2025-12-31",
+      "tag": "StockholdersEquity",
+      "val": 27623000,
+      "accn": "0001855447-26-000010",
+      "form": "10-Q",
+      "unit": "USD",
+      "year": "2025",
+      "basis": "instant",
+      "filed": "2026-11-04",
+      "frame": "CY2025Q4I",
+      "scope": "consolidated",
+      "source": "SEC EDGAR companyfacts",
+      "currency": "USD",
+      "periodEnd": "2025-12-31",
+      "fiscalYear": "2025",
+      "periodStart": null,
+      "publicationDate": "2026-11-04",
+      "periodConfidence": "exact"
+    }
+  ],
+  "shareDilution": 128.1,
+  "sharesHistory": [
+    {
+      "val": 2875000,
+      "unit": "shares",
+      "year": "2020",
+      "basis": "instant",
+      "scope": "consolidated",
+      "source": "SEC EDGAR",
+      "currency": "USD",
+      "periodEnd": "2020-12-31",
+      "fiscalYear": "2020",
+      "periodStart": null,
+      "publicationDate": "2022-04-07",
+      "periodConfidence": "exact"
+    },
+    {
+      "val": 3336500,
+      "unit": "shares",
+      "year": "2021",
+      "basis": "instant",
+      "scope": "consolidated",
+      "source": "SEC EDGAR",
+      "currency": "USD",
+      "periodEnd": "2021-12-31",
+      "fiscalYear": "2021",
+      "periodStart": null,
+      "publicationDate": "2022-04-07",
+      "periodConfidence": "exact"
+    },
+    {
+      "val": 5469921,
+      "unit": "shares",
+      "year": "2022",
+      "basis": "instant",
+      "scope": "consolidated",
+      "source": "SEC EDGAR",
+      "currency": "USD",
+      "periodEnd": "2022-12-31",
+      "fiscalYear": "2022",
+      "periodStart": null,
+      "publicationDate": "2024-03-21",
+      "periodConfidence": "exact"
+    },
+    {
+      "val": 58751666,
+      "unit": "shares",
+      "year": "2023",
+      "basis": "instant",
+      "scope": "consolidated",
+      "source": "SEC EDGAR",
+      "currency": "USD",
+      "periodEnd": "2023-12-31",
+      "fiscalYear": "2023",
+      "periodStart": null,
+      "publicationDate": "2025-03-20",
+      "periodConfidence": "exact"
+    },
+    {
+      "val": 60800130,
+      "unit": "shares",
+      "year": "2024",
+      "basis": "instant",
+      "scope": "consolidated",
+      "source": "SEC EDGAR",
+      "currency": "USD",
+      "periodEnd": "2024-12-31",
+      "fiscalYear": "2024",
+      "periodStart": null,
+      "publicationDate": "2026-03-19",
+      "periodConfidence": "exact"
+    },
+    {
+      "val": 70424566,
+      "unit": "shares",
+      "year": "2025",
+      "basis": "instant",
+      "scope": "consolidated",
+      "source": "SEC EDGAR",
+      "currency": "USD",
+      "periodEnd": "2025-12-31",
+      "fiscalYear": "2025",
+      "periodStart": null,
+      "publicationDate": "2026-03-19",
+      "periodConfidence": "exact"
+    }
+  ],
+  "lastFilingDate": "2026-11-04",
+  "currentAssetsVal": 55006000,
+  "dividendsPaidVal": null,
+  "financialPeriods": {
+    "oi": {
+      "basis": "TTM",
+      "scope": "consolidated",
+      "source": "SEC EDGAR",
+      "currency": "USD",
+      "periodEnd": "2026-09-30",
+      "periodStart": "2025-10-01"
+    },
+    "fcf": {
+      "basis": "TTM",
+      "scope": "consolidated",
+      "source": "SEC EDGAR",
+      "currency": "USD",
+      "periodEnd": "2026-09-30",
+      "periodStart": "2025-10-01"
+    },
+    "rev": {
+      "basis": "TTM",
+      "scope": "consolidated",
+      "source": "SEC EDGAR",
+      "currency": "USD",
+      "periodEnd": "2026-09-30",
+      "periodStart": "2025-10-01"
+    },
+    "daVal": {
+      "fp": "Q3",
+      "fy": 2026,
+      "end": "2026-09-30",
+      "tag": "DepreciationDepletionAndAmortization",
+      "val": 1357000,
+      "accn": "0001855447-26-000010",
+      "form": "10-Q",
+      "unit": "USD",
+      "basis": "TTM",
+      "filed": "2026-11-04",
+      "scope": "consolidated",
+      "start": "2026-01-01",
+      "source": "SEC EDGAR companyfacts",
+      "currency": "USD",
+      "periodEnd": "2026-09-30",
+      "components": [
+        {
+          "end": "2025-12-31",
+          "val": 1266000,
+          "start": "2025-01-01"
+        },
+        {
+          "end": "2025-09-30",
+          "val": 943000,
+          "start": "2025-01-01"
+        },
+        {
+          "end": "2026-09-30",
+          "val": 1034000,
+          "start": "2026-01-01"
+        }
+      ],
+      "periodStart": "2025-10-01",
+      "publicationDate": "2026-11-04"
+    },
+    "niVal": {
+      "fp": "Q3",
+      "fy": 2026,
+      "end": "2026-09-30",
+      "tag": "NetIncomeLoss",
+      "val": 12502000,
+      "accn": "0001855447-26-000010",
+      "form": "10-Q",
+      "unit": "USD",
+      "basis": "TTM",
+      "filed": "2026-11-04",
+      "scope": "consolidated",
+      "start": "2026-01-01",
+      "source": "SEC EDGAR companyfacts",
+      "currency": "USD",
+      "periodEnd": "2026-09-30",
+      "components": [
+        {
+          "end": "2025-12-31",
+          "val": -1880000,
+          "start": "2025-01-01"
+        },
+        {
+          "end": "2025-09-30",
+          "val": -13597000,
+          "start": "2025-01-01"
+        },
+        {
+          "end": "2026-09-30",
+          "val": 785000,
+          "start": "2026-01-01"
+        }
+      ],
+      "periodStart": "2025-10-01",
+      "publicationDate": "2026-11-04"
+    },
+    "oiVal": {
+      "fp": "Q3",
+      "fy": 2026,
+      "end": "2026-09-30",
+      "tag": "OperatingIncomeLoss",
+      "val": -3834000,
+      "accn": "0001855447-26-000010",
+      "form": "10-Q",
+      "unit": "USD",
+      "basis": "TTM",
+      "filed": "2026-11-04",
+      "scope": "consolidated",
+      "start": "2026-01-01",
+      "source": "SEC EDGAR companyfacts",
+      "currency": "USD",
+      "periodEnd": "2026-09-30",
+      "components": [
+        {
+          "end": "2025-12-31",
+          "val": -4499000,
+          "start": "2025-01-01"
+        },
+        {
+          "end": "2025-09-30",
+          "val": -4832000,
+          "start": "2025-01-01"
+        },
+        {
+          "end": "2026-09-30",
+          "val": -4167000,
+          "start": "2026-01-01"
+        }
+      ],
+      "periodStart": "2025-10-01",
+      "publicationDate": "2026-11-04"
+    },
+    "ebtVal": {
+      "fp": "Q3",
+      "fy": 2026,
+      "end": "2026-09-30",
+      "tag": "IncomeLossFromContinuingOperationsBeforeIncomeTaxesExtraordinaryItemsNoncontrollingInterest",
+      "val": 8757000,
+      "accn": "0001855447-26-000010",
+      "form": "10-Q",
+      "unit": "USD",
+      "basis": "TTM",
+      "filed": "2026-11-04",
+      "scope": "consolidated",
+      "start": "2026-01-01",
+      "source": "SEC EDGAR companyfacts",
+      "currency": "USD",
+      "periodEnd": "2026-09-30",
+      "components": [
+        {
+          "end": "2025-12-31",
+          "val": -1277000,
+          "start": "2025-01-01"
+        },
+        {
+          "end": "2025-09-30",
+          "val": -12913000,
+          "start": "2025-01-01"
+        },
+        {
+          "end": "2026-09-30",
+          "val": -2879000,
+          "start": "2026-01-01"
+        }
+      ],
+      "periodStart": "2025-10-01",
+      "publicationDate": "2026-11-04"
+    },
+    "fcfVal": {
+      "fp": "Q3",
+      "fy": 2026,
+      "end": "2026-09-30",
+      "tag": "NetCashProvidedByUsedInOperatingActivities",
+      "val": -7720000,
+      "accn": "0001855447-26-000010",
+      "form": "10-Q",
+      "unit": "USD",
+      "basis": "TTM",
+      "filed": "2026-11-04",
+      "scope": "consolidated",
+      "start": "2026-01-01",
+      "source": "SEC EDGAR companyfacts",
+      "currency": "USD",
+      "periodEnd": "2026-09-30",
+      "components": [
+        {
+          "end": "2025-12-31",
+          "val": 10299000,
+          "start": "2025-01-01"
+        },
+        {
+          "end": "2025-09-30",
+          "val": 8674000,
+          "start": "2025-01-01"
+        },
+        {
+          "end": "2026-09-30",
+          "val": -8300000,
+          "start": "2026-01-01"
+        }
+      ],
+      "periodStart": "2025-10-01",
+      "publicationDate": "2026-11-04"
+    },
+    "revVal": {
+      "fp": "Q3",
+      "fy": 2026,
+      "end": "2026-09-30",
+      "tag": "Revenues",
+      "val": 103537135000,
+      "accn": "0001855447-26-000010",
+      "form": "10-Q",
+      "unit": "USD",
+      "basis": "TTM",
+      "filed": "2026-11-04",
+      "scope": "consolidated",
+      "start": "2026-01-01",
+      "source": "SEC EDGAR companyfacts",
+      "currency": "USD",
+      "periodEnd": "2026-09-30",
+      "components": [
+        {
+          "end": "2025-12-31",
+          "val": 103536000000,
+          "start": "2025-01-01"
+        },
+        {
+          "end": "2025-09-30",
+          "val": 73507000,
+          "start": "2025-01-01"
+        },
+        {
+          "end": "2026-09-30",
+          "val": 74642000,
+          "start": "2026-01-01"
+        }
+      ],
+      "periodStart": "2025-10-01",
+      "publicationDate": "2026-11-04"
+    },
+    "taxVal": {
+      "fp": "Q3",
+      "fy": 2026,
+      "end": "2026-09-30",
+      "tag": "IncomeTaxExpenseBenefit",
+      "val": -3745000,
+      "accn": "0001855447-26-000010",
+      "form": "10-Q",
+      "unit": "USD",
+      "basis": "TTM",
+      "filed": "2026-11-04",
+      "scope": "consolidated",
+      "start": "2026-01-01",
+      "source": "SEC EDGAR companyfacts",
+      "currency": "USD",
+      "periodEnd": "2026-09-30",
+      "components": [
+        {
+          "end": "2025-12-31",
+          "val": 603000,
+          "start": "2025-01-01"
+        },
+        {
+          "end": "2025-09-30",
+          "val": 684000,
+          "start": "2025-01-01"
+        },
+        {
+          "end": "2026-09-30",
+          "val": -3664000,
+          "start": "2026-01-01"
+        }
+      ],
+      "periodStart": "2025-10-01",
+      "publicationDate": "2026-11-04"
+    },
+    "cashVal": {
+      "fp": "Q3",
+      "fy": 2026,
+      "end": "2026-09-30",
+      "tag": "CashAndCashEquivalentsAtCarryingValue",
+      "val": 16753000,
+      "accn": "0001855447-26-000010",
+      "form": "10-Q",
+      "unit": "USD",
+      "basis": "instant",
+      "filed": "2026-11-04",
+      "frame": "CY2026Q3I",
+      "scope": "consolidated",
+      "source": "SEC EDGAR companyfacts",
+      "currency": "USD",
+      "periodEnd": "2026-09-30",
+      "periodStart": null,
+      "publicationDate": "2026-11-04"
+    },
+    "debtVal": {
+      "note": "Deuda financiera dispuesta bajo la l\u00ednea de cr\u00e9dito revolving a 30/09/2026, seg\u00fan balance consolidado y nota 7 del 10-Q. Excluye arrendamientos operativos.",
+      "unit": "USD",
+      "basis": "instant",
+      "scope": "consolidated",
+      "manual": true,
+      "source": "Correcci\u00f3n manual de administraci\u00f3n",
+      "currency": "USD",
+      "periodEnd": "2026-09-30",
+      "sourceUrl": "https://www.sec.gov/Archives/edgar/data/1855447/000185544726000010/tygo-20260930.htm",
+      "periodStart": null,
+      "storageFirst": true,
+      "sourceReference": "https://www.sec.gov/Archives/edgar/data/1855447/000185544726000010/tygo-20260930.htm"
+    },
+    "capexVal": {
+      "fp": "Q3",
+      "fy": 2026,
+      "end": "2026-09-30",
+      "tag": "PaymentsToAcquirePropertyPlantAndEquipment",
+      "val": 1045000,
+      "accn": "0001855447-26-000010",
+      "form": "10-Q",
+      "unit": "USD",
+      "basis": "TTM",
+      "filed": "2026-11-04",
+      "scope": "consolidated",
+      "start": "2026-01-01",
+      "source": "SEC EDGAR companyfacts",
+      "currency": "USD",
+      "periodEnd": "2026-09-30",
+      "components": [
+        {
+          "end": "2025-12-31",
+          "val": 642000,
+          "start": "2025-01-01"
+        },
+        {
+          "end": "2025-09-30",
+          "val": 197000,
+          "start": "2025-01-01"
+        },
+        {
+          "end": "2026-09-30",
+          "val": 600000,
+          "start": "2026-01-01"
+        }
+      ],
+      "periodStart": "2025-10-01",
+      "publicationDate": "2026-11-04"
+    },
+    "assetsVal": {
+      "fp": "Q3",
+      "fy": 2026,
+      "end": "2026-09-30",
+      "tag": "Assets",
+      "val": 78261000,
+      "accn": "0001855447-26-000010",
+      "form": "10-Q",
+      "unit": "USD",
+      "basis": "instant",
+      "filed": "2026-11-04",
+      "frame": "CY2026Q3I",
+      "scope": "consolidated",
+      "source": "SEC EDGAR companyfacts",
+      "currency": "USD",
+      "periodEnd": "2026-09-30",
+      "periodStart": null,
+      "publicationDate": "2026-11-04"
+    },
+    "equityVal": {
+      "fp": "Q3",
+      "fy": 2026,
+      "end": "2026-09-30",
+      "tag": "StockholdersEquity",
+      "val": 45814000,
+      "accn": "0001855447-26-000010",
+      "form": "10-Q",
+      "unit": "USD",
+      "basis": "instant",
+      "filed": "2026-11-04",
+      "frame": "CY2026Q3I",
+      "scope": "consolidated",
+      "source": "SEC EDGAR companyfacts",
+      "currency": "USD",
+      "periodEnd": "2026-09-30",
+      "periodStart": null,
+      "publicationDate": "2026-11-04"
+    },
+    "operatingCFVal": {
+      "fp": "Q3",
+      "fy": 2026,
+      "end": "2026-09-30",
+      "tag": "NetCashProvidedByUsedInOperatingActivities",
+      "val": -6675000,
+      "accn": "0001855447-26-000010",
+      "form": "10-Q",
+      "unit": "USD",
+      "basis": "TTM",
+      "filed": "2026-11-04",
+      "scope": "consolidated",
+      "start": "2026-01-01",
+      "source": "SEC EDGAR companyfacts",
+      "currency": "USD",
+      "periodEnd": "2026-09-30",
+      "components": [
+        {
+          "end": "2025-12-31",
+          "val": 10299000,
+          "start": "2025-01-01"
+        },
+        {
+          "end": "2025-09-30",
+          "val": 8674000,
+          "start": "2025-01-01"
+        },
+        {
+          "end": "2026-09-30",
+          "val": -8300000,
+          "start": "2026-01-01"
+        }
+      ],
+      "periodStart": "2025-10-01",
+      "publicationDate": "2026-11-04"
+    },
+    "sharesBasicVal": {
+      "fp": "FY",
+      "fy": 2025,
+      "end": "2025-12-31",
+      "tag": "WeightedAverageNumberOfSharesOutstandingBasic",
+      "val": 65007762,
+      "accn": "0001193125-26-115952",
+      "form": "10-K",
+      "unit": "shares",
+      "basis": "FY",
+      "filed": "2026-03-19",
+      "frame": "CY2025",
+      "scope": "consolidated",
+      "start": "2025-01-01",
+      "source": "SEC EDGAR companyfacts",
+      "currency": null,
+      "periodEnd": "2025-12-31",
+      "periodStart": "2025-01-01",
+      "publicationDate": "2026-03-19"
+    },
+    "currentAssetsVal": {
+      "fp": "Q3",
+      "fy": 2026,
+      "end": "2026-09-30",
+      "tag": "AssetsCurrent",
+      "val": 55006000,
+      "accn": "0001855447-26-000010",
+      "form": "10-Q",
+      "unit": "USD",
+      "basis": "instant",
+      "filed": "2026-11-04",
+      "frame": "CY2026Q3I",
+      "scope": "consolidated",
+      "source": "SEC EDGAR companyfacts",
+      "currency": "USD",
+      "periodEnd": "2026-09-30",
+      "periodStart": null,
+      "publicationDate": "2026-11-04"
+    },
+    "sharesDilutedVal": {
+      "fp": "FY",
+      "fy": 2025,
+      "end": "2025-12-31",
+      "tag": "WeightedAverageNumberOfDilutedSharesOutstanding",
+      "val": 65007762,
+      "accn": "0001193125-26-115952",
+      "form": "10-K",
+      "unit": "shares",
+      "basis": "FY",
+      "filed": "2026-03-19",
+      "frame": "CY2025",
+      "scope": "consolidated",
+      "start": "2025-01-01",
+      "source": "SEC EDGAR companyfacts",
+      "currency": null,
+      "periodEnd": "2025-12-31",
+      "periodStart": "2025-01-01",
+      "publicationDate": "2026-03-19"
+    },
+    "currentLiabilitiesVal": {
+      "fp": "Q3",
+      "fy": 2026,
+      "end": "2026-09-30",
+      "tag": "LiabilitiesCurrent",
+      "val": 18975000,
+      "accn": "0001855447-26-000010",
+      "form": "10-Q",
+      "unit": "USD",
+      "basis": "instant",
+      "filed": "2026-11-04",
+      "frame": "CY2026Q3I",
+      "scope": "consolidated",
+      "source": "SEC EDGAR companyfacts",
+      "currency": "USD",
+      "periodEnd": "2026-09-30",
+      "periodStart": null,
+      "publicationDate": "2026-11-04"
+    },
+    "sbcVal": {
+      "note": "SBC TTM = FY2025 7.863.000 - 9M2025 5.782.000 + 9M2026 4.223.000 USD.",
+      "unit": "USD",
+      "basis": "TTM",
+      "scope": "consolidated",
+      "manual": true,
+      "source": "Correcci\u00f3n manual de administraci\u00f3n",
+      "currency": "USD",
+      "periodEnd": "2026-09-30",
+      "sourceUrl": "https://www.sec.gov/Archives/edgar/data/1855447/000119312526115952/tygo-20251231.htm",
+      "periodStart": "2025-10-01",
+      "storageFirst": true,
+      "sourceReference": "https://www.sec.gov/Archives/edgar/data/1855447/000119312526115952/tygo-20251231.htm"
+    }
+  },
+  "sharesOutstanding": 77563845,
+  "financialIntegrity": {
+    "version": 2,
+    "status": "provisional",
+    "fields": {
+      "revVal": {
+        "status": "verified",
+        "period": {
+          "fp": "Q3",
+          "fy": 2026,
+          "end": "2026-09-30",
+          "tag": "Revenues",
+          "val": 103537135000,
+          "accn": "0001855447-26-000010",
+          "form": "10-Q",
+          "unit": "USD",
+          "basis": "TTM",
+          "filed": "2026-11-04",
+          "scope": "consolidated",
+          "start": "2026-01-01",
+          "source": "SEC EDGAR companyfacts",
+          "currency": "USD",
+          "periodEnd": "2026-09-30",
+          "components": [
+            {
+              "end": "2025-12-31",
+              "val": 103536000000,
+              "start": "2025-01-01"
+            },
+            {
+              "end": "2025-09-30",
+              "val": 73507000,
+              "start": "2025-01-01"
+            },
+            {
+              "end": "2026-09-30",
+              "val": 74642000,
+              "start": "2026-01-01"
+            }
+          ],
+          "periodStart": "2025-10-01",
+          "publicationDate": "2026-11-04"
+        }
+      },
+      "niVal": {
+        "status": "verified",
+        "period": {
+          "fp": "Q3",
+          "fy": 2026,
+          "end": "2026-09-30",
+          "tag": "NetIncomeLoss",
+          "val": 12502000,
+          "accn": "0001855447-26-000010",
+          "form": "10-Q",
+          "unit": "USD",
+          "basis": "TTM",
+          "filed": "2026-11-04",
+          "scope": "consolidated",
+          "start": "2026-01-01",
+          "source": "SEC EDGAR companyfacts",
+          "currency": "USD",
+          "periodEnd": "2026-09-30",
+          "components": [
+            {
+              "end": "2025-12-31",
+              "val": -1880000,
+              "start": "2025-01-01"
+            },
+            {
+              "end": "2025-09-30",
+              "val": -13597000,
+              "start": "2025-01-01"
+            },
+            {
+              "end": "2026-09-30",
+              "val": 785000,
+              "start": "2026-01-01"
+            }
+          ],
+          "periodStart": "2025-10-01",
+          "publicationDate": "2026-11-04"
+        }
+      },
+      "oiVal": {
+        "status": "verified",
+        "period": {
+          "fp": "Q3",
+          "fy": 2026,
+          "end": "2026-09-30",
+          "tag": "OperatingIncomeLoss",
+          "val": -3834000,
+          "accn": "0001855447-26-000010",
+          "form": "10-Q",
+          "unit": "USD",
+          "basis": "TTM",
+          "filed": "2026-11-04",
+          "scope": "consolidated",
+          "start": "2026-01-01",
+          "source": "SEC EDGAR companyfacts",
+          "currency": "USD",
+          "periodEnd": "2026-09-30",
+          "components": [
+            {
+              "end": "2025-12-31",
+              "val": -4499000,
+              "start": "2025-01-01"
+            },
+            {
+              "end": "2025-09-30",
+              "val": -4832000,
+              "start": "2025-01-01"
+            },
+            {
+              "end": "2026-09-30",
+              "val": -4167000,
+              "start": "2026-01-01"
+            }
+          ],
+          "periodStart": "2025-10-01",
+          "publicationDate": "2026-11-04"
+        }
+      },
+      "fcfVal": {
+        "status": "verified",
+        "period": {
+          "fp": "Q3",
+          "fy": 2026,
+          "end": "2026-09-30",
+          "tag": "NetCashProvidedByUsedInOperatingActivities",
+          "val": -7720000,
+          "accn": "0001855447-26-000010",
+          "form": "10-Q",
+          "unit": "USD",
+          "basis": "TTM",
+          "filed": "2026-11-04",
+          "scope": "consolidated",
+          "start": "2026-01-01",
+          "source": "SEC EDGAR companyfacts",
+          "currency": "USD",
+          "periodEnd": "2026-09-30",
+          "components": [
+            {
+              "end": "2025-12-31",
+              "val": 10299000,
+              "start": "2025-01-01"
+            },
+            {
+              "end": "2025-09-30",
+              "val": 8674000,
+              "start": "2025-01-01"
+            },
+            {
+              "end": "2026-09-30",
+              "val": -8300000,
+              "start": "2026-01-01"
+            }
+          ],
+          "periodStart": "2025-10-01",
+          "publicationDate": "2026-11-04"
+        }
+      },
+      "operatingCFVal": {
+        "status": "verified",
+        "period": {
+          "fp": "Q3",
+          "fy": 2026,
+          "end": "2026-09-30",
+          "tag": "NetCashProvidedByUsedInOperatingActivities",
+          "val": -6675000,
+          "accn": "0001855447-26-000010",
+          "form": "10-Q",
+          "unit": "USD",
+          "basis": "TTM",
+          "filed": "2026-11-04",
+          "scope": "consolidated",
+          "start": "2026-01-01",
+          "source": "SEC EDGAR companyfacts",
+          "currency": "USD",
+          "periodEnd": "2026-09-30",
+          "components": [
+            {
+              "end": "2025-12-31",
+              "val": 10299000,
+              "start": "2025-01-01"
+            },
+            {
+              "end": "2025-09-30",
+              "val": 8674000,
+              "start": "2025-01-01"
+            },
+            {
+              "end": "2026-09-30",
+              "val": -8300000,
+              "start": "2026-01-01"
+            }
+          ],
+          "periodStart": "2025-10-01",
+          "publicationDate": "2026-11-04"
+        }
+      },
+      "capexVal": {
+        "status": "verified",
+        "period": {
+          "fp": "Q3",
+          "fy": 2026,
+          "end": "2026-09-30",
+          "tag": "PaymentsToAcquirePropertyPlantAndEquipment",
+          "val": 1045000,
+          "accn": "0001855447-26-000010",
+          "form": "10-Q",
+          "unit": "USD",
+          "basis": "TTM",
+          "filed": "2026-11-04",
+          "scope": "consolidated",
+          "start": "2026-01-01",
+          "source": "SEC EDGAR companyfacts",
+          "currency": "USD",
+          "periodEnd": "2026-09-30",
+          "components": [
+            {
+              "end": "2025-12-31",
+              "val": 642000,
+              "start": "2025-01-01"
+            },
+            {
+              "end": "2025-09-30",
+              "val": 197000,
+              "start": "2025-01-01"
+            },
+            {
+              "end": "2026-09-30",
+              "val": 600000,
+              "start": "2026-01-01"
+            }
+          ],
+          "periodStart": "2025-10-01",
+          "publicationDate": "2026-11-04"
+        }
+      },
+      "daVal": {
+        "status": "verified",
+        "period": {
+          "fp": "Q3",
+          "fy": 2026,
+          "end": "2026-09-30",
+          "tag": "DepreciationDepletionAndAmortization",
+          "val": 1357000,
+          "accn": "0001855447-26-000010",
+          "form": "10-Q",
+          "unit": "USD",
+          "basis": "TTM",
+          "filed": "2026-11-04",
+          "scope": "consolidated",
+          "start": "2026-01-01",
+          "source": "SEC EDGAR companyfacts",
+          "currency": "USD",
+          "periodEnd": "2026-09-30",
+          "components": [
+            {
+              "end": "2025-12-31",
+              "val": 1266000,
+              "start": "2025-01-01"
+            },
+            {
+              "end": "2025-09-30",
+              "val": 943000,
+              "start": "2025-01-01"
+            },
+            {
+              "end": "2026-09-30",
+              "val": 1034000,
+              "start": "2026-01-01"
+            }
+          ],
+          "periodStart": "2025-10-01",
+          "publicationDate": "2026-11-04"
+        }
+      },
+      "assetsVal": {
+        "status": "verified",
+        "period": {
+          "fp": "Q3",
+          "fy": 2026,
+          "end": "2026-09-30",
+          "tag": "Assets",
+          "val": 78261000,
+          "accn": "0001855447-26-000010",
+          "form": "10-Q",
+          "unit": "USD",
+          "basis": "instant",
+          "filed": "2026-11-04",
+          "frame": "CY2026Q3I",
+          "scope": "consolidated",
+          "source": "SEC EDGAR companyfacts",
+          "currency": "USD",
+          "periodEnd": "2026-09-30",
+          "periodStart": null,
+          "publicationDate": "2026-11-04"
+        }
+      },
+      "equityVal": {
+        "status": "verified",
+        "period": {
+          "fp": "Q3",
+          "fy": 2026,
+          "end": "2026-09-30",
+          "tag": "StockholdersEquity",
+          "val": 45814000,
+          "accn": "0001855447-26-000010",
+          "form": "10-Q",
+          "unit": "USD",
+          "basis": "instant",
+          "filed": "2026-11-04",
+          "frame": "CY2026Q3I",
+          "scope": "consolidated",
+          "source": "SEC EDGAR companyfacts",
+          "currency": "USD",
+          "periodEnd": "2026-09-30",
+          "periodStart": null,
+          "publicationDate": "2026-11-04"
+        }
+      },
+      "debtVal": {
+        "status": "provisional",
+        "period": {
+          "note": "Deuda financiera dispuesta bajo la l\u00ednea de cr\u00e9dito revolving a 30/09/2026, seg\u00fan balance consolidado y nota 7 del 10-Q. Excluye arrendamientos operativos.",
+          "unit": "USD",
+          "basis": "instant",
+          "scope": "consolidated",
+          "manual": true,
+          "source": "Correcci\u00f3n manual de administraci\u00f3n",
+          "currency": "USD",
+          "periodEnd": "2026-09-30",
+          "sourceUrl": "https://www.sec.gov/Archives/edgar/data/1855447/000185544726000010/tygo-20260930.htm",
+          "periodStart": null,
+          "storageFirst": true,
+          "sourceReference": "https://www.sec.gov/Archives/edgar/data/1855447/000185544726000010/tygo-20260930.htm"
+        },
+        "manual": true,
+        "source": "Correcci\u00f3n manual de administraci\u00f3n",
+        "manualCalculation": true,
+        "modelExcluded": false
+      },
+      "cashVal": {
+        "status": "verified",
+        "period": {
+          "fp": "Q3",
+          "fy": 2026,
+          "end": "2026-09-30",
+          "tag": "CashAndCashEquivalentsAtCarryingValue",
+          "val": 16753000,
+          "accn": "0001855447-26-000010",
+          "form": "10-Q",
+          "unit": "USD",
+          "basis": "instant",
+          "filed": "2026-11-04",
+          "frame": "CY2026Q3I",
+          "scope": "consolidated",
+          "source": "SEC EDGAR companyfacts",
+          "currency": "USD",
+          "periodEnd": "2026-09-30",
+          "periodStart": null,
+          "publicationDate": "2026-11-04"
+        }
+      },
+      "currentAssetsVal": {
+        "status": "verified",
+        "period": {
+          "fp": "Q3",
+          "fy": 2026,
+          "end": "2026-09-30",
+          "tag": "AssetsCurrent",
+          "val": 55006000,
+          "accn": "0001855447-26-000010",
+          "form": "10-Q",
+          "unit": "USD",
+          "basis": "instant",
+          "filed": "2026-11-04",
+          "frame": "CY2026Q3I",
+          "scope": "consolidated",
+          "source": "SEC EDGAR companyfacts",
+          "currency": "USD",
+          "periodEnd": "2026-09-30",
+          "periodStart": null,
+          "publicationDate": "2026-11-04"
+        }
+      },
+      "currentLiabilitiesVal": {
+        "status": "verified",
+        "period": {
+          "fp": "Q3",
+          "fy": 2026,
+          "end": "2026-09-30",
+          "tag": "LiabilitiesCurrent",
+          "val": 18975000,
+          "accn": "0001855447-26-000010",
+          "form": "10-Q",
+          "unit": "USD",
+          "basis": "instant",
+          "filed": "2026-11-04",
+          "frame": "CY2026Q3I",
+          "scope": "consolidated",
+          "source": "SEC EDGAR companyfacts",
+          "currency": "USD",
+          "periodEnd": "2026-09-30",
+          "periodStart": null,
+          "publicationDate": "2026-11-04"
+        }
+      },
+      "totalLiabilitiesVal": {
+        "status": "provisional",
+        "period": null
+      },
+      "ebtVal": {
+        "status": "verified",
+        "period": {
+          "fp": "Q3",
+          "fy": 2026,
+          "end": "2026-09-30",
+          "tag": "IncomeLossFromContinuingOperationsBeforeIncomeTaxesExtraordinaryItemsNoncontrollingInterest",
+          "val": 8757000,
+          "accn": "0001855447-26-000010",
+          "form": "10-Q",
+          "unit": "USD",
+          "basis": "TTM",
+          "filed": "2026-11-04",
+          "scope": "consolidated",
+          "start": "2026-01-01",
+          "source": "SEC EDGAR companyfacts",
+          "currency": "USD",
+          "periodEnd": "2026-09-30",
+          "components": [
+            {
+              "end": "2025-12-31",
+              "val": -1277000,
+              "start": "2025-01-01"
+            },
+            {
+              "end": "2025-09-30",
+              "val": -12913000,
+              "start": "2025-01-01"
+            },
+            {
+              "end": "2026-09-30",
+              "val": -2879000,
+              "start": "2026-01-01"
+            }
+          ],
+          "periodStart": "2025-10-01",
+          "publicationDate": "2026-11-04"
+        }
+      },
+      "taxVal": {
+        "status": "verified",
+        "period": {
+          "fp": "Q3",
+          "fy": 2026,
+          "end": "2026-09-30",
+          "tag": "IncomeTaxExpenseBenefit",
+          "val": -3745000,
+          "accn": "0001855447-26-000010",
+          "form": "10-Q",
+          "unit": "USD",
+          "basis": "TTM",
+          "filed": "2026-11-04",
+          "scope": "consolidated",
+          "start": "2026-01-01",
+          "source": "SEC EDGAR companyfacts",
+          "currency": "USD",
+          "periodEnd": "2026-09-30",
+          "components": [
+            {
+              "end": "2025-12-31",
+              "val": 603000,
+              "start": "2025-01-01"
+            },
+            {
+              "end": "2025-09-30",
+              "val": 684000,
+              "start": "2025-01-01"
+            },
+            {
+              "end": "2026-09-30",
+              "val": -3664000,
+              "start": "2026-01-01"
+            }
+          ],
+          "periodStart": "2025-10-01",
+          "publicationDate": "2026-11-04"
+        }
+      },
+      "interestVal": {
+        "status": "provisional",
+        "period": null
+      },
+      "rdVal": {
+        "status": "provisional",
+        "period": null
+      },
+      "cogsVal": {
+        "status": "provisional",
+        "period": null
+      },
+      "sgaVal": {
+        "status": "provisional",
+        "period": null
+      },
+      "sbcVal": {
+        "status": "provisional",
+        "period": {
+          "note": "SBC TTM = FY2025 7.863.000 - 9M2025 5.782.000 + 9M2026 4.223.000 USD.",
+          "unit": "USD",
+          "basis": "TTM",
+          "scope": "consolidated",
+          "manual": true,
+          "source": "Correcci\u00f3n manual de administraci\u00f3n",
+          "currency": "USD",
+          "periodEnd": "2026-09-30",
+          "sourceUrl": "https://www.sec.gov/Archives/edgar/data/1855447/000119312526115952/tygo-20251231.htm",
+          "periodStart": "2025-10-01",
+          "storageFirst": true,
+          "sourceReference": "https://www.sec.gov/Archives/edgar/data/1855447/000119312526115952/tygo-20251231.htm"
+        },
+        "manual": true,
+        "source": "Correcci\u00f3n manual de administraci\u00f3n",
+        "manualCalculation": true,
+        "modelExcluded": false
+      },
+      "investingCFVal": {
+        "status": "provisional",
+        "period": null
+      },
+      "financingCFVal": {
+        "status": "provisional",
+        "period": null
+      },
+      "inventoryVal": {
+        "status": "provisional",
+        "period": null
+      },
+      "receivablesVal": {
+        "status": "provisional",
+        "period": null
+      },
+      "payablesVal": {
+        "status": "provisional",
+        "period": null
+      },
+      "retainedEarningsVal": {
+        "status": "provisional",
+        "period": null
+      },
+      "sharesBasicVal": {
+        "status": "provisional",
+        "period": {
+          "fp": "FY",
+          "fy": 2025,
+          "end": "2025-12-31",
+          "tag": "WeightedAverageNumberOfSharesOutstandingBasic",
+          "val": 65007762,
+          "accn": "0001193125-26-115952",
+          "form": "10-K",
+          "unit": "shares",
+          "basis": "FY",
+          "filed": "2026-03-19",
+          "frame": "CY2025",
+          "scope": "consolidated",
+          "start": "2025-01-01",
+          "source": "SEC EDGAR companyfacts",
+          "currency": null,
+          "periodEnd": "2025-12-31",
+          "periodStart": "2025-01-01",
+          "publicationDate": "2026-03-19"
+        }
+      },
+      "sharesDilutedVal": {
+        "status": "provisional",
+        "period": {
+          "fp": "FY",
+          "fy": 2025,
+          "end": "2025-12-31",
+          "tag": "WeightedAverageNumberOfDilutedSharesOutstanding",
+          "val": 65007762,
+          "accn": "0001193125-26-115952",
+          "form": "10-K",
+          "unit": "shares",
+          "basis": "FY",
+          "filed": "2026-03-19",
+          "frame": "CY2025",
+          "scope": "consolidated",
+          "start": "2025-01-01",
+          "source": "SEC EDGAR companyfacts",
+          "currency": null,
+          "periodEnd": "2025-12-31",
+          "periodStart": "2025-01-01",
+          "publicationDate": "2026-03-19"
+        }
+      },
+      "sharesVal": {
+        "status": "provisional",
+        "period": null
+      },
+      "opMargin": {
+        "status": "verified"
+      },
+      "netMargin": {
+        "status": "verified"
+      },
+      "grossMargin": {
+        "status": "provisional",
+        "source": "legacy-reported-ratio",
+        "reason": "No est\u00e1n disponibles todos los componentes para contrastar el ratio publicado."
+      },
+      "roe": {
+        "status": "verified"
+      },
+      "roa": {
+        "status": "verified"
+      },
+      "netDebt": {
+        "status": "provisional",
+        "manual": true,
+        "manualCalculation": true,
+        "modelExcluded": false
+      },
+      "debtToEquity": {
+        "status": "provisional",
+        "manual": true,
+        "manualCalculation": true,
+        "modelExcluded": false
+      },
+      "roic": {
+        "status": "verified"
+      },
+      "dso": {
+        "status": "provisional",
+        "period": null
+      },
+      "dio": {
+        "status": "provisional",
+        "period": null
+      },
+      "dpo": {
+        "status": "provisional",
+        "period": null
+      },
+      "inventoryTurnover": {
+        "status": "provisional",
+        "period": null
+      },
+      "fcfYield": {
+        "status": "verified"
+      },
+      "eps": {
+        "status": "provisional",
+        "period": null
+      },
+      "pe": {
+        "status": "provisional"
+      },
+      "epsCagr": {
+        "status": "provisional",
+        "reason": "M\u00e9todo heredado de crecimiento del BPA; no equivale a una serie auditada."
+      },
+      "revGrowth": {
+        "status": "provisional",
+        "period": null
+      },
+      "shareDilution": {
+        "status": "provisional",
+        "period": null
+      },
+      "ccc": {
+        "status": "provisional",
+        "period": null
+      },
+      "priceToBook": {
+        "status": "provisional",
+        "period": null
+      }
+    },
+    "calculations": {
+      "opMargin": {
+        "status": "verified",
+        "dependencies": [
+          "revVal",
+          "oiVal"
+        ]
+      },
+      "netMargin": {
+        "status": "verified",
+        "dependencies": [
+          "revVal",
+          "niVal"
+        ]
+      },
+      "grossMargin": {
+        "status": "provisional",
+        "reason": "Faltan componentes necesarios.",
+        "reasonCode": "missing-components",
+        "dependencies": [
+          "revVal",
+          "gpVal"
+        ]
+      },
+      "roe": {
+        "status": "verified",
+        "dependencies": [
+          "niVal",
+          "equityVal"
+        ]
+      },
+      "roa": {
+        "status": "verified",
+        "dependencies": [
+          "niVal",
+          "assetsVal"
+        ]
+      },
+      "netDebt": {
+        "status": "provisional",
+        "dependencies": [
+          "debtVal",
+          "cashVal"
+        ],
+        "manualCalculation": true
+      },
+      "debtToEquity": {
+        "status": "provisional",
+        "dependencies": [
+          "debtVal",
+          "equityVal"
+        ],
+        "manualCalculation": true
+      },
+      "roic": {
+        "status": "verified",
+        "dependencies": [
+          "oiVal",
+          "ebtVal",
+          "taxVal",
+          "assetsVal",
+          "currentLiabilitiesVal"
+        ]
+      },
+      "evEbitda": {
+        "status": "provisional",
+        "dependencies": [
+          "oiVal",
+          "daVal",
+          "debtVal",
+          "cashVal"
+        ],
+        "manualCalculation": true
+      },
+      "dso": {
+        "status": "provisional",
+        "dependencies": [
+          "receivablesVal",
+          "revVal"
+        ]
+      },
+      "dio": {
+        "status": "provisional",
+        "dependencies": [
+          "inventoryVal",
+          "cogsVal"
+        ]
+      },
+      "dpo": {
+        "status": "provisional",
+        "dependencies": [
+          "payablesVal",
+          "cogsVal"
+        ]
+      },
+      "inventoryTurnover": {
+        "status": "provisional",
+        "dependencies": [
+          "inventoryVal",
+          "cogsVal"
+        ]
+      },
+      "fcfVal": {
+        "status": "verified",
+        "dependencies": [
+          "operatingCFVal",
+          "capexVal",
+          "fcfVal"
+        ]
+      },
+      "projections": {
+        "status": "provisional",
+        "dependencies": [
+          "revVal",
+          "oiVal",
+          "assetsVal",
+          "currentLiabilitiesVal",
+          "debtVal",
+          "cashVal",
+          "ebtVal",
+          "taxVal"
+        ],
+        "manualCalculation": true
+      },
+      "bankProjections": {
+        "status": "verified",
+        "dependencies": [
+          "niVal",
+          "equityVal"
+        ]
+      },
+      "dcf": {
+        "status": "provisional",
+        "manualCalculation": true
+      },
+      "growth": {
+        "status": "provisional"
+      },
+      "value": {
+        "status": "provisional",
+        "manualCalculation": true
+      },
+      "quality": {
+        "status": "provisional",
+        "manualCalculation": true
+      },
+      "currentRatio": {
+        "status": "verified",
+        "dependencies": [
+          "currentAssetsVal",
+          "currentLiabilitiesVal"
+        ]
+      },
+      "cashRunway": {
+        "status": "verified",
+        "dependencies": [
+          "cashVal",
+          "fcfVal"
+        ]
+      },
+      "fcfMargin": {
+        "status": "verified",
+        "dependencies": [
+          "fcfVal",
+          "revVal"
+        ]
+      },
+      "cashConversion": {
+        "status": "verified",
+        "dependencies": [
+          "fcfVal",
+          "niVal"
+        ]
+      }
+    },
+    "issues": [
+      {
+        "code": "EPS_BASES_UNRESOLVED",
+        "field": "eps",
+        "message": "BPA y beneficio/acciones actuales difieren. Pueden usar periodos y denominadores distintos; la relaci\u00f3n no est\u00e1 verificada.",
+        "severity": "warning"
+      },
+      {
+        "code": "PROVISIONAL_DATA",
+        "field": "financials",
+        "message": "Datos provisionales: falta verificar parte de sus periodos, moneda o procedencia. Las notas y estimaciones que los utilicen tambi\u00e9n son provisionales.",
+        "severity": "warning"
+      },
+      {
+        "code": "ADMIN_CORRECTION",
+        "severity": "warning",
+        "field": "financials",
+        "message": "Hay correcciones manuales de administraci\u00f3n. Se conservan hasta que se editen o se restaure el proveedor; no son una verificaci\u00f3n autom\u00e1tica."
+      },
+      {
+        "code": "MANUAL_CALCULATION",
+        "severity": "warning",
+        "field": "financials",
+        "message": "Calculado con entradas manuales de administraci\u00f3n. Las discrepancias son advertencias; no constituyen una verificaci\u00f3n autom\u00e1tica ni una anualizaci\u00f3n."
+      }
+    ],
+    "warning": "Datos provisionales: algunas relaciones fiscales y fuentes siguen sin verificarse. No confundir estas estimaciones con resultados validados."
+  },
+  "currentLiabilitiesVal": 18975000,
+  "currentLiabilitiesHistory": [
+    {
+      "fp": "FY",
+      "fy": 2023,
+      "end": "2022-12-31",
+      "tag": "LiabilitiesCurrent",
+      "val": 39588000,
+      "accn": "0000950170-24-034765",
+      "form": "10-K",
+      "unit": "USD",
+      "year": "2022",
+      "basis": "instant",
+      "filed": "2024-03-21",
+      "frame": "CY2022Q4I",
+      "scope": "consolidated",
+      "source": "SEC EDGAR companyfacts",
+      "currency": "USD",
+      "periodEnd": "2022-12-31",
+      "fiscalYear": "2022",
+      "periodStart": null,
+      "publicationDate": "2024-03-21",
+      "periodConfidence": "exact"
+    },
+    {
+      "fp": "FY",
+      "fy": 2024,
+      "end": "2023-12-31",
+      "tag": "LiabilitiesCurrent",
+      "val": 26419000,
+      "accn": "0000950170-25-042645",
+      "form": "10-K",
+      "unit": "USD",
+      "year": "2023",
+      "basis": "instant",
+      "filed": "2025-03-20",
+      "frame": "CY2023Q4I",
+      "scope": "consolidated",
+      "source": "SEC EDGAR companyfacts",
+      "currency": "USD",
+      "periodEnd": "2023-12-31",
+      "fiscalYear": "2023",
+      "periodStart": null,
+      "publicationDate": "2025-03-20",
+      "periodConfidence": "exact"
+    },
+    {
+      "fp": "FY",
+      "fy": 2025,
+      "end": "2024-12-31",
+      "tag": "LiabilitiesCurrent",
+      "val": 17108000,
+      "accn": "0001193125-26-115952",
+      "form": "10-K",
+      "unit": "USD",
+      "year": "2024",
+      "basis": "instant",
+      "filed": "2026-03-19",
+      "frame": "CY2024Q4I",
+      "scope": "consolidated",
+      "source": "SEC EDGAR companyfacts",
+      "currency": "USD",
+      "periodEnd": "2024-12-31",
+      "fiscalYear": "2024",
+      "periodStart": null,
+      "publicationDate": "2026-03-19",
+      "periodConfidence": "exact"
+    },
+    {
+      "fp": "Q3",
+      "fy": 2026,
+      "end": "2025-12-31",
+      "tag": "LiabilitiesCurrent",
+      "val": 38768000,
+      "accn": "0001855447-26-000010",
+      "form": "10-Q",
+      "unit": "USD",
+      "year": "2025",
+      "basis": "instant",
+      "filed": "2026-11-04",
+      "frame": "CY2025Q4I",
+      "scope": "consolidated",
+      "source": "SEC EDGAR companyfacts",
+      "currency": "USD",
+      "periodEnd": "2025-12-31",
+      "fiscalYear": "2025",
+      "periodStart": null,
+      "publicationDate": "2026-11-04",
+      "periodConfidence": "exact"
+    }
+  ],
+  "manualCorrections": [
+    {
+      "target": "history:sbcHistory:TTM:2026-09-30",
+      "field": "sbcVal",
+      "value": 6304000,
+      "period": {
+        "note": "SBC TTM = FY2025 7.863.000 - 9M2025 5.782.000 + 9M2026 4.223.000 USD.",
+        "unit": "USD",
+        "basis": "TTM",
+        "scope": "consolidated",
+        "manual": true,
+        "source": "Correcci\u00f3n manual de administraci\u00f3n",
+        "currency": "USD",
+        "periodEnd": "2026-09-30",
+        "sourceUrl": "https://www.sec.gov/Archives/edgar/data/1855447/000119312526115952/tygo-20251231.htm",
+        "periodStart": "2025-10-01",
+        "storageFirst": true,
+        "sourceReference": "https://www.sec.gov/Archives/edgar/data/1855447/000119312526115952/tygo-20251231.htm"
+      },
+      "id": 57,
+      "updatedAt": "2026-11-07T20:41:35.465684+00:00",
+      "ttmHistory": true,
+      "modelExcluded": false,
+      "appliedToCurrent": true,
+      "manualCalculation": true,
+      "calculationStatus": "manual",
+      "reason": "TTM manual utilizado con su periodo completo; no sustituye el hist\u00f3rico FY ni Q."
+    },
+    {
+      "target": "debtVal",
+      "field": "debtVal",
+      "value": 2516000,
+      "period": {
+        "note": "Deuda financiera dispuesta bajo la l\u00ednea de cr\u00e9dito revolving a 30/09/2026, seg\u00fan balance consolidado y nota 7 del 10-Q. Excluye arrendamientos operativos.",
+        "unit": "USD",
+        "basis": "instant",
+        "scope": "consolidated",
+        "manual": true,
+        "source": "Correcci\u00f3n manual de administraci\u00f3n",
+        "currency": "USD",
+        "periodEnd": "2026-09-30",
+        "sourceUrl": "https://www.sec.gov/Archives/edgar/data/1855447/000185544726000010/tygo-20260930.htm",
+        "periodStart": null,
+        "storageFirst": true,
+        "sourceReference": "https://www.sec.gov/Archives/edgar/data/1855447/000185544726000010/tygo-20260930.htm"
+      },
+      "exclusion": null,
+      "updatedAt": "2026-11-07T10:37:11.714574+00:00",
+      "id": 54,
+      "providerValue": 50000000,
+      "modelExcluded": false,
+      "calculationStatus": "manual",
+      "reason": "Entrada manual de administraci\u00f3n; no implica verificaci\u00f3n autom\u00e1tica.",
+      "manualCalculation": true
+    }
+  ],
+  "manualCalculation": {
+    "fields": [
+      "debtVal",
+      "sbcVal",
+      "debtToEquity",
+      "netDebt"
+    ],
+    "warnings": [],
+    "message": "Calculado con entradas manuales de administraci\u00f3n. Las discrepancias son advertencias; no constituyen una verificaci\u00f3n autom\u00e1tica ni una anualizaci\u00f3n."
+  },
+  "ttmHistories": {
+    "sbcHistory": [
+      {
+        "note": "SBC TTM = FY2025 7.863.000 - 9M2025 5.782.000 + 9M2026 4.223.000 USD.",
+        "unit": "USD",
+        "basis": "TTM",
+        "scope": "consolidated",
+        "manual": true,
+        "source": "Correcci\u00f3n manual de administraci\u00f3n",
+        "currency": "USD",
+        "periodEnd": "2026-09-30",
+        "sourceUrl": "https://www.sec.gov/Archives/edgar/data/1855447/000119312526115952/tygo-20251231.htm",
+        "periodStart": "2025-10-01",
+        "storageFirst": true,
+        "sourceReference": "https://www.sec.gov/Archives/edgar/data/1855447/000119312526115952/tygo-20251231.htm",
+        "year": "2026",
+        "val": 6304000,
+        "manualTarget": "history:sbcHistory:TTM:2026-09-30"
+      }
+    ]
+  },
+  "asOf": "2026-11-07"
+}

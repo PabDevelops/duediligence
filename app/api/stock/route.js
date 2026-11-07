@@ -1,4 +1,8 @@
 import { selectStatementFacts, selectFlowSeries, ANNUAL_FORMS } from '../../../lib/secFactSelection.js';
+import {secEarningsAdjustments} from '../../../lib/valuationEarnings.js';
+import {scopeFinancialEntity} from '../../../lib/listingIdentity.js';
+import {providerListing} from '../../../lib/listingDiscovery.js';
+import {discoverSecListing} from '../../../lib/secListingDiscovery.js';
 import { corroboratedCashEquivalents, annualFcfEvidence } from '../../../lib/secCoverageRecovery.js';
 import { recoverYahooPeriods, recoverSecPeriods } from '../../../lib/financialPeriodRecovery.js';
 import { joinAnnualEvidence } from '../../../lib/financialDataPolicy.js';
@@ -797,7 +801,7 @@ function recomputePriceRatios(data, newPrice) {
 
 function normalizeStockData(data) { return sanitizeFinancialData(data); }
 async function stockResponse(data, options) {
-  try{return Response.json(await applyStoredFinancialOverrides(sanitizeFinancialData(data)), options);}
+  try{return Response.json(scopeFinancialEntity(await applyStoredFinancialOverrides(sanitizeFinancialData(data))), options);}
   catch{return Response.json({error:'No se pudieron cargar las correcciones financieras. Inténtalo de nuevo.'},{status:503});}
 }
 
@@ -1084,9 +1088,12 @@ export async function GET(request) {
     let hasSecFacts = false;
     let facts = null;
     let cik = null;
+    let listingPromise=null;
 
     if (company) {
       cik = String(company.cik_str).padStart(10, '0');
+      // Run bounded metadata discovery alongside the existing facts/provider work.
+      listingPromise=discoverSecListing(cik,ticker,priorCachedData?.listingInfo);
       try {
         const factsRes = await fetch(
           `https://data.sec.gov/api/xbrl/companyfacts/CIK${cik}.json`,
@@ -1244,7 +1251,7 @@ export async function GET(request) {
         riskFreeRate,
         name: fhProfile.name || ticker,
         ticker,
-        cik: null,
+        cik: cik || null,
         sector: normalizeSector(fhProfile.finnhubIndustry) || yh?.sector || priorCachedData?.sector || null,
         industry: fhProfile.finnhubIndustry || yh?.industry || priorCachedData?.industry || null,
         exchange: fhProfile.exchange || priorCachedData?.exchange || null,
@@ -1340,6 +1347,7 @@ export async function GET(request) {
       result.lastEarningsDate = resolveLastEarningsDate(priorCachedData, earningsInfo.lastEarningsDate);
       result.nextEarningsDate = earningsInfo.nextEarningsDate;
       result.isEtf = cachedIsEtf;
+      result.listingInfo=(listingPromise?await listingPromise:null)||providerListing(fhProfile,ticker,priorCachedData?.listingInfo);
 
       // Fill in the price-dependent half of the QoQ comparison snapshot (market cap, P/E, ...)
       // now that priceBefore is available — yh.prevQuarter carries everything computable
@@ -2348,7 +2356,9 @@ export async function GET(request) {
       if(fact && result[field]===fact.val)result.financialPeriods[field]={basis:'instant',periodEnd:fact.end,currency:fact.currency,scope:'consolidated',source:'SEC EDGAR'};
     }
     result.isEtf = cachedIsEtf;
+    result.listingInfo=(listingPromise?await listingPromise:null)||providerListing(fhProfile,ticker,priorCachedData?.listingInfo);
     Object.assign(result,recoverSecPeriods(result,facts));
+    result.earningsAdjustments=secEarningsAdjustments(result,facts);
     if (!compatibleCurrentCashFlows && result.fcfVal != null) {
       const selected = freeCashFlows?.[0];
       const o = cashFlows?.find(p => p.start === selected?.start && p.end === selected?.end && p.currency === selected?.currency);

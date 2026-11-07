@@ -1,0 +1,907 @@
+{
+  "pe": 10.24,
+  "cik": "0001846416",
+  "eps": 0.1523,
+  "roa": 1.3,
+  "roe": -26.2,
+  "beta": 0.23789483,
+  "name": "ONE Nuclear Energy Inc.",
+  "roic": -1.8,
+  "daVal": null,
+  "niVal": 2639629,
+  "oiVal": -4586628,
+  "rdVal": null,
+  "ebtVal": null,
+  "fcfVal": null,
+  "revVal": null,
+  "sbcVal": null,
+  "sector": "Utilities",
+  "taxVal": null,
+  "ticker": "ONEN",
+  "cashVal": 259477,
+  "debtVal": 0,
+  "capexVal": null,
+  "currency": "USD",
+  "evEbitda": null,
+  "industry": "Utilities",
+  "opMargin": null,
+  "assetsVal": 200764663,
+  "daHistory": [],
+  "equityVal": -10084981,
+  "gpHistory": [],
+  "marketCap": 182957682.0275862,
+  "netMargin": null,
+  "niHistory": [
+    {
+      "fp": null,
+      "fy": null,
+      "end": "2025-12-31",
+      "tag": "NetIncomeLoss",
+      "val": 3687416,
+      "accn": "0001493152-26-034669",
+      "form": "S-4/A",
+      "unit": "USD",
+      "year": "2025",
+      "basis": "FY",
+      "filed": "2026-07-27",
+      "frame": "CY2025",
+      "scope": "consolidated",
+      "start": "2025-01-01",
+      "source": "SEC EDGAR companyfacts",
+      "currency": "USD",
+      "periodEnd": "2025-12-31",
+      "fiscalYear": "2025",
+      "periodStart": "2025-01-01",
+      "publicationDate": "2026-07-27",
+      "periodConfidence": "exact"
+    }
+  ],
+  "oiHistory": [
+    {
+      "fp": null,
+      "fy": null,
+      "end": "2025-12-31",
+      "tag": "OperatingIncomeLoss",
+      "val": -3656556,
+      "accn": "0001493152-26-034669",
+      "form": "S-4/A",
+      "unit": "USD",
+      "year": "2025",
+      "basis": "FY",
+      "filed": "2026-07-27",
+      "frame": "CY2025",
+      "scope": "consolidated",
+      "start": "2025-01-01",
+      "source": "SEC EDGAR companyfacts",
+      "currency": "USD",
+      "periodEnd": "2025-12-31",
+      "fiscalYear": "2025",
+      "periodStart": "2025-01-01",
+      "publicationDate": "2026-07-27",
+      "periodConfidence": "exact"
+    }
+  ],
+  "revGrowth": null,
+  "ebtHistory": [],
+  "fcfHistory": [],
+  "revHistory": [],
+  "taxHistory": [],
+  "debtHistory": [],
+  "grossMargin": null,
+  "interestVal": null,
+  "priceToBook": null,
+  "capexHistory": [],
+  "currentPrice": 1.56,
+  "riskFreeRate": 0.048369999999999996,
+  "assetsHistory": [],
+  "equityHistory": [
+    {
+      "fp": "Q2",
+      "fy": 2026,
+      "end": "2024-12-31",
+      "tag": "StockholdersEquity",
+      "val": -22952,
+      "accn": "0001493152-26-037362",
+      "form": "10-Q",
+      "unit": "USD",
+      "year": "2024",
+      "basis": "instant",
+      "filed": "2026-08-12",
+      "frame": "CY2024Q4I",
+      "scope": "consolidated",
+      "source": "SEC EDGAR companyfacts",
+      "currency": "USD",
+      "periodEnd": "2024-12-31",
+      "fiscalYear": "2024",
+      "periodStart": null,
+      "publicationDate": "2026-08-12",
+      "periodConfidence": "exact"
+    },
+    {
+      "fp": "Q2",
+      "fy": 2026,
+      "end": "2025-12-31",
+      "tag": "StockholdersEquity",
+      "val": -9050624,
+      "accn": "0001493152-26-037362",
+      "form": "10-Q",
+      "unit": "USD",
+      "year": "2025",
+      "basis": "instant",
+      "filed": "2026-08-12",
+      "frame": "CY2025Q4I",
+      "scope": "consolidated",
+      "source": "SEC EDGAR companyfacts",
+      "currency": "USD",
+      "periodEnd": "2025-12-31",
+      "fiscalYear": "2025",
+      "periodStart": null,
+      "publicationDate": "2026-08-12",
+      "periodConfidence": "exact"
+    }
+  ],
+  "shareDilution": null,
+  "sharesHistory": [],
+  "lastFilingDate": "2026-05-13",
+  "currentAssetsVal": 623525,
+  "dividendsPaidVal": null,
+  "financialPeriods": {
+    "oi": {
+      "basis": "TTM",
+      "scope": "consolidated",
+      "source": "SEC EDGAR",
+      "currency": "USD",
+      "periodEnd": "2026-06-30",
+      "periodStart": "2025-07-01"
+    },
+    "fcf": null,
+    "rev": null,
+    "niVal": {
+      "fp": "Q2",
+      "fy": 2026,
+      "end": "2026-06-30",
+      "tag": "NetIncomeLoss",
+      "val": 2639629,
+      "accn": "0001493152-26-037362",
+      "form": "10-Q",
+      "unit": "USD",
+      "basis": "TTM",
+      "filed": "2026-08-12",
+      "scope": "consolidated",
+      "start": "2026-01-01",
+      "source": "SEC EDGAR companyfacts",
+      "currency": "USD",
+      "periodEnd": "2026-06-30",
+      "components": [
+        {
+          "end": "2025-12-31",
+          "val": 3687416,
+          "start": "2025-01-01"
+        },
+        {
+          "end": "2025-06-30",
+          "val": 2538521,
+          "start": "2025-01-01"
+        },
+        {
+          "end": "2026-06-30",
+          "val": 1490734,
+          "start": "2026-01-01"
+        }
+      ],
+      "periodStart": "2025-07-01",
+      "publicationDate": "2026-08-12"
+    },
+    "oiVal": {
+      "fp": "Q2",
+      "fy": 2026,
+      "end": "2026-06-30",
+      "tag": "OperatingIncomeLoss",
+      "val": -4586628,
+      "accn": "0001493152-26-037362",
+      "form": "10-Q",
+      "unit": "USD",
+      "basis": "TTM",
+      "filed": "2026-08-12",
+      "scope": "consolidated",
+      "start": "2026-01-01",
+      "source": "SEC EDGAR companyfacts",
+      "currency": "USD",
+      "periodEnd": "2026-06-30",
+      "components": [
+        {
+          "end": "2025-12-31",
+          "val": -3656556,
+          "start": "2025-01-01"
+        },
+        {
+          "end": "2025-06-30",
+          "val": -937945,
+          "start": "2025-01-01"
+        },
+        {
+          "end": "2026-06-30",
+          "val": -1868017,
+          "start": "2026-01-01"
+        }
+      ],
+      "periodStart": "2025-07-01",
+      "publicationDate": "2026-08-12"
+    },
+    "ebtVal": null,
+    "revVal": null,
+    "taxVal": null,
+    "cashVal": {
+      "fp": "Q2",
+      "fy": 2026,
+      "end": "2026-06-30",
+      "tag": "CashAndCashEquivalentsAtCarryingValue",
+      "val": 259477,
+      "accn": "0001493152-26-037362",
+      "form": "10-Q",
+      "unit": "USD",
+      "basis": "instant",
+      "filed": "2026-08-12",
+      "frame": "CY2026Q2I",
+      "scope": "consolidated",
+      "source": "SEC EDGAR companyfacts",
+      "currency": "USD",
+      "periodEnd": "2026-06-30",
+      "periodStart": null,
+      "publicationDate": "2026-08-12"
+    },
+    "capexVal": null,
+    "assetsVal": {
+      "fp": "Q2",
+      "fy": 2026,
+      "end": "2026-06-30",
+      "tag": "Assets",
+      "val": 200764663,
+      "accn": "0001493152-26-037362",
+      "form": "10-Q",
+      "unit": "USD",
+      "basis": "instant",
+      "filed": "2026-08-12",
+      "frame": "CY2026Q2I",
+      "scope": "consolidated",
+      "source": "SEC EDGAR companyfacts",
+      "currency": "USD",
+      "periodEnd": "2026-06-30",
+      "periodStart": null,
+      "publicationDate": "2026-08-12"
+    },
+    "operatingCFVal": {
+      "fp": "Q2",
+      "fy": 2026,
+      "end": "2026-06-30",
+      "tag": "NetCashProvidedByUsedInOperatingActivities",
+      "val": -1891103,
+      "accn": "0001493152-26-037362",
+      "form": "10-Q",
+      "unit": "USD",
+      "basis": "TTM",
+      "filed": "2026-08-12",
+      "scope": "consolidated",
+      "start": "2026-01-01",
+      "source": "SEC EDGAR companyfacts",
+      "currency": "USD",
+      "periodEnd": "2026-06-30",
+      "components": [
+        {
+          "end": "2025-12-31",
+          "val": -1883274,
+          "start": "2025-01-01"
+        },
+        {
+          "end": "2025-06-30",
+          "val": -811872,
+          "start": "2025-01-01"
+        },
+        {
+          "end": "2026-06-30",
+          "val": -819701,
+          "start": "2026-01-01"
+        }
+      ],
+      "periodStart": "2025-07-01",
+      "publicationDate": "2026-08-12"
+    },
+    "currentAssetsVal": {
+      "fp": "Q2",
+      "fy": 2026,
+      "end": "2026-06-30",
+      "tag": "AssetsCurrent",
+      "val": 623525,
+      "accn": "0001493152-26-037362",
+      "form": "10-Q",
+      "unit": "USD",
+      "basis": "instant",
+      "filed": "2026-08-12",
+      "frame": "CY2026Q2I",
+      "scope": "consolidated",
+      "source": "SEC EDGAR companyfacts",
+      "currency": "USD",
+      "periodEnd": "2026-06-30",
+      "periodStart": null,
+      "publicationDate": "2026-08-12"
+    },
+    "currentLiabilitiesVal": {
+      "fp": "Q2",
+      "fy": 2026,
+      "end": "2026-06-30",
+      "tag": "LiabilitiesCurrent",
+      "val": 131247,
+      "accn": "0001493152-26-037362",
+      "form": "10-Q",
+      "unit": "USD",
+      "basis": "instant",
+      "filed": "2026-08-12",
+      "frame": "CY2026Q2I",
+      "scope": "consolidated",
+      "source": "SEC EDGAR companyfacts",
+      "currency": "USD",
+      "periodEnd": "2026-06-30",
+      "periodStart": null,
+      "publicationDate": "2026-08-12"
+    }
+  },
+  "sharesOutstanding": null,
+  "financialIntegrity": {
+    "version": 2,
+    "status": "provisional",
+    "fields": {
+      "niVal": {
+        "status": "verified",
+        "period": {
+          "fp": "Q2",
+          "fy": 2026,
+          "end": "2026-06-30",
+          "tag": "NetIncomeLoss",
+          "val": 2639629,
+          "accn": "0001493152-26-037362",
+          "form": "10-Q",
+          "unit": "USD",
+          "basis": "TTM",
+          "filed": "2026-08-12",
+          "scope": "consolidated",
+          "start": "2026-01-01",
+          "source": "SEC EDGAR companyfacts",
+          "currency": "USD",
+          "periodEnd": "2026-06-30",
+          "components": [
+            {
+              "end": "2025-12-31",
+              "val": 3687416,
+              "start": "2025-01-01"
+            },
+            {
+              "end": "2025-06-30",
+              "val": 2538521,
+              "start": "2025-01-01"
+            },
+            {
+              "end": "2026-06-30",
+              "val": 1490734,
+              "start": "2026-01-01"
+            }
+          ],
+          "periodStart": "2025-07-01",
+          "publicationDate": "2026-08-12"
+        }
+      },
+      "oiVal": {
+        "status": "verified",
+        "period": {
+          "fp": "Q2",
+          "fy": 2026,
+          "end": "2026-06-30",
+          "tag": "OperatingIncomeLoss",
+          "val": -4586628,
+          "accn": "0001493152-26-037362",
+          "form": "10-Q",
+          "unit": "USD",
+          "basis": "TTM",
+          "filed": "2026-08-12",
+          "scope": "consolidated",
+          "start": "2026-01-01",
+          "source": "SEC EDGAR companyfacts",
+          "currency": "USD",
+          "periodEnd": "2026-06-30",
+          "components": [
+            {
+              "end": "2025-12-31",
+              "val": -3656556,
+              "start": "2025-01-01"
+            },
+            {
+              "end": "2025-06-30",
+              "val": -937945,
+              "start": "2025-01-01"
+            },
+            {
+              "end": "2026-06-30",
+              "val": -1868017,
+              "start": "2026-01-01"
+            }
+          ],
+          "periodStart": "2025-07-01",
+          "publicationDate": "2026-08-12"
+        }
+      },
+      "operatingCFVal": {
+        "status": "verified",
+        "period": {
+          "fp": "Q2",
+          "fy": 2026,
+          "end": "2026-06-30",
+          "tag": "NetCashProvidedByUsedInOperatingActivities",
+          "val": -1891103,
+          "accn": "0001493152-26-037362",
+          "form": "10-Q",
+          "unit": "USD",
+          "basis": "TTM",
+          "filed": "2026-08-12",
+          "scope": "consolidated",
+          "start": "2026-01-01",
+          "source": "SEC EDGAR companyfacts",
+          "currency": "USD",
+          "periodEnd": "2026-06-30",
+          "components": [
+            {
+              "end": "2025-12-31",
+              "val": -1883274,
+              "start": "2025-01-01"
+            },
+            {
+              "end": "2025-06-30",
+              "val": -811872,
+              "start": "2025-01-01"
+            },
+            {
+              "end": "2026-06-30",
+              "val": -819701,
+              "start": "2026-01-01"
+            }
+          ],
+          "periodStart": "2025-07-01",
+          "publicationDate": "2026-08-12"
+        }
+      },
+      "assetsVal": {
+        "status": "verified",
+        "period": {
+          "fp": "Q2",
+          "fy": 2026,
+          "end": "2026-06-30",
+          "tag": "Assets",
+          "val": 200764663,
+          "accn": "0001493152-26-037362",
+          "form": "10-Q",
+          "unit": "USD",
+          "basis": "instant",
+          "filed": "2026-08-12",
+          "frame": "CY2026Q2I",
+          "scope": "consolidated",
+          "source": "SEC EDGAR companyfacts",
+          "currency": "USD",
+          "periodEnd": "2026-06-30",
+          "periodStart": null,
+          "publicationDate": "2026-08-12"
+        }
+      },
+      "equityVal": {
+        "status": "provisional",
+        "period": null
+      },
+      "debtVal": {
+        "status": "provisional",
+        "period": null
+      },
+      "cashVal": {
+        "status": "verified",
+        "period": {
+          "fp": "Q2",
+          "fy": 2026,
+          "end": "2026-06-30",
+          "tag": "CashAndCashEquivalentsAtCarryingValue",
+          "val": 259477,
+          "accn": "0001493152-26-037362",
+          "form": "10-Q",
+          "unit": "USD",
+          "basis": "instant",
+          "filed": "2026-08-12",
+          "frame": "CY2026Q2I",
+          "scope": "consolidated",
+          "source": "SEC EDGAR companyfacts",
+          "currency": "USD",
+          "periodEnd": "2026-06-30",
+          "periodStart": null,
+          "publicationDate": "2026-08-12"
+        }
+      },
+      "currentAssetsVal": {
+        "status": "verified",
+        "period": {
+          "fp": "Q2",
+          "fy": 2026,
+          "end": "2026-06-30",
+          "tag": "AssetsCurrent",
+          "val": 623525,
+          "accn": "0001493152-26-037362",
+          "form": "10-Q",
+          "unit": "USD",
+          "basis": "instant",
+          "filed": "2026-08-12",
+          "frame": "CY2026Q2I",
+          "scope": "consolidated",
+          "source": "SEC EDGAR companyfacts",
+          "currency": "USD",
+          "periodEnd": "2026-06-30",
+          "periodStart": null,
+          "publicationDate": "2026-08-12"
+        }
+      },
+      "currentLiabilitiesVal": {
+        "status": "verified",
+        "period": {
+          "fp": "Q2",
+          "fy": 2026,
+          "end": "2026-06-30",
+          "tag": "LiabilitiesCurrent",
+          "val": 131247,
+          "accn": "0001493152-26-037362",
+          "form": "10-Q",
+          "unit": "USD",
+          "basis": "instant",
+          "filed": "2026-08-12",
+          "frame": "CY2026Q2I",
+          "scope": "consolidated",
+          "source": "SEC EDGAR companyfacts",
+          "currency": "USD",
+          "periodEnd": "2026-06-30",
+          "periodStart": null,
+          "publicationDate": "2026-08-12"
+        }
+      },
+      "totalLiabilitiesVal": {
+        "status": "provisional",
+        "period": null
+      },
+      "investingCFVal": {
+        "status": "provisional",
+        "period": null
+      },
+      "financingCFVal": {
+        "status": "provisional",
+        "period": null
+      },
+      "receivablesVal": {
+        "status": "provisional",
+        "period": null
+      },
+      "payablesVal": {
+        "status": "provisional",
+        "period": null
+      },
+      "retainedEarningsVal": {
+        "status": "provisional",
+        "period": null
+      },
+      "roe": {
+        "status": "provisional"
+      },
+      "roa": {
+        "status": "verified"
+      },
+      "netDebt": {
+        "status": "provisional"
+      },
+      "debtToEquity": {
+        "status": "provisional"
+      },
+      "roic": {
+        "status": "provisional",
+        "source": "legacy-reported-ratio",
+        "reason": "No est\u00e1n disponibles todos los componentes para contrastar el ratio publicado."
+      },
+      "fcfVal": {
+        "status": "blocked",
+        "reason": "FCF sin OCF y CAPEX compatibles. No se presupone CAPEX cero."
+      },
+      "pfcf": {
+        "status": "blocked",
+        "reason": "FCF no disponible."
+      },
+      "fcfYield": {
+        "status": "blocked",
+        "reason": "FCF no disponible."
+      },
+      "epsCagr": {
+        "status": "blocked",
+        "reason": "No hay beneficio y acciones medias del mismo ejercicio."
+      },
+      "eps": {
+        "status": "provisional",
+        "period": null
+      },
+      "pe": {
+        "status": "provisional"
+      }
+    },
+    "calculations": {
+      "opMargin": {
+        "status": "blocked",
+        "reason": "Faltan componentes necesarios.",
+        "reasonCode": "missing-components",
+        "dependencies": [
+          "revVal",
+          "oiVal"
+        ]
+      },
+      "netMargin": {
+        "status": "blocked",
+        "reason": "Faltan componentes necesarios.",
+        "reasonCode": "missing-components",
+        "dependencies": [
+          "revVal",
+          "niVal"
+        ]
+      },
+      "grossMargin": {
+        "status": "blocked",
+        "reason": "Faltan componentes necesarios.",
+        "reasonCode": "missing-components",
+        "dependencies": [
+          "revVal",
+          "gpVal"
+        ]
+      },
+      "roe": {
+        "status": "provisional",
+        "dependencies": [
+          "niVal",
+          "equityVal"
+        ]
+      },
+      "roa": {
+        "status": "verified",
+        "dependencies": [
+          "niVal",
+          "assetsVal"
+        ]
+      },
+      "netDebt": {
+        "status": "provisional",
+        "dependencies": [
+          "debtVal",
+          "cashVal"
+        ]
+      },
+      "debtToEquity": {
+        "status": "provisional",
+        "dependencies": [
+          "debtVal",
+          "equityVal"
+        ]
+      },
+      "roic": {
+        "status": "provisional",
+        "reason": "Faltan componentes necesarios.",
+        "reasonCode": "missing-components",
+        "dependencies": [
+          "oiVal",
+          "ebtVal",
+          "taxVal",
+          "assetsVal",
+          "currentLiabilitiesVal"
+        ]
+      },
+      "evEbitda": {
+        "status": "blocked",
+        "reason": "Faltan componentes necesarios.",
+        "reasonCode": "missing-components",
+        "dependencies": [
+          "oiVal",
+          "daVal",
+          "debtVal",
+          "cashVal"
+        ]
+      },
+      "dso": {
+        "status": "blocked",
+        "reason": "Faltan componentes necesarios.",
+        "reasonCode": "missing-components",
+        "dependencies": [
+          "receivablesVal",
+          "revVal"
+        ]
+      },
+      "dio": {
+        "status": "blocked",
+        "reason": "Faltan componentes necesarios.",
+        "reasonCode": "missing-components",
+        "dependencies": [
+          "inventoryVal",
+          "cogsVal"
+        ]
+      },
+      "dpo": {
+        "status": "blocked",
+        "reason": "Faltan componentes necesarios.",
+        "reasonCode": "missing-components",
+        "dependencies": [
+          "payablesVal",
+          "cogsVal"
+        ]
+      },
+      "inventoryTurnover": {
+        "status": "blocked",
+        "reason": "Faltan componentes necesarios.",
+        "reasonCode": "missing-components",
+        "dependencies": [
+          "inventoryVal",
+          "cogsVal"
+        ]
+      },
+      "fcfVal": {
+        "status": "blocked",
+        "reason": "Faltan componentes necesarios.",
+        "reasonCode": "missing-components",
+        "dependencies": [
+          "operatingCFVal",
+          "capexVal",
+          "fcfVal"
+        ]
+      },
+      "projections": {
+        "status": "provisional",
+        "reason": "Faltan componentes necesarios.",
+        "reasonCode": "missing-components",
+        "dependencies": [
+          "revVal",
+          "oiVal",
+          "assetsVal",
+          "currentLiabilitiesVal",
+          "debtVal",
+          "cashVal",
+          "ebtVal",
+          "taxVal"
+        ]
+      },
+      "bankProjections": {
+        "status": "provisional",
+        "dependencies": [
+          "niVal",
+          "equityVal"
+        ]
+      },
+      "dcf": {
+        "status": "blocked"
+      },
+      "growth": {
+        "status": "blocked"
+      },
+      "value": {
+        "status": "blocked"
+      },
+      "quality": {
+        "status": "provisional"
+      },
+      "currentRatio": {
+        "status": "verified",
+        "dependencies": [
+          "currentAssetsVal",
+          "currentLiabilitiesVal"
+        ]
+      },
+      "cashRunway": {
+        "status": "blocked",
+        "reason": "Faltan componentes necesarios.",
+        "reasonCode": "missing-components",
+        "dependencies": [
+          "cashVal",
+          "fcfVal"
+        ]
+      },
+      "fcfMargin": {
+        "status": "blocked",
+        "reason": "Faltan componentes necesarios.",
+        "reasonCode": "missing-components",
+        "dependencies": [
+          "fcfVal",
+          "revVal"
+        ]
+      },
+      "cashConversion": {
+        "status": "blocked",
+        "reason": "Faltan componentes necesarios.",
+        "reasonCode": "missing-components",
+        "dependencies": [
+          "fcfVal",
+          "niVal"
+        ]
+      }
+    },
+    "issues": [
+      {
+        "code": "INCOMPATIBLE_INPUT",
+        "field": "epsCagr",
+        "message": "No hay beneficio y acciones medias del mismo ejercicio.",
+        "severity": "warning"
+      },
+      {
+        "code": "INCOMPATIBLE_INPUT",
+        "field": "fcfVal",
+        "message": "FCF sin OCF y CAPEX compatibles. No se presupone CAPEX cero.",
+        "severity": "warning"
+      },
+      {
+        "code": "INCOMPATIBLE_INPUT",
+        "field": "fcfYield",
+        "message": "FCF no disponible.",
+        "severity": "warning"
+      },
+      {
+        "code": "INCOMPATIBLE_INPUT",
+        "field": "pfcf",
+        "message": "FCF no disponible.",
+        "severity": "warning"
+      },
+      {
+        "code": "PROVISIONAL_DATA",
+        "field": "financials",
+        "message": "Datos provisionales: falta verificar parte de sus periodos, moneda o procedencia. Las notas y estimaciones que los utilicen tambi\u00e9n son provisionales.",
+        "severity": "warning"
+      }
+    ],
+    "warning": "Datos provisionales: algunas relaciones fiscales y fuentes siguen sin verificarse. No confundir estas estimaciones con resultados validados."
+  },
+  "currentLiabilitiesVal": 131247,
+  "currentLiabilitiesHistory": [
+    {
+      "fp": null,
+      "fy": null,
+      "end": "2024-12-31",
+      "tag": "LiabilitiesCurrent",
+      "val": 566218,
+      "accn": "0001493152-26-034669",
+      "form": "S-4/A",
+      "unit": "USD",
+      "year": "2024",
+      "basis": "instant",
+      "filed": "2026-07-27",
+      "frame": "CY2024Q4I",
+      "scope": "consolidated",
+      "source": "SEC EDGAR companyfacts",
+      "currency": "USD",
+      "periodEnd": "2024-12-31",
+      "fiscalYear": "2024",
+      "periodStart": null,
+      "publicationDate": "2026-07-27",
+      "periodConfidence": "exact"
+    },
+    {
+      "fp": "Q2",
+      "fy": 2026,
+      "end": "2025-12-31",
+      "tag": "LiabilitiesCurrent",
+      "val": 326953,
+      "accn": "0001493152-26-037362",
+      "form": "10-Q",
+      "unit": "USD",
+      "year": "2025",
+      "basis": "instant",
+      "filed": "2026-08-12",
+      "frame": "CY2025Q4I",
+      "scope": "consolidated",
+      "source": "SEC EDGAR companyfacts",
+      "currency": "USD",
+      "periodEnd": "2025-12-31",
+      "fiscalYear": "2025",
+      "periodStart": null,
+      "publicationDate": "2026-08-12",
+      "periodConfidence": "exact"
+    }
+  ],
+  "asOf": "2026-11-07"
+}

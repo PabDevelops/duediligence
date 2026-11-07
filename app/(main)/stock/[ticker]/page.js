@@ -1,4 +1,5 @@
 'use client';
+import ListingBadge from '../../../components/new/ListingBadge';
 import { currencySymbol, priceRelativeValue } from '../../../../lib/currencyPresentation';
 import FinancialDataNotice from '../../../components/new/FinancialDataNotice';
 import FinancialCoverageBadge from '../../../components/new/FinancialCoverageBadge';
@@ -212,7 +213,7 @@ function NewStockPageContent({ params }) {
           <StockLogo ticker={ticker} name={data.name} size={52} />
           <div style={{ minWidth: 0 }}>
             <h1 style={{ margin: 0, fontSize: '22px', fontWeight: 800, letterSpacing: '-0.02em' }}>{data.name || ticker}</h1>
-            <div style={{ fontSize: '13px', color: C.text2, fontWeight: 600 }}>{ticker}{data.exchange ? ` · ${data.exchange}` : ''}</div>
+            <div style={{ fontSize: '13px', color: C.text2, fontWeight: 600 }}>{ticker}{data.exchange ? ` · ${data.exchange}` : ''}<ListingBadge data={data}/></div>
           </div>
         </div>
           <div className="stock-header-price">
