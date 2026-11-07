@@ -54,4 +54,4 @@ La comprobación visual en navegador no se completó: el control de navegador de
 
 No se han editado correcciones ni datos de usuarios. Sin migraciones, dependencias nuevas, cambios de pesos, activación de staging o publicación de documentos españoles.
 
-Limitación independiente detectada al contrastar TYGO: `companyfacts` entrega Revenues FY2025 con una escala distinta del estado financiero publicado (103.536.000.000 frente a 103.536.000 USD). Este cambio de P/E conserva esa entrada y sus fórmulas; mantener Growth/Quality iguales en la regresión no certifica que ese ingreso sea correcto. Se debe conciliar esa discrepancia de origen por separado.
+La discrepancia de escala detectada en TYGO se resuelve en el cambio posterior documentado en [SEC_REVENUE_SCALE.md](SEC_REVENUE_SCALE.md). El concepto incorrecto era `RevenueFromContractWithCustomerExcludingAssessedTax`; `Revenues` ya contenía el total correcto. Las comparaciones anteriores describen la captura y el alcance del PR original de entidad/P/E, no certifican los ingresos entonces utilizados.

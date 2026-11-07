@@ -1,4 +1,5 @@
 import { selectStatementFacts, selectFlowSeries, ANNUAL_FORMS } from '../../../lib/secFactSelection.js';
+import {reconcileSecRevenueScales,revenueConcepts,cachedRevenueScaleConflicts} from '../../../lib/secRevenueScale.js';
 import {secEarningsAdjustments} from '../../../lib/valuationEarnings.js';
 import {scopeFinancialEntity} from '../../../lib/listingIdentity.js';
 import {providerListing} from '../../../lib/listingDiscovery.js';
@@ -935,7 +936,8 @@ export async function GET(request) {
       // no longer gates isComplete; missing rows get it filled in the background instead (below).
       const missingInsiderData = cached.data?.cik != null && !('insiderOwnershipPct' in (cached.data || {}));
       const isComplete = validFinCount >= 2 || isEtf || cached.data?.financialIntegrity?.version === 2;
-      if (isFinancialsCacheFresh(cached.data, hoursOld) && (cached.data?.marketCap != null || isEtf) && isComplete) {
+      const needsRevenueRefresh=cached.data?.secRevenueScaleCheckedVersion!==1&&(cachedRevenueScaleConflicts(cached.data).length>0||cached.data?.secRevenueScale?.status==='refresh-required');
+      if (isFinancialsCacheFresh(cached.data, hoursOld) && (cached.data?.marketCap != null || isEtf) && isComplete && !needsRevenueRefresh) {
         if (missingInsiderData) backfillInsiderOwnership(cached.data.cik, ticker, cached.data.sharesOutstanding);
         const minsOld = hoursOld * 60;
         if (minsOld < 2 && normData.currency) {
@@ -1383,7 +1385,8 @@ export async function GET(request) {
       return stockResponse({ ...result, updatedAt: fetchedAt });
     }
 
-    const usgaap = facts.facts?.['us-gaap'] || {};
+    const revenueReconciliation=reconcileSecRevenueScales(facts.facts?.['us-gaap']||{});
+    const usgaap = revenueReconciliation.usgaap;
 
     // How current this filer's most recent 10-K actually is, independent of getMetric() below
     // (computed directly off NetIncomeLoss/Assets, not through it, to avoid a chicken-and-egg
@@ -1418,6 +1421,7 @@ export async function GET(request) {
       : null;
 
     const getMetric = (keys, isFlow = true) => {
+      if(isFlow&&revenueConcepts(keys))return (selectFlowSeries(usgaap,keys,recencyAnchor)||[]).filter(p=>ANNUAL_FORMS.includes(p.form)&&(Date.parse(p.end)-Date.parse(p.start))/86400000>=349&&(Date.parse(p.end)-Date.parse(p.start))/86400000<=379);
       for (const key of keys) {
         const metric = usgaap[key];
         if (!metric) continue;
@@ -2357,7 +2361,9 @@ export async function GET(request) {
     }
     result.isEtf = cachedIsEtf;
     result.listingInfo=(listingPromise?await listingPromise:null)||providerListing(fhProfile,ticker,priorCachedData?.listingInfo);
-    Object.assign(result,recoverSecPeriods(result,facts));
+    Object.assign(result,recoverSecPeriods(result,{...facts,facts:{...facts.facts,'us-gaap':usgaap}}));
+    result.secRevenueScaleCheckedVersion=1;
+    if(revenueReconciliation.issues.length)result.secRevenueReconciliation={issues:revenueReconciliation.issues,method:'reported-alias-corroborated-by-gross-profit-plus-cost',rescaled:false};
     result.earningsAdjustments=secEarningsAdjustments(result,facts);
     if (!compatibleCurrentCashFlows && result.fcfVal != null) {
       const selected = freeCashFlows?.[0];
