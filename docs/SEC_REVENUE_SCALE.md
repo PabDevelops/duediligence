@@ -40,3 +40,13 @@ El análisis del source completo identifica el mismo problema en otros periodos 
 Regresión con fuentes SEC de AAPL, FLYW, BUDA y ONEN: sin cambios en sus hechos correctos. Comparación de AAPL, Altia y Lloyds contra `main` 00fac52: puntuaciones, DCF y escenarios idénticos. Pruebas adicionales: importe grande legítimo, selección del importe mayor cuando es el corroborado, monedas/unidades/documentos distintos, evidencia ausente/contradictoria, variantes brutas/netas, correcciones manuales y datos malformados.
 
 Sin migraciones, dependencias nuevas, cambios de pesos o fórmulas, edición de datos de usuarios, reactivación de staging ni publicación de documentos españoles. Esta validación no certifica todos los conceptos XBRL ni corrige por intuición errores que carezcan de evidencia suficiente.
+
+## Comprobación conectada: continuidad contable
+
+El primer refresco real confirmó la conciliación de ingresos, pero activó un bloqueo previo: la detección SEC de salida de sociedad vehículo dejaba TYGO como transición sin resolver, por lo que los datos correctos se conservaban en `entityHistory` y quedaban fuera del motor. No era un fallo de escala ni se habían borrado las correcciones manuales.
+
+Se documenta la operación en el registro existente: cierre 23/05/2023 y negociación TYGO desde 24/05/2023, según [8-K de 30/05/2023](https://www.sec.gov/Archives/edgar/data/1855447/000121390023044099/ea179362-8k_tigoenergy.htm). Las notas 3 de los [10-K FY2023](https://www.sec.gov/Archives/edgar/data/1855447/000095017024034765/tygo-20231231.htm) y [FY2024](https://www.sec.gov/Archives/edgar/data/1855447/000095017025042645/tygo-20241231.htm) acreditan que los consolidados continúan los de Legacy Tigo, incluido el histórico anterior a la fusión.
+
+La admisión de comparativos exige documento SEC expresamente contrastado, accession y rango de fechas. No basta el ticker, el año, la fecha de publicación posterior a la fusión ni una etiqueta manual. Se siguen excluyendo datos pro forma, entidades identificadas como vehículo, documentos desconocidos y evidencia aún no publicada. Los periodos recientes completos siguen la regla de entidad ya existente. Se vuelven a obtener los datos desde las fuentes normales para recuperar la caché; no se escriben revisiones de administrador ni se reconstruyen sus cifras.
+
+Validación adicional: 842 pruebas superadas, con casos de continuidad FY2022/23, conservación del ingreso FY2025/TTM, rechazo de comparativos sin evidencia, publicación futura y mantenimiento de SBC/deuda manuales. No se modifica ninguna fórmula financiera.
