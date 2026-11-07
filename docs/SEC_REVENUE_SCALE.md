@@ -23,7 +23,7 @@ No divide importes por 1.000, no elige siempre el menor, no reconstruye ingresos
 
 La selección anual y TTM utiliza el mismo concepto completo conciliado; las fórmulas FY − YTD anterior + YTD actual no cambian. Los periodos y el registro de procedencia se recuperan sobre esos mismos hechos. No hay condición por ticker. El resultado conserva un registro de hechos rechazados, hecho aceptado y componentes de contraste.
 
-Las cachés antiguas con una discrepancia comprobable frente a sus componentes solicitan una revisión ordinaria de fuente una sola vez. Hasta conciliar, se retienen los ingresos afectados y sus derivados dependientes. Se conservan NI, FCF, métricas independientes y correcciones manuales. Si la fuente sigue sin permitir resolverlo, se conserva N/D y un aviso; una versión de comprobación evita refetch continuo. Las cachés sanas no se invalidan ni reciben nuevas consultas.
+Las cachés antiguas con una discrepancia comprobable frente a sus componentes solicitan una revisión ordinaria de fuente una sola vez. Hasta conciliar, se retienen los ingresos afectados y sus derivados dependientes. Se conservan NI, FCF, métricas independientes y correcciones manuales. Si la fuente sigue sin permitir resolverlo, se conserva N/D y un aviso; una versión de comprobación evita refetch continuo. Las cachés sanas no se invalidan ni reciben nuevas consultas. La misma protección se aplica al HTML servido desde la caché y a las entradas directas del motor; los campos retenidos muestran el motivo del conflicto.
 
 ## Resultado y regresiones
 
@@ -35,7 +35,7 @@ Las cachés antiguas con una discrepancia comprobable frente a sus componentes s
 
 El análisis del source completo identifica el mismo problema en otros periodos del emisor, incluidos FY2023 y FY2024. Se seleccionan sus totales reportados corroborados; no se aplica una división general a las series.
 
-837 pruebas superadas (20 nuevas), build completo y ESLint correctos. La prueba de API reproduce la caché dañada, fuerza contraste SEC, verifica la corrección anual/TTM, conserva NI y comprueba que se guarda la caché corregida. También verifica que un conflicto reexaminado no provoca una descarga completa en cada visita.
+838 pruebas superadas (21 nuevas), build completo y ESLint correctos. La prueba de API reproduce la caché dañada, fuerza contraste SEC, verifica la corrección anual/TTM, conserva NI y comprueba que se guarda la caché corregida. También verifica que un conflicto reexaminado no provoca una descarga completa en cada visita.
 
 Regresión con fuentes SEC de AAPL, FLYW, BUDA y ONEN: sin cambios en sus hechos correctos. Comparación de AAPL, Altia y Lloyds contra `main` 00fac52: puntuaciones, DCF y escenarios idénticos. Pruebas adicionales: importe grande legítimo, selección del importe mayor cuando es el corroborado, monedas/unidades/documentos distintos, evidencia ausente/contradictoria, variantes brutas/netas, correcciones manuales y datos malformados.
 
