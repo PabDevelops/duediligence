@@ -13,6 +13,7 @@ import { flagDataAnomaly } from '../../../lib/dataAnomalies.js';
 import { normalizeSector } from '../../../lib/sectorMapping.js';
 import { rateLimit, getClientIp } from '../../../lib/rateLimit.js';
 import { applyStoredFinancialOverrides } from '../../../lib/financialOverrideStore.js';
+import { recomputeFinancialPriceRatios } from '../../../lib/priceRatios.js';
 
 const FH_KEY = process.env.FINNHUB_API_KEY;
 const AV_KEY = process.env.ALPHA_VANTAGE_API_KEY;
@@ -781,25 +782,7 @@ function reconcileMarketCap(statMarketCap, currentPrice, shares) {
 
 function recomputePriceRatios(data, newPrice) {
   if (!data || newPrice == null) return {};
-  const out = {};
-  if (data.sharesOutstanding) {
-    out.marketCap = newPrice * data.sharesOutstanding;
-  }
-  const marketCap = out.marketCap ?? data.marketCap;
-  if (data.eps) {
-    out.pe = +(newPrice / data.eps).toFixed(2);
-  }
-  if (marketCap != null && data.fcfVal) {
-    out.pfcf = data.fcfVal > 0 ? +(marketCap / data.fcfVal).toFixed(1) : null;
-    out.fcfYield = +((data.fcfVal / marketCap) * 100).toFixed(2);
-  }
-  if (marketCap != null && data.equityVal && data.equityVal > 0) {
-    out.priceToBook = +(marketCap / data.equityVal).toFixed(2);
-  }
-  if (marketCap != null && data.evEbitda && data.marketCap != null && data.netDebt != null) {
-    const impliedEbitda = (data.marketCap + data.netDebt) / data.evEbitda;
-    if (impliedEbitda) out.evEbitda = +((marketCap + data.netDebt) / impliedEbitda).toFixed(1);
-  }
+  const out = recomputeFinancialPriceRatios(data,newPrice);
   // high52/low52 aren't re-fetched here (that's Finnhub's /stock/metric, not /quote — a second
   // call this path deliberately skips to stay cheap). clamp52WeekRange only extends them to
   // match a fresh price that's already broken past the cached boundary.
