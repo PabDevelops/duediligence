@@ -5,6 +5,7 @@ import { useUser } from '../components/AuthProvider';
 import { NEW_COLORS as C } from '../components/new/theme';
 
 const SECTIONS = [
+  { href: '/admin/financial-suggestions', title: 'Correcciones sugeridas', desc: 'Revisar propuestas de usuarios, contrastar fuentes y aceptar, ajustar o rechazar cada cambio.' },
   { href: '/admin/users', title: 'Usuarios', desc: 'Buscar por email, ver su estado de Pro/trial y activar o desactivar el acceso a mano.' },
   { href: '/admin/trading212', title: 'Trading 212', desc: 'Cuentas conectadas, última sincronización y errores de sync, sin entrar a la base de datos.' },
   { href: '/admin/blog', title: 'Blog', desc: 'Crear y editar artículos de Aprende.' },

@@ -5,6 +5,7 @@ import {financialOverrideStorageTarget,isRatioField,overrideTarget} from '../../
 import {HISTORY_FIELDS} from '../../../lib/financialIntegrity';
 import {formatFiscalDateInput,parseFiscalDateInput} from '../../../lib/fiscalDateInput';
 import StatementHistoryEditor from './StatementHistoryEditor';
+import FinancialSuggestion from './FinancialSuggestion';
 const EditorContext=createContext(null);
 export function AddHistoricalStatement({statement}){
   const editor=useContext(EditorContext);
@@ -28,6 +29,7 @@ export function FinancialEditorProvider({children,...props}){
 }
 export function FinancialEditorSession({ticker,data,onSaved,auth,children}){
   const [admin,setAdmin]=useState(false),[rows,setRows]=useState([]),[selected,setSelected]=useState(null),[problem,setProblem]=useState('');
+  const [suggestion,setSuggestion]=useState(null);
   useEffect(()=>{let live=true;
     if(auth.isLoaded&&auth.isSignedIn&&!data.isEtf)fetch('/api/admin/check').then(r=>r.json()).then(async result=>{
       if(!result.isAdmin||!live)return;
@@ -43,10 +45,11 @@ export function FinancialEditorSession({ticker,data,onSaved,auth,children}){
     if(r.ok)setRows((await r.json()).overrides||[]);
     await onSaved();
   };
-  return <EditorContext.Provider value={{admin,data,open:setSelected}}>
+  return <EditorContext.Provider value={{admin,data,open:setSelected,suggest:setSuggestion}}>
     {admin&&<p style={{fontSize:12,color:'#726C5E'}}>Administración: pulsa una cifra o N/D para corregirla. Los cambios se publican para todos y se conservan hasta que los restaures.</p>}
     {problem&&<p role="status" style={{fontSize:12}}>{problem}</p>}
     {children}
+    {suggestion&&<FinancialSuggestion key={suggestion.target} ticker={ticker} data={data} selected={suggestion} signedIn={auth.isSignedIn} onClose={()=>setSuggestion(null)}/>}
     {selected&&(selected.statement?<StatementHistoryEditor key={selected.target} ticker={ticker} statement={selected.statement} data={data} rows={rows} onSaved={saved} onClose={()=>setSelected(null)}/>:<CorrectionDialog key={selected.target} ticker={ticker} selected={selected} data={data}
       rows={rows} current={rows.find(r=>r.target===selected.target)} onSaved={saved} onClose={()=>setSelected(null)}/>)}
   </EditorContext.Provider>;
@@ -63,8 +66,8 @@ export function EditableFinancialValue({target,label,children,point,showStoredVa
   const primary=!editor?.admin||!overrideTarget(target)?value:<button type="button" title={`Corregir ${label}`} aria-label={`Corregir ${label}`}
     onClick={()=>editor.open({target:manual?.appliedToCurrent?manual.target:target,label,point})} style={{font:'inherit',color:'inherit',background:'none',border:0,padding:'4px 0',cursor:'pointer',textAlign:'right',textDecoration:'underline dotted',textUnderlineOffset:4}}>{value}</button>;
   const independent=!nested&&['roa','roe'].includes(target)?(editor?.data?.reportedIndicators||[]).filter(r=>r.field===target):[];
-  return <>{primary}{independent.map(r=><div key={r.target} style={{fontSize:12,marginTop:8,fontWeight:400,maxWidth:300}}>
-    <EditableFinancialValue nested target={r.target} label={`${r.field.toUpperCase()} ${r.period.basis} ${formatFiscalDateInput(r.period.periodEnd)}`}>
+  return <>{primary}{editor?.suggest&&overrideTarget(target)&&<button type="button" aria-label={`Sugerir corrección de ${label}`} onClick={()=>editor.suggest({target:manual?.appliedToCurrent?manual.target:target,label,point})} style={{display:'block',marginTop:4,padding:'4px 0',minHeight:24,border:0,background:'none',color:'#726C5E',fontSize:11,fontWeight:400,cursor:'pointer',textDecoration:'underline dotted'}}>¿Dato incorrecto?</button>}{independent.map(r=><div key={r.target} style={{fontSize:12,marginTop:8,fontWeight:400,maxWidth:300}}>
+    <EditableFinancialValue nested target={r.target} label={`${r.field.toUpperCase()} ${r.period.basis} ${formatFiscalDateInput(r.period.periodEnd)}`} point={{...r.period,val:r.value}}>
       {r.field.toUpperCase()} {r.period.basis}: {r.value==null?'N/D':`${r.value.toLocaleString('es-ES')} %`}
     </EditableFinancialValue>
     <small style={{display:'block'}}>Manual · {formatFiscalDateInput(r.period.periodStart)||'inicio sin documentar'}–{formatFiscalDateInput(r.period.periodEnd)||'fin sin documentar'} · {(r.period.returnBasis||r.period.roaBasis)?.annualized===false?'no anualizado':(r.period.returnBasis||r.period.roaBasis)?.annualized===true?'anualizado':'anualización sin documentar'}</small>
