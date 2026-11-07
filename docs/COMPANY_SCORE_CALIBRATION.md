@@ -61,6 +61,8 @@ Piecewise linear scoring uses the existing `interp` helper. Values are percentag
 
 ### Sector policies
 
+Update 2026-11-07: documented negative earnings/cash denominators now count as evaluated VALUE components with score 0, without calculating negative multiples. Missing or incompatible evidence remains unavailable. Positive multiple formulas, sector weights, Growth, Quality and legacy valuation are unchanged. See [VALUE_NEGATIVE_RESULTS.md](VALUE_NEGATIVE_RESULTS.md) for eligibility, sector exceptions and the TE comparison.
+
 | Existing business profile | Value | Quality |
 | --- | --- | --- |
 | Ordinary operating companies | P/FCF 40%, P/E 30%, EV/EBIT 30% | Returns 25%, operating margin 15%, FCF generation 15%, conversion 15%, stability 15%, balance 15% |
