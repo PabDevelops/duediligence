@@ -6,6 +6,7 @@ import Sparkline from '../../components/Sparkline';
 import { useUser } from '../../components/AuthProvider';
 import { getGuestWatchlist, addToGuestWatchlist, removeFromGuestWatchlist } from '../../../lib/guestWatchlist';
 import { formatCurrency } from '../../../lib/formatters';
+import {currencySymbol} from '../../../lib/currencyPresentation';
 import { toScore100, scoreTier } from '../../../lib/scoreScale';
 import { NEW_COLORS as C, VERDICT_BADGE } from '../../components/new/theme';
 import {fetchPublicJSON} from '../../../lib/fetchPublicJSON';
@@ -107,7 +108,7 @@ function MoverRow({ s, watching, onToggle }) {
         <div style={{ fontSize: '11px', color: C.text3, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{s.name}</div>
       </div>
       <div style={{ textAlign: 'right', flexShrink: 0 }}>
-        <div style={{ fontSize: '13px', fontWeight: 700 }}>{s.currentPrice != null ? formatCurrency(s.currentPrice, '$') : '—'}</div>
+        <div style={{ fontSize: '13px', fontWeight: 700 }}>{s.currentPrice != null ? formatCurrency(s.currentPrice,currencySymbol(s.currency)) : '—'}</div>
         {s.priceChangePct != null && (
           <div style={{ fontSize: '11px', fontWeight: 700, color: isUp ? C.green : C.red }}>
             {isUp ? '+' : ''}{s.priceChangePct.toFixed(2)}%
@@ -157,7 +158,7 @@ function BasketCard({ s, watching, onToggle }) {
         <AddButton ticker={s.ticker} active={watching} onToggle={onToggle} />
       </div>
       <div style={{ display: 'flex', alignItems: 'baseline', gap: '8px' }}>
-        <span style={{ fontSize: '14px', fontWeight: 700 }}>{s.currentPrice != null ? formatCurrency(s.currentPrice, '$') : 'N/D'}</span>
+        <span style={{ fontSize: '14px', fontWeight: 700 }}>{s.currentPrice != null ? formatCurrency(s.currentPrice,currencySymbol(s.currency)) : 'N/D'}</span>
         {s.priceChangePct != null && (
           <span style={{ fontSize: '12px', fontWeight: 700, color: isUp ? C.green : C.red }}>
             {isUp ? '+' : ''}{s.priceChangePct.toFixed(2)}%
