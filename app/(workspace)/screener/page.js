@@ -34,6 +34,7 @@ export default function WorkspaceScreener() {
   const { user, isLoaded, isSignedIn } = useUser();
   const [stocks, setStocks] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [loadError,setLoadError] = useState(false);
   const [sector, setSector] = useState('All');
   // Arrays, not single values — a user comparing US large caps wants NASDAQ *and* NYSE at
   // once, or Mega *and* Large together, not one or the other. Empty array means no filter
@@ -76,15 +77,17 @@ export default function WorkspaceScreener() {
     fetch('/api/screener')
       .then(r => {
         if (r.status === 429) { setRateLimited(true); setLoading(false); return null; }
+        if (!r.ok) throw new Error('Screener unavailable');
         return r.json();
       })
       .then(d => {
         if (!d) return;
+        setLoadError(false);
         setStocks(d.stocks || []);
         setLimited(!!d.limited);
         setLoading(false);
       })
-      .catch(() => setLoading(false));
+      .catch(() => {setLoadError(true);setLoading(false);});
   }, [isLoaded, isSignedIn]);
 
   useEffect(() => {
@@ -735,7 +738,7 @@ export default function WorkspaceScreener() {
           {/* Empty State */}
           {!loading && !rateLimited && filtered.length === 0 && (
             <div style={{ padding: '60px 20px', textAlign: 'center', color: 'var(--ws-text-3)', fontSize: '12px' }}>
-              No companies match your filters. Try resetting or adjusting the values.
+              {loadError?'No se pudieron cargar los datos. Recarga la página para volver a intentarlo.':'No companies match your filters. Try resetting or adjusting the values.'}
             </div>
           )}
         </div>

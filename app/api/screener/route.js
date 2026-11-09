@@ -45,6 +45,6 @@ export async function GET(request) {
     return Response.json({ stocks, limited: visitor.type === 'anonymous' });
   } catch (e) {
     console.error(e);
-    return Response.json({ stocks: [] });
+    return Response.json({ stocks: [],error:'No se pudieron cargar los datos del screener. Inténtalo de nuevo.' },{status:503});
   }
 }

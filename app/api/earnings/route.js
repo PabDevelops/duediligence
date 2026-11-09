@@ -3,6 +3,7 @@ import { fetchNasdaqEarningsRange } from '../../../lib/nasdaqEarnings';
 import { supabase } from '../../../lib/supabase';
 import { computeEasyMode } from '../../../lib/financialCalculations';
 import { limitConcurrency } from '../../../lib/limitConcurrency';
+import {unstable_cache} from 'next/cache';
 
 const FH_KEY = process.env.FINNHUB_API_KEY;
 
@@ -42,17 +43,27 @@ function setCached(key, data) {
 export async function GET(req) {
   const key=requestKey(req);
   let work=loadsInFlight.get(key);
-  if(!work){work=loadEarnings(req);loadsInFlight.set(key,work);}
-  // Each caller needs its own readable Response body.
-  try{return (await work).clone();}finally{if(loadsInFlight.get(key)===work)loadsInFlight.delete(key);}
+  if(!work){work=loadSharedWindow(key);loadsInFlight.set(key,work);}
+  try{return Response.json(await work);}finally{if(loadsInFlight.get(key)===work)loadsInFlight.delete(key);}
 }
 
-async function loadEarnings(req) {
+async function loadSharedWindow(key){
+  const read=unstable_cache(async query=>{
+    const result=await loadEarnings(query);
+    // Do not persist an upstream failure as an empty calendar. Existing good
+    // data may be served while Next revalidates it in the background.
+    if(!result.cacheable)throw Object.assign(new Error('Calendar source unavailable'),{uncachedData:result.data});
+    return result.data;
+  },['earnings-window-v1',process.env.VERCEL_GIT_COMMIT_SHA||'local',new Date().toISOString().slice(0,10)],{revalidate:90});
+  try{return await read(key);}catch(error){return error.uncachedData||(await loadEarnings(key)).data;}
+}
+
+async function loadEarnings(key) {
   try {
-    const { searchParams } = new URL(req.url);
-    const cacheKey = requestKey(req);
+    const searchParams = new URLSearchParams(key);
+    const cacheKey = key;
     const cached = getCached(cacheKey);
-    if (cached) return Response.json(cached);
+    if (cached) return {data:cached,cacheable:true};
     const today = new Date();
     const ticker = searchParams.get('ticker')?.toUpperCase();
 
@@ -109,7 +120,7 @@ async function loadEarnings(req) {
         ? { earnings, debug: { finnhubStatus: fhRawRes.status, finnhubError: fhRes.error || null } }
         : { earnings };
       if (!fhFailed) setCached(cacheKey, result); // don't cache a transient upstream failure
-      return Response.json(result);
+      return {data:result,cacheable:!fhFailed};
     }
 
     const from = searchParams.get('from') || today.toISOString().slice(0, 10);
@@ -306,8 +317,8 @@ async function loadEarnings(req) {
 
     const result = { earnings: enrichedEarnings, ipos: enrichedIpos };
     setCached(cacheKey, result);
-    return Response.json(result);
+    return {data:result,cacheable:true};
   } catch (e) {
-    return Response.json({ earnings: [] });
+    return {data:{earnings:[]},cacheable:false};
   }
 }

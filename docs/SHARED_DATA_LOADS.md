@@ -13,3 +13,7 @@ Validación: pruebas de visitantes concurrentes, respuesta reutilizable, dos slo
 Sin cambios en fórmulas, notas, fuentes, autenticación, carteras, revisiones manuales, esquema de base de datos o plan contratado. No se reinicia Supabase ni se reactiva staging.
 
 La validación conectada detectó todavía un timeout SQL 57014 en una página con OFFSET. Se sustituye por cursor sobre la clave primaria: cada página empieza después del último ticker leído y no recorre de nuevo las anteriores. Se mantienen páginas reducidas, caché y dos slots compartidos para sus lecturas/revalidaciones. No se amplían los tiempos de espera de Supabase.
+
+El calendario también persiste ventanas públicas en la caché existente de Next durante 90 segundos, separadas por commit y día. No se persiste un fallo como calendario vacío; las peticiones concurrentes reciben objetos de respuesta independientes. Un fallo real del screener responde 503 y la interfaz indica que no se pudieron cargar los datos, en lugar de atribuirlo a los filtros.
+
+Validación final ampliada: 865 pruebas y build completo correctos. ESLint de los módulos de carga y API correcto. La página del screener conserva exactamente los 8 diagnósticos de error y 1 aviso de lint preexistentes, sin introducir nuevos; no se amplía el trabajo a esos componentes.
