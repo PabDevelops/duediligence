@@ -77,7 +77,7 @@ export default function BottomNav() {
   if (!isSignedIn || isPublicPage || isWorkspaceRoute) return null;
 
   const isHome = path === '/';
-  const isSearch = path === '/screener' || path === '/radar';
+  const isSearch = path === '/search' || path === '/radar';
   const isWatchlist = path.startsWith('/watchlist');
   const isProfile = path.startsWith('/profile');
 
@@ -92,7 +92,7 @@ export default function BottomNav() {
     }}>
       <div style={{ display: 'flex', alignItems: 'center', padding: '6px 8px' }}>
         <NavLink href="/" icon="home" label="Home" active={isHome} />
-        <NavLink href="/screener" icon="search" label="Search" active={isSearch} />
+        <NavLink href="/search" icon="search" label="Search" active={isSearch} />
         <NavLink href="/about" icon="watchlist" label="About" active={path.startsWith('/about')} />
         <NavLink href="/profile" icon="profile" label="Profile" active={path.startsWith('/profile')} />
       </div>

@@ -177,7 +177,7 @@ export default function WorkspaceLayout({ children }) {
         <PaywallModal
           eyebrow="BULLTRACE TERMINAL"
           title="Subscribe to unlock the terminal"
-          description="The screener, portfolio tracker, full financials and the rest of the terminal are available with Bulltrace Pro — 14 days free to start."
+          description="The portfolio tracker, full financials and the rest of the terminal are available with Bulltrace Pro — 14 days free to start."
           ctaLabel="Start 14-day free trial"
           ctaHref="/pricing"
           onClose={closePaywall}
