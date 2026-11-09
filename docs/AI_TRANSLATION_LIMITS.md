@@ -1,5 +1,7 @@
 # Contención del gasto de traducciones
 
+Modelo para traducciones: `claude-haiku-5-5`, con thinking desactivado para esta tarea breve. Se seleccionan los bloques de respuesta por tipo y se conserva el tope de 256 tokens. La actualización no cambia el modelo del generador administrativo del blog. Referencia de compatibilidad: https://platform.claude.com/docs/en/models/haiku-5-5/whats-new-haiku-5-5.
+
 Las consultas anónimas, los buscadores y la hidratación automática no pueden iniciar traducciones de pago. Se requiere una sesión registrada y confirmada, validada mediante Supabase `auth.getUser()` en el servidor. Una cookie de visitante, un identificador enviado por el cliente o una sesión anónima no autorizan gasto.
 
 Límites fijos: 5 intentos por usuario y día, 50 entre todos los usuarios y servidores, con reinicio a las 00:00 UTC. El servidor reserva antes de llamar al proveedor mediante una transacción con bloqueo compartido de Postgres. Un hash del texto impide dos intentos para la misma entrada en un día. Los errores y tiempos agotados consumen su reserva porque pueden haber sido facturados; no hay reintentos automáticos. Entrada máxima: 4.000 caracteres; salida máxima: 256 tokens. Son límites de llamadas y tamaño, no un importe monetario exacto.
