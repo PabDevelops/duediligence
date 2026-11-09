@@ -2,6 +2,7 @@ import { sanitizeFinancialData } from '../../../lib/financialIntegrity.js';
 import { fetchNasdaqEarningsRange } from '../../../lib/nasdaqEarnings';
 import { supabase } from '../../../lib/supabase';
 import { computeEasyMode } from '../../../lib/financialCalculations';
+import { limitConcurrency } from '../../../lib/limitConcurrency';
 
 const FH_KEY = process.env.FINNHUB_API_KEY;
 
@@ -22,6 +23,9 @@ function surprisePercent(actual, estimate) {
 const CACHE_TTL_MS = 90_000;
 const cache = new Map(); // queryString -> { data, cachedAt }
 const CACHE_MAX_ENTRIES = 300;
+const loadsInFlight = new Map();
+const enrichWithinBudget = limitConcurrency(2);
+function requestKey(req){const params=new URL(req.url).searchParams;params.sort();return params.toString();}
 
 function getCached(key) {
   const hit = cache.get(key);
@@ -36,9 +40,17 @@ function setCached(key, data) {
 }
 
 export async function GET(req) {
+  const key=requestKey(req);
+  let work=loadsInFlight.get(key);
+  if(!work){work=loadEarnings(req);loadsInFlight.set(key,work);}
+  // Each caller needs its own readable Response body.
+  try{return (await work).clone();}finally{if(loadsInFlight.get(key)===work)loadsInFlight.delete(key);}
+}
+
+async function loadEarnings(req) {
   try {
     const { searchParams } = new URL(req.url);
-    const cacheKey = searchParams.toString();
+    const cacheKey = requestKey(req);
     const cached = getCached(cacheKey);
     if (cached) return Response.json(cached);
     const today = new Date();
@@ -242,18 +254,18 @@ export async function GET(req) {
     const tickerArray = Array.from(allTickers);
     const enrichmentMap = {};
 
-    // Chunks queried concurrently instead of one-at-a-time — independent lookups (no chunk
-    // depends on another's result), so there's no reason to pay N sequential round trips to
-    // Supabase when N parallel ones finish in roughly the time of the slowest single one.
-    const CHUNK_SIZE = 100;
+    // Bound response size and share two slots across calendar windows in this
+    // instance. Unbounded batches starve unrelated auth/watchlist requests.
+    const CHUNK_SIZE = 50;
     const chunks = [];
     for (let i = 0; i < tickerArray.length; i += CHUNK_SIZE) chunks.push(tickerArray.slice(i, i + CHUNK_SIZE));
 
     // Full cached `data` blob (not just marketCap/sector sub-fields) so computeEasyMode below
     // has what it needs to score each ticker — same JSON shape /api/stock returns, since this
     // is exactly what that route caches.
-    const chunkResults = await Promise.all(chunks.map(chunk =>
+    const chunkResults = await Promise.all(chunks.map(chunk => enrichWithinBudget(()=>
       supabase.from('stock_cache').select('ticker, data').in('ticker', chunk)
+    )
     ));
     chunkResults.forEach(({ data }) => {
       if (!data) return;
