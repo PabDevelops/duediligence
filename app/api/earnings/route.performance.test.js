@@ -1,6 +1,7 @@
 import {beforeEach,it,expect,vi} from 'vitest';
 const s=vi.hoisted(()=>({active:0,peak:0,chunks:[],fail:false}));
 vi.mock('../../../lib/nasdaqEarnings',()=>({fetchNasdaqEarningsRange:async()=>[]}));
+vi.mock('next/cache',()=>({unstable_cache:fn=>fn}));
 vi.mock('../../../lib/supabase',()=>({supabase:{from:()=>({select:()=>({in:async(_,tickers)=>{
  s.active++;s.peak=Math.max(s.peak,s.active);s.chunks.push(tickers);await new Promise(r=>setTimeout(r,3));s.active--;
  if(s.fail)throw Error('offline');return {data:tickers.map(ticker=>({ticker,data:{name:ticker,marketCap:100,sector:'Technology'}}))};

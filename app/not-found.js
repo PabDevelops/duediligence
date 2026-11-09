@@ -28,8 +28,8 @@ export default function NotFound() {
           <button className="btn-primary" onClick={() => router.push('/')} style={{ padding: '12px 28px' }}>
             Go home
           </button>
-          <button className="btn-secondary" onClick={() => router.push('/screener')} style={{ padding: '12px 28px' }}>
-            Open screener
+          <button className="btn-secondary" onClick={() => router.push('/search')} style={{ padding: '12px 28px' }}>
+            Buscar empresas
           </button>
         </div>
 

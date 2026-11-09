@@ -45,7 +45,7 @@ export default function WatchlistWidget() {
           ) : stocks.length === 0 ? (
             <div style={{ padding: '20px', color: 'var(--text-3)', fontSize: '10px', textAlign: 'center', letterSpacing: '1px' }}>
               NO STOCKS YET<br />
-              <a href="/screener" style={{ color: 'var(--accent)', textDecoration: 'none', marginTop: '8px', display: 'inline-block' }}>BROWSE SCREENER →</a>
+              <a href="/search" style={{ color: 'var(--accent)', textDecoration: 'none', marginTop: '8px', display: 'inline-block' }}>BUSCAR EMPRESAS →</a>
             </div>
           ) : (
             stocks.map(s => {

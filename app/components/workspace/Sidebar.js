@@ -20,11 +20,6 @@ const NAV_ITEMS = [
       <line x1="3" x2="21" y1="10" y2="10"/>
     </svg>
   )},
-  { id: 'screener', href: '/screener', label: 'Screener', icon: (active) => (
-    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke={active ? 'var(--ws-accent)' : 'currentColor'} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-      <polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/>
-    </svg>
-  )},
   { id: 'etfs', href: '/etfs', label: 'ETFs', icon: (active) => (
     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke={active ? 'var(--ws-accent)' : 'currentColor'} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
       <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/>
