@@ -618,30 +618,18 @@ async function fetchDescription(ticker) {
   } catch { return null; }
 }
 
-// A properly translated+summarized description should land well under this — generous headroom
-// over the ~400-500 chars translateDescription targets, so normal output never re-triggers.
-// Descriptions already translated before summarization was added (plain translation of the
-// original, sometimes a multi-paragraph legal dump) sit well above it, so this also catches and
-// reprocesses those instead of leaving them stuck long forever.
-const MAX_DESCRIPTION_CHARS = 700;
-
-// Translates (and condenses) result.description to Spanish exactly once per ticker and marks it
-// with descriptionTranslated, so the paid translation call only runs the first time a given
-// description needs work — every subsequent fetch within the same 24h-or-so cache cycle reuses
-// priorCachedData's already-processed text instead of redoing it. Mutates `result` in place;
-// callers run this right before upserting so the translated text (not the English original) is
-// what gets cached and served.
-async function ensureSpanishDescription(result, priorCachedData) {
-  if (!result.description) return;
-  const alreadyDone = priorCachedData?.descriptionTranslated
-    && priorCachedData?.description === result.description
-    && result.description.length <= MAX_DESCRIPTION_CHARS;
-  if (alreadyDone) {
+// Keep cached translations shared; new paid work requires verified registration
+// and a persistent global/per-user budget in translateDescription.
+async function ensureSpanishDescription(result, priorCachedData, request) {
+  // Preserve the shared translation when a provider refresh returns English.
+  if (priorCachedData?.descriptionTranslated && priorCachedData.description) {
+    result.description = priorCachedData.description;
     result.descriptionTranslated = true;
     return;
   }
+  if (!result.description) return;
   const original = result.description;
-  result.description = await translateDescription(original);
+  result.description = await translateDescription(original, {request});
   // translateDescription falls back to returning the untouched original on any failure (missing
   // key, rate limit, network error) — only mark success when it actually changed, so a transient
   // failure gets retried on the next fetch instead of permanently mislabeling English text as
@@ -1078,7 +1066,7 @@ export async function GET(request) {
         isEtf: cachedIsEtf,
       };
 
-      await ensureSpanishDescription(result, priorCachedData);
+      await ensureSpanishDescription(result, priorCachedData, request);
 
       try {
         await supabase.from('stock_cache').upsert({ ticker, data: sanitizeFinancialData(result), updated_at: fetchedAt });
@@ -1179,7 +1167,7 @@ export async function GET(request) {
           isEtf: cachedIsEtf,
         };
 
-        await ensureSpanishDescription(yhResult, priorCachedData);
+        await ensureSpanishDescription(yhResult, priorCachedData, request);
 
         try {
           await supabase.from('stock_cache').upsert({ ticker, data: sanitizeFinancialData(yhResult), updated_at: fetchedAt });
@@ -1372,7 +1360,7 @@ export async function GET(request) {
         };
       }
 
-      await ensureSpanishDescription(result, priorCachedData);
+      await ensureSpanishDescription(result, priorCachedData, request);
 
       const valCountFallback = [result.revVal, result.niVal, result.fcfVal, result.assetsVal, result.debtVal, result.cashVal].filter(v => v !== null).length;
       const isEtfFallback = result.sector === 'ETF' || result.industry === 'ETF';
@@ -2333,7 +2321,7 @@ export async function GET(request) {
     if (result.description == null) {
       result.description = await fetchDescription(ticker).catch(() => null);
     }
-    await ensureSpanishDescription(result, priorCachedData);
+    await ensureSpanishDescription(result, priorCachedData, request);
 
     result.financialPeriods = { ...result.financialPeriods };
     result.currency = result.currency || 'USD'; // This branch reads SEC USD facts; other currencies are rejected below.
