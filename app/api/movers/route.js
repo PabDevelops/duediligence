@@ -1,6 +1,4 @@
-import { sanitizeFinancialData } from '../../../lib/financialIntegrity.js';
-import { supabase } from '../../../lib/supabase';
-import { computeEasyMode } from '../../../lib/financialCalculations';
+import {loadMoversRows} from '../../../lib/moversData';
 
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;
@@ -10,31 +8,6 @@ export const revalidate = 0;
 // would mix a % change from 5 minutes ago with one from last week. 24h matches the same
 // freshness window /api/stock already treats as "current" (see CACHE_HOURS there).
 const MAX_CACHE_AGE_HOURS = 24;
-
-// This endpoint is public and identical for every caller, but gets hit on every Home
-// page load plus a client-side poll every few minutes — memoize the raw table scan
-// in-process for a short window instead of re-pulling it from Supabase on every request.
-const MOVERS_CACHE_TTL_MS = 60_000;
-let moversRowsCache = null;
-let moversRowsCachedAt = 0;
-
-async function loadMoversRows() {
-  if (moversRowsCache && Date.now() - moversRowsCachedAt < MOVERS_CACHE_TTL_MS) return moversRowsCache;
-
-  // Only the fields actually used below — selecting individual jsonb paths instead of the
-  // whole `data` blob (which also carries multi-year history arrays) cuts the egress for
-  // what is otherwise a near-full-table scan.
-  const { data: rows } = await supabase
-    .from('stock_cache')
-    .select('ticker, updated_at, data')
-    .neq('ticker', 'INHD')
-    .not('data->currentPrice', 'is', null)
-    .not('data->priceChangePct', 'is', null);
-
-  moversRowsCache = (rows || []).map(row=>({...sanitizeFinancialData(row.data),ticker:row.ticker,updated_at:row.updated_at}));
-  moversRowsCachedAt = Date.now();
-  return moversRowsCache;
-}
 
 export async function GET(request) {
   try {
@@ -53,21 +26,7 @@ export async function GET(request) {
 
     const stocks = freshRows;
 
-    const calcScore = (d) => {
-      if (!d) return { score: null, cbs: null, oppo: null, gqs: null };
-      const hasFundamentals = d.revVal != null || d.niVal != null || d.marketCap != null
-        || d.roic != null || d.grossMargin != null || (d.revHistory?.length ?? 0) > 0;
-      const easy = computeEasyMode(d, hasFundamentals);
-      if (!easy) return { score: null, cbs: null, oppo: null, gqs: null };
-      return {
-        score: +(easy.finalNote).toFixed(1),
-        cbs: +(easy.cbs).toFixed(1),
-        oppo: +(easy.oppo).toFixed(1),
-        gqs: +(easy.gqs).toFixed(1)
-      };
-    };
-
-    const withScore = stocks.map(s => ({ ...s, ...calcScore(s) }));
+    const withScore = stocks;
     const sorted = (arr, key, dir = 'desc', max = null) => [...arr]
   .filter(s => s[key] != null)
   .filter(s => max === null || Math.abs(s[key]) <= max)
@@ -91,10 +50,11 @@ export async function GET(request) {
       topQuality: sorted(withScore, 'cbs').slice(0, limit),
       topOppo: sorted(withScore, 'oppo').slice(0, limit),
       bigCapMovers,
+      coverage:{companies:withScore.length,limit:1000,source:'recent-cache'},
       leaders: isFull ? withScore : undefined,
     });
   } catch (e) {
     console.error(e);
-    return Response.json({ gainers: [], losers: [], topRoic: [], topFcfYield: [], topRevGrowth: [], topScore: [], topQuality: [], topOppo: [], bigCapMovers: [] });
+    return Response.json({error:'No se pudieron cargar los movimientos del mercado.'},{status:503});
   }
 }

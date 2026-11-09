@@ -26,11 +26,14 @@ export async function GET(request) {
   try {
     const results = await Promise.all(
       symbols.map(async ({ symbol, label }) => {
+        try {
         const res = await fetch(
           `https://query1.finance.yahoo.com/v8/finance/chart/${symbol}?interval=1d&range=${range}`,
-          { headers: { 'User-Agent': 'Mozilla/5.0' } }
+          { headers: { 'User-Agent': 'Mozilla/5.0' },signal:AbortSignal.timeout(5000),next:{revalidate:60} }
         );
+        if(!res.ok)return null;
         const data = await res.json();
+        if(!data?.chart?.result?.[0])return null;
         const meta = data?.chart?.result?.[0]?.meta;
         const closes = data?.chart?.result?.[0]?.indicators?.quote?.[0]?.close || [];
         const timestamps = data?.chart?.result?.[0]?.timestamp || [];
@@ -42,11 +45,13 @@ export async function GET(request) {
         const changePct = price && prevClose ? +((((price - prevClose) / prevClose) * 100)).toFixed(2) : null;
 
         return { symbol, label, candles, price, change, changePct };
+        }catch{return null;}
       })
     );
 
-    return Response.json({ markets: results });
+    const markets=results.filter(Boolean);
+    return Response.json({markets,...(!markets.length?{error:'No se pudieron cargar los índices.'}:{})},{status:markets.length?200:503});
   } catch (e) {
-    return Response.json({ markets: [] });
+    return Response.json({markets:[],error:'No se pudieron cargar los índices.'},{status:503});
   }
 }

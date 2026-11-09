@@ -49,12 +49,13 @@ export async function GET(request) {
   }
 
   try {
-    const { data } = await supabase
+    const { data,error } = await supabase
       .from('stock_cache')
-      .select('ticker, data')
+      .select('ticker,name:data->>name,currentPrice:data->currentPrice,priceChangePct:data->priceChangePct,exchange:data->>exchange,currency:data->>currency')
       .in('ticker', theme.tickers);
 
-    const byTicker = Object.fromEntries((data || []).map((row) => [row.ticker, row.data]));
+    if(error)throw error;
+    const byTicker = Object.fromEntries((data || []).map((row) => [row.ticker, row]));
 
     const stocks = theme.tickers
       .map((ticker) => {
@@ -79,6 +80,6 @@ export async function GET(request) {
     return Response.json({ label: theme.label, stocks, missing });
   } catch (err) {
     console.error('Error fetching explore category:', err);
-    return Response.json({ label: theme.label, stocks: [], missing: theme.tickers });
+    return Response.json({label:theme.label,stocks:[],missing:[],error:'No se pudo cargar esta cesta.'},{status:503});
   }
 }

@@ -6,8 +6,12 @@ import Sparkline from '../../components/Sparkline';
 import { useUser } from '../../components/AuthProvider';
 import { getGuestWatchlist, addToGuestWatchlist, removeFromGuestWatchlist } from '../../../lib/guestWatchlist';
 import { formatCurrency } from '../../../lib/formatters';
+import {currencySymbol} from '../../../lib/currencyPresentation';
 import { toScore100, scoreTier } from '../../../lib/scoreScale';
 import { NEW_COLORS as C, VERDICT_BADGE } from '../../components/new/theme';
+import {fetchPublicJSON} from '../../../lib/fetchPublicJSON';
+import {limitConcurrency} from '../../../lib/limitConcurrency';
+const seedWithinBudget=limitConcurrency(2);
 
 // Same curated ticker baskets as app/api/explore/route.js (THEMES) — ids must match what
 // that endpoint accepts. Labels here are the Spanish display text; the API's own `label`
@@ -104,7 +108,7 @@ function MoverRow({ s, watching, onToggle }) {
         <div style={{ fontSize: '11px', color: C.text3, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{s.name}</div>
       </div>
       <div style={{ textAlign: 'right', flexShrink: 0 }}>
-        <div style={{ fontSize: '13px', fontWeight: 700 }}>{s.currentPrice != null ? formatCurrency(s.currentPrice, '$') : '—'}</div>
+        <div style={{ fontSize: '13px', fontWeight: 700 }}>{s.currentPrice != null ? formatCurrency(s.currentPrice,currencySymbol(s.currency)) : '—'}</div>
         {s.priceChangePct != null && (
           <div style={{ fontSize: '11px', fontWeight: 700, color: isUp ? C.green : C.red }}>
             {isUp ? '+' : ''}{s.priceChangePct.toFixed(2)}%
@@ -154,7 +158,7 @@ function BasketCard({ s, watching, onToggle }) {
         <AddButton ticker={s.ticker} active={watching} onToggle={onToggle} />
       </div>
       <div style={{ display: 'flex', alignItems: 'baseline', gap: '8px' }}>
-        <span style={{ fontSize: '14px', fontWeight: 700 }}>{s.currentPrice != null ? formatCurrency(s.currentPrice, '$') : 'N/D'}</span>
+        <span style={{ fontSize: '14px', fontWeight: 700 }}>{s.currentPrice != null ? formatCurrency(s.currentPrice,currencySymbol(s.currency)) : 'N/D'}</span>
         {s.priceChangePct != null && (
           <span style={{ fontSize: '12px', fontWeight: 700, color: isUp ? C.green : C.red }}>
             {isUp ? '+' : ''}{s.priceChangePct.toFixed(2)}%
@@ -179,7 +183,11 @@ function Section({ title, subtitle, children }) {
 
 export default function RadarPage() {
   const { isSignedIn } = useUser();
-  const [loading, setLoading] = useState(true);
+  const [loadingMovers,setLoadingMovers]=useState(true);
+  const [loadingMarkets,setLoadingMarkets]=useState(true);
+  const [moversError,setMoversError]=useState(false);
+  const [marketsError,setMarketsError]=useState(false);
+  const loading=loadingMovers&&loadingMarkets;
   const [movers, setMovers] = useState(null);
   const [markets, setMarkets] = useState([]);
   const [watchlistTickers, setWatchlistTickers] = useState([]);
@@ -187,19 +195,21 @@ export default function RadarPage() {
 
   const [basketCategory, setBasketCategory] = useState('bigtech');
   const [basketCache, setBasketCache] = useState({});
-  const [loadingBasket, setLoadingBasket] = useState(false);
+  const [loadingBasket, setLoadingBasket] = useState(null);
+  const [basketError,setBasketError]=useState(null);
 
   useEffect(() => {
     let active = true;
-    Promise.all([fetch('/api/movers').then(r => r.json()), fetch('/api/market').then(r => r.json())])
-      .then(([moversData, marketsData]) => {
-        if (!active) return;
-        setMovers(moversData);
-        setMarkets((marketsData.markets || []).filter(m => m.symbol !== '^VIX'));
-      })
-      .catch(() => {})
-      .finally(() => { if (active) setLoading(false); });
-    return () => { active = false; };
+    const controller=new AbortController();
+    fetchPublicJSON('/api/movers',{signal:controller.signal,timeoutMs:25000})
+      .then(data=>{if(active){setMovers(data);setMoversError(false);}})
+      .catch(()=>{if(active)setMoversError(true);})
+      .finally(()=>{if(active)setLoadingMovers(false);});
+    fetchPublicJSON('/api/market',{signal:controller.signal,timeoutMs:10000})
+      .then(data=>{if(active){setMarkets((data.markets||[]).filter(m=>m.symbol!=='^VIX'));setMarketsError(false);}})
+      .catch(()=>{if(active)setMarketsError(true);})
+      .finally(()=>{if(active)setLoadingMarkets(false);});
+    return () => {active=false;controller.abort();};
   }, []);
 
   useEffect(() => {
@@ -212,15 +222,18 @@ export default function RadarPage() {
 
   useEffect(() => {
     if (basketCache[basketCategory]) return;
-    setLoadingBasket(true);
-    fetch(`/api/explore?category=${basketCategory}`)
-      .then(r => r.json())
+    let active=true;const controller=new AbortController();
+    setLoadingBasket(basketCategory);
+    fetchPublicJSON(`/api/explore?category=${basketCategory}`,{signal:controller.signal})
       .then(data => {
+        if(!active)return;
+        setBasketError(null);
+        setLoadingBasket(null);
         setBasketCache(prev => ({ ...prev, [basketCategory]: data.stocks || [] }));
-        (data.missing || []).forEach(ticker => { fetch(`/api/stock?ticker=${ticker}`).catch(() => {}); });
+        (data.missing || []).forEach(ticker => { seedWithinBudget(()=>fetch(`/api/stock?ticker=${encodeURIComponent(ticker)}`)).catch(() => {}); });
       })
-      .catch(() => setBasketCache(prev => ({ ...prev, [basketCategory]: [] })))
-      .finally(() => setLoadingBasket(false));
+      .catch(() => {if(active){setBasketError(basketCategory);setLoadingBasket(null);}});
+    return ()=>{active=false;controller.abort();};
   }, [basketCategory, basketCache]);
 
   const toggleWatchlist = useCallback(async (ticker) => {
@@ -264,6 +277,7 @@ export default function RadarPage() {
           <p style={{ margin: 0, fontSize: '13px', color: C.text2, maxWidth: '560px' }}>
             Qué se mueve hoy, qué destaca por calidad fundamental, y cestas de empresas para explorar por tema.
           </p>
+          {movers?.coverage&&<p style={{margin:'6px 0 0',fontSize:'11px',color:C.text3}}>Cobertura de este radar: {movers.coverage.companies} empresas con precios recientes.</p>}
         </div>
 
         {watchlistError && (
@@ -276,6 +290,7 @@ export default function RadarPage() {
           <div style={{ fontSize: '13px', color: C.text3 }}>Cargando…</div>
         ) : (
           <>
+            {marketsError&&<div role="status" style={{fontSize:'12px',color:C.text2}}>No se pudieron cargar los índices. El resto de Radar sigue disponible.</div>}
             {markets.length > 0 && (
               <Section title="Pulso del mercado">
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))', gap: '12px' }}>
@@ -297,7 +312,7 @@ export default function RadarPage() {
                     <div key={s.ticker} style={{ borderTop: i > 0 ? `1px solid ${C.borderSoft}` : 'none' }}>
                       <MoverRow s={s} watching={watchlistTickers.includes(s.ticker)} onToggle={toggleWatchlist} />
                     </div>
-                  )) : <div style={{ padding: '16px 4px', fontSize: '12px', color: C.text3 }}>Sin datos todavía.</div>}
+                  )) : <div style={{ padding: '16px 4px', fontSize: '12px', color: C.text3 }}>{loadingMovers?'Cargando movimientos…':moversError?'No se pudieron cargar los movimientos. Recarga para intentarlo de nuevo.':'Sin datos todavía.'}</div>}
                 </div>
               </Section>
 
@@ -307,7 +322,7 @@ export default function RadarPage() {
                     <div key={s.ticker} style={{ borderTop: i > 0 ? `1px solid ${C.borderSoft}` : 'none' }}>
                       <MoverRow s={s} watching={watchlistTickers.includes(s.ticker)} onToggle={toggleWatchlist} />
                     </div>
-                  )) : <div style={{ padding: '16px 4px', fontSize: '12px', color: C.text3 }}>Sin datos todavía.</div>}
+                  )) : <div style={{ padding: '16px 4px', fontSize: '12px', color: C.text3 }}>{loadingMovers?'Cargando movimientos…':moversError?'No se pudieron cargar los movimientos. Recarga para intentarlo de nuevo.':'Sin datos todavía.'}</div>}
                 </div>
               </Section>
             </div>
@@ -318,7 +333,7 @@ export default function RadarPage() {
                   <div key={s.ticker} style={{ borderTop: i > 0 ? `1px solid ${C.borderSoft}` : 'none' }}>
                     <LeaderRow s={s} watching={watchlistTickers.includes(s.ticker)} onToggle={toggleWatchlist} />
                   </div>
-                )) : <div style={{ padding: '16px 4px', fontSize: '12px', color: C.text3 }}>Sin datos todavía.</div>}
+                )) : <div style={{ padding: '16px 4px', fontSize: '12px', color: C.text3 }}>{loadingMovers?'Cargando clasificaciones…':moversError?'No se pudieron cargar las clasificaciones.':'Sin datos todavía.'}</div>}
               </div>
             </Section>
 
@@ -341,11 +356,11 @@ export default function RadarPage() {
                 ))}
               </div>
 
-              {loadingBasket ? (
+              {loadingBasket===basketCategory ? (
                 <div style={{ fontSize: '13px', color: C.text3, padding: '12px 0' }}>Cargando…</div>
               ) : basketStocks.length === 0 ? (
                 <div style={{ background: C.surface, border: `1px solid ${C.border}`, borderRadius: '16px', padding: '28px', textAlign: 'center', fontSize: '13px', color: C.text2 }}>
-                  Sin datos para esta cesta todavía.
+                  {basketError===basketCategory?'No se pudo cargar esta cesta. Cambia de tema o recarga para intentarlo de nuevo.':'Sin datos para esta cesta todavía.'}
                 </div>
               ) : (
                 <div className="new-card-grid-3" style={{ display: 'grid', gridTemplateColumns: 'repeat(3, minmax(0, 1fr))', gap: '14px' }}>
