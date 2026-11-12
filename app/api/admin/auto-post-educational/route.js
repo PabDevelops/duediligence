@@ -3,6 +3,9 @@ import { checkIsAdmin } from '../../../../lib/isAdmin';
 import { isCronRequest } from '../../../../lib/verifyCronAuth';
 import Anthropic from '@anthropic-ai/sdk';
 
+// Cap function time so a slow run cannot burn the 300s default (Vercel usage limits).
+export const maxDuration = 60;
+
 const anthropic = new Anthropic({
   apiKey: process.env.ANTHROPIC_API_KEY,
 });

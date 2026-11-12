@@ -3,6 +3,9 @@ import { isCronRequest } from '../../../../lib/verifyCronAuth';
 import { supabase } from '../../../../lib/supabase';
 import { syncPortfolioFromTrading212 } from '../../../../lib/trading212Sync';
 
+// Cap function time so a slow run cannot burn the 300s default (Vercel usage limits).
+export const maxDuration = 60;
+
 // Backstop sync for every connected Trading 212 account — the page itself
 // also triggers a sync when it loads and the last one is stale, this just
 // keeps data from going too far out of date for anyone who doesn't open the

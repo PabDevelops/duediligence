@@ -2,6 +2,9 @@ import { checkIsAdmin } from '../../../../lib/isAdmin';
 import { isCronRequest } from '../../../../lib/verifyCronAuth';
 import { THEMES } from '../../explore/route';
 
+// Cap function time so a slow run cannot burn the 300s default (Vercel usage limits).
+export const maxDuration = 60;
+
 // Populates stock_cache for a batch of tickers proactively, instead of relying on a real
 // user searching each one first. Reuses /api/stock's existing fetch/upsert logic via an
 // internal HTTP call rather than duplicating the SEC EDGAR/Finnhub/Yahoo fetching — same
